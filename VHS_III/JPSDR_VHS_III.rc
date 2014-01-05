@@ -1,0 +1,145 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Français (France) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FRA)
+#ifdef _WIN32
+LANGUAGE LANG_FRENCH, SUBLANG_FRENCH
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_JPSDR_VHS_III DIALOGEX 0, 0, 432, 143
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "JPSDR - VHS III Filter"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,355,93,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,355,110,50,14
+    PUSHBUTTON      "Default",ID_DEFAULT,290,93,50,14
+    CONTROL         "Enable Luminance Filter",IDC_FILTER_Y_ENABLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,13,89,13
+    EDITTEXT        IDC_THRS_Y_1,17,30,25,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_THRS_Y_2,17,54,25,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Level 1",IDC_THRS_Y_1_T,45,30,30,14,SS_CENTERIMAGE
+    LTEXT           "Level 2",IDC_THRS_Y_2_T,45,54,31,14,SS_CENTERIMAGE
+    CONTROL         "Mode 1",IDC_Y_FILTER_1,"Button",BS_AUTORADIOBUTTON,82,35,40,11
+    CONTROL         "Mode 2",IDC_Y_FILTER_2,"Button",BS_AUTORADIOBUTTON,82,46,39,11
+    CONTROL         "Mode 3",IDC_Y_FILTER_3,"Button",BS_AUTORADIOBUTTON,82,57,39,11
+    GROUPBOX        "Filter mode",IDC_Y_FILTER_MODE,78,25,47,45,WS_GROUP
+    CONTROL         "Enable Chrominance Filter",IDC_FILTER_UV_ENABLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,17,77,96,13
+    EDITTEXT        IDC_THRS_UV_1,17,94,25,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_THRS_UV_2,17,118,25,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Level 1",IDC_THRS_UV_1_T,45,94,28,14,SS_CENTERIMAGE
+    LTEXT           "Level 2",IDC_THRS_UV_2_T,45,118,29,14,SS_CENTERIMAGE
+    CONTROL         "Enable DTi on Chrominace (UV)",IDC_DCTi_ENABLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,137,12,116,13
+    EDITTEXT        IDC_DCTi_DELTA1,137,29,25,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_DCTi_DELTA2,137,48,25,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Size 1",IDC_DCTi_DELTA1_T,165,29,23,14,SS_CENTERIMAGE
+    LTEXT           "Size 2",IDC_DCTi_DELTA2_T,165,48,24,14,SS_CENTERIMAGE
+    EDITTEXT        IDC_DCTi_THRS1,192,29,25,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_DCTi_THRS2,192,48,25,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Level Max",IDC_DCTi_THRS1_T,221,29,41,14,SS_CENTERIMAGE
+    LTEXT           "Level Min",IDC_DCTi_THRS2_T,221,48,40,14,SS_CENTERIMAGE
+    CONTROL         "Chroma/Luma filter first",IDC_DCTi_FILTER_FIRST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,137,65,86,10
+    CONTROL         "Enable Chrominance Shift",IDC_CHROMA_SHIFT_ENABLE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,137,83,96,13
+    EDITTEXT        IDC_CHROMA_SHIFT,137,100,25,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Size",IDC_CHROMA_SHIFT_T,166,100,18,14,SS_CENTERIMAGE
+    CONTROL         "Test mode",IDC_DCTi_TEST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,227,65,50,9
+    CONTROL         "Enable DTi on Luminace (Y)",IDC_DTi_ENABLE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,281,12,104,13
+    EDITTEXT        IDC_DTi_DELTA1,281,29,25,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_DTi_DELTA2,281,48,25,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Size 1",IDC_DTi_DELTA1_T,309,29,23,14,SS_CENTERIMAGE
+    LTEXT           "Size 2",IDC_DTi_DELTA2_T,309,48,24,14,SS_CENTERIMAGE
+    EDITTEXT        IDC_DTi_THRS1,336,29,25,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_DTi_THRS2,336,48,25,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Level Max",IDC_DTi_THRS1_T,365,28,41,14,SS_CENTERIMAGE
+    LTEXT           "Level Min",IDC_DTi_THRS2_T,365,47,40,14,SS_CENTERIMAGE
+    CONTROL         "Chroma/Luma filter first",IDC_DTi_FILTER_FIRST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,281,65,86,10
+    CONTROL         "Test mode",IDC_DTi_TEST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,371,65,50,9
+    GROUPBOX        "Filter mode",IDC_UV_FILTER_MODE,78,89,47,45,WS_GROUP
+    CONTROL         "Mode 1",IDC_UV_FILTER_1,"Button",BS_AUTORADIOBUTTON,82,99,39,11
+    CONTROL         "Mode 2",IDC_UV_FILTER_2,"Button",BS_AUTORADIOBUTTON,82,110,38,11
+    CONTROL         "Mode 3",IDC_UV_FILTER_3,"Button",BS_AUTORADIOBUTTON,82,121,39,11
+    GROUPBOX        "Direction",IDC_CHROMA_SHIFT_DIR,186,95,46,36,WS_GROUP
+    CONTROL         "Left",IDC_SHIFT_LEFT,"Button",BS_AUTORADIOBUTTON,190,105,31,11
+    CONTROL         "Right",IDC_SHIFT_RIGHT,"Button",BS_AUTORADIOBUTTON,190,116,32,11
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_JPSDR_VHS_III, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 425
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 135
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+#endif    // Français (France) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

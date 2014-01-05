@@ -1,0 +1,306 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Fichiers sources">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Fichiers d%27en-tête">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Fichiers de ressources">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\AddBorder\Filtre_JPSDR_AddBorder.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\AutoYUY2\Filtre_JPSDR_AutoYUY2.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\BlurMotion\Filtre_JPSDR_BlurMotion.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ChromaShift\Filtre_JPSDR_ChromaShift.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ColorSpaceConvert\Filtre_JPSDR_ColorSpaceConvert.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Deinterlace\Filtre_JPSDR_Deinterlace.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DeinterlaceII\Filtre_JPSDR_DeinterlaceII.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Field_Shift\Filtre_JPSDR_Field_Shift.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\InterlaceMotion\Filtre_JPSDR_InterlaceMotion.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\IVTC\Filtre_JPSDR_IVTC.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\IVTC_Manual\Filtre_JPSDR_IVTC_Manual.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Median\Filtre_JPSDR_Median.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RemoveFrames\Filtre_JPSDR_RemoveFrames.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RGBConvert\Filtre_JPSDR_RGBConvert.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Saturation\Filtre_JPSDR_Saturation.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Smart_Deinterlace\Filtre_JPSDR_Smart_Deinterlace.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\VHS\Filtre_JPSDR_VHS.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\VHS_II\Filtre_JPSDR_VHS_II.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\VHS_III\Filtre_JPSDR_VHS_III.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WideScreen\Filtre_JPSDR_WideScreen.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Filtres_JPSDR.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Fraction.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="int128.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="math.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="VideoFilter.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="VideoFilterDialog.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="VideoFilterEntry.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\CCC\Filtre_JPSDR_CCC.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="..\AddBorder\Filtre_JPSDR_AddBorder_asm.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
+    <MASM Include="..\AutoYUY2\Filtre_JPSDR_AutoYUY2_asm.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
+    <MASM Include="..\BlurMotion\Filtre_JPSDR_BlurMotion_asm.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
+    <MASM Include="..\ColorSpaceConvert\Filtre_JPSDR_ColorSpaceConvert_asm.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
+    <MASM Include="..\Deinterlace\Filtre_JPSDR_Deinterlace_asm.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
+    <MASM Include="..\DeinterlaceII\Filtre_JPSDR_DeinterlaceII_asm.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
+    <MASM Include="..\Field_Shift\Filtre_JPSDR_Field_Shift_asm.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
+    <MASM Include="..\InterlaceMotion\Filtre_JPSDR_InterlaceMotion_asm.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
+    <MASM Include="..\IVTC\Filtre_JPSDR_IVTC_asm.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
+    <MASM Include="..\IVTC_Manual\Filtre_JPSDR_IVTC_Manual_asm.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
+    <MASM Include="..\Median\Filtre_JPSDR_Median_asm.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
+    <MASM Include="..\RGBConvert\Filtre_JPSDR_RGBConvert_asm.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
+    <MASM Include="..\Saturation\Filtre_JPSDR_Saturation_asm.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
+    <MASM Include="..\Smart_Deinterlace\Filtre_JPSDR_Smart_Deinterlace_asm.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
+    <MASM Include="..\VHS\Filtre_JPSDR_VHS_asm.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
+    <MASM Include="..\VHS_III\Filtre_JPSDR_VHS_III_asm.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
+    <MASM Include="..\WideScreen\Filtre_JPSDR_WideScreen_asm.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Unknown.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="vdplugin.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="vdvideofilt.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoFilter.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoFilterDialog.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="VideoFilterEntry.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Fraction.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="int128.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="JPSDR_Filter.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="math.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="Pascal.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="vdtypes.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\AddBorder\JPSDR_AddBorder.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\AutoYUY2\JPSDR_AutoYUY2.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\ChromaShift\JPSDR_ChromaShift.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\ColorSpaceConvert\JPSDR_ColorSpaceConvert.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\Deinterlace\JPSDR_Deinterlace.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\DeinterlaceII\JPSDR_DeinterlaceII.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\Field_Shift\JPSDR_Field_Shift.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\IVTC\JPSDR_IVTC.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\IVTC_Manual\JPSDR_IVTC_Manual.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\Median\JPSDR_Median.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\RemoveFrames\JPSDR_RemoveFrames.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\RGBConvert\JPSDR_RGBConvert.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\Saturation\JPSDR_Saturation.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\Smart_Deinterlace\JPSDR_Smart_Deinterlace.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\VHS\JPSDR_VHS.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\VHS_II\JPSDR_VHS_II.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\VHS_III\JPSDR_VHS_III.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\WideScreen\JPSDR_WideScreen.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="..\CCC\JPSDR_CCC.rc">
+      <Filter>Fichiers de ressources</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\AddBorder\Filtre_JPSDR_AddBorder_asm_x64.asm">
+      <Filter>Fichiers sources</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\AutoYUY2\Filtre_JPSDR_AutoYUY2_asm_x64.asm">
+      <Filter>Fichiers sources</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\BlurMotion\Filtre_JPSDR_BlurMotion_asm_x64.asm">
+      <Filter>Fichiers sources</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\CCC\Filtre_JPSDR_CCC_asm_x64.asm">
+      <Filter>Fichiers sources</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\ColorSpaceConvert\Filtre_JPSDR_ColorSpaceConvert_asm_x64.asm">
+      <Filter>Fichiers sources</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Deinterlace\Filtre_JPSDR_Deinterlace_asm_x64.asm">
+      <Filter>Fichiers sources</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Field_Shift\Filtre_JPSDR_Field_Shift_asm_x64.asm">
+      <Filter>Fichiers sources</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\IVTC\Filtre_JPSDR_IVTC_asm_x64.asm">
+      <Filter>Fichiers sources</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\IVTC_Manual\Filtre_JPSDR_IVTC_Manual_asm_x64.asm">
+      <Filter>Fichiers sources</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Median\Filtre_JPSDR_Median_asm_x64.asm">
+      <Filter>Fichiers sources</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\RGBConvert\Filtre_JPSDR_RGBConvert_asm_x64.asm">
+      <Filter>Fichiers sources</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\Saturation\Filtre_JPSDR_Saturation_asm_x64.asm">
+      <Filter>Fichiers sources</Filter>
+    </CustomBuild>
+    <CustomBuild Include="..\WideScreen\Filtre_JPSDR_WideScreen_asm_x64.asm">
+      <Filter>Fichiers sources</Filter>
+    </CustomBuild>
+    <CustomBuild Include="a64_fraction.asm">
+      <Filter>Fichiers sources</Filter>
+    </CustomBuild>
+    <CustomBuild Include="a64_int128.asm">
+      <Filter>Fichiers sources</Filter>
+    </CustomBuild>
+  </ItemGroup>
+</Project>

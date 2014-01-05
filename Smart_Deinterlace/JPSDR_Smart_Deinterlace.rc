@@ -1,0 +1,107 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Français (France) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FRA)
+#ifdef _WIN32
+LANGUAGE LANG_FRENCH, SUBLANG_FRENCH
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_JPSDR_SMART_DEINTERLACE DIALOGEX 0, 0, 191, 87
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "JPSDR - Smart Deinterlace"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,134,66,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,75,66,50,14
+    EDITTEXT        IDC_THRESHOLD,45,12,32,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Threshold",IDC_STATIC,10,15,34,12
+    EDITTEXT        IDC_OFFSET,45,29,32,14,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_FREQ,45,46,32,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Offset",IDC_STATIC,10,31,34,12
+    LTEXT           "1/Nth  N :",IDC_STATIC,10,47,34,12
+    CONTROL         "Disable motion map filtering",IDC_MOTION_MAP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,84,49,100,12
+    GROUPBOX        "Deinterlace mode",IDC_STATIC,84,11,71,35,WS_GROUP
+    CONTROL         "Bilinear",IDC_BILINEAR,"Button",BS_AUTORADIOBUTTON | BS_LEFT | BS_VCENTER,90,20,37,11
+    CONTROL         "Trilinear",IDC_TRILINEAR,"Button",BS_AUTORADIOBUTTON | BS_LEFT | BS_VCENTER,90,32,45,11
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_JPSDR_SMART_DEINTERLACE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 184
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 80
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+#endif    // Français (France) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

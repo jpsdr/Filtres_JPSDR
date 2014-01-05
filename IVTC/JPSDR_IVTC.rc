@@ -1,0 +1,126 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Français (France) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FRA)
+#ifdef _WIN32
+LANGUAGE LANG_FRENCH, SUBLANG_FRENCH
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_JPSDR_IVTC DIALOGEX 0, 0, 296, 151
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "JPSDR - IVTC Filter"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,232,105,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,232,128,50,14
+    CONTROL         "Output filtering",IDC_OUTPUT_FILTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,56,61,10
+    CONTROL         "Y Only",IDC_Y_ONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,70,56,40,10
+    EDITTEXT        IDC_THRESHOLD_IVTC,165,9,35,15,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_THRESHOLD_FILTER,165,25,35,15,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Lines removed (field)",IDC_IVTC_STATIC,113,62,49,18
+    EDITTEXT        IDC_LINE_REMOVED,165,64,35,15,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Invert polarity",IDC_INV_POLAR,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,69,59,11
+    CONTROL         "Stable sequence mode",IDC_FIRST_LAST,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,43,89,10
+    CONTROL         "Disable deinterlace",IDC_DEINTERLACE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,82,74,11
+    CONTROL         "Blend anime mode",IDC_BLEND,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,95,74,11
+    EDITTEXT        IDC_THRESHOLD_DEINTERLACE,165,41,35,15,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Disable zero mode",IDC_Z_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,89,95,74,11
+    CONTROL         "Disable motion map filtering",IDC_MOTION_MAP,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,89,82,109,11
+    CONTROL         "Manual Mode",IDC_MANUAL_MODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,114,74,11
+    EDITTEXT        IDC_FILENAME,12,131,157,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Browse",IDC_BROWSE,112,112,58,15
+    GROUPBOX        "Thresholds",IDC_IVTC_STATIC,116,2,90,59,WS_GROUP
+    RTEXT           "Telecine",IDC_IVTC_STATIC,121,10,40,10,SS_CENTERIMAGE
+    RTEXT           "Output filter",IDC_OUTPUT_TEXT,121,26,42,11,SS_CENTERIMAGE
+    RTEXT           "Deinterlace",IDC_IVTC_STATIC,120,43,41,10,SS_CENTERIMAGE
+    GROUPBOX        "Output mode",IDC_IVTC_STATIC,7,2,106,37,WS_GROUP
+    CONTROL         "Progressive",IDC_PROGRESSIVE,"Button",BS_AUTORADIOBUTTON,13,13,70,10
+    CONTROL         "Stable telecine (Offset 2)",IDC_TELECINE,"Button",BS_AUTORADIOBUTTON,13,25,93,10
+    GROUPBOX        "Deinterlace mode",IDC_IVTC_STATIC2,215,2,74,36,BS_CENTER | WS_GROUP
+    CONTROL         "Smart",IDC_SMART,"Button",BS_AUTORADIOBUTTON,221,13,45,10
+    CONTROL         "Standard",IDC_STANDARD,"Button",BS_AUTORADIOBUTTON,221,25,54,10
+    GROUPBOX        "Deinterlace method",IDC_IVTC_STATIC3,215,42,74,36,BS_CENTER | WS_GROUP
+    CONTROL         "Bilinear",IDC_BILINEAR,"Button",BS_AUTORADIOBUTTON,221,53,45,10
+    CONTROL         "Trilinear",IDC_TRILINEAR,"Button",BS_AUTORADIOBUTTON,221,65,54,10
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_JPSDR_IVTC, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 289
+        TOPMARGIN, 2
+        BOTTOMMARGIN, 148
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+#endif    // Français (France) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

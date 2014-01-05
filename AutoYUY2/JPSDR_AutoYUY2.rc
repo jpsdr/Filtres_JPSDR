@@ -1,0 +1,109 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Français (France) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FRA)
+#ifdef _WIN32
+LANGUAGE LANG_FRENCH, SUBLANG_FRENCH
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_JPSDR_AUTO_YUY2, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 157
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 96
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_JPSDR_AUTO_YUY2 DIALOGEX 0, 0, 164, 103
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "JPSDR - AutoYUY2"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,7,82,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,7,62,50,14
+    PUSHBUTTON      "Show Preview",IDC_PREVIEW,93,82,50,14
+    EDITTEXT        IDC_THRESHOLD,93,63,24,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Threshold",IDC_THRESHOLD_TEXT,120,63,32,12,SS_CENTERIMAGE
+    GROUPBOX        "Output format",IDC_MODE_GROUP,7,7,70,46,WS_GROUP
+    CONTROL         "YUY2",IDC_YUY2,"Button",BS_AUTORADIOBUTTON,13,16,33,10
+    CONTROL         "UYVY",IDC_UYVY,"Button",BS_AUTORADIOBUTTON,13,27,33,10
+    CONTROL         "Planar 4:2:2",IDC_PLANAR_422,"Button",BS_AUTORADIOBUTTON,13,38,55,10
+    GROUPBOX        "Convert mode",IDC_CONVERT_GROUP,93,7,64,55,WS_GROUP
+    CONTROL         "Progressive",IDC_PROGRESSIVE,"Button",BS_AUTORADIOBUTTON,100,16,53,10
+    CONTROL         "Interlaced",IDC_INTERLACED,"Button",BS_AUTORADIOBUTTON,100,27,49,10
+    CONTROL         "Automatic",IDC_AUTOMATIC,"Button",BS_AUTORADIOBUTTON,100,38,48,10
+    CONTROL         "Test",IDC_TEST,"Button",BS_AUTORADIOBUTTON,100,49,30,10
+END
+
+#endif    // Français (France) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

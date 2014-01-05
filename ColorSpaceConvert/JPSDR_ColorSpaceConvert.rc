@@ -1,0 +1,111 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Français (France) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_FRA)
+#ifdef _WIN32
+LANGUAGE LANG_FRENCH, SUBLANG_FRENCH
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_JPSDR_COLORSPACECONVERT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 157
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 96
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_JPSDR_COLORSPACECONVERT DIALOGEX 0, 0, 226, 80
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "JPSDR - ColorSpaceConvert"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,170,10,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,170,30,50,14
+    PUSHBUTTON      "Show Preview",IDC_PREVIEW,170,60,50,14
+    CONTROL         "Full Range YCbCr",IDC_FULL_RANGE_IN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,65,70,11
+    GROUPBOX        "Input",IDC_MATRIX_GROUP_IN,7,7,70,57,WS_GROUP
+    CONTROL         "BT.709",IDC_BT709_IN,"Button",BS_AUTORADIOBUTTON,13,16,45,10
+    CONTROL         "BT.601",IDC_BT601_IN,"Button",BS_AUTORADIOBUTTON,13,27,45,10
+    CONTROL         "SMPTE 204M",IDC_SMPTE_240M_IN,"Button",BS_AUTORADIOBUTTON,13,38,60,10
+    CONTROL         "FCC",IDC_FCC_IN,"Button",BS_AUTORADIOBUTTON,13,49,45,10
+    CONTROL         "Full Range YCbCr",IDC_FULL_RANGE_OUT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,91,65,70,11
+    GROUPBOX        "Output",IDC_MATRIX_GROUP_OUT,85,7,70,57,WS_GROUP
+    CONTROL         "BT.709",IDC_BT709_OUT,"Button",BS_AUTORADIOBUTTON,91,16,45,10
+    CONTROL         "BT.601",IDC_BT601_OUT,"Button",BS_AUTORADIOBUTTON,91,27,45,10
+    CONTROL         "SMPTE 204M",IDC_SMPTE_240M_OUT,"Button",BS_AUTORADIOBUTTON,91,38,60,10
+    CONTROL         "FCC",IDC_FCC_OUT,"Button",BS_AUTORADIOBUTTON,91,49,45,10
+
+END
+
+#endif    // Français (France) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
