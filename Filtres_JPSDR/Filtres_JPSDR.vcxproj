@@ -41,6 +41,14 @@
       <Configuration>Release_Intel_98_P4</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Intel_XP_Core2_AVX2|Win32">
+      <Configuration>Release_Intel_XP_Core2_AVX2</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_Intel_XP_Core2_AVX2|x64">
+      <Configuration>Release_Intel_XP_Core2_AVX2</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Release_Intel_XP_Core2_AVX|Win32">
       <Configuration>Release_Intel_XP_Core2_AVX</Configuration>
       <Platform>Win32</Platform>
@@ -181,7 +189,25 @@
     <ParallelDebugEnvironment>Disabled</ParallelDebugEnvironment>
     <InterproceduralOptimization>true</InterproceduralOptimization>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <UseIntelTBB>true</UseIntelTBB>
+    <InstrumentIntelTBB>false</InstrumentIntelTBB>
+    <ParallelDebugEnvironment>Disabled</ParallelDebugEnvironment>
+    <InterproceduralOptimization>true</InterproceduralOptimization>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <UseIntelTBB>true</UseIntelTBB>
+    <InstrumentIntelTBB>false</InstrumentIntelTBB>
+    <ParallelDebugEnvironment>Disabled</ParallelDebugEnvironment>
+    <InterproceduralOptimization>true</InterproceduralOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
     <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -405,7 +431,13 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release_XP_P4|Win32'" Label="PropertySheets">
@@ -570,15 +602,21 @@
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">$(Configuration)\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">$(Platform)\$(Configuration)\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">$(Configuration)\</IntDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">$(Platform)\$(Configuration)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">$(Platform)\$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">false</LinkIncremental>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">false</LinkIncremental>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">false</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">false</LinkIncremental>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">false</LinkIncremental>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">false</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|Win32'">$(Configuration)\</IntDir>
@@ -624,15 +662,21 @@
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'" />
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'" />
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'" />
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'" />
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'" />
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'" />
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|Win32'" />
@@ -1783,6 +1827,50 @@
       <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">
+    <MASM>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+    </MASM>
+    <ClCompile>
+      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FILTRES_JPSDR_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <GlobalOptimizations>true</GlobalOptimizations>
+      <InterproceduralOptimization>SingleFile</InterproceduralOptimization>
+      <Parallelization>true</Parallelization>
+      <UseIntelOptimizedHeaders>false</UseIntelOptimizedHeaders>
+      <UseProcessorExtensions>AVX2</UseProcessorExtensions>
+      <OpenMP>GenerateParallelCode</OpenMP>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <OutputFile>$(OutDir)$(ProjectName).vdf</OutputFile>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <TargetMachine>MachineX86</TargetMachine>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">
     <MASM>
       <GenerateDebugInformation>false</GenerateDebugInformation>
@@ -1814,6 +1902,49 @@
       <Parallelization>true</Parallelization>
       <UseIntelOptimizedHeaders>false</UseIntelOptimizedHeaders>
       <UseProcessorExtensions>AVX</UseProcessorExtensions>
+      <OpenMP>GenerateParallelCode</OpenMP>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <OutputFile>$(OutDir)$(ProjectName).vdf</OutputFile>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">
+    <MASM>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+    </MASM>
+    <ClCompile>
+      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FILTRES_JPSDR_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <StructMemberAlignment>Default</StructMemberAlignment>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <GlobalOptimizations>true</GlobalOptimizations>
+      <InterproceduralOptimization>SingleFile</InterproceduralOptimization>
+      <Parallelization>true</Parallelization>
+      <UseIntelOptimizedHeaders>false</UseIntelOptimizedHeaders>
+      <UseProcessorExtensions>AVX2</UseProcessorExtensions>
       <OpenMP>GenerateParallelCode</OpenMP>
       <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
@@ -1927,6 +2058,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -1946,6 +2078,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -1970,6 +2103,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -1988,6 +2122,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -2006,6 +2141,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -2024,6 +2160,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -2053,6 +2190,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -2075,6 +2213,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|Win32'">true</ExcludedFromBuild>
@@ -2090,6 +2229,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
@@ -2105,6 +2245,7 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">Assembleur x64</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">Assembleur x64</Message>
@@ -2120,6 +2261,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
@@ -2138,6 +2280,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -2160,6 +2303,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|Win32'">true</ExcludedFromBuild>
@@ -2175,6 +2319,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
@@ -2190,6 +2335,7 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">Assembleur x64</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">Assembleur x64</Message>
@@ -2205,6 +2351,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
@@ -2223,6 +2370,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -2245,6 +2393,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|Win32'">true</ExcludedFromBuild>
@@ -2260,6 +2409,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
@@ -2275,6 +2425,7 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">Assembleur x64</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">Assembleur x64</Message>
@@ -2290,6 +2441,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
@@ -2312,6 +2464,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|Win32'">true</ExcludedFromBuild>
@@ -2327,6 +2480,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
@@ -2342,6 +2496,7 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">Assembleur x64</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">Assembleur x64</Message>
@@ -2357,6 +2512,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
@@ -2375,6 +2531,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -2397,6 +2554,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|Win32'">true</ExcludedFromBuild>
@@ -2412,6 +2570,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
@@ -2427,6 +2586,7 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">Assembleur x64</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">Assembleur x64</Message>
@@ -2442,6 +2602,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
@@ -2466,7 +2627,9 @@
       <GenerateDebugInformation Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">false</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">false</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">false</GenerateDebugInformation>
+      <GenerateDebugInformation Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">false</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">false</GenerateDebugInformation>
+      <GenerateDebugInformation Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">false</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|Win32'">false</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">false</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2|Win32'">false</GenerateDebugInformation>
@@ -2490,6 +2653,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -2508,6 +2672,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -2530,6 +2695,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|Win32'">true</ExcludedFromBuild>
@@ -2545,6 +2711,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
@@ -2560,6 +2727,7 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">Assembleur x64</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">Assembleur x64</Message>
@@ -2575,6 +2743,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
@@ -2593,6 +2762,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -2615,6 +2785,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|Win32'">true</ExcludedFromBuild>
@@ -2630,6 +2801,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
@@ -2645,6 +2817,7 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">Assembleur x64</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">Assembleur x64</Message>
@@ -2660,6 +2833,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
@@ -2678,6 +2852,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -2696,6 +2871,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -2718,6 +2894,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|Win32'">true</ExcludedFromBuild>
@@ -2733,6 +2910,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
@@ -2748,6 +2926,7 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">Assembleur x64</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">Assembleur x64</Message>
@@ -2763,6 +2942,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
@@ -2781,6 +2961,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -2803,6 +2984,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|Win32'">true</ExcludedFromBuild>
@@ -2818,6 +3000,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
@@ -2833,6 +3016,7 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">Assembleur x64</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">Assembleur x64</Message>
@@ -2848,6 +3032,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
@@ -2866,6 +3051,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -2888,6 +3074,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|Win32'">true</ExcludedFromBuild>
@@ -2903,6 +3090,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
@@ -2918,6 +3106,7 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">Assembleur x64</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">Assembleur x64</Message>
@@ -2933,6 +3122,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
@@ -2951,6 +3141,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -2973,6 +3164,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|Win32'">true</ExcludedFromBuild>
@@ -2988,6 +3180,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
@@ -3003,6 +3196,7 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">Assembleur x64</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">Assembleur x64</Message>
@@ -3018,6 +3212,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
@@ -3042,7 +3237,9 @@
       <GenerateDebugInformation Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">false</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">false</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">false</GenerateDebugInformation>
+      <GenerateDebugInformation Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">false</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">false</GenerateDebugInformation>
+      <GenerateDebugInformation Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">false</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|Win32'">false</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">false</GenerateDebugInformation>
       <GenerateDebugInformation Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2|Win32'">false</GenerateDebugInformation>
@@ -3066,6 +3263,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -3088,6 +3286,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|Win32'">true</ExcludedFromBuild>
@@ -3103,6 +3302,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
@@ -3118,6 +3318,7 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">Assembleur x64</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">Assembleur x64</Message>
@@ -3133,6 +3334,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
@@ -3151,6 +3353,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -3169,6 +3372,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -3187,6 +3391,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -3205,6 +3410,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">true</ExcludedFromBuild>
@@ -3227,6 +3433,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|Win32'">true</ExcludedFromBuild>
@@ -3242,6 +3449,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
@@ -3257,6 +3465,7 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">Assembleur x64</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">Assembleur x64</Message>
@@ -3272,6 +3481,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
@@ -3294,6 +3504,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|Win32'">true</ExcludedFromBuild>
@@ -3309,6 +3520,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
@@ -3324,6 +3536,7 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">Assembleur x64</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">Assembleur x64</Message>
@@ -3339,6 +3552,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
@@ -3361,6 +3575,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|Win32'">true</ExcludedFromBuild>
@@ -3376,6 +3591,7 @@
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">ml64 /c /Fo $(IntDir)%(Filename).obj %(FullPath)</Command>
@@ -3391,6 +3607,7 @@
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">Assembleur x64</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">Assembleur x64</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">Assembleur x64</Message>
@@ -3406,6 +3623,7 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P3|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_98_P4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_AVX2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.1|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4.2|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release_Intel_XP_Core2_SSE4|x64'">$(IntDir)%(Filename).obj;%(Outputs)</Outputs>
