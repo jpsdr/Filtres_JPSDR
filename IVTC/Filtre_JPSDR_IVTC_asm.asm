@@ -1773,13 +1773,15 @@ JPSDR_IVTC_Rebuild_Frame8 proc bottom_src:dword,top_src:dword,dst:dword,w:dword,
 	
 Loop_D8_1:
 	mov ecx,w
-	and ecx,3
-	jz short loop_D8_suite1
-	rep movsb
-loop_D8_suite1:	
-	mov ecx,w
 	shr ecx,2
+	jz short loop_D8_suite1
 	rep movsd
+loop_D8_suite1:
+	mov ecx,w
+	and ecx,3
+	jz short loop_D8_suite2
+	rep movsb
+loop_D8_suite2:
 	add esi,eax
 	add edi,ebx
 	dec edx
@@ -1788,15 +1790,18 @@ loop_D8_suite1:
 	mov edi,dst
 	mov edx,h
 	add edi,dst_pitch
+	
 Loop_D8_2:
 	mov ecx,w
-	and ecx,3
-	jz short loop_D8_suite2
-	rep movsb
-loop_D8_suite2:	
-	mov ecx,w
 	shr ecx,2
+	jz short loop_D8_suite3
 	rep movsd
+loop_D8_suite3:
+	mov ecx,w
+	and ecx,3
+	jz short loop_D8_suite4
+	rep movsb
+loop_D8_suite4:
 	add esi,eax
 	add edi,ebx
 	dec edx
@@ -1831,13 +1836,15 @@ JPSDR_IVTC_Rebuild_Frame8_2 proc src:dword,dst:dword,w:dword,h:dword,src_pitch:d
 	
 Loop_D8_2_1:
 	mov ecx,w
-	and ecx,3
-	jz short loop_D8_2_suite1
-	rep movsb
-loop_D8_2_suite1:	
-	mov ecx,w
 	shr ecx,2
+	jz short loop_D8_2_suite1
 	rep movsd
+loop_D8_2_suite1:
+	mov ecx,w
+	and ecx,3
+	jz short loop_D8_2_suite2
+	rep movsb
+loop_D8_2_suite2:
 	add esi,eax
 	add edi,ebx
 	dec edx
@@ -1864,7 +1871,12 @@ JPSDR_IVTC_Move32_Full proc src:dword,dst:dword,w:dword,h:dword,src_modulo:dword
 	mov esi,src
 	mov edi,dst
 	mov ebx,w
+	or ebx,ebx
+	jz short fin_F			
 	mov edx,h
+	or edx,edx
+	jz short fin_F		
+	
 loop_F:
 	mov ecx,ebx
 	rep movsd
@@ -1895,17 +1907,23 @@ JPSDR_IVTC_Move8_Full proc src:dword,dst:dword,w:dword,h:dword,src_modulo:dword,
 	mov esi,src
 	mov edi,dst
 	mov ebx,w
+	or ebx,ebx
+	jz short fin_F8		
 	mov edx,h
+	or edx,edx
+	jz short fin_F8		
 	
 loop_F8:
 	mov ecx,ebx
-	and ecx,3
-	jz short loop_F8_suite
-	rep movsb
-loop_F8_suite:	
-	mov ecx,ebx
 	shr ecx,2
+	jz short loop_F8_suite1
 	rep movsd
+loop_F8_suite1:	
+	mov ecx,ebx
+	and ecx,3
+	jz short loop_F8_suite2
+	rep movsb
+loop_F8_suite2:	
 	add esi,src_modulo
 	add edi,dst_modulo
 	dec edx
@@ -1933,8 +1951,13 @@ JPSDR_IVTC_Move32_Full_src proc src:dword,dst:dword,w:dword,h:dword,src_modulo:d
 	mov esi,src
 	mov edi,dst
 	mov ebx,w
+	or ebx,ebx
+	jz short fin_G	
 	mov edx,h
+	or edx,edx
+	jz short fin_G	
 	mov eax,src_modulo
+	
 loop_G:
 	mov ecx,ebx
 	rep movsd
@@ -1964,18 +1987,24 @@ JPSDR_IVTC_Move8_Full_src proc src:dword,dst:dword,w:dword,h:dword,src_modulo:dw
 	mov esi,src
 	mov edi,dst
 	mov ebx,w
+	or ebx,ebx
+	jz short fin_G8
 	mov edx,h
+	or edx,edx
+	jz short fin_G8
 	mov eax,src_modulo
 	
 loop_G8:
 	mov ecx,ebx
-	and ecx,3
-	jz short loop_G8_suite
-	rep movsb
-loop_G8_suite:	
-	mov ecx,ebx
 	shr ecx,2
+	jz short loop_G8_suite1
 	rep movsd
+loop_G8_suite1:	
+	mov ecx,ebx
+	and ecx,3
+	jz short loop_G8_suite2
+	rep movsb
+loop_G8_suite2:	
 	add esi,eax
 	dec edx
 	jnz short loop_G8
@@ -2003,8 +2032,13 @@ JPSDR_IVTC_Move32_Full_dst proc src:dword,dst:dword,w:dword,h:dword,dst_modulo:d
 	mov esi,src
 	mov edi,dst
 	mov ebx,w
+	or ebx,ebx
+	jz short fin_H
 	mov edx,h
+	or edx,edx
+	jz short fin_H
 	mov eax,dst_modulo
+	
 loop_H:
 	mov ecx,ebx
 	rep movsd
@@ -2034,18 +2068,24 @@ JPSDR_IVTC_Move8_Full_dst proc src:dword,dst:dword,w:dword,h:dword,dst_modulo:dw
 	mov esi,src
 	mov edi,dst
 	mov ebx,w
+	or ebx,ebx
+	jz short fin_H8
 	mov edx,h
+	or edx,edx
+	jz short fin_H8
 	mov eax,dst_modulo
 	
 loop_H8:
 	mov ecx,ebx
-	and ecx,3
-	jz short loop_H8_suite
-	rep movsb
-loop_H8_suite:
+	shr ecx,2
+	jz short loop_H8_suite1
+	rep movsd	
+loop_H8_suite1:
 	mov ecx,ebx
-	shr ecx,2	
-	rep movsd
+	and ecx,3
+	jz short loop_H8_suite2
+	rep movsb
+loop_H8_suite2:
 	add edi,eax
 	dec edx
 	jnz short loop_H8
@@ -2071,8 +2111,12 @@ JPSDR_IVTC_Move32 proc src:dword,dst:dword,_size:dword
 	mov esi,src
 	mov edi,dst
 	mov ecx,_size
+	or ecx,ecx
+	jz short Move32_fin
+	
 	rep movsd
 	
+Move32_fin:	
 	pop edi
 	pop esi
 
@@ -2089,19 +2133,24 @@ JPSDR_IVTC_Move8 proc src:dword,dst:dword,_size:dword
 	push edi
 	
 	mov edx,_size
+	or edx,edx
+	jz short Move8_fin
 	
 	cld
 	mov esi,src
 	mov edi,dst
-	mov ecx,edx
-	and ecx,3
-	jz short Move8_suite
-	rep movsb
-Move8_suite:
+	
 	mov ecx,edx
 	shr ecx,2	
+	jz short Move8_suite
 	rep movsd
+Move8_suite:	
+	mov ecx,edx
+	and ecx,3
+	jz short Move8_fin
+	rep movsb
 	
+Move8_fin:	
 	pop edi
 	pop esi
 

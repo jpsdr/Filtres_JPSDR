@@ -2113,7 +2113,7 @@ JPSDR_IVTC_Convert420_to_YUY2_1 endp
 ; bottom_src = rcx
 ; top_src = rdx
 ; dst = r8
-; w = r9
+; w = r9d
 
 JPSDR_IVTC_Rebuild_Frame proc public frame
 
@@ -2137,6 +2137,8 @@ dst_modulo equ qword ptr[rbp+80]
 	.endprolog
 
 	cld
+	or r9d,r9d
+	jz short fin_F4	
 	mov rsi,rcx
 	mov rdi,r8
 	mov rax,src_modulo
@@ -2176,6 +2178,7 @@ Loop_D_2a:
 	dec r9d
 	jnz short Loop_D_2
 
+fin_F4:	
 	pop r12
 	pop rbx
 	pop rsi	
@@ -2191,8 +2194,8 @@ JPSDR_IVTC_Rebuild_Frame endp
 ;	src_pitch:dword,dst_pitch:dword,src_modulo:dword,dst_modulo:dword;
 ; src = rcx
 ; dst = rdx
-; w = r8
-; h = r9
+; w = r8d
+; h = r9d
 
 JPSDR_IVTC_Rebuild_Frame_2 proc public frame
 
@@ -2213,11 +2216,15 @@ dst_modulo equ qword ptr[rbp+72]
 	cld
 	mov rdi,rdx
 	mov rsi,rcx
+	xor rcx,rcx
+	or r8d,r8d
+	jz short fin_F3
+	or r9d,r9d
+	jz short fin_F3		
 	mov rax,src_pitch
 	mov rdx,dst_pitch
 	add rax,src_modulo
 	add rdx,dst_modulo
-	xor rcx,rcx
 		
 Loop_D_2_1:
 	mov ecx,r8d
@@ -2231,6 +2238,7 @@ Loop_D_2_1a:
 	dec r9d
 	jnz short Loop_D_2_1
 	
+fin_F3:	
 	pop rsi
 	pop rdi
 	pop rbp
@@ -2245,7 +2253,7 @@ JPSDR_IVTC_Rebuild_Frame_2 endp
 ; bottom_src = rcx
 ; top_src = rdx
 ; dst = r8
-; w = r9
+; w = r9d
 
 JPSDR_IVTC_Rebuild_Frame8 proc public frame
 
@@ -2276,6 +2284,8 @@ dst_modulo equ qword ptr[rbp+80]
 	mov rax,src_modulo
 	mov rbx,dst_modulo
 	mov r10,r8
+	or r9d,r9d
+	jz short fin_F2	
 	mov r8d,r9d
 	mov r9d,h
 	mov r11,dst_pitch
@@ -2283,17 +2293,21 @@ dst_modulo equ qword ptr[rbp+80]
 	add rax,src_pitch
 	xor rcx,rcx
 	add rbx,r11
-	mov r13,7
+	mov r13d,r8d
+	and r13d,7
+	shr r8d,3
 	
 Loop_D8_1:
-	mov ecx,r8d
-	and ecx,r13d
+	or r8d,r8d
 	jz short loop_D8_suite1
-	rep movsb
-loop_D8_suite1:	
 	mov ecx,r8d
-	shr ecx,3
 	rep movsq
+loop_D8_suite1:
+	or r13d,r13d
+	jz short loop_D8_suite2
+	mov ecx,r13d
+	rep movsb
+loop_D8_suite2:
 	add rsi,rax
 	add rdi,rbx
 	dec r12d
@@ -2301,20 +2315,24 @@ loop_D8_suite1:
 	mov rsi,rdx
 	mov rdi,r10
 	add rdi,r11
+	
 Loop_D8_2:
+	or r8d,r8d
+	jz short loop_D8_suite3
 	mov ecx,r8d
-	and ecx,r13d
-	jz short loop_D8_suite2
-	rep movsb
-loop_D8_suite2:	
-	mov ecx,r8d
-	shr ecx,3
 	rep movsq
+loop_D8_suite3:
+	or r13d,r13d
+	jz short loop_D8_suite4
+	mov ecx,r13d
+	rep movsb
+loop_D8_suite4:
 	add rsi,rax
 	add rdi,rbx
 	dec r9d
 	jnz short Loop_D8_2
 
+fin_F2:	
 	pop r13
 	pop r12
 	pop rbx
@@ -2332,8 +2350,8 @@ JPSDR_IVTC_Rebuild_Frame8 endp
 ;	src_pitch:dword,dst_pitch:dword,src_modulo:dword,dst_modulo:dword;
 ; src = rcx
 ; dst = rdx
-; w = r8
-; h = r9
+; w = r8d
+; h = r9d
 
 JPSDR_IVTC_Rebuild_Frame8_2 proc public frame
 
@@ -2354,27 +2372,37 @@ dst_modulo equ qword ptr[rbp+72]
 	cld
 	mov rdi,rdx
 	mov rsi,rcx
+	xor rcx,rcx
+	or r8d,r8d
+	jz short fin_F1
+	or r9d,r9d
+	jz short fin_F1	
+	
 	mov rax,src_pitch
 	mov rdx,dst_pitch
 	add rax,src_modulo
 	add rdx,dst_modulo
-	mov r10,7
-	xor rcx,rcx
+	mov r10d,r8d
+	and r10d,7
+	shr r8d,3
 	
 Loop_D8_2_1:
-	mov ecx,r8d
-	and ecx,r10d
+	or r8d,r8d
 	jz short loop_D8_2_suite1
-	rep movsb
-loop_D8_2_suite1:	
 	mov ecx,r8d
-	shr ecx,3
 	rep movsq
+loop_D8_2_suite1:
+	or r10d,r10d
+	jz short loop_D8_2_suite2
+	mov ecx,r10d
+	rep movsb
+loop_D8_2_suite2:
 	add rsi,rax
 	add rdi,rdx
 	dec r9d
 	jnz short Loop_D8_2_1
 	
+fin_F1:	
 	pop rsi
 	pop rdi
 	pop rbp
@@ -2409,6 +2437,10 @@ dst_modulo equ qword ptr[rbp+56]
 	mov rsi,rcx
 	mov rdi,rdx
 	xor rcx,rcx
+	or r8d,r8d
+	jz short fin_F
+	or r9d,r9d
+	jz short fin_F	
 	mov r10,src_modulo
 	mov r11,dst_modulo
 	
@@ -2460,19 +2492,28 @@ dst_modulo equ qword ptr[rbp+56]
 	mov rsi,rcx
 	mov rdi,rdx
 	xor rcx,rcx
+	or r8d,r8d
+	jz short fin_F8
+	or r9d,r9d
+	jz short fin_F8
+	
 	mov r10,src_modulo
 	mov r11,dst_modulo
-	mov rbx,7
+	mov ebx,r8d
+	and ebx,7
+	shr r8d,3
 		
 loop_F8:
+	or r8d,r8d
+	jz short loop_F8_suite1
 	mov ecx,r8d
-	and ecx,ebx
-	jz short loop_F8_suite
-	rep movsb
-loop_F8_suite:	
-	mov ecx,r8d
-	shr ecx,3
 	rep movsq
+loop_F8_suite1:
+	or ebx,ebx
+	jz short loop_F8_suite2
+	mov ecx,ebx
+	rep movsb
+loop_F8_suite2:
 	add rsi,r10
 	add rdi,r11
 	dec r9d
@@ -2512,6 +2553,11 @@ src_modulo equ qword ptr[rbp+48]
 	mov rsi,rcx
 	mov rdi,rdx
 	xor rcx,rcx
+	or r8d,r8d
+	jz short fin_G
+	or r9d,r9d
+	jz short fin_G
+	
 	mov rax,src_modulo
 		
 loop_G:
@@ -2558,18 +2604,27 @@ src_modulo equ qword ptr[rbp+48]
 	mov rsi,rcx
 	mov rdi,rdx
 	xor rcx,rcx
+	or r8d,r8d
+	jz short fin_G8
+	or r9d,r9d
+	jz short fin_G8
+	
 	mov r10,src_modulo
-	mov rax,7
+	mov eax,r8d
+	and eax,7
+	shr r8d,3
 	
 loop_G8:
+	or r8d,r8d
+	jz short loop_G8_suite1
 	mov ecx,r8d
-	and ecx,eax
-	jz short loop_G8_suite
-	rep movsb
-loop_G8_suite:	
-	mov ecx,r8d
-	shr ecx,3
 	rep movsq
+loop_G8_suite1:
+	or eax,eax
+	jz short loop_G8_suite2
+	mov ecx,eax
+	rep movsb
+loop_G8_suite2:
 	add rsi,r10
 	dec r9d
 	jnz short loop_G8
@@ -2608,6 +2663,10 @@ dst_modulo equ qword ptr[rbp+48]
 	mov rsi,rcx
 	mov rdi,rdx
 	xor rcx,rcx
+	or r8d,r8d
+	jz short fin_H
+	or r9d,r9d
+	jz short fin_H	
 	mov rax,dst_modulo
 	
 loop_H:
@@ -2654,18 +2713,27 @@ dst_modulo equ qword ptr[rbp+48]
 	mov rsi,rcx
 	mov rdi,rdx
 	xor rcx,rcx
+	or r8d,r8d
+	jz short fin_H8
+	or r9d,r9d
+	jz short fin_H8
+	
 	mov r10,dst_modulo
-	mov rax,7
+	mov eax,r8d
+	and eax,7
+	shr r8d,3
 	
 loop_H8:
+	or r8d,r8d
+	jz short loop_H8_suite1
 	mov ecx,r8d
-	and ecx,eax
-	jz short loop_H8_suite
-	rep movsb
-loop_H8_suite:
-	mov ecx,r8d
-	shr ecx,3	
 	rep movsq
+loop_H8_suite1:
+	or eax,eax
+	jz short loop_H8_suite2
+	mov ecx,eax
+	rep movsb
+loop_H8_suite2:	
 	add rdi,r10
 	dec r9d
 	jnz short loop_H8
@@ -2700,6 +2768,9 @@ JPSDR_IVTC_Move32 proc public frame
 	mov rsi,rcx
 	xor rcx,rcx
 	mov rdi,rdx
+	or r8d,r8d
+	jz short Move32_fin
+	
 	mov ecx,r8d
 	shr ecx,1
 	jnc short move_xx
@@ -2707,6 +2778,7 @@ JPSDR_IVTC_Move32 proc public frame
 move_xx:	
 	rep movsq
 	
+Move32_fin:	
 	pop rsi	
 	pop rdi
 	pop rbp
@@ -2736,15 +2808,20 @@ JPSDR_IVTC_Move8 proc public frame
 	mov rsi,rcx
 	xor rcx,rcx
 	mov rdi,rdx
+	or r8d,r8d
+	jz short Move8_fin
+
+	mov ecx,r8d
+	shr ecx,3
+	jz short Move8_suite
+	rep movsq	
+Move8_suite:	
 	mov ecx,r8d
 	and ecx,7
-	jz short Move8_suite
+	jz short Move8_fin
 	rep movsb
-Move8_suite:
-	mov ecx,r8d
-	shr ecx,3	
-	rep movsq
 	
+Move8_fin:	
 	pop rsi	
 	pop rdi
 	pop rbp

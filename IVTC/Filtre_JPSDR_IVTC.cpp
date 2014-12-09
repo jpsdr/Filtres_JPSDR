@@ -11531,5 +11531,5 @@ void JPSDR_IVTC::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_IVTC=
-VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v5.1.1","IVTC Filter. [MMX][SSE] Optimised.");
+VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v5.1.2","IVTC Filter. [MMX][SSE] Optimised.");
 
