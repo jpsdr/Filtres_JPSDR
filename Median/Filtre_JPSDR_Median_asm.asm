@@ -18,15 +18,21 @@ JPSDR_Median_Planar_Move_src proc src:dword,dst:dword,w:dword,h:dword,src_offset
 	mov eax,src_offset
 	mov ebx,w
 	mov edx,h
+	or ebx,ebx
+	jz short fin_f_2
+	or edx,edx
+	jz short fin_f_2
 loop_1_f_2:
 	mov ecx,ebx
-	and ecx,3
+	shr ecx,2
 	jz short loop_2_f_2
-	rep movsb
+	rep movsd
 loop_2_f_2:
 	mov ecx,ebx	
-	shr ecx,2
-	rep movsd
+	and ecx,3
+	jz short loop_3_f_2
+	rep movsb
+loop_3_f_2:	
 	add esi,eax
 	dec edx
 	jnz short loop_1_f_2
@@ -56,15 +62,21 @@ JPSDR_Median_Planar_Move_dst proc src:dword,dst:dword,w:dword,h:dword,dst_offset
 	mov eax,dst_offset
 	mov ebx,w
 	mov edx,h
+	or ebx,ebx
+	jz short fin_f_3
+	or edx,edx
+	jz short fin_f_3	
 loop_1_f_3:
 	mov ecx,ebx
-	and ecx,3
+	shr ecx,2
 	jz short loop_2_f_3
-	rep movsb
+	rep movsd
 loop_2_f_3:
 	mov ecx,ebx	
-	shr ecx,2
-	rep movsd
+	and ecx,3
+	jz short loop_3_f_3
+	rep movsb
+loop_3_f_3:	
 	add edi,eax
 	dec edx
 	jnz short loop_1_f_3

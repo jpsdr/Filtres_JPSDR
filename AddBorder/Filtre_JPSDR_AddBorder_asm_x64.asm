@@ -68,14 +68,14 @@ JPSDR_AddBorder_Fill8 proc public frame
 	mov r8d,eax
 	shl r8,32
 	or rax,r8
-	and rcx,7
+	shr rcx,3
 	jz short suite_1_Fill8
-	rep stosb
+	rep stosq
 suite_1_Fill8:
 	mov rcx,rdx
-	shr rcx,3
+	and rcx,7
 	jz short fin_Fill8
-	rep stosq
+	rep stosb
 	
 fin_Fill8:
 	pop rbx

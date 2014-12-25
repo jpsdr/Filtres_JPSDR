@@ -15,6 +15,10 @@ JPSDR_Saturation_Non_SSE_Planar_Fill8 proc dst:dword,w:dword,h:dword,offset_:byt
 	mov edi,dst
 	mov ebx,w
 	mov edx,h
+	or ebx,ebx
+	jz short fin_10
+	or edx,edx
+	jz short fin_10
 	mov al,offset_
 	mov ah,al
 	push ax
@@ -22,14 +26,15 @@ JPSDR_Saturation_Non_SSE_Planar_Fill8 proc dst:dword,w:dword,h:dword,offset_:byt
 	pop ax
 loop_1_10:
 	mov ecx,ebx
-	and ecx,3
+	shr ecx,2
 	jz short loop_2_10
-	rep stosb
+	rep stosd
 loop_2_10:
 	mov ecx,ebx	
-	shr ecx,2
-	jz short fin_10
-	rep stosd
+	and ecx,3
+	jz short loop_3_10
+	rep stosb
+loop_3_10:	
 	add edi,dst_modulo
 	dec edx
 	jnz short loop_1_10
@@ -54,6 +59,10 @@ JPSDR_Saturation_Non_SSE_Planar_Fill32 proc dst:dword,w:dword,h:dword,offset_:by
 	mov edi,dst
 	mov ebx,w
 	mov edx,h
+	or ebx,ebx
+	jz short fin_11
+	or edx,edx
+	jz short fin_11	
 	mov al,offset_
 	mov ah,al
 	push ax

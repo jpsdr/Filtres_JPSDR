@@ -70,13 +70,15 @@ JPSDR_IVTC_Manual_Rebuild_Frame8 proc bottom_src:dword,top_src:dword,dst:dword,w
 	
 Loop_D8_1:
 	mov ecx,w
-	and ecx,3
-	jz short loop_D8_suite1
-	rep movsb
-loop_D8_suite1:	
-	mov ecx,w
 	shr ecx,2
+	jz short loop_D8_suite1a
 	rep movsd
+loop_D8_suite1a:
+	mov ecx,w
+	and ecx,3
+	jz short loop_D8_suite1b
+	rep movsb
+loop_D8_suite1b:	
 	add esi,eax
 	add edi,ebx
 	dec edx
@@ -87,13 +89,15 @@ loop_D8_suite1:
 	add edi,dst_pitch
 Loop_D8_2:
 	mov ecx,w
-	and ecx,3
-	jz short loop_D8_suite2
-	rep movsb
-loop_D8_suite2:	
-	mov ecx,w
 	shr ecx,2
+	jz short loop_D8_suite2a
 	rep movsd
+loop_D8_suite2a:	
+	mov ecx,w
+	and ecx,3
+	jz short loop_D8_suite2b
+	rep movsb
+loop_D8_suite2b:
 	add esi,eax
 	add edi,ebx
 	dec edx
@@ -164,13 +168,15 @@ JPSDR_IVTC_Manual_Rebuild_Frame8_2 proc src:dword,dst:dword,w:dword,h:dword,src_
 	
 Loop_E8_1:
 	mov ecx,w
-	and ecx,3
+	shr ecx,2
 	jz short loop_E8_suite1
-	rep movsb
+	rep movsd
 loop_E8_suite1:	
 	mov ecx,w
-	shr ecx,2
-	rep movsd
+	and ecx,3
+	jz short loop_E8_suite2
+	rep movsb
+loop_E8_suite2:		
 	add esi,eax
 	add edi,ebx
 	dec edx

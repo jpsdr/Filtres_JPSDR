@@ -3,7 +3,7 @@
 ;JPSDR_Saturation_Non_SSE_Planar_Fill8 proc dst:dword,w:dword,h:dword,offset_:byte,dst_modulo:dword
 ;public JPSDR_Saturation_Non_SSE_Planar_Fill8
 ; dst = rcx
-; w = rdx
+; w = edx
 ; h = r8d
 ; offset = r9d
 
@@ -21,9 +21,14 @@ dst_modulo equ qword ptr[rbp+48]
 	cld
 	xor rax,rax
 	mov rdi,rcx
-	mov r10,rdx			;r10=w
+	mov r10d,edx			;r10d=w
 	mov eax,r9d
 	mov r11,dst_modulo
+	or r10d,r10d
+	jz short fin_10
+	or r8d,r8d
+	jz short fin_10
+	xor rcx,rcx
 	mov ah,al
 	mov dx,ax
 	shl eax,16
@@ -31,17 +36,20 @@ dst_modulo equ qword ptr[rbp+48]
 	mov r9d,eax
 	shl r9,32
 	or rax,r9
-	mov r9,7
+	mov r9d,r10d
+	and r9d,7
+	shr r10d,3
 loop_1_10:
-	mov rcx,r10
-	and rcx,r9
+	or r10d,r10d
 	jz short loop_2_10
-	rep stosb
-loop_2_10:
-	mov rcx,r10
-	shr rcx,3
-	jz short fin_10
+	mov ecx,r10d
 	rep stosq
+loop_2_10:
+	or r9d,r9d
+	jz short loop_3_10
+	mov ecx,r9d
+	rep stosb
+loop_3_10:	
 	add rdi,r11
 	dec r8d
 	jnz short loop_1_10
@@ -58,7 +66,7 @@ JPSDR_Saturation_Non_SSE_Planar_Fill8 endp
 ;JPSDR_Saturation_Non_SSE_Planar_Fill32 proc dst:dword,w:dword,h:dword,offset_:byte,dst_modulo:dword
 ;public JPSDR_Saturation_Non_SSE_Planar_Fill32
 ; dst = rcx
-; w = rdx
+; w = edx
 ; h = r8d
 ; offset = r9d
 
@@ -76,9 +84,14 @@ dst_modulo equ qword ptr[rbp+48]
 	cld
 	xor rax,rax
 	mov rdi,rcx
-	mov r10,rdx			;r10=w
+	mov r10d,edx			;r10d=w
 	mov eax,r9d
 	mov r11,dst_modulo
+	or r10d,r10d
+	jz short fin_11
+	or r8d,r8d
+	jz short fin_11
+	xor rcx,rcx
 	mov ah,al
 	mov dx,ax
 	shl eax,16
@@ -87,8 +100,8 @@ dst_modulo equ qword ptr[rbp+48]
 	shl r9,32
 	or rax,r9	
 loop_1_11:
-	mov rcx,r10
-	shr rcx,1
+	mov ecx,r10d
+	shr ecx,1
 	jnc short loop_1_11a
 	stosd
 loop_1_11a:	
@@ -110,7 +123,7 @@ JPSDR_Saturation_Non_SSE_Planar_Fill32 endp
 ;JPSDR_Saturation_Non_SSE_Planar_Fill64 proc dst:dword,w:dword,h:dword,offset_:byte,dst_modulo:dword
 ;public JPSDR_Saturation_Non_SSE_Planar_Fill64
 ; dst = rcx
-; w = rdx
+; w = edx
 ; h = r8d
 ; offset = r9d
 
@@ -128,9 +141,14 @@ dst_modulo equ qword ptr[rbp+48]
 	cld
 	xor rax,rax
 	mov rdi,rcx
-	mov r10,rdx			;r10=w
+	mov r10d,edx			;r10d=w
 	mov eax,r9d
 	mov r11,dst_modulo
+	or r10d,r10d
+	jz short fin_12
+	or r8d,r8d
+	jz short fin_12
+	xor rcx,rcx	
 	mov ah,al
 	mov dx,ax
 	shl eax,16
@@ -139,12 +157,11 @@ dst_modulo equ qword ptr[rbp+48]
 	shl r9,32
 	or rax,r9	
 loop_1_12:
-	mov rcx,r10
+	mov ecx,r10d
 	rep stosq
 	add rdi,r11
 	dec r8d
-	jnz short loop_1_12
-	
+	jnz short loop_1_12	
 fin_12:
 	pop rdi
 	pop rbp

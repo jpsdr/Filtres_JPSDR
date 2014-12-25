@@ -24,18 +24,26 @@ src_offset equ qword ptr[rbp+48]
 	mov rsi,rcx
 	mov rdi,rdx
 	xor rcx,rcx
+	or r8d,r8d
+	jz short fin_f_2
+	or r9d,r9d
+	jz short fin_f_2
 	mov rax,src_offset
-	mov edx,7
+	mov edx,r8d
+	and edx,7
+	shr r8d,3
 
 loop_1_f_2:
-	mov ecx,r8d
-	and ecx,edx
+	or r8d,r8d
 	jz short loop_2_f_2
-	rep movsb
-loop_2_f_2:
-	mov ecx,r8d	
-	shr ecx,3
+	mov ecx,r8d
 	rep movsq
+loop_2_f_2:
+	or edx,edx
+	jz short loop_3_f_2
+	mov ecx,edx
+	rep movsb
+loop_3_f_2:	
 	add rsi,rax
 	dec r9d
 	jnz short loop_1_f_2
@@ -73,19 +81,27 @@ dst_offset equ qword ptr[rbp+48]
 	cld
 	mov rsi,rcx
 	mov rdi,rdx
+	or r8d,r8d
+	jz short fin_f_3
+	or r9d,r9d
+	jz short fin_f_3	
 	xor rcx,rcx
 	mov rax,dst_offset
-	mov edx,7
+	mov edx,r8d
+	and edx,7
+	shr r8d,3
 
 loop_1_f_3:
-	mov ecx,r8d
-	and ecx,edx
+	or r8d,r8d
 	jz short loop_2_f_3
-	rep movsb
-loop_2_f_3:
 	mov ecx,r8d
-	shr ecx,3
 	rep movsq
+loop_2_f_3:
+	or edx,edx
+	jz short loop_3_f_3
+	mov ecx,edx
+	rep movsb
+loop_3_f_3:	
 	add rdi,rax
 	dec r9d
 	jnz short loop_1_f_3

@@ -43,14 +43,14 @@ JPSDR_AddBorder_Fill8 proc dst:dword,taille:dword,data:byte
 	shl eax,16
 	mov al,data
 	mov ah,al
-	and ecx,3
+	shr ecx,2
 	jz short suite_1_Fill8
-	rep stosb
+	rep stosd
 suite_1_Fill8:
 	mov ecx,edx
-	shr ecx,2
+	and ecx,3	
 	jz short fin_Fill8
-	rep stosd
+	rep stosb
 	
 fin_Fill8:
 	pop edi

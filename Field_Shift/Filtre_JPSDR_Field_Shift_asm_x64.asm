@@ -119,17 +119,22 @@ dst_modulo equ qword ptr[rbp+80]
 	add r11,src_pitch		; r11=src_modulo+src_pitch
 	add r12,dst_pitch		; r12=dst_modulo+dst_pitch
 	xor rcx,rcx
-	mov r13d,7
+	mov r13d,r9d
+	and r13d,7
+	shr r9d,3
 	mov edx,ebx
+	
 Loop_E_1:
+	or r9d,r9d
+	jz short Rebuild8_1a
 	mov ecx,r9d
-	and ecx,r13d
-	jz short Rebuild8_1
-	rep movsb
-Rebuild8_1:
-	mov ecx,r9d
-	shr ecx,3
 	rep movsq
+Rebuild8_1a:
+	or r13d,r13d
+	jz short Rebuild8_1b
+	mov ecx,r13d
+	rep movsb
+Rebuild8_1b:
 	add rsi,r11
 	add rdi,r12
 	dec edx
@@ -139,14 +144,16 @@ Rebuild8_1:
 	mov edx,ebx
 	add rdi,dst_pitch
 Loop_E_2:
+	or r9d,r9d
+	jz short Rebuild8_2a
 	mov ecx,r9d
-	and ecx,r13d
-	jz short Rebuild8_2
-	rep movsb
-Rebuild8_2:
-	mov ecx,r9d
-	shr ecx,3
 	rep movsq
+Rebuild8_2a:
+	or r13d,r13d
+	jz short Rebuild8_2b
+	mov ecx,r13d
+	rep movsb
+Rebuild8_2b:
 	add rsi,r11
 	add rdi,r12
 	dec edx
@@ -188,6 +195,10 @@ dst_modulo equ qword ptr[rbp+56]
 	mov rsi,rcx
 	mov rdi,rdx
 	xor rcx,rcx
+	or r8d,r8d
+	jz short fin_F
+	or r9d,r9d
+	jz short fin_F
 	mov r10,src_modulo
 	mov r11,dst_modulo
 	
@@ -239,19 +250,27 @@ dst_modulo equ qword ptr[rbp+56]
 	mov rsi,rcx
 	mov rdi,rdx
 	xor rcx,rcx
+	or r8d,r8d
+	jz short fin_F8
+	or r9d,r9d
+	jz short fin_F8	
 	mov r10,src_modulo
 	mov r11,dst_modulo
-	mov rbx,7
+	mov ebx,r8d
+	and ebx,7
+	shr r8d,3
 		
 loop_F8:
+	or r8d,r8d
+	jz short loop_F8_suite1
 	mov ecx,r8d
-	and ecx,ebx
-	jz short loop_F8_suite
-	rep movsb
-loop_F8_suite:	
-	mov ecx,r8d
-	shr ecx,3
 	rep movsq
+loop_F8_suite1:	
+	or ebx,ebx
+	jz short loop_F8_suite2
+	mov ecx,ebx
+	rep movsb
+loop_F8_suite2:
 	add rsi,r10
 	add rdi,r11
 	dec r9d

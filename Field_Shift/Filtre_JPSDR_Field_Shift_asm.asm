@@ -67,13 +67,15 @@ JPSDR_Field_Shift_Rebuild_Frame8 proc bottom_src:dword,top_src:dword,dst:dword,w
 	mov edx,h
 Loop_E_1:
 	mov ecx,w
-	and ecx,3
-	jz short Rebuild8_1
-	rep movsb
-Rebuild8_1:
-	mov ecx,w
 	shr ecx,2
+	jz short Rebuild8_1a
 	rep movsd
+Rebuild8_1a:
+	mov ecx,w
+	and ecx,3
+	jz short Rebuild8_1b
+	rep movsb
+Rebuild8_1b:	
 	add esi,eax
 	add edi,ebx
 	dec edx
@@ -84,13 +86,15 @@ Rebuild8_1:
 	add edi,dst_pitch
 Loop_E_2:
 	mov ecx,w
-	and ecx,3
-	jz short Rebuild8_2
-	rep movsb
-Rebuild8_2:
-	mov ecx,w
 	shr ecx,2
+	jz short Rebuild8_2a
 	rep movsd
+Rebuild8_2a:
+	mov ecx,w
+	and ecx,3
+	jz short Rebuild8_2b
+	rep movsb
+Rebuild8_2b:	
 	add esi,eax
 	add edi,ebx
 	dec edx
@@ -117,6 +121,12 @@ JPSDR_Field_Shift_Move32_Full proc src:dword,dst:dword,w:dword,h:dword,src_modul
 	mov edi,dst
 	mov ebx,w
 	mov edx,h
+	
+	or ebx,ebx
+	jz short fin_F
+	or edx,edx
+	jz short fin_F
+	
 loop_F:
 	mov ecx,ebx
 	rep movsd
@@ -149,15 +159,22 @@ JPSDR_Field_Shift_Move8_Full proc src:dword,dst:dword,w:dword,h:dword,src_modulo
 	mov ebx,w
 	mov edx,h
 	
+	or ebx,ebx
+	jz short fin_F8
+	or edx,edx
+	jz short fin_F8
+	
 loop_F8:
 	mov ecx,ebx
-	and ecx,3
-	jz short loop_F8_suite
-	rep movsb
-loop_F8_suite:	
-	mov ecx,ebx
 	shr ecx,2
+	jz short loop_F8_suite1
 	rep movsd
+loop_F8_suite1:	
+	mov ecx,ebx
+	and ecx,3
+	jz short loop_F8_suite2
+	rep movsb
+loop_F8_suite2:		
 	add esi,src_modulo
 	add edi,dst_modulo
 	dec edx

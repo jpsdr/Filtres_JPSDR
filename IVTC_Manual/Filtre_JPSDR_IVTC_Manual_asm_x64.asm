@@ -126,19 +126,23 @@ dst_modulo equ qword ptr[rbp+80]
 	mov rax,r13
 	add r12,src_modulo
 	add r13,dst_modulo
-	mov r14,7
+	mov r14d,r9d
+	and r14d,7
+	shr r9d,3
 	xor rcx,rcx
 	
 	mov edx,r10d
 Loop_D8_1:
+	or r9d,r9d
+	jz short loop_D8_suite1a
 	mov ecx,r9d
-	and ecx,r14d
-	jz short loop_D8_suite1
-	rep movsb
-loop_D8_suite1:	
-	mov ecx,r9d
-	shr ecx,3
 	rep movsq
+loop_D8_suite1a:	
+	or r14d,r14d
+	jz short loop_D8_suite1b
+	mov ecx,r14d
+	rep movsb
+loop_D8_suite1b:	
 	add rsi,r12
 	add rdi,r13
 	dec edx
@@ -149,14 +153,16 @@ loop_D8_suite1:
 	mov edx,r10d
 	add rdi,rax
 Loop_D8_2:
+	or r9d,r9d
+	jz short loop_D8_suite2a
 	mov ecx,r9d
-	and ecx,r14d
-	jz short loop_D8_suite2
-	rep movsb
-loop_D8_suite2:	
-	mov ecx,r9d
-	shr ecx,3
 	rep movsq
+loop_D8_suite2a:	
+	or r14d,r14d
+	jz short loop_D8_suite2b
+	mov ecx,r14d
+	rep movsb
+loop_D8_suite2b:	
 	add rsi,r12
 	add rdi,r13
 	dec edx
@@ -180,8 +186,8 @@ JPSDR_IVTC_Manual_Rebuild_Frame8 endp
 ;	src_pitch:dword,dst_pitch:dword,src_modulo:dword,dst_modulo:dword;
 ; src = rcx
 ; dst = rdx
-; w = r8
-; h = r9
+; w = r8d
+; h = r9d
 
 JPSDR_IVTC_Manual_Rebuild_Frame_2 proc public frame
 
@@ -234,8 +240,8 @@ JPSDR_IVTC_Manual_Rebuild_Frame_2 endp
 ;	src_pitch:dword,dst_pitch:dword,src_modulo:dword,dst_modulo:dword;
 ; src = rcx
 ; dst = rdx
-; w = r8
-; h = r9
+; w = r8d
+; h = r9d
 
 JPSDR_IVTC_Manual_Rebuild_Frame8_2 proc public frame
 
@@ -260,18 +266,22 @@ dst_modulo equ qword ptr[rbp+72]
 	mov rdx,dst_pitch
 	add rax,src_modulo
 	add rdx,dst_modulo
-	mov r10,7
+	mov r10d,r8d
+	and r10d,7
+	shr r8d,3
 	xor rcx,rcx
 	
 Loop_E8_1:
-	mov ecx,r8d
-	and ecx,r10d
+	or r8d,r8d
 	jz short loop_E8_suite1
-	rep movsb
-loop_E8_suite1:	
 	mov ecx,r8d
-	shr ecx,3
 	rep movsq
+loop_E8_suite1:	
+	or r10d,r10d
+	jz short loop_E8_suite2
+	mov ecx,r10d
+	rep movsb
+loop_E8_suite2:	
 	add rsi,rax
 	add rdi,rdx
 	dec r9d

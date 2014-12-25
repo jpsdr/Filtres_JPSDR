@@ -16,7 +16,11 @@ JPSDR_AutoYUY2_Move32_Full proc src:dword,dst:dword,w:dword,h:dword,src_modulo:d
 	mov edi,dst
 	mov eax,src_modulo
 	mov ebx,w
+	or ebx,ebx
+	jz short fin_F	
 	mov edx,h
+	or edx,edx
+	jz short fin_F	
 loop_F:
 	mov ecx,ebx
 	rep movsd
@@ -48,16 +52,22 @@ JPSDR_AutoYUY2_Move8_Full proc src:dword,dst:dword,w:dword,h:dword,src_modulo:dw
 	mov edi,dst
 	mov eax,src_modulo
 	mov ebx,w
+	or ebx,ebx
+	jz short fin_F8
 	mov edx,h
+	or edx,edx
+	jz short fin_F8	
 loop_F8:
 	mov ecx,ebx
-	and ecx,3
-	jz short loop_F8_suite
-	rep movsb
-loop_F8_suite:	
-	mov ecx,ebx
 	shr ecx,2
+	jz short loop_F8_suite1
 	rep movsd
+loop_F8_suite1:	
+	mov ecx,ebx
+	and ecx,3
+	jz short loop_F8_suite2
+	rep movsb
+loop_F8_suite2:		
 	add esi,eax
 	add edi,dst_modulo
 	dec edx

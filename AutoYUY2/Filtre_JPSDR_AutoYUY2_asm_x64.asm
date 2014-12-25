@@ -26,6 +26,10 @@ dst_modulo equ qword ptr[rbp+56]
 	mov rsi,rcx
 	mov rdi,rdx
 	xor rcx,rcx
+	or r8d,r8d
+	jz short fin_F
+	or r9d,r9d
+	jz short fin_F
 	mov rax,src_modulo
 	mov r10,dst_modulo
 loop_F:
@@ -75,18 +79,27 @@ dst_modulo equ qword ptr[rbp+56]
 	mov rsi,rcx
 	mov rdi,rdx
 	xor rcx,rcx
+	or r8d,r8d
+	jz short fin_F8
+	or r9d,r9d
+	jz short fin_F8	
 	mov rax,src_modulo
 	mov r10,dst_modulo
-	mov r11d,7
+	mov r11d,r8d
+	and r11d,7
+	shr r8d,3
+	
 loop_F8:
+	or r8d,r8d
+	jz short loop_F8_suite1
 	mov ecx,r8d
-	and ecx,r11d
-	jz short loop_F8_suite
-	rep movsb
-loop_F8_suite:	
-	mov ecx,r8d
-	shr ecx,3
 	rep movsq
+loop_F8_suite1:	
+	or r11d,r11d
+	jz short loop_F8_suite2
+	mov ecx,r11d
+	rep movsb
+loop_F8_suite2:		
 	add rsi,rax
 	add rdi,r10
 	dec r9d

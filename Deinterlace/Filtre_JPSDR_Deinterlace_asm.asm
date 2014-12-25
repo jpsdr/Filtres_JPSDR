@@ -17,6 +17,10 @@ JPSDR_Deinterlace_Move32_Half proc src:dword,dst:dword,w:dword,h:dword,src_modul
 	mov edi,dst
 	mov ebx,w
 	mov edx,h
+	or ebx,ebx
+	jz short fin_f
+	or edx,edx
+	jz short fin_f
 loop_1_f:
 	mov ecx,ebx
 	rep movsd
@@ -48,15 +52,21 @@ JPSDR_Deinterlace_Move8_Half proc src:dword,dst:dword,w:dword,h:dword,src_modulo
 	mov edi,dst
 	mov ebx,w
 	mov edx,h
+	or ebx,ebx
+	jz short fin_f_2
+	or edx,edx
+	jz short fin_f_2	
 loop_1_f_2:
 	mov ecx,ebx
-	and ecx,3
+	shr ecx,2	
 	jz short loop_2_f_2
-	rep movsb
+	rep movsd
 loop_2_f_2:
 	mov ecx,ebx	
-	shr ecx,2
-	rep movsd
+	and ecx,3
+	jz short loop_3_f_2
+	rep movsb
+loop_3_f_2:	
 	add esi,src_modulo_pitch
 	add edi,dst_modulo_pitch
 	dec edx
@@ -86,6 +96,10 @@ JPSDR_Deinterlace_Move32_Full proc src:dword,dst:dword,w:dword,h:dword,src_modul
 	mov edi,dst
 	mov ebx,w
 	mov edx,h
+	or ebx,ebx
+	jz short fin_f_3
+	or edx,edx
+	jz short fin_f_3		
 loop_1_f_3:
 	mov ecx,ebx
 	rep movsd
@@ -118,15 +132,21 @@ JPSDR_Deinterlace_Move8_Full proc src:dword,dst:dword,w:dword,h:dword,src_modulo
 	mov edi,dst
 	mov ebx,w
 	mov edx,h
+	or ebx,ebx
+	jz short fin_f_4
+	or edx,edx
+	jz short fin_f_4			
 loop_1_f_4:
 	mov ecx,ebx
-	and ecx,3
+	shr ecx,2
 	jz short loop_2_f_4
-	rep movsb
+	rep movsd
 loop_2_f_4:
 	mov ecx,ebx	
-	shr ecx,2
-	rep movsd
+	and ecx,3
+	jz short loop_3_f_4
+	rep movsb
+loop_3_f_4:	
 	add esi,src_modulo
 	add edi,dst_modulo
 	dec edx
