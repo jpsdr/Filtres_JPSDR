@@ -3852,22 +3852,22 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_YUY2(const void *_src_Y,const void *_s
 	
 			if (((abs((int16_t)src_Un[j_UV]-(int16_t)src_Unn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Unnn[j_UV]-(int16_t)src_Unn[j_UV])>=threshold) &&
-				((src_Un[j_UV]>src_Unn[j_UV]) && (src_Unnn[j_UV]>src_Unn[j_UV]) ||
-				(src_Un[j_UV]<src_Unn[j_UV]) && (src_Unnn[j_UV]<src_Unn[j_UV]))) ||
+				(((src_Un[j_UV]>src_Unn[j_UV]) && (src_Unnn[j_UV]>src_Unn[j_UV])) ||
+				((src_Un[j_UV]<src_Unn[j_UV]) && (src_Unnn[j_UV]<src_Unn[j_UV])))) ||
 				((abs((int16_t)src_Vn[j_UV]-(int16_t)src_Vnn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Vnnn[j_UV]-(int16_t)src_Vnn[j_UV])>=threshold) &&
-				((src_Vn[j_UV]>src_Vnn[j_UV]) && (src_Vnnn[j_UV]>src_Vnn[j_UV]) ||
-				(src_Vn[j_UV]<src_Vnn[j_UV]) && (src_Vnnn[j_UV]<src_Vnn[j_UV]))))
+				(((src_Vn[j_UV]>src_Vnn[j_UV]) && (src_Vnnn[j_UV]>src_Vnn[j_UV])) ||
+				((src_Vn[j_UV]<src_Vnn[j_UV]) && (src_Vnnn[j_UV]<src_Vnn[j_UV])))))
 				interlaced_tab[1][j_UV]=true;
 			else interlaced_tab[1][j_UV]=false;
 			if (((abs((int16_t)src_U[j_UV]-(int16_t)src_Un[j_UV])>=threshold) &&
 				(abs((int16_t)src_Unn[j_UV]-(int16_t)src_Un[j_UV])>=threshold) &&
-				((src_U[j_UV]>src_Un[j_UV]) && (src_Unn[j_UV]>src_Un[j_UV]) ||
-				(src_U[j_UV]<src_Un[j_UV]) && (src_Unn[j_UV]<src_Un[j_UV]))) ||
+				(((src_U[j_UV]>src_Un[j_UV]) && (src_Unn[j_UV]>src_Un[j_UV])) ||
+				((src_U[j_UV]<src_Un[j_UV]) && (src_Unn[j_UV]<src_Un[j_UV])))) ||
 				((abs((int16_t)src_V[j_UV]-(int16_t)src_Vn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Vnn[j_UV]-(int16_t)src_Vn[j_UV])>=threshold) &&
-				((src_V[j_UV]>src_Vn[j_UV]) && (src_Vnn[j_UV]>src_Vn[j_UV]) ||
-				(src_V[j_UV]<src_Vn[j_UV]) && (src_Vnn[j_UV]<src_Vn[j_UV]))))
+				(((src_V[j_UV]>src_Vn[j_UV]) && (src_Vnn[j_UV]>src_Vn[j_UV])) ||
+				((src_V[j_UV]<src_Vn[j_UV]) && (src_Vnn[j_UV]<src_Vn[j_UV])))))
 				interlaced_tab[0][j_UV]=true;
 			else interlaced_tab[0][j_UV]=false;
 
@@ -3929,12 +3929,12 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_YUY2(const void *_src_Y,const void *_s
 
 			if (((abs((int16_t)src_U[j_UV]-(int16_t)src_Un[j_UV])>=threshold) &&
 				(abs((int16_t)src_Unn[j_UV]-(int16_t)src_Un[j_UV])>=threshold) &&
-				((src_U[j_UV]>src_Un[j_UV]) && (src_Unn[j_UV]>src_Un[j_UV]) ||
-				(src_U[j_UV]<src_Un[j_UV]) && (src_Unn[j_UV]<src_Un[j_UV]))) ||
+				(((src_U[j_UV]>src_Un[j_UV]) && (src_Unn[j_UV]>src_Un[j_UV])) ||
+				((src_U[j_UV]<src_Un[j_UV]) && (src_Unn[j_UV]<src_Un[j_UV])))) ||
 				((abs((int16_t)src_V[j_UV]-(int16_t)src_Vn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Vnn[j_UV]-(int16_t)src_Vn[j_UV])>=threshold) &&
-				((src_V[j_UV]>src_Vn[j_UV]) && (src_Vnn[j_UV]>src_Vn[j_UV]) ||
-				(src_V[j_UV]<src_Vn[j_UV]) && (src_Vnn[j_UV]<src_Vn[j_UV]))))
+				(((src_V[j_UV]>src_Vn[j_UV]) && (src_Vnn[j_UV]>src_Vn[j_UV])) ||
+				((src_V[j_UV]<src_Vn[j_UV]) && (src_Vnn[j_UV]<src_Vn[j_UV])))))
 				interlaced_tab[index_tab_2][j_UV]=true;
 			else interlaced_tab[index_tab_2][j_UV]=false;			
 
@@ -3984,12 +3984,12 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_YUY2(const void *_src_Y,const void *_s
 
 			if (((abs((int16_t)src_Un[j_UV]-(int16_t)src_Unn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Unnn[j_UV]-(int16_t)src_Unn[j_UV])>=threshold) &&
-				((src_Un[j_UV]>src_Unn[j_UV]) && (src_Unnn[j_UV]>src_Unn[j_UV]) ||
-				(src_Un[j_UV]<src_Unn[j_UV]) && (src_Unnn[j_UV]<src_Unn[j_UV]))) ||
+				(((src_Un[j_UV]>src_Unn[j_UV]) && (src_Unnn[j_UV]>src_Unn[j_UV])) ||
+				((src_Un[j_UV]<src_Unn[j_UV]) && (src_Unnn[j_UV]<src_Unn[j_UV])))) ||
 				((abs((int16_t)src_Vn[j_UV]-(int16_t)src_Vnn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Vnnn[j_UV]-(int16_t)src_Vnn[j_UV])>=threshold) &&
-				((src_Vn[j_UV]>src_Vnn[j_UV]) && (src_Vnnn[j_UV]>src_Vnn[j_UV]) ||
-				(src_Vn[j_UV]<src_Vnn[j_UV]) && (src_Vnnn[j_UV]<src_Vnn[j_UV]))))
+				(((src_Vn[j_UV]>src_Vnn[j_UV]) && (src_Vnnn[j_UV]>src_Vnn[j_UV])) ||
+				((src_Vn[j_UV]<src_Vnn[j_UV]) && (src_Vnnn[j_UV]<src_Vnn[j_UV])))))
 				interlaced_tab[index_tab_0][j_UV]=true;
 			else interlaced_tab[index_tab_0][j_UV]=false;
 
@@ -4149,22 +4149,22 @@ void JPSDR_AutoYUY2::Convert_Test_to_YUY2(const void *_src_Y,const void *_src_U,
 	
 			if (((abs((int16_t)src_Un[j_UV]-(int16_t)src_Unn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Unnn[j_UV]-(int16_t)src_Unn[j_UV])>=threshold) &&
-				((src_Un[j_UV]>src_Unn[j_UV]) && (src_Unnn[j_UV]>src_Unn[j_UV]) ||
-				(src_Un[j_UV]<src_Unn[j_UV]) && (src_Unnn[j_UV]<src_Unn[j_UV]))) ||
+				(((src_Un[j_UV]>src_Unn[j_UV]) && (src_Unnn[j_UV]>src_Unn[j_UV])) ||
+				((src_Un[j_UV]<src_Unn[j_UV]) && (src_Unnn[j_UV]<src_Unn[j_UV])))) ||
 				((abs((int16_t)src_Vn[j_UV]-(int16_t)src_Vnn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Vnnn[j_UV]-(int16_t)src_Vnn[j_UV])>=threshold) &&
-				((src_Vn[j_UV]>src_Vnn[j_UV]) && (src_Vnnn[j_UV]>src_Vnn[j_UV]) ||
-				(src_Vn[j_UV]<src_Vnn[j_UV]) && (src_Vnnn[j_UV]<src_Vnn[j_UV]))))
+				(((src_Vn[j_UV]>src_Vnn[j_UV]) && (src_Vnnn[j_UV]>src_Vnn[j_UV])) ||
+				((src_Vn[j_UV]<src_Vnn[j_UV]) && (src_Vnnn[j_UV]<src_Vnn[j_UV])))))
 				interlaced_tab[1][j_UV]=true;
 			else interlaced_tab[1][j_UV]=false;
 			if (((abs((int16_t)src_U[j_UV]-(int16_t)src_Un[j_UV])>=threshold) &&
 				(abs((int16_t)src_Unn[j_UV]-(int16_t)src_Un[j_UV])>=threshold) &&
-				((src_U[j_UV]>src_Un[j_UV]) && (src_Unn[j_UV]>src_Un[j_UV]) ||
-				(src_U[j_UV]<src_Un[j_UV]) && (src_Unn[j_UV]<src_Un[j_UV]))) ||
+				(((src_U[j_UV]>src_Un[j_UV]) && (src_Unn[j_UV]>src_Un[j_UV])) ||
+				((src_U[j_UV]<src_Un[j_UV]) && (src_Unn[j_UV]<src_Un[j_UV])))) ||
 				((abs((int16_t)src_V[j_UV]-(int16_t)src_Vn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Vnn[j_UV]-(int16_t)src_Vn[j_UV])>=threshold) &&
-				((src_V[j_UV]>src_Vn[j_UV]) && (src_Vnn[j_UV]>src_Vn[j_UV]) ||
-				(src_V[j_UV]<src_Vn[j_UV]) && (src_Vnn[j_UV]<src_Vn[j_UV]))))
+				(((src_V[j_UV]>src_Vn[j_UV]) && (src_Vnn[j_UV]>src_Vn[j_UV])) ||
+				((src_V[j_UV]<src_Vn[j_UV]) && (src_Vnn[j_UV]<src_Vn[j_UV])))))
 				interlaced_tab[0][j_UV]=true;
 			else interlaced_tab[0][j_UV]=false;
 
@@ -4224,12 +4224,12 @@ void JPSDR_AutoYUY2::Convert_Test_to_YUY2(const void *_src_Y,const void *_src_U,
 		{
 			if (((abs((int16_t)src_U[j_UV]-(int16_t)src_Un[j_UV])>=threshold) &&
 				(abs((int16_t)src_Unn[j_UV]-(int16_t)src_Un[j_UV])>=threshold) &&
-				((src_U[j_UV]>src_Un[j_UV]) && (src_Unn[j_UV]>src_Un[j_UV]) ||
-				(src_U[j_UV]<src_Un[j_UV]) && (src_Unn[j_UV]<src_Un[j_UV]))) ||
+				(((src_U[j_UV]>src_Un[j_UV]) && (src_Unn[j_UV]>src_Un[j_UV])) ||
+				((src_U[j_UV]<src_Un[j_UV]) && (src_Unn[j_UV]<src_Un[j_UV])))) ||
 				((abs((int16_t)src_V[j_UV]-(int16_t)src_Vn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Vnn[j_UV]-(int16_t)src_Vn[j_UV])>=threshold) &&
-				((src_V[j_UV]>src_Vn[j_UV]) && (src_Vnn[j_UV]>src_Vn[j_UV]) ||
-				(src_V[j_UV]<src_Vn[j_UV]) && (src_Vnn[j_UV]<src_Vn[j_UV]))))
+				(((src_V[j_UV]>src_Vn[j_UV]) && (src_Vnn[j_UV]>src_Vn[j_UV])) ||
+				((src_V[j_UV]<src_Vn[j_UV]) && (src_Vnn[j_UV]<src_Vn[j_UV])))))
 				interlaced_tab[index_tab_2][j_UV]=true;
 			else interlaced_tab[index_tab_2][j_UV]=false;			
 
@@ -4281,12 +4281,12 @@ void JPSDR_AutoYUY2::Convert_Test_to_YUY2(const void *_src_Y,const void *_src_U,
 		{
 			if (((abs((int16_t)src_Un[j_UV]-(int16_t)src_Unn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Unnn[j_UV]-(int16_t)src_Unn[j_UV])>=threshold) &&
-				((src_Un[j_UV]>src_Unn[j_UV]) && (src_Unnn[j_UV]>src_Unn[j_UV]) ||
-				(src_Un[j_UV]<src_Unn[j_UV]) && (src_Unnn[j_UV]<src_Unn[j_UV]))) ||
+				(((src_Un[j_UV]>src_Unn[j_UV]) && (src_Unnn[j_UV]>src_Unn[j_UV])) ||
+				((src_Un[j_UV]<src_Unn[j_UV]) && (src_Unnn[j_UV]<src_Unn[j_UV])))) ||
 				((abs((int16_t)src_Vn[j_UV]-(int16_t)src_Vnn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Vnnn[j_UV]-(int16_t)src_Vnn[j_UV])>=threshold) &&
-				((src_Vn[j_UV]>src_Vnn[j_UV]) && (src_Vnnn[j_UV]>src_Vnn[j_UV]) ||
-				(src_Vn[j_UV]<src_Vnn[j_UV]) && (src_Vnnn[j_UV]<src_Vnn[j_UV]))))
+				(((src_Vn[j_UV]>src_Vnn[j_UV]) && (src_Vnnn[j_UV]>src_Vnn[j_UV])) ||
+				((src_Vn[j_UV]<src_Vnn[j_UV]) && (src_Vnnn[j_UV]<src_Vnn[j_UV])))))
 				interlaced_tab[index_tab_0][j_UV]=true;
 			else interlaced_tab[index_tab_0][j_UV]=false;
 
@@ -4451,22 +4451,22 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_UYVY(const void *_src_Y,const void *_s
 	
 			if (((abs((int16_t)src_Un[j_UV]-(int16_t)src_Unn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Unnn[j_UV]-(int16_t)src_Unn[j_UV])>=threshold) &&
-				((src_Un[j_UV]>src_Unn[j_UV]) && (src_Unnn[j_UV]>src_Unn[j_UV]) ||
-				(src_Un[j_UV]<src_Unn[j_UV]) && (src_Unnn[j_UV]<src_Unn[j_UV]))) ||
+				(((src_Un[j_UV]>src_Unn[j_UV]) && (src_Unnn[j_UV]>src_Unn[j_UV])) ||
+				((src_Un[j_UV]<src_Unn[j_UV]) && (src_Unnn[j_UV]<src_Unn[j_UV])))) ||
 				((abs((int16_t)src_Vn[j_UV]-(int16_t)src_Vnn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Vnnn[j_UV]-(int16_t)src_Vnn[j_UV])>=threshold) &&
-				((src_Vn[j_UV]>src_Vnn[j_UV]) && (src_Vnnn[j_UV]>src_Vnn[j_UV]) ||
-				(src_Vn[j_UV]<src_Vnn[j_UV]) && (src_Vnnn[j_UV]<src_Vnn[j_UV]))))
+				(((src_Vn[j_UV]>src_Vnn[j_UV]) && (src_Vnnn[j_UV]>src_Vnn[j_UV])) ||
+				((src_Vn[j_UV]<src_Vnn[j_UV]) && (src_Vnnn[j_UV]<src_Vnn[j_UV])))))
 				interlaced_tab[1][j_UV]=true;
 			else interlaced_tab[1][j_UV]=false;
 			if (((abs((int16_t)src_U[j_UV]-(int16_t)src_Un[j_UV])>=threshold) &&
 				(abs((int16_t)src_Unn[j_UV]-(int16_t)src_Un[j_UV])>=threshold) &&
-				((src_U[j_UV]>src_Un[j_UV]) && (src_Unn[j_UV]>src_Un[j_UV]) ||
-				(src_U[j_UV]<src_Un[j_UV]) && (src_Unn[j_UV]<src_Un[j_UV]))) ||
+				(((src_U[j_UV]>src_Un[j_UV]) && (src_Unn[j_UV]>src_Un[j_UV])) ||
+				((src_U[j_UV]<src_Un[j_UV]) && (src_Unn[j_UV]<src_Un[j_UV])))) ||
 				((abs((int16_t)src_V[j_UV]-(int16_t)src_Vn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Vnn[j_UV]-(int16_t)src_Vn[j_UV])>=threshold) &&
-				((src_V[j_UV]>src_Vn[j_UV]) && (src_Vnn[j_UV]>src_Vn[j_UV]) ||
-				(src_V[j_UV]<src_Vn[j_UV]) && (src_Vnn[j_UV]<src_Vn[j_UV]))))
+				(((src_V[j_UV]>src_Vn[j_UV]) && (src_Vnn[j_UV]>src_Vn[j_UV])) ||
+				((src_V[j_UV]<src_Vn[j_UV]) && (src_Vnn[j_UV]<src_Vn[j_UV])))))
 				interlaced_tab[0][j_UV]=true;
 			else interlaced_tab[0][j_UV]=false;
 
@@ -4528,12 +4528,12 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_UYVY(const void *_src_Y,const void *_s
 
 			if (((abs((int16_t)src_U[j_UV]-(int16_t)src_Un[j_UV])>=threshold) &&
 				(abs((int16_t)src_Unn[j_UV]-(int16_t)src_Un[j_UV])>=threshold) &&
-				((src_U[j_UV]>src_Un[j_UV]) && (src_Unn[j_UV]>src_Un[j_UV]) ||
-				(src_U[j_UV]<src_Un[j_UV]) && (src_Unn[j_UV]<src_Un[j_UV]))) ||
+				(((src_U[j_UV]>src_Un[j_UV]) && (src_Unn[j_UV]>src_Un[j_UV])) ||
+				((src_U[j_UV]<src_Un[j_UV]) && (src_Unn[j_UV]<src_Un[j_UV])))) ||
 				((abs((int16_t)src_V[j_UV]-(int16_t)src_Vn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Vnn[j_UV]-(int16_t)src_Vn[j_UV])>=threshold) &&
-				((src_V[j_UV]>src_Vn[j_UV]) && (src_Vnn[j_UV]>src_Vn[j_UV]) ||
-				(src_V[j_UV]<src_Vn[j_UV]) && (src_Vnn[j_UV]<src_Vn[j_UV]))))
+				(((src_V[j_UV]>src_Vn[j_UV]) && (src_Vnn[j_UV]>src_Vn[j_UV])) ||
+				((src_V[j_UV]<src_Vn[j_UV]) && (src_Vnn[j_UV]<src_Vn[j_UV])))))
 				interlaced_tab[index_tab_2][j_UV]=true;
 			else interlaced_tab[index_tab_2][j_UV]=false;			
 
@@ -4583,12 +4583,12 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_UYVY(const void *_src_Y,const void *_s
 
 			if (((abs((int16_t)src_Un[j_UV]-(int16_t)src_Unn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Unnn[j_UV]-(int16_t)src_Unn[j_UV])>=threshold) &&
-				((src_Un[j_UV]>src_Unn[j_UV]) && (src_Unnn[j_UV]>src_Unn[j_UV]) ||
-				(src_Un[j_UV]<src_Unn[j_UV]) && (src_Unnn[j_UV]<src_Unn[j_UV]))) ||
+				(((src_Un[j_UV]>src_Unn[j_UV]) && (src_Unnn[j_UV]>src_Unn[j_UV])) ||
+				((src_Un[j_UV]<src_Unn[j_UV]) && (src_Unnn[j_UV]<src_Unn[j_UV])))) ||
 				((abs((int16_t)src_Vn[j_UV]-(int16_t)src_Vnn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Vnnn[j_UV]-(int16_t)src_Vnn[j_UV])>=threshold) &&
-				((src_Vn[j_UV]>src_Vnn[j_UV]) && (src_Vnnn[j_UV]>src_Vnn[j_UV]) ||
-				(src_Vn[j_UV]<src_Vnn[j_UV]) && (src_Vnnn[j_UV]<src_Vnn[j_UV]))))
+				(((src_Vn[j_UV]>src_Vnn[j_UV]) && (src_Vnnn[j_UV]>src_Vnn[j_UV])) ||
+				((src_Vn[j_UV]<src_Vnn[j_UV]) && (src_Vnnn[j_UV]<src_Vnn[j_UV])))))
 				interlaced_tab[index_tab_0][j_UV]=true;
 			else interlaced_tab[index_tab_0][j_UV]=false;
 
@@ -4748,22 +4748,22 @@ void JPSDR_AutoYUY2::Convert_Test_to_UYVY(const void *_src_Y,const void *_src_U,
 	
 			if (((abs((int16_t)src_Un[j_UV]-(int16_t)src_Unn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Unnn[j_UV]-(int16_t)src_Unn[j_UV])>=threshold) &&
-				((src_Un[j_UV]>src_Unn[j_UV]) && (src_Unnn[j_UV]>src_Unn[j_UV]) ||
-				(src_Un[j_UV]<src_Unn[j_UV]) && (src_Unnn[j_UV]<src_Unn[j_UV]))) ||
+				(((src_Un[j_UV]>src_Unn[j_UV]) && (src_Unnn[j_UV]>src_Unn[j_UV])) ||
+				((src_Un[j_UV]<src_Unn[j_UV]) && (src_Unnn[j_UV]<src_Unn[j_UV])))) ||
 				((abs((int16_t)src_Vn[j_UV]-(int16_t)src_Vnn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Vnnn[j_UV]-(int16_t)src_Vnn[j_UV])>=threshold) &&
-				((src_Vn[j_UV]>src_Vnn[j_UV]) && (src_Vnnn[j_UV]>src_Vnn[j_UV]) ||
-				(src_Vn[j_UV]<src_Vnn[j_UV]) && (src_Vnnn[j_UV]<src_Vnn[j_UV]))))
+				(((src_Vn[j_UV]>src_Vnn[j_UV]) && (src_Vnnn[j_UV]>src_Vnn[j_UV])) ||
+				((src_Vn[j_UV]<src_Vnn[j_UV]) && (src_Vnnn[j_UV]<src_Vnn[j_UV])))))
 				interlaced_tab[1][j_UV]=true;
 			else interlaced_tab[1][j_UV]=false;
 			if (((abs((int16_t)src_U[j_UV]-(int16_t)src_Un[j_UV])>=threshold) &&
 				(abs((int16_t)src_Unn[j_UV]-(int16_t)src_Un[j_UV])>=threshold) &&
-				((src_U[j_UV]>src_Un[j_UV]) && (src_Unn[j_UV]>src_Un[j_UV]) ||
-				(src_U[j_UV]<src_Un[j_UV]) && (src_Unn[j_UV]<src_Un[j_UV]))) ||
+				(((src_U[j_UV]>src_Un[j_UV]) && (src_Unn[j_UV]>src_Un[j_UV])) ||
+				((src_U[j_UV]<src_Un[j_UV]) && (src_Unn[j_UV]<src_Un[j_UV])))) ||
 				((abs((int16_t)src_V[j_UV]-(int16_t)src_Vn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Vnn[j_UV]-(int16_t)src_Vn[j_UV])>=threshold) &&
-				((src_V[j_UV]>src_Vn[j_UV]) && (src_Vnn[j_UV]>src_Vn[j_UV]) ||
-				(src_V[j_UV]<src_Vn[j_UV]) && (src_Vnn[j_UV]<src_Vn[j_UV]))))
+				(((src_V[j_UV]>src_Vn[j_UV]) && (src_Vnn[j_UV]>src_Vn[j_UV])) ||
+				((src_V[j_UV]<src_Vn[j_UV]) && (src_Vnn[j_UV]<src_Vn[j_UV])))))
 				interlaced_tab[0][j_UV]=true;
 			else interlaced_tab[0][j_UV]=false;
 
@@ -4823,12 +4823,12 @@ void JPSDR_AutoYUY2::Convert_Test_to_UYVY(const void *_src_Y,const void *_src_U,
 		{
 			if (((abs((int16_t)src_U[j_UV]-(int16_t)src_Un[j_UV])>=threshold) &&
 				(abs((int16_t)src_Unn[j_UV]-(int16_t)src_Un[j_UV])>=threshold) &&
-				((src_U[j_UV]>src_Un[j_UV]) && (src_Unn[j_UV]>src_Un[j_UV]) ||
-				(src_U[j_UV]<src_Un[j_UV]) && (src_Unn[j_UV]<src_Un[j_UV]))) ||
+				(((src_U[j_UV]>src_Un[j_UV]) && (src_Unn[j_UV]>src_Un[j_UV])) ||
+				((src_U[j_UV]<src_Un[j_UV]) && (src_Unn[j_UV]<src_Un[j_UV])))) ||
 				((abs((int16_t)src_V[j_UV]-(int16_t)src_Vn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Vnn[j_UV]-(int16_t)src_Vn[j_UV])>=threshold) &&
-				((src_V[j_UV]>src_Vn[j_UV]) && (src_Vnn[j_UV]>src_Vn[j_UV]) ||
-				(src_V[j_UV]<src_Vn[j_UV]) && (src_Vnn[j_UV]<src_Vn[j_UV]))))
+				(((src_V[j_UV]>src_Vn[j_UV]) && (src_Vnn[j_UV]>src_Vn[j_UV])) ||
+				((src_V[j_UV]<src_Vn[j_UV]) && (src_Vnn[j_UV]<src_Vn[j_UV])))))
 				interlaced_tab[index_tab_2][j_UV]=true;
 			else interlaced_tab[index_tab_2][j_UV]=false;			
 
@@ -4880,12 +4880,12 @@ void JPSDR_AutoYUY2::Convert_Test_to_UYVY(const void *_src_Y,const void *_src_U,
 		{
 			if (((abs((int16_t)src_Un[j_UV]-(int16_t)src_Unn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Unnn[j_UV]-(int16_t)src_Unn[j_UV])>=threshold) &&
-				((src_Un[j_UV]>src_Unn[j_UV]) && (src_Unnn[j_UV]>src_Unn[j_UV]) ||
-				(src_Un[j_UV]<src_Unn[j_UV]) && (src_Unnn[j_UV]<src_Unn[j_UV]))) ||
+				(((src_Un[j_UV]>src_Unn[j_UV]) && (src_Unnn[j_UV]>src_Unn[j_UV])) ||
+				((src_Un[j_UV]<src_Unn[j_UV]) && (src_Unnn[j_UV]<src_Unn[j_UV])))) ||
 				((abs((int16_t)src_Vn[j_UV]-(int16_t)src_Vnn[j_UV])>=threshold) &&
 				(abs((int16_t)src_Vnnn[j_UV]-(int16_t)src_Vnn[j_UV])>=threshold) &&
-				((src_Vn[j_UV]>src_Vnn[j_UV]) && (src_Vnnn[j_UV]>src_Vnn[j_UV]) ||
-				(src_Vn[j_UV]<src_Vnn[j_UV]) && (src_Vnnn[j_UV]<src_Vnn[j_UV]))))
+				(((src_Vn[j_UV]>src_Vnn[j_UV]) && (src_Vnnn[j_UV]>src_Vnn[j_UV])) ||
+				((src_Vn[j_UV]<src_Vnn[j_UV]) && (src_Vnnn[j_UV]<src_Vnn[j_UV])))))
 				interlaced_tab[index_tab_0][j_UV]=true;
 			else interlaced_tab[index_tab_0][j_UV]=false;
 
@@ -5040,22 +5040,22 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_Planar422(const void *src_Y,const void
 		{
 			if (((abs((int16_t)src_Un[j]-(int16_t)src_Unn[j])>=threshold) &&
 				(abs((int16_t)src_Unnn[j]-(int16_t)src_Unn[j])>=threshold) &&
-				((src_Un[j]>src_Unn[j]) && (src_Unnn[j]>src_Unn[j]) ||
-				(src_Un[j]<src_Unn[j]) && (src_Unnn[j]<src_Unn[j]))) ||
+				(((src_Un[j]>src_Unn[j]) && (src_Unnn[j]>src_Unn[j])) ||
+				((src_Un[j]<src_Unn[j]) && (src_Unnn[j]<src_Unn[j])))) ||
 				((abs((int16_t)src_Vn[j]-(int16_t)src_Vnn[j])>=threshold) &&
 				(abs((int16_t)src_Vnnn[j]-(int16_t)src_Vnn[j])>=threshold) &&
-				((src_Vn[j]>src_Vnn[j]) && (src_Vnnn[j]>src_Vnn[j]) ||
-				(src_Vn[j]<src_Vnn[j]) && (src_Vnnn[j]<src_Vnn[j]))))
+				(((src_Vn[j]>src_Vnn[j]) && (src_Vnnn[j]>src_Vnn[j])) ||
+				((src_Vn[j]<src_Vnn[j]) && (src_Vnnn[j]<src_Vnn[j])))))
 				interlaced_tab[1][j]=true;
 			else interlaced_tab[1][j]=false;
 			if (((abs((int16_t)src_U[j]-(int16_t)src_Un[j])>=threshold) &&
 				(abs((int16_t)src_Unn[j]-(int16_t)src_Un[j])>=threshold) &&
-				((src_U[j]>src_Un[j]) && (src_Unn[j]>src_Un[j]) ||
-				(src_U[j]<src_Un[j]) && (src_Unn[j]<src_Un[j]))) ||
+				(((src_U[j]>src_Un[j]) && (src_Unn[j]>src_Un[j])) ||
+				((src_U[j]<src_Un[j]) && (src_Unn[j]<src_Un[j])))) ||
 				((abs((int16_t)src_V[j]-(int16_t)src_Vn[j])>=threshold) &&
 				(abs((int16_t)src_Vnn[j]-(int16_t)src_Vn[j])>=threshold) &&
-				((src_V[j]>src_Vn[j]) && (src_Vnn[j]>src_Vn[j]) ||
-				(src_V[j]<src_Vn[j]) && (src_Vnn[j]<src_Vn[j]))))
+				(((src_V[j]>src_Vn[j]) && (src_Vnn[j]>src_Vn[j])) ||
+				((src_V[j]<src_Vn[j]) && (src_Vnn[j]<src_Vn[j])))))
 				interlaced_tab[0][j]=true;
 			else interlaced_tab[0][j]=false;
 
@@ -5106,12 +5106,12 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_Planar422(const void *src_Y,const void
 		{
 			if (((abs((int16_t)src_U[j]-(int16_t)src_Un[j])>=threshold) &&
 				(abs((int16_t)src_Unn[j]-(int16_t)src_Un[j])>=threshold) &&
-				((src_U[j]>src_Un[j]) && (src_Unn[j]>src_Un[j]) ||
-				(src_U[j]<src_Un[j]) && (src_Unn[j]<src_Un[j]))) ||
+				(((src_U[j]>src_Un[j]) && (src_Unn[j]>src_Un[j])) ||
+				((src_U[j]<src_Un[j]) && (src_Unn[j]<src_Un[j])))) ||
 				((abs((int16_t)src_V[j]-(int16_t)src_Vn[j])>=threshold) &&
 				(abs((int16_t)src_Vnn[j]-(int16_t)src_Vn[j])>=threshold) &&
-				((src_V[j]>src_Vn[j]) && (src_Vnn[j]>src_Vn[j]) ||
-				(src_V[j]<src_Vn[j]) && (src_Vnn[j]<src_Vn[j]))))
+				(((src_V[j]>src_Vn[j]) && (src_Vnn[j]>src_Vn[j])) ||
+				((src_V[j]<src_Vn[j]) && (src_Vnn[j]<src_Vn[j])))))
 				interlaced_tab[index_tab_2][j]=true;
 			else interlaced_tab[index_tab_2][j]=false;			
 
@@ -5150,12 +5150,12 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_Planar422(const void *src_Y,const void
 		{
 			if (((abs((int16_t)src_Un[j]-(int16_t)src_Unn[j])>=threshold) &&
 				(abs((int16_t)src_Unnn[j]-(int16_t)src_Unn[j])>=threshold) &&
-				((src_Un[j]>src_Unn[j]) && (src_Unnn[j]>src_Unn[j]) ||
-				(src_Un[j]<src_Unn[j]) && (src_Unnn[j]<src_Unn[j]))) ||
+				(((src_Un[j]>src_Unn[j]) && (src_Unnn[j]>src_Unn[j])) ||
+				((src_Un[j]<src_Unn[j]) && (src_Unnn[j]<src_Unn[j])))) ||
 				((abs((int16_t)src_Vn[j]-(int16_t)src_Vnn[j])>=threshold) &&
 				(abs((int16_t)src_Vnnn[j]-(int16_t)src_Vnn[j])>=threshold) &&
-				((src_Vn[j]>src_Vnn[j]) && (src_Vnnn[j]>src_Vnn[j]) ||
-				(src_Vn[j]<src_Vnn[j]) && (src_Vnnn[j]<src_Vnn[j]))))
+				(((src_Vn[j]>src_Vnn[j]) && (src_Vnnn[j]>src_Vnn[j])) ||
+				((src_Vn[j]<src_Vnn[j]) && (src_Vnnn[j]<src_Vnn[j])))))
 				interlaced_tab[index_tab_0][j]=true;
 			else interlaced_tab[index_tab_0][j]=false;
 
@@ -5298,22 +5298,22 @@ void JPSDR_AutoYUY2::Convert_Test_to_Planar422(const void *src_Y,const void *_sr
 		{
 			if (((abs((int16_t)src_Un[j]-(int16_t)src_Unn[j])>=threshold) &&
 				(abs((int16_t)src_Unnn[j]-(int16_t)src_Unn[j])>=threshold) &&
-				((src_Un[j]>src_Unn[j]) && (src_Unnn[j]>src_Unn[j]) ||
-				(src_Un[j]<src_Unn[j]) && (src_Unnn[j]<src_Unn[j]))) ||
+				(((src_Un[j]>src_Unn[j]) && (src_Unnn[j]>src_Unn[j])) ||
+				((src_Un[j]<src_Unn[j]) && (src_Unnn[j]<src_Unn[j])))) ||
 				((abs((int16_t)src_Vn[j]-(int16_t)src_Vnn[j])>=threshold) &&
 				(abs((int16_t)src_Vnnn[j]-(int16_t)src_Vnn[j])>=threshold) &&
-				((src_Vn[j]>src_Vnn[j]) && (src_Vnnn[j]>src_Vnn[j]) ||
-				(src_Vn[j]<src_Vnn[j]) && (src_Vnnn[j]<src_Vnn[j]))))
+				(((src_Vn[j]>src_Vnn[j]) && (src_Vnnn[j]>src_Vnn[j])) ||
+				((src_Vn[j]<src_Vnn[j]) && (src_Vnnn[j]<src_Vnn[j])))))
 				interlaced_tab[1][j]=true;
 			else interlaced_tab[1][j]=false;
 			if (((abs((int16_t)src_U[j]-(int16_t)src_Un[j])>=threshold) &&
 				(abs((int16_t)src_Unn[j]-(int16_t)src_Un[j])>=threshold) &&
-				((src_U[j]>src_Un[j]) && (src_Unn[j]>src_Un[j]) ||
-				(src_U[j]<src_Un[j]) && (src_Unn[j]<src_Un[j]))) ||
+				(((src_U[j]>src_Un[j]) && (src_Unn[j]>src_Un[j])) ||
+				((src_U[j]<src_Un[j]) && (src_Unn[j]<src_Un[j])))) ||
 				((abs((int16_t)src_V[j]-(int16_t)src_Vn[j])>=threshold) &&
 				(abs((int16_t)src_Vnn[j]-(int16_t)src_Vn[j])>=threshold) &&
-				((src_V[j]>src_Vn[j]) && (src_Vnn[j]>src_Vn[j]) ||
-				(src_V[j]<src_Vn[j]) && (src_Vnn[j]<src_Vn[j]))))
+				(((src_V[j]>src_Vn[j]) && (src_Vnn[j]>src_Vn[j])) ||
+				((src_V[j]<src_Vn[j]) && (src_Vnn[j]<src_Vn[j])))))
 				interlaced_tab[0][j]=true;
 			else interlaced_tab[0][j]=false;
 
@@ -5364,12 +5364,12 @@ void JPSDR_AutoYUY2::Convert_Test_to_Planar422(const void *src_Y,const void *_sr
 		{
 			if (((abs((int16_t)src_U[j]-(int16_t)src_Un[j])>=threshold) &&
 				(abs((int16_t)src_Unn[j]-(int16_t)src_Un[j])>=threshold) &&
-				((src_U[j]>src_Un[j]) && (src_Unn[j]>src_Un[j]) ||
-				(src_U[j]<src_Un[j]) && (src_Unn[j]<src_Un[j]))) ||
+				(((src_U[j]>src_Un[j]) && (src_Unn[j]>src_Un[j])) ||
+				((src_U[j]<src_Un[j]) && (src_Unn[j]<src_Un[j])))) ||
 				((abs((int16_t)src_V[j]-(int16_t)src_Vn[j])>=threshold) &&
 				(abs((int16_t)src_Vnn[j]-(int16_t)src_Vn[j])>=threshold) &&
-				((src_V[j]>src_Vn[j]) && (src_Vnn[j]>src_Vn[j]) ||
-				(src_V[j]<src_Vn[j]) && (src_Vnn[j]<src_Vn[j]))))
+				(((src_V[j]>src_Vn[j]) && (src_Vnn[j]>src_Vn[j])) ||
+				((src_V[j]<src_Vn[j]) && (src_Vnn[j]<src_Vn[j])))))
 				interlaced_tab[index_tab_2][j]=true;
 			else interlaced_tab[index_tab_2][j]=false;			
 
@@ -5408,12 +5408,12 @@ void JPSDR_AutoYUY2::Convert_Test_to_Planar422(const void *src_Y,const void *_sr
 		{
 			if (((abs((uint8_t)src_Un[j]-(uint8_t)src_Unn[j])>=threshold) &&
 				(abs((uint8_t)src_Unnn[j]-(uint8_t)src_Unn[j])>=threshold) &&
-				((src_Un[j]>src_Unn[j]) && (src_Unnn[j]>src_Unn[j]) ||
-				(src_Un[j]<src_Unn[j]) && (src_Unnn[j]<src_Unn[j]))) ||
+				(((src_Un[j]>src_Unn[j]) && (src_Unnn[j]>src_Unn[j])) ||
+				((src_Un[j]<src_Unn[j]) && (src_Unnn[j]<src_Unn[j])))) ||
 				((abs((uint8_t)src_Vn[j]-(uint8_t)src_Vnn[j])>=threshold) &&
 				(abs((uint8_t)src_Vnnn[j]-(uint8_t)src_Vnn[j])>=threshold) &&
-				((src_Vn[j]>src_Vnn[j]) && (src_Vnnn[j]>src_Vnn[j]) ||
-				(src_Vn[j]<src_Vnn[j]) && (src_Vnnn[j]<src_Vnn[j]))))
+				(((src_Vn[j]>src_Vnn[j]) && (src_Vnnn[j]>src_Vnn[j])) ||
+				((src_Vn[j]<src_Vnn[j]) && (src_Vnnn[j]<src_Vnn[j])))))
 				interlaced_tab[index_tab_0][j]=true;
 			else interlaced_tab[index_tab_0][j]=false;
 
@@ -5629,5 +5629,5 @@ void JPSDR_AutoYUY2::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_AutoYUY2=
-VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","Auto YUY2 v1.5.2","Convert Planar4:2:0 to severals 4:2:2 modes. [SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","Auto YUY2 v1.5.3","Convert Planar4:2:0 to severals 4:2:2 modes. [SSE2] Optimised.");
 
