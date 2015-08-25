@@ -155,6 +155,9 @@
     <MASM Include="..\WideScreen\Filtre_JPSDR_WideScreen_asm.asm">
       <Filter>Fichiers sources</Filter>
     </MASM>
+    <MASM Include="..\CCC\Filtre_JPSDR_CCC_asm.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">

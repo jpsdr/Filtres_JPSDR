@@ -101,6 +101,10 @@ typedef struct _Image_Data
 #define INTERLACED_BFF 3
 
 #define myfree(ptr) if (ptr!=NULL) { free(ptr); ptr=NULL;}
+
+#define ALIGN_SIZE 64
+#define ALIGN_SHIFT 6
+#define my_aligned_free(ptr) if (ptr!=NULL) { _aligned_free(ptr); ptr=NULL;}
 /*
 #define abs64(x) (x<0)?-x:x
 */

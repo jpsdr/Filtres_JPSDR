@@ -13,12 +13,10 @@
 
 extern int g_VFVAPIVersion;
 
-#ifdef _M_AMD64
 extern "C" void JPSDR_CCC_Planar_SSE_1(const void *src, void *dst, ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w);
 extern "C" void JPSDR_CCC_Planar_SSE_2(const void *src, void *dst, ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w);
 extern "C" void JPSDR_CCC_Planar_SSE_1_FR(const void *src, void *dst, ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w);
 extern "C" void JPSDR_CCC_Planar_SSE_2_FR(const void *src, void *dst, ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w);
-#endif
 
 #define CLP_FR(x) ((x > 255) ? 255 : x)
 #define ZRC_FR(x) ((x < 0) ? 0 : x)
@@ -170,12 +168,10 @@ protected:
 	void CCC_YUY2_FR(const void *src, void *dst, ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w, int32_t h, uint8_t phase);
 	void CCC_UYVY_FR(const void *src, void *dst, ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w, int32_t h, uint8_t phase);
 	void MovePlane(const void *src, void *dst, ptrdiff_t src_pitch, ptrdiff_t dst_pitch, size_t size, int32_t h);
-#ifdef _M_AMD64
 	void CCC_Planar_SSE_1(const void *src, void *dst, ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w, int32_t h, uint8_t phase);
 	void CCC_Planar_SSE_2(const void *src, void *dst, ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w, int32_t h, uint8_t phase);
 	void CCC_Planar_SSE_1_FR(const void *src, void *dst, ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w, int32_t h, uint8_t phase);
 	void CCC_Planar_SSE_2_FR(const void *src, void *dst, ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w, int32_t h, uint8_t phase);
-#endif
 
 	void ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptValue *argv, int argc);
 		
@@ -343,7 +339,6 @@ void JPSDR_CCC::CCC_Planar(const void *src_, void *dst_, ptrdiff_t src_pitch, pt
 
 }
 
-#ifdef _M_AMD64
 
 void JPSDR_CCC::CCC_Planar_SSE_1(const void *src_, void *dst_, ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w, int32_t h,
 	uint8_t phase)
@@ -429,7 +424,6 @@ void JPSDR_CCC::CCC_Planar_SSE_2(const void *src_, void *dst_, ptrdiff_t src_pit
 
 }
 
-#endif
 
 void JPSDR_CCC::CCC_YUY2(const void *src_, void *dst_, ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w, int32_t h,
 	uint8_t phase)
@@ -759,8 +753,6 @@ void JPSDR_CCC::CCC_Planar_FR(const void *src_, void *dst_, ptrdiff_t src_pitch,
 
 }
 
-#ifdef _M_AMD64
-
 void JPSDR_CCC::CCC_Planar_SSE_1_FR(const void *src_, void *dst_, ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w, int32_t h,
 	uint8_t phase)
 {
@@ -843,8 +835,6 @@ void JPSDR_CCC::CCC_Planar_SSE_2_FR(const void *src_, void *dst_, ptrdiff_t src_
 	}
 
 }
-
-#endif
 
 void JPSDR_CCC::CCC_YUY2_FR(const void *src_, void *dst_, ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w, int32_t h,
 	uint8_t phase)
@@ -2684,7 +2674,6 @@ void JPSDR_CCC::Run()
 		case 6 :
 		case 7 :
 		case 8 :
-#ifdef _M_AMD64
 			if (idata.dst_full_mode)
 			{
 				if (SSE2_Enable)
@@ -2723,20 +2712,10 @@ void JPSDR_CCC::Run()
 					CCC_Planar(idata.src_plane0,idata.dst_plane0,idata.src_pitch0,idata.dst_pitch0,idata.src_w0,
 						idata.src_h0,mData.phase);
 			}
-#else
-			if (idata.dst_full_mode)
-			{
-				CCC_Planar_FR(idata.src_plane0,idata.dst_plane0,idata.src_pitch0,idata.dst_pitch0,idata.src_w0,
-					idata.src_h0,mData.phase);
-			}
-			else CCC_Planar(idata.src_plane0,idata.dst_plane0,idata.src_pitch0,idata.dst_pitch0,idata.src_w0,
-					idata.src_h0,mData.phase);
-#endif
 			MovePlane(idata.src_plane1,idata.dst_plane1,idata.src_pitch1,idata.dst_pitch1,idata.src_w1,idata.src_h1);
 			MovePlane(idata.src_plane2,idata.dst_plane2,idata.src_pitch2,idata.dst_pitch2,idata.src_w2,idata.src_h2);
 			break;
 		case 9 :
-#ifdef _M_AMD64
 			if (idata.dst_full_mode)
 			{
 				if (SSE2_Enable)
@@ -2775,15 +2754,6 @@ void JPSDR_CCC::Run()
 					CCC_Planar(idata.src_plane0,idata.dst_plane0,idata.src_pitch0,idata.dst_pitch0,idata.src_w0,
 						idata.src_h0,mData.phase);		
 			}
-#else
-			if (idata.dst_full_mode)
-				{
-					CCC_Planar_FR(idata.src_plane0,idata.dst_plane0,idata.src_pitch0,idata.dst_pitch0,idata.src_w0,
-						idata.src_h0,mData.phase);
-				}
-				else CCC_Planar(idata.src_plane0,idata.dst_plane0,idata.src_pitch0,idata.dst_pitch0,idata.src_w0,
-						idata.src_h0,mData.phase);
-#endif
 			break;
 	}
 
@@ -2815,9 +2785,5 @@ void JPSDR_CCC::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_CCC=
-#ifdef _M_AMD64
-VDXVideoFilterDefinition<JPSDR_CCC>("JPSDR","Cross-Conversion Correction v1.2.3","Restore interlaced 720->1080 upscale. SSE optimized.");
-#else
-VDXVideoFilterDefinition<JPSDR_CCC>("JPSDR","Cross-Conversion Correction v1.2.3","Restore interlaced 720->1080 upscale.");
-#endif
+VDXVideoFilterDefinition<JPSDR_CCC>("JPSDR","Cross-Conversion Correction v1.3.0","Restore interlaced 720->1080 upscale. SSE optimized.");
 

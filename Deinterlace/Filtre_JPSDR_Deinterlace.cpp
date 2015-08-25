@@ -98,10 +98,9 @@ extern "C" void JPSDR_Deinterlace_YadifAvg_SSE(const void *src_a, const void *sc
 
 typedef struct _Yadif_Buffer
 {
-	void *data[3],*_data[3];
-	void *absdiff[3],*_absdiff[3];
+	void *data[3];
+	void *absdiff[3];
 } Yadif_Buffer;
-
 
 
 class JPSDR_DeinterlaceData
@@ -409,11 +408,10 @@ protected:
 	Image_Data image_data;
 	Yadif_Buffer tab_Yadif[3];
 	ptrdiff_t Yadif_pitch[3],Yadif_modulo[3];
-	void *spatial_Yadif_buffer,*_spatial_Yadif_buffer;
-	void *_avg1[3],*_avg2[3],*_avg3[3],*_abs1[3];
+	void *spatial_Yadif_buffer;
 	void *avg1[3],*avg2[3],*avg3[3],*abs1[3];
 	uint8_t write_index_Yadif,current_frame_Yadif,previous_frame_Yadif,next_frame_Yadif;
-	void *buffer0,*buffer1,*buffer2,*_buffer_SSE,*buffer_SSE;
+	void *buffer0,*buffer1,*buffer2,*buffer_SSE;
 	void *buffer[3][2];
 	uint32_t debut[Number_Max_Lines],fin[Number_Max_Lines];
 	uint8_t tab_mode[Number_Max_Lines];
@@ -489,18 +487,18 @@ bool JPSDR_Deinterlace::Init()
 	{
 		Yadif_pitch[i]=0;
 		Yadif_modulo[i]=0;
-		_avg1[i]=NULL;
-		_avg2[i]=NULL;
-		_avg3[i]=NULL;
-		_abs1[i]=NULL;
+		avg1[i]=NULL;
+		avg2[i]=NULL;
+		avg3[i]=NULL;
+		abs1[i]=NULL;
 		for (j=0; j<3; j++)
 		{
-			tab_Yadif[i]._data[j]=NULL;
-			tab_Yadif[i]._absdiff[j]=NULL;
+			tab_Yadif[i].data[j]=NULL;
+			tab_Yadif[i].absdiff[j]=NULL;
 		}
 	}
-	_spatial_Yadif_buffer=NULL;
-	_buffer_SSE=NULL;
+	spatial_Yadif_buffer=NULL;
+	buffer_SSE=NULL;
 
 	return(true);
 }
@@ -2380,84 +2378,90 @@ void JPSDR_Deinterlace::Start()
 		{
 			case 0 :
 			case 1 :
-				Yadif_pitch[0]=((((idata.src_w0<<2)+15)>>4)<<4)+32;
+				Yadif_pitch[0]=(ptrdiff_t) (((size_t)(idata.src_w0<<2)+ALIGN_SIZE-1) & ~(size_t)(ALIGN_SIZE-1));
+				Yadif_pitch[0]+=(ALIGN_SIZE << 1);
 				Yadif_modulo[0]=Yadif_pitch[0]-(idata.src_w0<<2);
 				for (i=0; i<3; i++)
 				{
-					tab_Yadif[i]._data[0]=(void *)malloc(idata.src_h0*Yadif_pitch[0]+16);
-					tab_Yadif[i]._absdiff[0]=(void *)malloc((idata.src_h0>>1)*Yadif_pitch[0]+16);
+					tab_Yadif[i].data[0]=(void *)_aligned_malloc(idata.src_h0*Yadif_pitch[0],ALIGN_SIZE);
+					tab_Yadif[i].absdiff[0]=(void *)_aligned_malloc((idata.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
 				}
-				_avg1[0]=(void *)malloc((idata.src_h0>>1)*Yadif_pitch[0]+16);
-				_avg2[0]=(void *)malloc((idata.src_h0>>1)*Yadif_pitch[0]+16);
-				_avg3[0]=(void *)malloc((idata.src_h0>>1)*Yadif_pitch[0]+16);
-				_abs1[0]=(void *)malloc((idata.src_h0>>1)*Yadif_pitch[0]+16);
-				_spatial_Yadif_buffer=(void *)malloc((idata.src_h0>>1)*(Yadif_pitch[0]*10)+16);
+				avg1[0]=(void *)_aligned_malloc((idata.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
+				avg2[0]=(void *)_aligned_malloc((idata.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
+				avg3[0]=(void *)_aligned_malloc((idata.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
+				abs1[0]=(void *)_aligned_malloc((idata.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
+				spatial_Yadif_buffer=(void *)_aligned_malloc((idata.src_h0>>1)*(Yadif_pitch[0]*10),ALIGN_SIZE);
 				break;
 			case 2 :
 			case 3 :
-				Yadif_pitch[0]=((((((idata.src_w0+1)>>1)<<2)+15)>>4)<<4)+32;
+				Yadif_pitch[0]=(ptrdiff_t) (((size_t)(((idata.src_w0+1)>>1)<<2)+ALIGN_SIZE-1) & ~(size_t)(ALIGN_SIZE-1));
+				Yadif_pitch[0]+=(ALIGN_SIZE << 1);
 				Yadif_modulo[0]=Yadif_pitch[0]-(((idata.src_w0+1)>>1)<<2);
 				for (i=0; i<3; i++)
 				{
-					tab_Yadif[i]._data[0]=(void *)malloc(idata.src_h0*Yadif_pitch[0]+16);
-					tab_Yadif[i]._absdiff[0]=(void *)malloc((idata.src_h0>>1)*Yadif_pitch[0]+16);
+					tab_Yadif[i].data[0]=(void *)_aligned_malloc(idata.src_h0*Yadif_pitch[0],ALIGN_SIZE);
+					tab_Yadif[i].absdiff[0]=(void *)_aligned_malloc((idata.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
 				}
-				_avg1[0]=(void *)malloc((idata.src_h0>>1)*Yadif_pitch[0]+16);
-				_avg2[0]=(void *)malloc((idata.src_h0>>1)*Yadif_pitch[0]+16);
-				_avg3[0]=(void *)malloc((idata.src_h0>>1)*Yadif_pitch[0]+16);
-				_abs1[0]=(void *)malloc((idata.src_h0>>1)*Yadif_pitch[0]+16);
-				_spatial_Yadif_buffer=(void *)malloc((idata.src_h0>>1)*(Yadif_pitch[0]*10)+16);
+				avg1[0]=(void *)_aligned_malloc((idata.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
+				avg2[0]=(void *)_aligned_malloc((idata.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
+				avg3[0]=(void *)_aligned_malloc((idata.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
+				abs1[0]=(void *)_aligned_malloc((idata.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
+				spatial_Yadif_buffer=(void *)_aligned_malloc((idata.src_h0>>1)*(Yadif_pitch[0]*10),ALIGN_SIZE);
 				break;
 			case 4 :
 			case 5 :
 			case 6 :
 			case 7 :
 			case 8 :
-				Yadif_pitch[0]=(((idata.src_w0+15)>>4)<<4)+32;
-				Yadif_pitch[1]=(((idata.src_w1+15)>>4)<<4)+32;
-				Yadif_pitch[2]=(((idata.src_w2+15)>>4)<<4)+32;
+				Yadif_pitch[0]=(ptrdiff_t) (((size_t)idata.src_w0+ALIGN_SIZE-1) & ~(size_t)(ALIGN_SIZE-1));
+				Yadif_pitch[1]=(ptrdiff_t) (((size_t)idata.src_w1+ALIGN_SIZE-1) & ~(size_t)(ALIGN_SIZE-1));
+				Yadif_pitch[2]=(ptrdiff_t) (((size_t)idata.src_w2+ALIGN_SIZE-1) & ~(size_t)(ALIGN_SIZE-1));
+				Yadif_pitch[0]+=(ALIGN_SIZE << 1);
+				Yadif_pitch[1]+=(ALIGN_SIZE << 1);
+				Yadif_pitch[2]+=(ALIGN_SIZE << 1);
 				Yadif_modulo[0]=Yadif_pitch[0]-idata.src_w0;
 				Yadif_modulo[1]=Yadif_pitch[1]-idata.src_w1;
 				Yadif_modulo[2]=Yadif_pitch[2]-idata.src_w2;
 				for (i=0; i<3; i++)
 				{
-					tab_Yadif[i]._data[0]=(void *)malloc(idata.src_h0*Yadif_pitch[0]+16);
-					tab_Yadif[i]._absdiff[0]=(void *)malloc((idata.src_h0>>1)*Yadif_pitch[0]+16);
-					tab_Yadif[i]._data[1]=(void *)malloc(idata.src_h1*Yadif_pitch[1]+16);
-					tab_Yadif[i]._absdiff[1]=(void *)malloc((idata.src_h1>>1)*Yadif_pitch[1]+16);
-					tab_Yadif[i]._data[2]=(void *)malloc(idata.src_h2*Yadif_pitch[2]+16);
-					tab_Yadif[i]._absdiff[2]=(void *)malloc((idata.src_h2>>1)*Yadif_pitch[2]+16);
+					tab_Yadif[i].data[0]=(void *)_aligned_malloc(idata.src_h0*Yadif_pitch[0],ALIGN_SIZE);
+					tab_Yadif[i].absdiff[0]=(void *)_aligned_malloc((idata.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
+					tab_Yadif[i].data[1]=(void *)_aligned_malloc(idata.src_h1*Yadif_pitch[1],ALIGN_SIZE);
+					tab_Yadif[i].absdiff[1]=(void *)_aligned_malloc((idata.src_h1>>1)*Yadif_pitch[1],ALIGN_SIZE);
+					tab_Yadif[i].data[2]=(void *)_aligned_malloc(idata.src_h2*Yadif_pitch[2],ALIGN_SIZE);
+					tab_Yadif[i].absdiff[2]=(void *)_aligned_malloc((idata.src_h2>>1)*Yadif_pitch[2],ALIGN_SIZE);
 				}
-				_avg1[0]=(void *)malloc((idata.src_h0>>1)*Yadif_pitch[0]+16);
-				_avg2[0]=(void *)malloc((idata.src_h0>>1)*Yadif_pitch[0]+16);
-				_avg3[0]=(void *)malloc((idata.src_h0>>1)*Yadif_pitch[0]+16);
-				_abs1[0]=(void *)malloc((idata.src_h0>>1)*Yadif_pitch[0]+16);
-				_avg1[1]=(void *)malloc((idata.src_h1>>1)*Yadif_pitch[1]+16);
-				_avg2[1]=(void *)malloc((idata.src_h1>>1)*Yadif_pitch[1]+16);
-				_avg3[1]=(void *)malloc((idata.src_h1>>1)*Yadif_pitch[1]+16);
-				_abs1[1]=(void *)malloc((idata.src_h1>>1)*Yadif_pitch[1]+16);
-				_avg1[2]=(void *)malloc((idata.src_h2>>1)*Yadif_pitch[2]+16);
-				_avg2[2]=(void *)malloc((idata.src_h2>>1)*Yadif_pitch[2]+16);
-				_avg3[2]=(void *)malloc((idata.src_h2>>1)*Yadif_pitch[2]+16);
-				_abs1[2]=(void *)malloc((idata.src_h2>>1)*Yadif_pitch[2]+16);
-				_spatial_Yadif_buffer=(void *)malloc((idata.src_h0>>1)*(Yadif_pitch[0]*10)+16);
+				avg1[0]=(void *)_aligned_malloc((idata.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
+				avg2[0]=(void *)_aligned_malloc((idata.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
+				avg3[0]=(void *)_aligned_malloc((idata.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
+				abs1[0]=(void *)_aligned_malloc((idata.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
+				avg1[1]=(void *)_aligned_malloc((idata.src_h1>>1)*Yadif_pitch[1],ALIGN_SIZE);
+				avg2[1]=(void *)_aligned_malloc((idata.src_h1>>1)*Yadif_pitch[1],ALIGN_SIZE);
+				avg3[1]=(void *)_aligned_malloc((idata.src_h1>>1)*Yadif_pitch[1],ALIGN_SIZE);
+				abs1[1]=(void *)_aligned_malloc((idata.src_h1>>1)*Yadif_pitch[1],ALIGN_SIZE);
+				avg1[2]=(void *)_aligned_malloc((idata.src_h2>>1)*Yadif_pitch[2],ALIGN_SIZE);
+				avg2[2]=(void *)_aligned_malloc((idata.src_h2>>1)*Yadif_pitch[2],ALIGN_SIZE);
+				avg3[2]=(void *)_aligned_malloc((idata.src_h2>>1)*Yadif_pitch[2],ALIGN_SIZE);
+				abs1[2]=(void *)_aligned_malloc((idata.src_h2>>1)*Yadif_pitch[2],ALIGN_SIZE);
+				spatial_Yadif_buffer=(void *)_aligned_malloc((idata.src_h0>>1)*(Yadif_pitch[0]*10),ALIGN_SIZE);
 				break;
 			case 9 :
-				Yadif_pitch[0]=(((idata.src_w0+15)>>4)<<4)+32;
+				Yadif_pitch[0]=(ptrdiff_t) (((size_t)idata.src_w0+ALIGN_SIZE-1) & ~(size_t)(ALIGN_SIZE-1));
+				Yadif_pitch[0]+=(ALIGN_SIZE << 1);
 				Yadif_modulo[0]=Yadif_pitch[0]-idata.src_w0;
 				for (i=0; i<3; i++)
 				{
-					tab_Yadif[i]._data[0]=(void *)malloc(idata.src_h0*Yadif_pitch[0]+16);
-					tab_Yadif[i]._absdiff[0]=(void *)malloc((idata.src_h0>>1)*Yadif_pitch[0]+16);
+					tab_Yadif[i].data[0]=(void *)_aligned_malloc(idata.src_h0*Yadif_pitch[0],ALIGN_SIZE);
+					tab_Yadif[i].absdiff[0]=(void *)_aligned_malloc((idata.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
 				}
-				_avg1[0]=(void *)malloc((idata.src_h0>>1)*Yadif_pitch[0]+16);
-				_avg2[0]=(void *)malloc((idata.src_h0>>1)*Yadif_pitch[0]+16);
-				_avg3[0]=(void *)malloc((idata.src_h0>>1)*Yadif_pitch[0]+16);
-				_abs1[0]=(void *)malloc((idata.src_h0>>1)*Yadif_pitch[0]+16);
-				_spatial_Yadif_buffer=(void *)malloc((idata.src_h0>>1)*(Yadif_pitch[0]*10)+16);
+				avg1[0]=(void *)_aligned_malloc((idata.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
+				avg2[0]=(void *)_aligned_malloc((idata.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
+				avg3[0]=(void *)_aligned_malloc((idata.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
+				abs1[0]=(void *)_aligned_malloc((idata.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
+				spatial_Yadif_buffer=(void *)_aligned_malloc((idata.src_h0>>1)*(Yadif_pitch[0]*10),ALIGN_SIZE);
 				break;
 		}
-		_buffer_SSE=(void *)malloc(160+16);
+		buffer_SSE=(void *)_aligned_malloc(160,ALIGN_SIZE);
 
 		buff_ok=true;
 		for (i=0; i<3; i++)
@@ -2466,8 +2470,8 @@ void JPSDR_Deinterlace::Start()
 			{
 				if (Yadif_pitch[j]!=0)
 				{
-					buff_ok=buff_ok && (tab_Yadif[i]._data[j]!=NULL);
-					buff_ok=buff_ok && (tab_Yadif[i]._absdiff[j]!=NULL);
+					buff_ok=buff_ok && (tab_Yadif[i].data[j]!=NULL);
+					buff_ok=buff_ok && (tab_Yadif[i].absdiff[j]!=NULL);
 				}
 			}
 		}
@@ -2475,33 +2479,33 @@ void JPSDR_Deinterlace::Start()
 		{
 			if (Yadif_pitch[i]!=0)
 			{
-				buff_ok=buff_ok && (_avg1[i]!=NULL);
-				buff_ok=buff_ok && (_avg2[i]!=NULL);
-				buff_ok=buff_ok && (_avg3[i]!=NULL);
-				buff_ok=buff_ok && (_abs1[i]!=NULL);
+				buff_ok=buff_ok && (avg1[i]!=NULL);
+				buff_ok=buff_ok && (avg2[i]!=NULL);
+				buff_ok=buff_ok && (avg3[i]!=NULL);
+				buff_ok=buff_ok && (abs1[i]!=NULL);
 			}
 		}
-		buff_ok=buff_ok && (_spatial_Yadif_buffer!=NULL);
-		buff_ok=buff_ok && (_buffer_SSE!=NULL);
+		buff_ok=buff_ok && (spatial_Yadif_buffer!=NULL);
+		buff_ok=buff_ok && (buffer_SSE!=NULL);
 
 		if (!buff_ok)
 		{
-			myfree(_buffer_SSE);
-			myfree(_spatial_Yadif_buffer);
+			my_aligned_free(buffer_SSE);
+			my_aligned_free(spatial_Yadif_buffer);
 			for (i=2; i>=0; i--)
 			{
-				myfree(_abs1[i]);
-				myfree(_avg3[i]);
-				myfree(_avg2[i]);
-				myfree(_avg1[i]);
+				my_aligned_free(abs1[i]);
+				my_aligned_free(avg3[i]);
+				my_aligned_free(avg2[i]);
+				my_aligned_free(avg1[i]);
 			}
 
 			for (i=2; i>=0; i--)
 			{
 				for (j=2; j>=0; j--)
 				{
-					myfree(tab_Yadif[i]._absdiff[j]);
-					myfree(tab_Yadif[i]._data[j]);
+					my_aligned_free(tab_Yadif[i].absdiff[j]);
+					my_aligned_free(tab_Yadif[i].data[j]);
 				}
 			}
 			myfree(buffer2);
@@ -2523,29 +2527,12 @@ void JPSDR_Deinterlace::Start()
 			{
 				if (Yadif_pitch[j]!=0)
 				{
-					tab_Yadif[i].data[j]=(void *)(((size_t)tab_Yadif[i]._data[j]+15) & ~(size_t)15);
-					tab_Yadif[i].data[j]=(void *)((size_t)tab_Yadif[i].data[j]+16);
-					tab_Yadif[i].absdiff[j]=(void *)(((size_t)tab_Yadif[i]._absdiff[j]+15) & ~(size_t)15);
-					tab_Yadif[i].absdiff[j]=(void *)((size_t)tab_Yadif[i].absdiff[j]+16);
+					tab_Yadif[i].data[j]=(void *)((size_t)tab_Yadif[i].data[j]+ALIGN_SIZE);
+					tab_Yadif[i].absdiff[j]=(void *)((size_t)tab_Yadif[i].absdiff[j]+ALIGN_SIZE);
 				}
 			}
 		}
-		for (i=0; i<3; i++)
-		{
-			if (Yadif_pitch[i]!=0)
-			{
-				avg1[i]=(void *)(((size_t)_avg1[i]+15) & ~(size_t)15);
-				avg2[i]=(void *)(((size_t)_avg2[i]+15) & ~(size_t)15);
-				avg3[i]=(void *)(((size_t)_avg3[i]+15) & ~(size_t)15);
-				abs1[i]=(void *)(((size_t)_abs1[i]+15) & ~(size_t)15);
-				avg1[i]=(void *)((size_t)avg1[i]+16);
-				avg2[i]=(void *)((size_t)avg2[i]+16);
-				avg3[i]=(void *)((size_t)avg3[i]+16);
-				abs1[i]=(void *)((size_t)abs1[i]+16);
-			}
-		}
-		spatial_Yadif_buffer=(void *)(((size_t)_spatial_Yadif_buffer+15) & ~(size_t)15);
-		buffer_SSE=(void *)(((size_t)_buffer_SSE+15) & ~(size_t)15);
+
 	}
 
 	write_index_Yadif=0;
@@ -2559,14 +2546,14 @@ void JPSDR_Deinterlace::End()
 {
 	int8_t i,j;
 
-	myfree(_buffer_SSE);
-	myfree(_spatial_Yadif_buffer);
+	my_aligned_free(buffer_SSE);
+	my_aligned_free(spatial_Yadif_buffer);
 	for (i=2; i>=0; i--)
 	{
-		myfree(_abs1[i]);
-		myfree(_avg3[i]);
-		myfree(_avg2[i]);
-		myfree(_avg1[i]);
+		my_aligned_free(abs1[i]);
+		my_aligned_free(avg3[i]);
+		my_aligned_free(avg2[i]);
+		my_aligned_free(avg1[i]);
 	}
 
 	for (i=2; i>=0; i--)
@@ -2575,8 +2562,8 @@ void JPSDR_Deinterlace::End()
 		Yadif_modulo[i]=0;
 		for (j=2; j>=0; j--)
 		{
-			myfree(tab_Yadif[i]._absdiff[j]);
-			myfree(tab_Yadif[i]._data[j]);
+			my_aligned_free(tab_Yadif[i].absdiff[j]);
+			my_aligned_free(tab_Yadif[i].data[j]);
 		}
 	}
 	myfree(buffer2);
@@ -5955,7 +5942,7 @@ void JPSDR_Deinterlace::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScript
 
 		
 extern VDXFilterDefinition filterDef_JPSDR_Deinterlace=
-VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v4.1.2","Deinterlace blending frames. [ASM][MMX][SSE][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v4.2.0","Deinterlace blending frames. [ASM][MMX][SSE][SSE2] Optimised.");
 
 
 

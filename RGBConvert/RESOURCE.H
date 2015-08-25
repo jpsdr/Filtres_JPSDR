@@ -10,6 +10,12 @@
 #define IDC_FULL_RANGE                   8055
 #define IDC_PREVIEW                      8056
 #define IDC_MATRIX_GROUP                 8057
+#define IDC_AUTODETECT                   8058
+#define IDC_OUTPUT_GROUP                 8059
+#define IDC_OUTPUT_YV24                  8060
+#define IDC_OUTPUT_YV16                  8061
+#define IDC_OUTPUT_YUY2                  8062
+#define IDC_OUTPUT_YV12                  8063
 
 // Next default values for new objects
 // 

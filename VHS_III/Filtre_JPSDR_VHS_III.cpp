@@ -422,7 +422,6 @@ protected:
 	int16_t *Y_filtre[5],*U_filtre[5],*V_filtre[5];
 	int16_t *Y_filtre_prec,*U_filtre_prec,*V_filtre_prec;
 	int16_t *buffer_Y[2],*buffer_U[2],*buffer_V[2];
-	int16_t *_buffer_Y[2],*_buffer_U[2],*_buffer_V[2];
 	int16_t lookup_RGB_Y[768],lookup_YUV_G[20403],lookup_filter_Y[44881],lookup_filter_UV[89761];
 	uint8_t indice_filtre[5];
 	bool SSE_Integer_Enable,SSE2_Enable;
@@ -542,9 +541,9 @@ bool JPSDR_VHS_III::Init()
 	V_filtre_prec=NULL;
 	for (i=0; i<2; i++)
 	{
-		_buffer_Y[i]=NULL;
-		_buffer_U[i]=NULL;
-		_buffer_V[i]=NULL;
+		buffer_Y[i]=NULL;
+		buffer_U[i]=NULL;
+		buffer_V[i]=NULL;
 	}
 
 	a=0.3008;
@@ -4332,9 +4331,9 @@ void JPSDR_VHS_III::Start()
 
 	for (i=0; i<2; i++)
 	{
-		_buffer_Y[i]=(int16_t *)malloc(size_Y+16);
-		_buffer_U[i]=(int16_t *)malloc(size_U+16);
-		_buffer_V[i]=(int16_t *)malloc(size_V+16);
+		buffer_Y[i]=(int16_t *)_aligned_malloc(size_Y,ALIGN_SIZE);
+		buffer_U[i]=(int16_t *)_aligned_malloc(size_U,ALIGN_SIZE);
+		buffer_V[i]=(int16_t *)_aligned_malloc(size_V,ALIGN_SIZE);
 	}
 
 	ok=true;
@@ -4352,18 +4351,18 @@ void JPSDR_VHS_III::Start()
 
 	for (i=0; i<2; i++)
 	{
-		ok=ok && (_buffer_Y[i]!=NULL);
-		ok=ok && (_buffer_U[i]!=NULL);
-		ok=ok && (_buffer_V[i]!=NULL);
+		ok=ok && (buffer_Y[i]!=NULL);
+		ok=ok && (buffer_U[i]!=NULL);
+		ok=ok && (buffer_V[i]!=NULL);
 	}
 
 	if (!ok)
 	{
 		for (i=1; i>=0; i--)
 		{
-			myfree(_buffer_V[i]);
-			myfree(_buffer_U[i]);
-			myfree(_buffer_Y[i]);
+			my_aligned_free(buffer_V[i]);
+			my_aligned_free(buffer_U[i]);
+			my_aligned_free(buffer_Y[i]);
 		}
 		myfree(V_filtre_prec);
 		myfree(U_filtre_prec);
@@ -4376,13 +4375,6 @@ void JPSDR_VHS_III::Start()
 		}
 		ff->ExceptOutOfMemory();
 		return;
-	}
-
-	for (i=0; i<2; i++)
-	{
-		buffer_Y[i]=(int16_t *)(((size_t)_buffer_Y[i]+15) & ~(size_t)15);
-		buffer_U[i]=(int16_t *)(((size_t)_buffer_U[i]+15) & ~(size_t)15);
-		buffer_V[i]=(int16_t *)(((size_t)_buffer_V[i]+15) & ~(size_t)15);
 	}
 
 	switch (mData.filter_mode_Y)
@@ -4431,9 +4423,9 @@ void JPSDR_VHS_III::End()
 
 	for (i=1; i>=0; i--)
 	{
-		myfree(_buffer_V[i]);
-		myfree(_buffer_U[i]);
-		myfree(_buffer_Y[i]);
+		my_aligned_free(buffer_V[i]);
+		my_aligned_free(buffer_U[i]);
+		my_aligned_free(buffer_Y[i]);
 	}
 	myfree(V_filtre_prec);
 	myfree(U_filtre_prec);
@@ -4509,5 +4501,5 @@ void JPSDR_VHS_III::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_VHS_III=
-VDXVideoFilterDefinition<JPSDR_VHS_III>("JPSDR","VHS III v2.3.3","Filter to remove VHS noise.[ASM][SSE][SSE2] Optimised. Lag 2");
+VDXVideoFilterDefinition<JPSDR_VHS_III>("JPSDR","VHS III v2.4.0","Filter to remove VHS noise.[ASM][SSE][SSE2] Optimised. Lag 2");
 

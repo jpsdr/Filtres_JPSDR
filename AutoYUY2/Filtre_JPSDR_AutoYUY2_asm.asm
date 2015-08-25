@@ -1,5 +1,22 @@
 .586
 .model flat,c
+
+.data
+
+align 16
+
+uw_2_0 dword 4 dup(00000002h)
+uw_3_0 dword 4 dup(00000003h)
+uw_4_0 dword 4 dup(00000004h)
+uw_5_0 dword 4 dup(00000005h)
+uw_7_0 dword 4 dup(00000007h)
+
+uw_2_1 dword 4 dup(00020000h)
+uw_3_1 dword 4 dup(00030000h)
+uw_4_1 dword 4 dup(00040000h)
+uw_5_1 dword 4 dup(00050000h)
+uw_7_1 dword 4 dup(00070000h)
+
 .code
 
 
@@ -164,9 +181,6 @@ JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_2 proc src_y:dword,src1_u:dword,src2_u:dw
 	push ebx
 	
 	pxor xmm7,xmm7
-	pxor xmm6,xmm6
-	pxor xmm5,xmm5
-	pxor xmm4,xmm4
 	pxor xmm2,xmm2
 	pxor xmm1,xmm1
 	
@@ -175,21 +189,9 @@ JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_2 proc src_y:dword,src1_u:dword,src2_u:dw
 	mov ecx,w
 	cld
 	
-	mov eax,4
-	pinsrw xmm6,eax,1
-	pinsrw xmm6,eax,3
-	pinsrw xmm6,eax,5
-	pinsrw xmm6,eax,7
-	mov eax,3
-	pinsrw xmm5,eax,1
-	pinsrw xmm5,eax,3
-	pinsrw xmm5,eax,5
-	pinsrw xmm5,eax,7
-	mov eax,5
-	pinsrw xmm4,eax,1
-	pinsrw xmm4,eax,3
-	pinsrw xmm4,eax,5
-	pinsrw xmm4,eax,7
+	movdqa xmm6,oword ptr uw_4_1
+	movdqa xmm5,oword ptr uw_3_1
+	movdqa xmm4,oword ptr uw_5_1
 
 	xor eax,eax
 
@@ -258,9 +260,6 @@ JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_2 proc src_y:dword,src1_u:dword,src2_u:dw
 	push ebx
 	
 	pxor xmm7,xmm7
-	pxor xmm6,xmm6
-	pxor xmm5,xmm5
-	pxor xmm4,xmm4
 	pxor xmm2,xmm2
 	pxor xmm1,xmm1
 		
@@ -269,22 +268,10 @@ JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_2 proc src_y:dword,src1_u:dword,src2_u:dw
 	mov ecx,w
 	cld
 	
-	mov eax,4
-	pinsrw xmm6,eax,0
-	pinsrw xmm6,eax,2
-	pinsrw xmm6,eax,4
-	pinsrw xmm6,eax,6
-	mov eax,3
-	pinsrw xmm5,eax,0
-	pinsrw xmm5,eax,2
-	pinsrw xmm5,eax,4
-	pinsrw xmm5,eax,6
-	mov eax,5
-	pinsrw xmm4,eax,0
-	pinsrw xmm4,eax,2
-	pinsrw xmm4,eax,4
-	pinsrw xmm4,eax,6
-
+	movdqa xmm6,oword ptr uw_4_0
+	movdqa xmm5,oword ptr uw_3_0
+	movdqa xmm4,oword ptr uw_5_0
+	
 	xor eax,eax
 
 SSE2_2_b:
@@ -353,8 +340,6 @@ JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_3 proc src_y:dword,src1_u:dword,src2_u:dw
 	push ebx
 	
 	pxor xmm7,xmm7
-	pxor xmm6,xmm6
-	pxor xmm5,xmm5
 	pxor xmm1,xmm1
 	pxor xmm2,xmm2
 	
@@ -363,17 +348,8 @@ JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_3 proc src_y:dword,src1_u:dword,src2_u:dw
 	mov ecx,w
 	cld
 	
-	mov eax,4
-	pinsrw xmm6,eax,1
-	pinsrw xmm6,eax,3
-	pinsrw xmm6,eax,5
-	pinsrw xmm6,eax,7
-	
-	mov eax,7
-	pinsrw xmm5,eax,1
-	pinsrw xmm5,eax,3
-	pinsrw xmm5,eax,5
-	pinsrw xmm5,eax,7
+	movdqa xmm6,oword ptr uw_4_1
+	movdqa xmm5,oword ptr uw_7_1
 
 	xor eax,eax	
 
@@ -441,8 +417,6 @@ JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_3 proc src_y:dword,src1_u:dword,src2_u:dw
 	push ebx
 	
 	pxor xmm7,xmm7
-	pxor xmm6,xmm6
-	pxor xmm5,xmm5
 	pxor xmm1,xmm1
 	pxor xmm2,xmm2
 	
@@ -451,17 +425,8 @@ JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_3 proc src_y:dword,src1_u:dword,src2_u:dw
 	mov ecx,w
 	cld
 	
-	mov eax,4
-	pinsrw xmm6,eax,0
-	pinsrw xmm6,eax,2
-	pinsrw xmm6,eax,4
-	pinsrw xmm6,eax,6
-	
-	mov eax,7
-	pinsrw xmm5,eax,0
-	pinsrw xmm5,eax,2
-	pinsrw xmm5,eax,4
-	pinsrw xmm5,eax,6
+	movdqa xmm6,oword ptr uw_4_0
+	movdqa xmm5,oword ptr uw_7_0
 	
 	xor eax,eax		
 
@@ -529,8 +494,6 @@ JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_4 proc src_y:dword,src1_u:dword,src2_u:dw
 	push ebx
 	
 	pxor xmm7,xmm7
-	pxor xmm6,xmm6
-	pxor xmm5,xmm5
 	pxor xmm2,xmm2
 	pxor xmm1,xmm1
 	
@@ -539,18 +502,9 @@ JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_4 proc src_y:dword,src1_u:dword,src2_u:dw
 	mov ecx,w
 	cld
 	
-	mov eax,2
-	pinsrw xmm6,eax,1
-	pinsrw xmm6,eax,3
-	pinsrw xmm6,eax,5
-	pinsrw xmm6,eax,7
+	movdqa xmm6,oword ptr uw_2_1
+	movdqa xmm5,oword ptr uw_3_1
 	
-	mov eax,3
-	pinsrw xmm5,eax,1
-	pinsrw xmm5,eax,3
-	pinsrw xmm5,eax,5
-	pinsrw xmm5,eax,7
-
 	xor eax,eax	
 
 SSE2_4_a:
@@ -617,8 +571,6 @@ JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_4 proc src_y:dword,src1_u:dword,src2_u:dw
 	push ebx
 	
 	pxor xmm7,xmm7
-	pxor xmm6,xmm6
-	pxor xmm5,xmm5
 	pxor xmm2,xmm2
 	pxor xmm1,xmm1
 	
@@ -627,18 +579,9 @@ JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_4 proc src_y:dword,src1_u:dword,src2_u:dw
 	mov ecx,w
 	cld
 	
-	mov eax,2
-	pinsrw xmm6,eax,0
-	pinsrw xmm6,eax,2
-	pinsrw xmm6,eax,4
-	pinsrw xmm6,eax,6
+	movdqa xmm6,oword ptr uw_2_0
+	movdqa xmm5,oword ptr uw_3_0
 	
-	mov eax,3
-	pinsrw xmm5,eax,0
-	pinsrw xmm5,eax,2
-	pinsrw xmm5,eax,4
-	pinsrw xmm5,eax,6
-
 	xor eax,eax	
 
 SSE2_4_b:

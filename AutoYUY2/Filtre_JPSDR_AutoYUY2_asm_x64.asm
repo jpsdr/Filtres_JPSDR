@@ -1,3 +1,20 @@
+.data
+
+align 16
+
+uw_2_0 dword 4 dup(00000002h)
+uw_3_0 dword 4 dup(00000003h)
+uw_4_0 dword 4 dup(00000004h)
+uw_5_0 dword 4 dup(00000005h)
+uw_7_0 dword 4 dup(00000007h)
+
+uw_2_1 dword 4 dup(00020000h)
+uw_3_1 dword 4 dup(00030000h)
+uw_4_1 dword 4 dup(00040000h)
+uw_5_1 dword 4 dup(00050000h)
+uw_7_1 dword 4 dup(00070000h)
+
+
 .code
 
 
@@ -32,13 +49,18 @@ dst_modulo equ qword ptr[rbp+56]
 	jz short fin_F
 	mov rax,src_modulo
 	mov r10,dst_modulo
+	mov edx,1
 loop_F:
 	mov ecx,r8d
 	shr ecx,1
-	jnc short loop_Fa
+	jz short loop_F_Suite
+	rep movsq
+loop_F_Suite:	
+	mov ecx,r8d
+	and ecx,edx
+	jz short loop_Fa
 	movsd
 loop_Fa:	
-	rep movsq
 	add rsi,rax
 	add rdi,r10
 	dec r9d
@@ -245,9 +267,6 @@ w equ dword ptr[rbp+64]
 	.endprolog
 	
 	pxor xmm7,xmm7
-	pxor xmm6,xmm6
-	pxor xmm5,xmm5
-	pxor xmm4,xmm4
 	pxor xmm2,xmm2
 	pxor xmm1,xmm1
 	xor rax,rax
@@ -262,21 +281,9 @@ w equ dword ptr[rbp+64]
 	mov ecx,w
 	cld
 	
-	mov eax,4
-	pinsrw xmm6,eax,1
-	pinsrw xmm6,eax,3
-	pinsrw xmm6,eax,5
-	pinsrw xmm6,eax,7
-	mov eax,3
-	pinsrw xmm5,eax,1
-	pinsrw xmm5,eax,3
-	pinsrw xmm5,eax,5
-	pinsrw xmm5,eax,7
-	mov eax,5
-	pinsrw xmm4,eax,1
-	pinsrw xmm4,eax,3
-	pinsrw xmm4,eax,5
-	pinsrw xmm4,eax,7
+	movdqa xmm6,oword ptr uw_4_1
+	movdqa xmm5,oword ptr uw_3_1
+	movdqa xmm4,oword ptr uw_5_1
 
 	xor eax,eax
 
@@ -367,9 +374,6 @@ w equ dword ptr[rbp+64]
 	.endprolog
 	
 	pxor xmm7,xmm7
-	pxor xmm6,xmm6
-	pxor xmm5,xmm5
-	pxor xmm4,xmm4
 	pxor xmm2,xmm2
 	pxor xmm1,xmm1
 			
@@ -383,21 +387,9 @@ w equ dword ptr[rbp+64]
 	mov ecx,w
 	cld
 		
-	mov eax,4
-	pinsrw xmm6,eax,0
-	pinsrw xmm6,eax,2
-	pinsrw xmm6,eax,4
-	pinsrw xmm6,eax,6
-	mov eax,3
-	pinsrw xmm5,eax,0
-	pinsrw xmm5,eax,2
-	pinsrw xmm5,eax,4
-	pinsrw xmm5,eax,6
-	mov eax,5
-	pinsrw xmm4,eax,0
-	pinsrw xmm4,eax,2
-	pinsrw xmm4,eax,4
-	pinsrw xmm4,eax,6
+	movdqa xmm6,oword ptr uw_4_0
+	movdqa xmm5,oword ptr uw_3_0
+	movdqa xmm4,oword ptr uw_5_0
 
 	xor eax,eax
 
@@ -489,8 +481,6 @@ w equ dword ptr[rbp+64]
 	.endprolog
 
 	pxor xmm7,xmm7
-	pxor xmm6,xmm6
-	pxor xmm5,xmm5
 	pxor xmm1,xmm1
 	pxor xmm2,xmm2
 	
@@ -505,18 +495,9 @@ w equ dword ptr[rbp+64]
 	mov ecx,w
 	cld
 	
-	mov eax,4
-	pinsrw xmm6,eax,1
-	pinsrw xmm6,eax,3
-	pinsrw xmm6,eax,5
-	pinsrw xmm6,eax,7
+	movdqa xmm6,oword ptr uw_4_1
+	movdqa xmm5,oword ptr uw_7_1
 	
-	mov eax,7
-	pinsrw xmm5,eax,1
-	pinsrw xmm5,eax,3
-	pinsrw xmm5,eax,5
-	pinsrw xmm5,eax,7
-
 	xor eax,eax	
 
 SSE2_3_a:
@@ -605,8 +586,6 @@ w equ dword ptr[rbp+64]
 	.endprolog
 
 	pxor xmm7,xmm7
-	pxor xmm6,xmm6
-	pxor xmm5,xmm5
 	pxor xmm1,xmm1
 	pxor xmm2,xmm2
 	
@@ -620,17 +599,8 @@ w equ dword ptr[rbp+64]
 	mov ecx,w
 	cld
 	
-	mov eax,4
-	pinsrw xmm6,eax,0
-	pinsrw xmm6,eax,2
-	pinsrw xmm6,eax,4
-	pinsrw xmm6,eax,6
-	
-	mov eax,7
-	pinsrw xmm5,eax,0
-	pinsrw xmm5,eax,2
-	pinsrw xmm5,eax,4
-	pinsrw xmm5,eax,6
+	movdqa xmm6,oword ptr uw_4_0
+	movdqa xmm5,oword ptr uw_7_0
 	
 	xor eax,eax		
 
@@ -720,8 +690,6 @@ w equ dword ptr[rbp+64]
 	.endprolog
 	
 	pxor xmm7,xmm7
-	pxor xmm6,xmm6
-	pxor xmm5,xmm5
 	pxor xmm2,xmm2
 	pxor xmm1,xmm1
 
@@ -735,18 +703,9 @@ w equ dword ptr[rbp+64]
 	mov ecx,w
 	cld
 	
-	mov eax,2
-	pinsrw xmm6,eax,1
-	pinsrw xmm6,eax,3
-	pinsrw xmm6,eax,5
-	pinsrw xmm6,eax,7
+	movdqa xmm6,oword ptr uw_2_1
+	movdqa xmm5,oword ptr uw_3_1
 	
-	mov eax,3
-	pinsrw xmm5,eax,1
-	pinsrw xmm5,eax,3
-	pinsrw xmm5,eax,5
-	pinsrw xmm5,eax,7
-
 	xor eax,eax	
 
 SSE2_4_a:
@@ -835,8 +794,6 @@ w equ dword ptr[rbp+64]
 	.endprolog
 
 	pxor xmm7,xmm7
-	pxor xmm6,xmm6
-	pxor xmm5,xmm5
 	pxor xmm2,xmm2
 	pxor xmm1,xmm1
 
@@ -850,18 +807,9 @@ w equ dword ptr[rbp+64]
 	mov ecx,w
 	cld
 	
-	mov eax,2
-	pinsrw xmm6,eax,0
-	pinsrw xmm6,eax,2
-	pinsrw xmm6,eax,4
-	pinsrw xmm6,eax,6
+	movdqa xmm6,oword ptr uw_2_0
+	movdqa xmm5,oword ptr uw_3_0
 	
-	mov eax,3
-	pinsrw xmm5,eax,0
-	pinsrw xmm5,eax,2
-	pinsrw xmm5,eax,4
-	pinsrw xmm5,eax,6
-
 	xor eax,eax	
 
 SSE2_4_b:

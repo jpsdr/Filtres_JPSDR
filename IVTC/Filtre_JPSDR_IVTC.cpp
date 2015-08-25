@@ -129,8 +129,8 @@ typedef struct _IVTC_Data_Flags
 
 typedef struct _IVTC_Data_Buffer
 {
-	void *frameRGB32,*_frameRGB32;
-	void *frameRGB32Resize,*_frameRGB32Resize;
+	void *frameRGB32;
+	void *frameRGB32Resize;
 	uint32_t error,error_IVTC_M1,error_IVTC_P1;
 	uint32_t error_Motion_Map,error_IVTC_M1_Motion_Map,error_IVTC_P1_Motion_Map;
 	uint32_t Delta_Top_P1,Delta_Bottom_P1,Delta_Top_M1,Delta_Bottom_M1;
@@ -411,9 +411,8 @@ protected:
 	JPSDR_IVTC_Manual manual;
 	uint8_t read_index[Read_Index_Size],error_index[Error_Index_Size];
 	uint8_t write_index[Write_Index_Size],flag_index[Flag_Index_Size];
-	void *_buffer_delta,*buffer_delta,*buffer_frame[2],*_buffer_frame[2];
-	void *_buffer_frameRGB32[2],*buffer_frameRGB32[2];
-	void *_buffer_resize_Y,*_buffer_resize_U,*_buffer_resize_V;
+	void *buffer_delta,*buffer_frame[2];
+	void *buffer_frameRGB32[2];
 	void *buffer_resize_Y,*buffer_resize_U,*buffer_resize_V;
 	uint8_t *buffer_frame_Y[2],*buffer_frame_U[2],*buffer_frame_V[2];
 	uint8_t *buffer_delta_Y,*buffer_delta_U,*buffer_delta_V;
@@ -544,23 +543,23 @@ bool JPSDR_IVTC::Init()
 	int16_t i;
 
 	resize_720x480=false;
-	_buffer_resize_Y=NULL;
-	_buffer_resize_U=NULL;
-	_buffer_resize_V=NULL;
-	_buffer_delta=NULL;
+	buffer_resize_Y=NULL;
+	buffer_resize_U=NULL;
+	buffer_resize_V=NULL;
+	buffer_delta=NULL;
 	buffer_map=NULL;
 	buffer_2=NULL;
 	for (i=0; i<2; i++)
 	{
-		_buffer_frame[i]=NULL;
-		_buffer_frameRGB32[i]=NULL;
+		buffer_frame[i]=NULL;
+		buffer_frameRGB32[i]=NULL;
 	}
 	for (i=0; i<Error_Fields_Size; i++)
 		error_Fields[i]=NULL;
 	for (i=0; i<Data_Buffer_Size; i++)
 	{
-		buffer[i]._frameRGB32=NULL;
-		buffer[i]._frameRGB32Resize=NULL;
+		buffer[i].frameRGB32=NULL;
+		buffer[i].frameRGB32Resize=NULL;
 	}
 	for (i=0; i<Interlaced_Tab_Size; i++)
 	{
@@ -2370,7 +2369,7 @@ void JPSDR_IVTC::Start()
 		}
 	}
 	
-	_buffer_delta=(void *)malloc(idata.src_h0*idata.src_w0*4+16); // Taille RGB32
+	buffer_delta=(void *)_aligned_malloc(idata.src_h0*idata.src_w0*4,ALIGN_SIZE); // Taille RGB32
 	buffer_map=(uint8_t *)malloc(idata.src_h0*w_map*sizeof(uint8_t));
 	buffer_2=(uint8_t *)malloc(idata.src_h0*w_map*sizeof(uint8_t));
 
@@ -2382,10 +2381,11 @@ void JPSDR_IVTC::Start()
 			case 1 :
 			case 2 :
 			case 3 :
-				_buffer_frame[i]=(void *)malloc(idata.src_size0+16);
+				buffer_frame[i]=(void *)_aligned_malloc(idata.src_size0,ALIGN_SIZE);
 				break;
 			case 6 :
-				_buffer_frame[i]=(void *)malloc(idata.src_size0+idata.src_size1+idata.src_size2+48);
+				buffer_frame[i]=(void *)_aligned_malloc(idata.src_size0+idata.src_size1+idata.src_size2
+					+2*ALIGN_SIZE,ALIGN_SIZE);
 				break;
 		}
 		switch (idata.video_mode)
@@ -2393,7 +2393,7 @@ void JPSDR_IVTC::Start()
 			case 2 :
 			case 3 :
 			case 6 :
-				_buffer_frameRGB32[i]=(void *)malloc(idata.src_h0*idata.src_w0*4+16);
+				buffer_frameRGB32[i]=(void *)_aligned_malloc(idata.src_h0*idata.src_w0*4,ALIGN_SIZE);
 				break;
 		}
 	}
@@ -2414,7 +2414,7 @@ void JPSDR_IVTC::Start()
 			case 2 :
 			case 3 :
 			case 6 :
-				buffer[i]._frameRGB32=(void *)malloc(idata.src_h0*idata.src_w0*4+16);
+				buffer[i].frameRGB32=(void *)_aligned_malloc(idata.src_h0*idata.src_w0*4,ALIGN_SIZE);
 				break;
 		}
 	}
@@ -2446,25 +2446,26 @@ void JPSDR_IVTC::Start()
 		{
 			resize_h1[i]=(sint32)trunc((i+0.5)/factor);
 		}
-		_buffer_resize_Y=(void *)malloc(720*480+16);
-		_buffer_resize_U=(void *)malloc(368*240+16);
-		_buffer_resize_V=(void *)malloc(368*240+16);
+		buffer_resize_Y=(void *)_aligned_malloc(720*480,ALIGN_SIZE);
+		buffer_resize_U=(void *)_aligned_malloc(368*240,ALIGN_SIZE);
+		buffer_resize_V=(void *)_aligned_malloc(368*240,ALIGN_SIZE);
 		for (i=0; i<Data_Buffer_Size; i++)
 		{
-			buffer[i]._frameRGB32Resize=(void *)malloc(720*480*4+16);
+			buffer[i].frameRGB32Resize=(void *)_aligned_malloc(720*480*4,ALIGN_SIZE);
 		}
 	}
 
-	test=((_buffer_delta!=NULL) && (buffer_map!=NULL) && (buffer_2!=NULL));
+
+	test=((buffer_delta!=NULL) && (buffer_map!=NULL) && (buffer_2!=NULL));
 	for (i=0; i<2; i++)
 	{
-		test=test && (_buffer_frame[i]!=NULL);
+		test=test && (buffer_frame[i]!=NULL);
 		switch (idata.video_mode)
 		{
 			case 2 :
 			case 3 :
 			case 6 :
-				test=test && (_buffer_frameRGB32[i]!=NULL);
+				test=test && (buffer_frameRGB32[i]!=NULL);
 				break;
 		}
 	}
@@ -2477,7 +2478,7 @@ void JPSDR_IVTC::Start()
 			case 2 :
 			case 3 :
 			case 6 :
-				test=test && (buffer[i]._frameRGB32!=NULL);
+				test=test && (buffer[i].frameRGB32!=NULL);
 				break;
 		}
 	}
@@ -2487,42 +2488,43 @@ void JPSDR_IVTC::Start()
 	}
 	if (resize_720x480)
 	{
-		test=test && (_buffer_resize_Y!=NULL);
-		test=test && (_buffer_resize_U!=NULL);
-		test=test && (_buffer_resize_V!=NULL);
+		test=test && (buffer_resize_Y!=NULL);
+		test=test && (buffer_resize_U!=NULL);
+		test=test && (buffer_resize_V!=NULL);
 		for (i=0; i<Data_Buffer_Size; i++)
 		{
-			test=test && (buffer[i]._frameRGB32Resize!=NULL);
+			test=test && (buffer[i].frameRGB32Resize!=NULL);
 		}
 	}
+
 
 	if (!test)
 	{
 		for (i=Data_Buffer_Size-1; i>=0; i--)
 		{
-			myfree(buffer[i]._frameRGB32Resize);
+			my_aligned_free(buffer[i].frameRGB32Resize);
 		}
-		myfree(_buffer_resize_V);
-		myfree(_buffer_resize_U);
-		myfree(_buffer_resize_Y);
+		my_aligned_free(buffer_resize_V);
+		my_aligned_free(buffer_resize_U);
+		my_aligned_free(buffer_resize_Y);
 		for (i=Interlaced_Tab_Size-1; i>=0; i--)
 		{
 			myfree(interlaced_tab[i]);
 		}
 		for (i=Data_Buffer_Size-1; i>=0; i--)
 		{
-			myfree(buffer[i]._frameRGB32);
+			my_aligned_free(buffer[i].frameRGB32);
 		}
 		for (i=Error_Fields_Size-1; i>=0; i--)
 			myfree(error_Fields[i]);
 		for (i=1; i>=0; i--)
 		{
-			myfree(_buffer_frameRGB32[i]);
-			myfree(_buffer_frame[i]);
+			my_aligned_free(buffer_frameRGB32[i]);
+			my_aligned_free(buffer_frame[i]);
 		}
 		myfree(buffer_2);
 		myfree(buffer_map);
-		myfree(_buffer_delta);
+		my_aligned_free(buffer_delta);
 		ff->ExceptOutOfMemory();
 		return;
 	}
@@ -2554,16 +2556,15 @@ void JPSDR_IVTC::Start()
 	switch(idata.video_mode)
 	{
 		case 6 :
-			if ((idata.src_size0&0x0F)==0) offset_y=idata.src_size0;
-			else offset_y=((idata.src_size0+15)>>4)<<4;
-			if ((idata.src_size1&0x0F)==0) offset_u=idata.src_size1;
-			else offset_u=((idata.src_size1+15)>>4)<<4;
+			if ((idata.src_size0&(ALIGN_SIZE-1))==0) offset_y=idata.src_size0;
+			else offset_y=((idata.src_size0+(ALIGN_SIZE-1))>>ALIGN_SHIFT)<<ALIGN_SHIFT;
+			if ((idata.src_size1&(ALIGN_SIZE-1))==0) offset_u=idata.src_size1;
+			else offset_u=((idata.src_size1+(ALIGN_SIZE-1))>>ALIGN_SHIFT)<<ALIGN_SHIFT;
 			break;
 		default : offset_y=0; offset_u=0;
 			break;
 	}
 
-	buffer_delta=(void *)(((size_t)_buffer_delta + 15) & ~(size_t)15);
 	switch(idata.video_mode)
 	{
 		case 6 :
@@ -2579,7 +2580,6 @@ void JPSDR_IVTC::Start()
 	}
 	for (i=0; i<2; i++)
 	{
-		buffer_frame[i]=(void *)(((size_t)_buffer_frame[i] + 15) & ~(size_t)15);
 		switch (idata.video_mode)
 		{
 			case 6 :
@@ -2591,25 +2591,6 @@ void JPSDR_IVTC::Start()
 				buffer_frame_Y[i]=(uint8_t *)buffer_frame[i];
 				buffer_frame_U[i]=buffer_frame_Y[i];
 				buffer_frame_V[i]=buffer_frame_Y[i];
-				break;
-		}
-		switch (idata.video_mode)
-		{
-			case 2 :
-			case 3 :
-			case 6 :
-				buffer_frameRGB32[i]=(void *)(((size_t)_buffer_frameRGB32[i] + 15) & ~(size_t)15);
-				break;
-		}
-	}
-	for (i=0; i<Data_Buffer_Size; i++)
-	{
-		switch (idata.video_mode)
-		{
-			case 2 :
-			case 3 :
-			case 6 :
-				buffer[i].frameRGB32=(void *)(((size_t)buffer[i]._frameRGB32 + 15) & ~(size_t)15);
 				break;
 		}
 	}
@@ -2626,16 +2607,6 @@ void JPSDR_IVTC::Start()
 					break;
 			}
 		}
-	}
-	if (resize_720x480)
-	{
-		for (i=0; i<Data_Buffer_Size; i++)
-		{
-			buffer[i].frameRGB32Resize=(void *)(((size_t)buffer[i]._frameRGB32Resize + 15) & ~(size_t)15);
-		}
-		buffer_resize_Y=(void *)(((size_t)_buffer_resize_Y + 15) & ~(size_t)15);
-		buffer_resize_U=(void *)(((size_t)_buffer_resize_U + 15) & ~(size_t)15);
-		buffer_resize_V=(void *)(((size_t)_buffer_resize_V + 15) & ~(size_t)15);
 	}
 
 /*	fic1=NULL;
@@ -11434,11 +11405,11 @@ void JPSDR_IVTC::End()
 
 	for (i=Data_Buffer_Size-1; i>=0; i--)
 	{
-		myfree(buffer[i]._frameRGB32Resize);
+		my_aligned_free(buffer[i].frameRGB32Resize);
 	}
-	myfree(_buffer_resize_V);
-	myfree(_buffer_resize_U);
-	myfree(_buffer_resize_Y);
+	my_aligned_free(buffer_resize_V);
+	my_aligned_free(buffer_resize_U);
+	my_aligned_free(buffer_resize_Y);
 
 	for (i=Interlaced_Tab_Size-1; i>=0; i--)
 	{
@@ -11446,18 +11417,18 @@ void JPSDR_IVTC::End()
 	}
 	for (i=Data_Buffer_Size-1; i>=0; i--)
 	{
-		myfree(buffer[i]._frameRGB32);
+		my_aligned_free(buffer[i].frameRGB32);
 	}
 	for (i=Error_Fields_Size-1; i>=0; i--)
 		myfree(error_Fields[i]);
 	for (i=1; i>=0; i--)
 	{
-		myfree(_buffer_frameRGB32[i]);
-		myfree(_buffer_frame[i]);
+		my_aligned_free(buffer_frameRGB32[i]);
+		my_aligned_free(buffer_frame[i]);
 	}
 	myfree(buffer_2);
 	myfree(buffer_map);
-	myfree(_buffer_delta);
+	my_aligned_free(buffer_delta);
 }
 
 
@@ -11531,5 +11502,5 @@ void JPSDR_IVTC::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_IVTC=
-VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v5.1.2","IVTC Filter. [MMX][SSE] Optimised.");
+VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v5.2.0","IVTC Filter. [MMX][SSE] Optimised.");
 
