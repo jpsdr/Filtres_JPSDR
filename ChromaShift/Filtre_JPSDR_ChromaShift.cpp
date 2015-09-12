@@ -10,8 +10,11 @@
 #include "..\Filtres_JPSDR\JPSDR_Filter.h"
 #include "..\Filtres_JPSDR\Pascal.h"
 
+#include "..\asmlib\asmlib.h"
+
 extern int g_VFVAPIVersion;
 
+extern "C" int IInstrSet;
 
 class JPSDR_ChromaShiftData
 {
@@ -282,27 +285,29 @@ protected:
 	Image_Data idata;
 	uint8_t *buffer_Y,*buffer_U,*buffer_V;
 	int16_t lookupRGB[14][256];
-
+	size_t CPU_Cache_Size,Cache_Setting;
+	
 	void ConvertRGB32toPlanarYCbCr(const void *src, uint8_t *dst_Y, uint8_t *dst_U, uint8_t *dst_V,
-		ptrdiff_t src_modulo, int32_t w, int32_t h);
+		ptrdiff_t src_modulo, const int32_t w, const int32_t h);
 	void ConvertPlanarYCbCrtoRGB32(const uint8_t *src_Y, const uint8_t *src_U, const uint8_t *src_V,
-		void *dst,ptrdiff_t dst_modulo, int32_t w, int32_t h);
+		void *dst,ptrdiff_t dst_modulo, const int32_t w, const int32_t h);
 	void ConvertYUY2toPlanarYCbCr(const void *src, uint8_t *dst_Y, uint8_t *dst_U, uint8_t *dst_V,
-		ptrdiff_t src_modulo, int32_t w, int32_t h);
+		ptrdiff_t src_modulo, const int32_t w, const int32_t h);
 	void ConvertPlanarYCbCrtoYUY2(const uint8_t *src_Y, const uint8_t *src_U, const uint8_t *src_V,
-		void *dst,ptrdiff_t dst_modulo, int32_t w, int32_t h);
+		void *dst,ptrdiff_t dst_modulo, const int32_t w, const int32_t h);
 	void ConvertUYVYtoPlanarYCbCr(const void *src, uint8_t *dst_Y, uint8_t *dst_U, uint8_t *dst_V,
-		ptrdiff_t src_modulo, int32_t w, int32_t h);
+		ptrdiff_t src_modulo, const int32_t w, const int32_t h);
 	void ConvertPlanarYCbCrtoUYVY(const uint8_t *src_Y, const uint8_t *src_U, const uint8_t *src_V,
-		void *dst,ptrdiff_t dst_modulo, int32_t w, int32_t h);
-	void ShiftPlanarLeft(const uint8_t *src, void *dst, ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w, int32_t h,
-		int32_t shift,uint8_t data);
-	void ShiftPlanarRight(const uint8_t *src, void *dst, ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w, int32_t h,
-		int32_t shift,uint8_t data);
-	void ShiftPlanarUp(const uint8_t *src, void *dst, ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w, int32_t h,
-		int32_t shift,uint8_t data);
-	void ShiftPlanarDown(const uint8_t *src, void *dst, ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w, int32_t h,
-		int32_t shift,uint8_t data);
+		void *dst,ptrdiff_t dst_modulo, const int32_t w, const int32_t h);
+
+	void ShiftPlanarLeft(const void *src_, void *dst_, ptrdiff_t src_pitch, ptrdiff_t dst_pitch,
+		const int32_t w, const int32_t h, const int32_t shift,const uint8_t data);
+	void ShiftPlanarRight(const void *src_, void *dst_, ptrdiff_t src_pitch, ptrdiff_t dst_pitch,
+		const int32_t w, const int32_t h,const int32_t shift,const uint8_t data);
+	void ShiftPlanarUp(const void *src_, void *dst_, ptrdiff_t src_pitch, ptrdiff_t dst_pitch,
+		const int32_t w, const int32_t h, const int32_t shift, const uint8_t data);
+	void ShiftPlanarDown(const void *src_, void *dst_, ptrdiff_t src_pitch, ptrdiff_t dst_pitch,
+		const int32_t w, const int32_t h,const int32_t shift,const uint8_t data);
 
 	void ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptValue *argv, int argc);
 		
@@ -459,18 +464,20 @@ bool JPSDR_ChromaShift::Init()
 	buffer_U=NULL;
 	buffer_V=NULL;
 
+	if (IInstrSet<0) InstructionSet();
+	CPU_Cache_Size=DataCacheSize(0)>>2;
+
 	return(true);
 }
 
 
 void JPSDR_ChromaShift::ConvertYUY2toPlanarYCbCr(const void *_src, uint8_t *dst_Y, uint8_t *dst_U, uint8_t *dst_V,
-	ptrdiff_t src_modulo, int32_t w, int32_t h)
+	ptrdiff_t src_modulo, const int32_t w, const int32_t h)
 {
-	int32_t w_2;
+	const int32_t w_2=(w+1)>>1;
 	const YUYV *src;
 
 	src=(YUYV*)_src;
-	w_2=(w+1)>>1;
 
 	for (int32_t i=0; i<h; i++)
 	{
@@ -488,13 +495,12 @@ void JPSDR_ChromaShift::ConvertYUY2toPlanarYCbCr(const void *_src, uint8_t *dst_
 
 
 void JPSDR_ChromaShift::ConvertUYVYtoPlanarYCbCr(const void *_src, uint8_t *dst_Y, uint8_t *dst_U, uint8_t *dst_V,
-	ptrdiff_t src_modulo, int32_t w, int32_t h)
+	ptrdiff_t src_modulo, const int32_t w, const int32_t h)
 {
-	int32_t w_2;
+	const int32_t w_2=(w+1)>>1;
 	const UYVY *src;
 
 	src=(UYVY*)_src;
-	w_2=(w+1)>>1;
 
 	for (int32_t i=0; i<h; i++)
 	{
@@ -513,13 +519,12 @@ void JPSDR_ChromaShift::ConvertUYVYtoPlanarYCbCr(const void *_src, uint8_t *dst_
 
 
 void JPSDR_ChromaShift::ConvertPlanarYCbCrtoYUY2(const uint8_t *src_Y, const uint8_t *src_U, const uint8_t *src_V,
-	void *_dst, ptrdiff_t dst_modulo, int32_t w, int32_t h)
+	void *_dst, ptrdiff_t dst_modulo, const int32_t w, const int32_t h)
 {
-	int32_t w_2;
+	const int32_t w_2=(w+1)>>1;
 	YUYV *dst;
 
 	dst=(YUYV*)_dst;
-	w_2=(w+1)>>1;
 
 	for (int32_t i=0; i<h; i++)
 	{
@@ -538,13 +543,12 @@ void JPSDR_ChromaShift::ConvertPlanarYCbCrtoYUY2(const uint8_t *src_Y, const uin
 
 
 void JPSDR_ChromaShift::ConvertPlanarYCbCrtoUYVY(const uint8_t *src_Y, const uint8_t *src_U, const uint8_t *src_V,
-	void *_dst, ptrdiff_t dst_modulo, int32_t w, int32_t h)
+	void *_dst, ptrdiff_t dst_modulo, const int32_t w, const int32_t h)
 {
-	int32_t w_2;
+	const int32_t w_2=(w+1)>>1;
 	UYVY *dst;
 
 	dst=(UYVY*)_dst;
-	w_2=(w+1)>>1;
 
 	for (int32_t i=0; i<h; i++)
 	{
@@ -562,7 +566,7 @@ void JPSDR_ChromaShift::ConvertPlanarYCbCrtoUYVY(const uint8_t *src_Y, const uin
 
 
 void JPSDR_ChromaShift::ConvertRGB32toPlanarYCbCr(const void *_src, uint8_t *dst_Y, uint8_t *dst_U, uint8_t *dst_V,
-	ptrdiff_t src_modulo, int32_t w, int32_t h)
+	ptrdiff_t src_modulo, const int32_t w, const int32_t h)
 {
 	const RGB32BMP* src;
 	uint8_t r,g,b;
@@ -587,7 +591,7 @@ void JPSDR_ChromaShift::ConvertRGB32toPlanarYCbCr(const void *_src, uint8_t *dst
 
 
 void JPSDR_ChromaShift::ConvertPlanarYCbCrtoRGB32(const uint8_t *src_Y, const uint8_t *src_U, const uint8_t *src_V,
-	void *_dst,ptrdiff_t dst_modulo, int32_t w, int32_t h)
+	void *_dst,ptrdiff_t dst_modulo, const int32_t w, const int32_t h)
 {
 	RGB32BMP *dst;
 	int16_t y,calcul;
@@ -630,48 +634,41 @@ void JPSDR_ChromaShift::ConvertPlanarYCbCrtoRGB32(const uint8_t *src_Y, const ui
 
 
 
-void JPSDR_ChromaShift::ShiftPlanarLeft(const uint8_t *_src, void *dst, ptrdiff_t src_pitch, ptrdiff_t dst_pitch,
-	int32_t w, int32_t h,int32_t shift, uint8_t data)
+void JPSDR_ChromaShift::ShiftPlanarLeft(const void *src_, void *dst_, ptrdiff_t src_pitch, ptrdiff_t dst_pitch,
+	const int32_t w, const int32_t h,const int32_t shift, const uint8_t data)
 {
-	int32_t w_shift;
-	uint8_t *dst_a;
-	const uint8_t *src;
-
 	if ((shift==0) || (shift>=w)) return;
 
-	w_shift=w-shift;
-	src=_src+shift;
-	dst_a=(uint8_t *)((uint8_t *)dst+w_shift);
+	const int32_t w_shift=w-shift;
+	const uint8_t *src=(uint8_t *)src_+shift;
+	uint8_t *dst=(uint8_t *)dst_;
+	uint8_t *dst_a=dst+w_shift;
 
 	for (int32_t i=0; i<h; i++)
 	{
-		memmove(dst,src,w_shift);
-		for (int32_t j=0; j<shift; j++)
-			dst_a[j]=data;
+		A_memmove(dst,src,w_shift);
+		A_memset(dst_a,data,shift);
 		src+=src_pitch;
-		dst=(void *)((uint8_t *)dst+dst_pitch);
+		dst+=dst_pitch;
 		dst_a+=dst_pitch;
 	}
 }
 
 
-void JPSDR_ChromaShift::ShiftPlanarRight(const uint8_t *src, void *dst, ptrdiff_t src_pitch, ptrdiff_t dst_pitch,
-	int32_t w, int32_t h,int32_t shift, uint8_t data)
+void JPSDR_ChromaShift::ShiftPlanarRight(const void *src_, void *dst_, ptrdiff_t src_pitch, ptrdiff_t dst_pitch,
+	const int32_t w, const int32_t h,const int32_t shift, const uint8_t data)
 {
-	int32_t w_shift;
-	uint8_t *dst_a,*dst_b;
-
 	if ((shift==0) || (shift>=w)) return;
 
-	w_shift=w-shift;
-	dst_a=(uint8_t *)((uint8_t *)dst+shift);
-	dst_b=(uint8_t *)dst;
+	const uint8_t *src=(uint8_t *)src_;
+	const int32_t w_shift=w-shift;
+	uint8_t *dst_b=(uint8_t *)dst_;
+	uint8_t *dst_a=dst_b+shift;
 
 	for (int32_t i=0; i<h; i++)
 	{
-		memmove(dst_a,src,w_shift);
-		for (int32_t j=0; j<shift; j++)
-			dst_b[j]=data;
+		A_memmove(dst_a,src,w_shift);
+		A_memset(dst_b,data,shift);
 		src+=src_pitch;
 		dst_a+=dst_pitch;
 		dst_b+=dst_pitch;
@@ -680,56 +677,68 @@ void JPSDR_ChromaShift::ShiftPlanarRight(const uint8_t *src, void *dst, ptrdiff_
 
 
 
-void JPSDR_ChromaShift::ShiftPlanarUp(const uint8_t *_src, void *dst, ptrdiff_t src_pitch, ptrdiff_t dst_pitch,
-	int32_t w, int32_t h,int32_t shift, uint8_t data)
+void JPSDR_ChromaShift::ShiftPlanarUp(const void *src_, void *dst_, ptrdiff_t src_pitch, ptrdiff_t dst_pitch,
+	const int32_t w, const int32_t h, const int32_t shift, const uint8_t data)
 {
-	uint8_t *src;
-	uint8_t *dst_a;
-
 	if ((shift==0) || (shift>=h)) return;
 
-	src=(uint8_t *)_src+(shift*src_pitch);
-	dst_a=(uint8_t *)dst;
+	const uint8_t *src=(uint8_t *)src_+shift*src_pitch;
+	uint8_t *dst=(uint8_t *)dst_;
 
-	for (int32_t i=shift; i<h; i++)
+	if ((src_pitch==dst_pitch) && (src_pitch==w))
 	{
-		memcpy(dst_a,src,w);
-		src+=src_pitch;
-		dst_a+=dst_pitch;
+		A_memcpy(dst,src,(size_t)w*(size_t)(h-shift));
+		dst+=(h-shift)*w;
+
+		A_memset(dst,data,(size_t)w*(size_t)shift);
 	}
-
-	for (int32_t i=0; i<shift; i++)
+	else
 	{
-		for (int32_t j=0; j<w; j++)
-			dst_a[j]=data;
-		dst_a+=dst_pitch;			
+		for (int32_t i=shift; i<h; i++)
+		{
+			A_memcpy(dst,src,w);
+			src+=src_pitch;
+			dst+=dst_pitch;
+		}
+
+		for (int32_t i=0; i<shift; i++)
+		{
+			A_memset(dst,data,w);
+			dst+=dst_pitch;			
+		}
 	}
 }
 
 
-void JPSDR_ChromaShift::ShiftPlanarDown(const uint8_t *_src, void *dst, ptrdiff_t src_pitch, ptrdiff_t dst_pitch,
-	int32_t w, int32_t h,int32_t shift, uint8_t data)
+void JPSDR_ChromaShift::ShiftPlanarDown(const void *src_, void *dst_, ptrdiff_t src_pitch, ptrdiff_t dst_pitch,
+	const int32_t w, const int32_t h, const int32_t shift, const uint8_t data)
 {
-	uint8_t *src;
-	uint8_t *dst_a;
-
 	if ((shift==0) || (shift>=h)) return;
 
-	src=(uint8_t *)_src+((h-shift-1)*src_pitch);
-	dst_a=(uint8_t *)dst+(h-1)*dst_pitch;
+	const uint8_t *src=(uint8_t *)src_+((h-shift-1)*src_pitch);
+	uint8_t *dst=(uint8_t *)dst_+(h-1)*dst_pitch;
 
-	for (int32_t i=shift; i<h; i++)
+	if ((src_pitch==dst_pitch) && (-src_pitch==w))
 	{
-		memcpy(dst_a,src,w);
-		src-=src_pitch;
-		dst_a-=dst_pitch;
+		A_memcpy(dst,src,(size_t)w*(size_t)(h-shift));
+		dst+=(h-shift)*w;
+
+		A_memset(dst,data,(size_t)w*(size_t)shift);
 	}
-
-	for (int32_t i=0; i<shift; i++)
+	else
 	{
-		for (int32_t j=0; j<w; j++)
-			dst_a[j]=data;
-		dst_a-=dst_pitch;			
+		for (int32_t i=shift; i<h; i++)
+		{
+			A_memcpy(dst,src,w);
+			src-=src_pitch;
+			dst-=dst_pitch;
+		}
+
+		for (int32_t i=0; i<shift; i++)
+		{
+			A_memset(dst,data,w);
+			dst-=dst_pitch;			
+		}
 	}
 }
 
@@ -755,6 +764,9 @@ void JPSDR_ChromaShift::Run()
 	idata.dst_plane0=pxdst.data;
 	idata.dst_plane1=pxdst.data2;
 	idata.dst_plane2=pxdst.data3;
+
+	SetMemcpyCacheLimit(Cache_Setting);
+	SetMemsetCacheLimit(Cache_Setting);
 
 	switch(idata.video_mode)
 	{
@@ -1156,7 +1168,7 @@ void JPSDR_ChromaShift::Start()
 				idata.src_video_mode=1;
 				idata.video_mode=1;
 				idata.src_modulo0=idata.src_pitch0-4*idata.src_w0;
-				idata.src_size0=idata.src_h0*4*idata.src_w0;
+				idata.src_size0=(size_t)idata.src_h0*(size_t)idata.src_w0*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1175,7 +1187,7 @@ void JPSDR_ChromaShift::Start()
 				idata.src_video_mode=2;
 				idata.video_mode=2;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1194,7 +1206,7 @@ void JPSDR_ChromaShift::Start()
 				idata.src_video_mode=2;
 				idata.video_mode=2;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1213,7 +1225,7 @@ void JPSDR_ChromaShift::Start()
 				idata.src_video_mode=2;
 				idata.video_mode=2;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1232,7 +1244,7 @@ void JPSDR_ChromaShift::Start()
 				idata.src_video_mode=2;
 				idata.video_mode=2;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1251,7 +1263,7 @@ void JPSDR_ChromaShift::Start()
 				idata.src_video_mode=3;
 				idata.video_mode=3;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1270,7 +1282,7 @@ void JPSDR_ChromaShift::Start()
 				idata.src_video_mode=3;
 				idata.video_mode=3;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1289,7 +1301,7 @@ void JPSDR_ChromaShift::Start()
 				idata.src_video_mode=3;
 				idata.video_mode=3;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1308,7 +1320,7 @@ void JPSDR_ChromaShift::Start()
 				idata.src_video_mode=3;
 				idata.video_mode=3;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1333,9 +1345,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_NONE;								
@@ -1350,9 +1362,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_NONE;								
@@ -1367,9 +1379,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_NONE;								
@@ -1384,9 +1396,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_NONE;								
@@ -1401,9 +1413,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_NONE;				
@@ -1418,9 +1430,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_NONE;				
@@ -1435,9 +1447,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_NONE;				
@@ -1452,9 +1464,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_NONE;				
@@ -1469,9 +1481,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=PROGRESSIVE;								
@@ -1486,9 +1498,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED;								
@@ -1503,9 +1515,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_BFF;								
@@ -1520,9 +1532,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_TFF;								
@@ -1537,9 +1549,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=PROGRESSIVE;								
@@ -1554,9 +1566,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED;								
@@ -1571,9 +1583,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_BFF;								
@@ -1588,9 +1600,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_TFF;								
@@ -1605,9 +1617,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=PROGRESSIVE;								
@@ -1622,9 +1634,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED;								
@@ -1639,9 +1651,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_BFF;								
@@ -1656,9 +1668,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_TFF;								
@@ -1673,9 +1685,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=PROGRESSIVE;								
@@ -1690,9 +1702,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED;								
@@ -1707,9 +1719,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_BFF;								
@@ -1724,9 +1736,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_TFF;								
@@ -1741,9 +1753,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_NONE;												
@@ -1758,9 +1770,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_NONE;												
@@ -1775,9 +1787,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_NONE;												
@@ -1792,9 +1804,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_NONE;												
@@ -1809,9 +1821,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=PROGRESSIVE;																
@@ -1826,9 +1838,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=PROGRESSIVE;																
@@ -1843,9 +1855,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=PROGRESSIVE;																
@@ -1860,9 +1872,9 @@ void JPSDR_ChromaShift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=PROGRESSIVE;																
@@ -1871,7 +1883,7 @@ void JPSDR_ChromaShift::Start()
 				idata.src_video_mode=9;
 				idata.video_mode=9;
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
-				idata.src_size0=idata.src_h0*idata.src_w0;
+				idata.src_size0=(size_t)idata.src_h0*(size_t)idata.src_w0;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1890,7 +1902,7 @@ void JPSDR_ChromaShift::Start()
 				idata.src_video_mode=9;
 				idata.video_mode=9;
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
-				idata.src_size0=idata.src_h0*idata.src_w0;
+				idata.src_size0=(size_t)idata.src_h0*(size_t)idata.src_w0;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1911,7 +1923,7 @@ void JPSDR_ChromaShift::Start()
 			case nsVDXPixmap::kPixFormat_XRGB8888 :
 				idata.dst_video_mode=1;
 				idata.dst_modulo0=idata.dst_pitch0-4*idata.dst_w0;
-				idata.dst_size0=idata.dst_h0*4*idata.dst_w0;
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)idata.dst_w0*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1929,7 +1941,7 @@ void JPSDR_ChromaShift::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_YUYV :
 				idata.dst_video_mode=2;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1947,7 +1959,7 @@ void JPSDR_ChromaShift::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_YUYV_709 :
 				idata.dst_video_mode=2;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1965,7 +1977,7 @@ void JPSDR_ChromaShift::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_YUYV_FR :
 				idata.dst_video_mode=2;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1983,7 +1995,7 @@ void JPSDR_ChromaShift::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_YUYV_709_FR :			
 				idata.dst_video_mode=2;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -2001,7 +2013,7 @@ void JPSDR_ChromaShift::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_UYVY :
 				idata.dst_video_mode=3;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -2019,7 +2031,7 @@ void JPSDR_ChromaShift::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_UYVY_709 :
 				idata.dst_video_mode=3;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -2037,7 +2049,7 @@ void JPSDR_ChromaShift::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_UYVY_FR :
 				idata.dst_video_mode=3;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -2055,7 +2067,7 @@ void JPSDR_ChromaShift::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_UYVY_709_FR :			
 				idata.dst_video_mode=3;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -2079,9 +2091,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -2095,9 +2107,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -2111,9 +2123,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -2127,9 +2139,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -2143,9 +2155,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -2159,9 +2171,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -2175,9 +2187,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -2191,9 +2203,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -2207,9 +2219,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2223,9 +2235,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED;																																
@@ -2239,9 +2251,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_BFF;																																
@@ -2255,9 +2267,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_TFF;																																
@@ -2271,9 +2283,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2287,9 +2299,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED;																																
@@ -2303,9 +2315,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_BFF;																																
@@ -2319,9 +2331,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_TFF;																																
@@ -2335,9 +2347,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2351,9 +2363,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED;																																
@@ -2367,9 +2379,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_BFF;																																
@@ -2383,9 +2395,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_TFF;																																
@@ -2399,9 +2411,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2415,9 +2427,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED;																																
@@ -2431,9 +2443,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_BFF;																																
@@ -2447,9 +2459,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_TFF;																																
@@ -2463,9 +2475,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -2479,9 +2491,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -2495,9 +2507,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -2511,9 +2523,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -2527,9 +2539,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2543,9 +2555,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2559,9 +2571,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2575,9 +2587,9 @@ void JPSDR_ChromaShift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2585,7 +2597,7 @@ void JPSDR_ChromaShift::Start()
 			case nsVDXPixmap::kPixFormat_Y8 :
 				idata.dst_video_mode=9;
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
-				idata.dst_size0=idata.dst_h0*idata.dst_w0;
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)idata.dst_w0;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -2603,7 +2615,7 @@ void JPSDR_ChromaShift::Start()
 			case nsVDXPixmap::kPixFormat_Y8_FR :						
 				idata.dst_video_mode=9;
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
-				idata.dst_size0=idata.dst_h0*idata.dst_w0;
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)idata.dst_w0;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -2656,6 +2668,16 @@ void JPSDR_ChromaShift::Start()
 		myfree(buffer_Y);
 		ff->ExceptOutOfMemory();
 	}
+
+	const size_t img_size=idata.dst_size0+idata.dst_size1+idata.dst_size2;
+
+	if (img_size<=MAX_CACHE_SIZE)
+	{
+		if (CPU_Cache_Size>=img_size) Cache_Setting=img_size;
+		else Cache_Setting=16;
+	}
+	else Cache_Setting=16;
+
 }
 
 
@@ -2698,5 +2720,5 @@ void JPSDR_ChromaShift::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_ChromaShift=
-VDXVideoFilterDefinition<JPSDR_ChromaShift>("JPSDR","Chroma Shift v2.0.2","Shift chrominace channels");
+VDXVideoFilterDefinition<JPSDR_ChromaShift>("JPSDR","Chroma Shift v2.1.0","Shift chrominace channels");
 

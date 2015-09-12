@@ -2,243 +2,6 @@
 
 
 
-;JPSDR_BlurMotion_Move32_Full proc src:dword,dst:dword,w:dword,h:dword,src_modulo:dword,dst_modulo:dword
-; src = rcx
-; dst = rdx
-; w = r8d
-; h = r9d
-
-JPSDR_BlurMotion_Move32_Full proc public frame
-
-src_modulo equ qword ptr[rbp+48]
-dst_modulo equ qword ptr[rbp+56]
-
-	push rbp
-	.pushreg rbp
-	mov rbp,rsp
-	push rdi
-	.pushreg rdi
-	push rsi
-	.pushreg rsi
-	.endprolog
-	
-	cld
-	mov rsi,rcx
-	mov rdi,rdx
-	xor rcx,rcx
-	mov r10,src_modulo
-	mov r11,dst_modulo
-	
-loop_F:
-	mov ecx,r8d
-	shr ecx,1
-	jnc short loop_Fa
-	movsd
-loop_Fa:	
-	rep movsq
-	add rsi,r10
-	add rdi,r11
-	dec r9d
-	jnz short loop_F
-	
-fin_F:
-	pop rsi	
-	pop rdi
-	pop rbp
-
-	ret
-
-JPSDR_BlurMotion_Move32_Full endp
-
-
-;JPSDR_BlurMotion_MMX proc src:dword,s:dword,dst:dword,w:dword,h:dword,src_pitch:dword,buffer_pitch:dword,
-;	dst_pitch:dword
-; src = rcx
-; s = rdx
-; dst = r8
-; w = r9d
-
-JPSDR_BlurMotion_MMX proc public frame
-
-h equ dword ptr[rbp+48]
-src_pitch equ qword ptr[rbp+56]
-buffer_pitch equ qword ptr[rbp+64]
-dst_pitch equ qword ptr[rbp+72]
-
-	push rbp
-	.pushreg rbp
-	mov rbp,rsp
-	push rdi
-	.pushreg rdi
-	push rsi
-	.pushreg rsi	
-	push rbx
-	.pushreg rbx
-	.endprolog
-	
-	mov rsi,rcx
-	mov rdi,rdx
-	mov r10d,h
-	mov r11,src_pitch
-	mov rbx,buffer_pitch
-	mov rdx,dst_pitch
-	xor rcx,rcx
-
-loop_1_b:
-	xor rax,rax
-	mov ecx,r9d
-loop_2_b:
-	movd mm0,dword ptr[rsi+4*rax]
-	movd mm1,dword ptr[rdi+4*rax]
-	punpcklbw mm0,mm2
-	punpcklbw mm1,mm2
-	paddusw mm0,mm1
-	psrlw mm0,1
-	packuswb mm0,mm2
-	movd dword ptr[r8+4*rax],mm0
-	inc rax
-	loop loop_2_b
-	add rsi,r11
-	add rdi,rbx
-	add r8,rdx
-	dec r10d
-	jnz short loop_1_b
-
-	emms
-
-	pop rbx
-	pop rsi
-	pop rdi
-	pop rbp
-
-	ret
-
-JPSDR_BlurMotion_MMX endp
-
-
-
-;JPSDR_BlurMotion_SSE proc src:dword,s:dword,dst:dword,w:dword,h:dword,src_pitch:dword,buffer_pitch:dword,
-;	dst_pitch:dword
-; src = rcx
-; s = rdx
-; dst = r8
-; w = r9d
-
-JPSDR_BlurMotion_SSE proc public frame
-
-h equ dword ptr[rbp+48]
-src_pitch equ qword ptr[rbp+56]
-buffer_pitch equ qword ptr[rbp+64]
-dst_pitch equ qword ptr[rbp+72]
-
-	push rbp
-	.pushreg rbp
-	mov rbp,rsp
-	push rdi
-	.pushreg rdi
-	push rsi
-	.pushreg rsi	
-	push rbx
-	.pushreg rbx
-	.endprolog
-	
-	mov rsi,rcx
-	mov rdi,rdx
-	mov r10d,h
-	mov r11,src_pitch
-	mov rbx,buffer_pitch
-	mov rdx,dst_pitch
-	xor rcx,rcx
-
-loop_1_c:
-	xor rax,rax
-	mov ecx,r9d
-loop_2_c:
-	movd mm0,dword ptr[rsi+4*rax]
-	movd mm1,dword ptr[rdi+4*rax]
-	pavgb mm0,mm1
-	movd dword ptr[r8+4*rax],mm0
-	inc rax
-	loop loop_2_c
-	add rsi,r11
-	add rdi,rbx
-	add r8,rdx
-	dec r10d
-	jnz short loop_1_c
-
-	emms
-	
-	pop rbx
-	pop rsi
-	pop rdi
-	pop rbp
-
-	ret
-
-JPSDR_BlurMotion_SSE endp
-
-
-
-;JPSDR_BlurMotion_SSE_2 proc src:dword,s:dword,dst:dword,w:dword,h:dword,src_pitch:dword,buffer_pitch:dword,
-;	dst_pitch:dword
-; src = rcx
-; s = rdx
-; dst = r8
-; w = r9d
-
-JPSDR_BlurMotion_SSE_2 proc public frame
-
-h equ dword ptr[rbp+48]
-src_pitch equ qword ptr[rbp+56]
-buffer_pitch equ qword ptr[rbp+64]
-dst_pitch equ qword ptr[rbp+72]
-
-	push rbp
-	.pushreg rbp
-	mov rbp,rsp
-	push rdi
-	.pushreg rdi
-	push rsi
-	.pushreg rsi	
-	push rbx
-	.pushreg rbx
-	.endprolog
-	
-	mov rsi,rcx
-	mov rdi,rdx
-	mov r10d,h
-	mov r11,src_pitch
-	mov rbx,buffer_pitch
-	mov rdx,dst_pitch
-	xor rcx,rcx
-	
-loop_1_d:
-	xor rax,rax
-	mov ecx,r9d
-loop_2_d:
-	movq mm0,qword ptr[rsi+8*rax]
-	pavgb mm0,qword ptr[rdi+8*rax]
-	movq qword ptr[r8+8*rax],mm0
-	inc rax
-	loop loop_2_d
-	add rsi,r11
-	add rdi,rbx
-	add r8,rdx
-	dec r10d
-	jnz short loop_1_d
-
-	emms
-
-	pop rbx
-	pop rsi
-	pop rdi
-	pop rbp
-
-	ret
-
-JPSDR_BlurMotion_SSE_2 endp
-
-
 
 ;JPSDR_BlurMotion_SSE_3 proc src:dword,s:dword,dst:dword,w:dword,h:dword,src_pitch:dword,buffer_pitch:dword,
 ;	dst_pitch:dword
@@ -273,18 +36,34 @@ dst_pitch equ qword ptr[rbp+72]
 	mov r11,src_pitch
 	mov rbx,buffer_pitch
 	mov rdx,dst_pitch
-	mov r12,16
+	mov r12d,1
 	xor rcx,rcx
 
 loop_1_e:
 	xor rax,rax
 	mov ecx,r9d
+	shr ecx,1
+	jz short loop_3_e
+	
 loop_2_e:
-	movdqa xmm0,[rsi+rax]
-	pavgb xmm0,[rdi+rax]
-	movdqa [r8+rax],xmm0
-	add rax,r12
+	movq xmm0,qword ptr[rsi+8*rax]
+	movq xmm1,qword ptr[rdi+8*rax]
+	pavgb xmm0,xmm1
+	movq qword ptr[r8+8*rax],xmm0
+	inc rax
 	loop loop_2_e
+	
+loop_3_e:
+	mov ecx,r9d
+	and ecx,r12d
+	jz short loop_4_e
+
+	movd xmm0,dword ptr[rsi+8*rax]
+	movd xmm1,dword ptr[rdi+8*rax]
+	pavgb xmm0,xmm1
+	movd dword ptr[r8+8*rax],xmm0
+	
+loop_4_e:	
 	add rsi,r11
 	add rdi,rbx
 	add r8,rdx
@@ -302,14 +81,15 @@ loop_2_e:
 JPSDR_BlurMotion_SSE_3 endp
 
 
-;JPSDR_BlurMotion_SSE_3_A_U proc src:dword,s:dword,dst:dword,w:dword,h:dword,src_pitch:dword,buffer_pitch:dword,
+
+;JPSDR_BlurMotion_SSE_3_A proc src:dword,s:dword,dst:dword,w:dword,h:dword,src_pitch:dword,buffer_pitch:dword,
 ;	dst_pitch:dword
 ; src = rcx
 ; s = rdx
 ; dst = r8
 ; w = r9d
 
-JPSDR_BlurMotion_SSE_3_A_U proc public frame
+JPSDR_BlurMotion_SSE_3_A proc public frame
 
 h equ dword ptr[rbp+48]
 src_pitch equ qword ptr[rbp+56]
@@ -327,6 +107,12 @@ dst_pitch equ qword ptr[rbp+72]
 	.pushreg rbx
 	push r12
 	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	push r15
+	.pushreg r15
 	.endprolog
 	
 	mov rsi,rcx
@@ -336,23 +122,57 @@ dst_pitch equ qword ptr[rbp+72]
 	mov rbx,buffer_pitch
 	mov rdx,dst_pitch
 	mov r12,16
+	mov r13d,3
+	mov r14d,2
+	mov r15d,1
 	xor rcx,rcx
 
 loop_1_f:
 	xor rax,rax
 	mov ecx,r9d
+	shr ecx,2
+	jz short loop_3_f
+	
 loop_2_f:
-	movdqa xmm0,[rsi+rax]
-	pavgb xmm0,[rdi+rax]
+	movdqa xmm0,oword ptr[rsi+rax]
+	pavgb xmm0,oword ptr[rdi+rax]
 	movdqu [r8+rax],xmm0
 	add rax,r12
 	loop loop_2_f
+	
+loop_3_f:
+	mov ecx,r9d
+	and ecx,r13d
+	jz short loop_5_f
+	and ecx,r14d
+	jz short loop_4_f
+	
+	movq xmm0,qword ptr[rsi+rax]
+	movq xmm1,qword ptr[rdi+rax]
+	pavgb xmm0,xmm1
+	movq qword ptr[r8+rax],xmm0
+
+	mov ecx,r9d
+	and ecx,r15d
+	jz short loop_5_f
+	add rax,8	
+
+loop_4_f:
+	movd xmm0,dword ptr[rsi+rax]
+	movd xmm1,dword ptr[rdi+rax]
+	pavgb xmm0,xmm1
+	movd dword ptr[r8+rax],xmm0
+	
+loop_5_f:
 	add rsi,r11
 	add rdi,rbx
 	add r8,rdx
 	dec r10d
 	jnz short loop_1_f
 
+	pop r15
+	pop r14
+	pop r13
 	pop r12
 	pop rbx
 	pop rsi
@@ -361,127 +181,7 @@ loop_2_f:
 
 	ret
 
-JPSDR_BlurMotion_SSE_3_A_U endp
-
-
-;JPSDR_BlurMotion_SSE_3_U_A proc src:dword,s:dword,dst:dword,w:dword,h:dword,src_pitch:dword,buffer_pitch:dword,
-;	dst_pitch:dword
-; src = rcx
-; s = rdx
-; dst = r8
-; w = r9d
-
-JPSDR_BlurMotion_SSE_3_U_A proc public frame
-
-h equ dword ptr[rbp+48]
-src_pitch equ qword ptr[rbp+56]
-buffer_pitch equ qword ptr[rbp+64]
-dst_pitch equ qword ptr[rbp+72]
-
-	push rbp
-	.pushreg rbp
-	mov rbp,rsp
-	push rdi
-	.pushreg rdi
-	push rsi
-	.pushreg rsi	
-	push rbx
-	.pushreg rbx
-	push r12
-	.pushreg r12
-	.endprolog
-	
-	mov rsi,rcx
-	mov rdi,rdx
-	mov r10d,h
-	mov r11,src_pitch
-	mov rbx,buffer_pitch
-	mov rdx,dst_pitch
-	mov r12,16
-	xor rcx,rcx
-
-loop_1_g:
-	xor rax,rax
-	mov ecx,r9d
-loop_2_g:
-	movdqu xmm0,[rsi+rax]
-	pavgb xmm0,[rdi+rax]
-	movdqa [r8+rax],xmm0
-	add rax,r12
-	loop loop_2_g
-	add rsi,r11
-	add rdi,rbx
-	add r8,rdx
-	dec r10d
-	jnz short loop_1_g
-
-	pop r12
-	pop rbx
-	pop rsi
-	pop rdi
-	pop rbp
-
-	ret
-
-JPSDR_BlurMotion_SSE_3_U_A endp
-
-
-
-;JPSDR_BlurMotion_SSE_3_U proc src:dword,s:dword,dst:dword,w:dword,h:dword,src_pitch:dword,buffer_pitch:dword,
-;	dst_pitch:dword
-; src = rcx
-; s = rdx
-; dst = r8
-; w = r9d
-
-JPSDR_BlurMotion_SSE_3_U proc public frame
-
-	push rbp
-	.pushreg rbp
-	mov rbp,rsp
-	push rdi
-	.pushreg rdi
-	push rsi
-	.pushreg rsi	
-	push rbx
-	.pushreg rbx
-	push r12
-	.pushreg r12
-	.endprolog
-	
-	mov rsi,rcx
-	mov rdi,rdx
-	mov r10d,h
-	mov r11,src_pitch
-	mov rbx,buffer_pitch
-	mov rdx,dst_pitch
-	mov r12,16
-	xor rcx,rcx
-
-loop_1_h:
-	xor rax,rax
-	mov ecx,r9d
-loop_2_h:
-	movdqu xmm0,[rsi+rax]
-	pavgb xmm0,[rdi+rax]
-	movdqu [r8+rax],xmm0
-	add rax,r12
-	loop loop_2_h
-	add rsi,r11
-	add rdi,rbx
-	add r8,rdx
-	dec r10d
-	jnz short loop_1_h
-
-	pop r12
-	pop rbx
-	pop rsi
-	pop rdi
-	pop rbp
-
-	ret
-
-JPSDR_BlurMotion_SSE_3_U endp
+JPSDR_BlurMotion_SSE_3_A endp
 
 
 

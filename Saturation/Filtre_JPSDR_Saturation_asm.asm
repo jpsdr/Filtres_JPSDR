@@ -4,282 +4,6 @@
 
 .code
 
-JPSDR_Saturation_Non_SSE_Planar_Fill8 proc dst:dword,w:dword,h:dword,offset_:byte,dst_modulo:dword
-
-	public JPSDR_Saturation_Non_SSE_Planar_Fill8
-
-	push edi
-	push ebx
-	
-	cld
-	mov edi,dst
-	mov ebx,w
-	mov edx,h
-	or ebx,ebx
-	jz short fin_10
-	or edx,edx
-	jz short fin_10
-	mov al,offset_
-	mov ah,al
-	push ax
-	shl eax,16
-	pop ax
-loop_1_10:
-	mov ecx,ebx
-	shr ecx,2
-	jz short loop_2_10
-	rep stosd
-loop_2_10:
-	mov ecx,ebx	
-	and ecx,3
-	jz short loop_3_10
-	rep stosb
-loop_3_10:	
-	add edi,dst_modulo
-	dec edx
-	jnz short loop_1_10
-	
-fin_10:
-	pop ebx
-	pop edi
-
-	ret
-
-JPSDR_Saturation_Non_SSE_Planar_Fill8 endp
-
-
-JPSDR_Saturation_Non_SSE_Planar_Fill32 proc dst:dword,w:dword,h:dword,offset_:byte,dst_modulo:dword
-
-	public JPSDR_Saturation_Non_SSE_Planar_Fill32
-
-	push edi
-	push ebx
-	
-	cld
-	mov edi,dst
-	mov ebx,w
-	mov edx,h
-	or ebx,ebx
-	jz short fin_11
-	or edx,edx
-	jz short fin_11	
-	mov al,offset_
-	mov ah,al
-	push ax
-	shl eax,16
-	pop ax
-loop_1_11:
-	mov ecx,ebx	
-	rep stosd
-	add edi,dst_modulo
-	dec edx
-	jnz short loop_1_11
-	
-fin_11:
-	pop ebx
-	pop edi
-
-	ret
-
-JPSDR_Saturation_Non_SSE_Planar_Fill32 endp
-
-
-
-JPSDR_Saturation_SSE_Planar_Fill proc dst:dword,w:dword,h:dword,offset_:byte,dst_pitch:dword
-
-	public JPSDR_Saturation_SSE_Planar_Fill
-
-	push edi
-	push ebx
-	
-	xor eax,eax
-	pxor mm0,mm0
-	mov edi,dst
-	mov ebx,w
-	mov edx,h
-	mov al,offset_
-	mov ah,al
-	pinsrw mm0,eax,0
-	pinsrw mm0,eax,1
-	pinsrw mm0,eax,2
-	pinsrw mm0,eax,3
-	
-loop_1_12:
-	mov ecx,ebx	
-	xor eax,eax
-loop_2_12:	
-	movq qword ptr [edi+8*eax],mm0
-	inc eax
-	loop loop_2_12
-	add edi,dst_pitch
-	dec edx
-	jnz short loop_1_12
-	
-	emms
-	
-fin_12:
-	pop ebx
-	pop edi
-
-	ret
-
-JPSDR_Saturation_SSE_Planar_Fill endp
-
-
-JPSDR_Saturation_SSE2_Planar_Fill_a proc dst:dword,w:dword,h:dword,offset_:byte,dst_modulo:dword
-
-	public JPSDR_Saturation_SSE2_Planar_Fill_a
-
-	push edi
-	push ebx
-	
-	xor eax,eax
-	pxor xmm0,xmm0
-	mov edi,dst
-	mov ebx,w
-	mov edx,h
-	mov al,offset_
-	mov ah,al
-	pinsrw xmm0,eax,0
-	pinsrw xmm0,eax,1
-	pinsrw xmm0,eax,2
-	pinsrw xmm0,eax,3
-	pinsrw xmm0,eax,4
-	pinsrw xmm0,eax,5
-	pinsrw xmm0,eax,6
-	pinsrw xmm0,eax,7
-	mov eax,dst_modulo
-loop_1_13:
-	mov ecx,ebx	
-loop_2_13:	
-	movdqa [edi],xmm0
-	add edi,16
-	loop loop_2_13
-	add edi,eax
-	dec edx
-	jnz short loop_1_13
-	
-fin_13:
-	pop ebx
-	pop edi
-
-	ret
-
-JPSDR_Saturation_SSE2_Planar_Fill_a endp
-
-
-JPSDR_Saturation_SSE2_Planar_Fill_u proc dst:dword,w:dword,h:dword,offset_:byte,dst_modulo:dword
-
-	public JPSDR_Saturation_SSE2_Planar_Fill_u
-
-	push edi
-	push ebx
-	
-	xor eax,eax
-	pxor xmm0,xmm0
-	mov edi,dst
-	mov ebx,w
-	mov edx,h
-	mov al,offset_
-	mov ah,al
-	pinsrw xmm0,eax,0
-	pinsrw xmm0,eax,1
-	pinsrw xmm0,eax,2
-	pinsrw xmm0,eax,3
-	pinsrw xmm0,eax,4
-	pinsrw xmm0,eax,5
-	pinsrw xmm0,eax,6
-	pinsrw xmm0,eax,7
-	mov eax,dst_modulo
-loop_1_14:
-	mov ecx,ebx	
-loop_2_14:	
-	movdqu [edi],xmm0
-	add edi,16
-	loop loop_2_14
-	add edi,eax
-	dec edx
-	jnz short loop_1_14
-	
-fin_14:
-	pop ebx
-	pop edi
-
-	ret
-
-JPSDR_Saturation_SSE2_Planar_Fill_u endp
-
-
-JPSDR_Saturation_SSE_RGB24 proc src:dword,dst:dword,w:dword,h:dword,offset_R:word,offset_G:word,
-	offset_B:word,lookup:dword,src_modulo:dword,dst_modulo:dword
-
-	public JPSDR_Saturation_SSE_RGB24
-
-	local i:dword
-
-	push esi
-	push edi
-	push ebx
-
-	xor eax,eax
-	pxor mm2,mm2
-	pxor mm1,mm1
-	pxor mm0,mm0
-	movzx eax,offset_R
-	pinsrw mm1,eax,2
-	movzx eax,offset_G
-	pinsrw mm1,eax,1
-	movzx eax,offset_B
-	pinsrw mm1,eax,0
-	mov edi,dst
-	mov esi,src
-
-Boucle0_1:
-	mov eax,w
-	mov i,eax
-Boucle1_1:
-	movzx edx,byte ptr[esi]
-	movzx ecx,byte ptr[esi+1]
-	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
-	pinsrw mm0,eax,2
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
-	pinsrw mm0,eax,1
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
-	pinsrw mm0,eax,0
-	paddsw mm0,mm1
-	psraw mm0,4
-	packuswb mm0,mm2
-	movd dword ptr[edi],mm0
-	add src,4
-	add edi,4
-	mov esi,src
-	dec i
-	jnz short Boucle1_1
-	add esi,src_modulo
-	add edi,dst_modulo
-	mov src,esi
-	dec h
-	jnz Boucle0_1
-
-	emms
-
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Saturation_SSE_RGB24 endp
-
-
 
 JPSDR_Saturation_SSE2_RGB24 proc src:dword,dst:dword,w:dword,h:dword,offset_R:word,offset_G:word,
 	offset_B:word,lookup:dword,src_modulo:dword,dst_modulo:dword
@@ -310,6 +34,8 @@ JPSDR_Saturation_SSE2_RGB24 proc src:dword,dst:dword,w:dword,h:dword,offset_R:wo
 
 Boucle0_2:
 	mov eax,w
+	shr eax,1
+	jz Suite1_2
 	mov i,eax
 Boucle1_2:
 	movzx edx,byte ptr[esi]
@@ -354,6 +80,37 @@ Boucle1_2:
 	mov esi,src
 	dec i
 	jnz Boucle1_2
+	
+Suite1_2:	
+	mov eax,w
+	and eax,1
+	jz short Suite2_2
+	
+	movzx edx,byte ptr[esi]
+	movzx ecx,byte ptr[esi+1]
+	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	pinsrw xmm0,eax,2
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	pinsrw xmm0,eax,1
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	pinsrw xmm0,eax,0
+	paddsw xmm0,xmm1
+	psraw xmm0,4
+	packuswb xmm0,xmm2
+	movd dword ptr[edi],xmm0
+	add src,4
+	add edi,4
+	mov esi,src
+	
+Suite2_2:	
 	add esi,src_modulo
 	add edi,dst_modulo
 	mov src,esi
@@ -671,70 +428,6 @@ BoucleY_1_4:
 JPSDR_Saturation_Y_UYVY endp
 
 
-JPSDR_Saturation_Y_SSE_RGB24 proc src:dword,dst:dword,w:dword,h:dword,offset_Y:word,lookup:dword,
-	src_modulo:dword,dst_modulo:dword
-
-	public JPSDR_Saturation_Y_SSE_RGB24
-
-	local i:dword
-
-	push esi
-	push edi
-	push ebx
-
-	xor eax,eax
-	xor ebx,ebx
-	xor ecx,ecx
-	xor edx,edx
-	pxor mm2,mm2
-	pxor mm1,mm1	
-	pxor mm0,mm0
-	movzx eax,offset_Y
-	pinsrw mm1,eax,2
-	pinsrw mm1,eax,1
-	pinsrw mm1,eax,0	
-	mov edi,dst
-	mov esi,src
-
-BoucleY_0_1:
-	mov eax,w
-	mov i,eax
-BoucleY_1_1:
-	movzx edx,byte ptr[esi]
-	movzx ecx,byte ptr[esi+1]
-	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
-	pinsrw mm0,eax,2
-	pinsrw mm0,eax,1
-	pinsrw mm0,eax,0
-	paddsw mm0,mm1
-	psraw mm0,4
-	packuswb mm0,mm2
-	movd dword ptr[edi],mm0
-	add src,4
-	add edi,4
-	mov esi,src
-	dec i
-	jnz short BoucleY_1_1
-	add esi,src_modulo
-	add edi,dst_modulo
-	mov src,esi
-	dec h
-	jnz short BoucleY_0_1
-
-	emms
-
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Saturation_Y_SSE_RGB24 endp
-
 
 JPSDR_Saturation_Y_SSE2_RGB24 proc src:dword,dst:dword,w:dword,h:dword,offset_Y:word,lookup:dword,
 	src_modulo:dword,dst_modulo:dword
@@ -766,6 +459,8 @@ JPSDR_Saturation_Y_SSE2_RGB24 proc src:dword,dst:dword,w:dword,h:dword,offset_Y:
 
 BoucleY_0_2:
 	mov eax,w
+	shr eax,1
+	jz SuiteY1_2
 	mov i,eax
 BoucleY_1_2:
 	movzx edx,byte ptr[esi]
@@ -798,6 +493,31 @@ BoucleY_1_2:
 	mov esi,src
 	dec i
 	jnz BoucleY_1_2
+	
+SuiteY1_2:
+	mov eax,w
+	and eax,1
+	jz short SuiteY2_2
+
+	movzx edx,byte ptr[esi]
+	movzx ecx,byte ptr[esi+1]
+	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	pinsrw xmm0,eax,2
+	pinsrw xmm0,eax,1
+	pinsrw xmm0,eax,0
+	paddsw xmm0,xmm1
+	psraw xmm0,4
+	packuswb xmm0,xmm2
+	movd dword ptr[edi],xmm0
+	add src,4
+	add edi,4
+	mov esi,src
+	
+SuiteY2_2:	
 	add esi,src_modulo
 	add edi,dst_modulo
 	mov src,esi

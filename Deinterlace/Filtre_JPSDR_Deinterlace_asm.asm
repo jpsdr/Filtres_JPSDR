@@ -3,166 +3,6 @@
 
 .code
 
-
-JPSDR_Deinterlace_Move32_Half proc src:dword,dst:dword,w:dword,h:dword,src_modulo_pitch:dword,dst_modulo_pitch:dword
-
-	public JPSDR_Deinterlace_Move32_Half
-
-	push esi
-	push edi
-	push ebx
-
-	cld
-	mov esi,src
-	mov edi,dst
-	mov ebx,w
-	mov edx,h
-	or ebx,ebx
-	jz short fin_f
-	or edx,edx
-	jz short fin_f
-loop_1_f:
-	mov ecx,ebx
-	rep movsd
-	add esi,src_modulo_pitch
-	add edi,dst_modulo_pitch
-	dec edx
-	jnz short loop_1_f
-	
-fin_f:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Move32_Half endp
-
-
-JPSDR_Deinterlace_Move8_Half proc src:dword,dst:dword,w:dword,h:dword,src_modulo_pitch:dword,dst_modulo_pitch:dword
-
-	public JPSDR_Deinterlace_Move8_Half
-
-	push esi
-	push edi
-	push ebx
-
-	cld
-	mov esi,src
-	mov edi,dst
-	mov ebx,w
-	mov edx,h
-	or ebx,ebx
-	jz short fin_f_2
-	or edx,edx
-	jz short fin_f_2	
-loop_1_f_2:
-	mov ecx,ebx
-	shr ecx,2	
-	jz short loop_2_f_2
-	rep movsd
-loop_2_f_2:
-	mov ecx,ebx	
-	and ecx,3
-	jz short loop_3_f_2
-	rep movsb
-loop_3_f_2:	
-	add esi,src_modulo_pitch
-	add edi,dst_modulo_pitch
-	dec edx
-	jnz short loop_1_f_2
-	
-fin_f_2:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Move8_Half endp
-
-
-
-JPSDR_Deinterlace_Move32_Full proc src:dword,dst:dword,w:dword,h:dword,src_modulo:dword,dst_modulo:dword
-
-	public JPSDR_Deinterlace_Move32_Full
-
-	push esi
-	push edi
-	push ebx
-	
-	cld
-	mov esi,src
-	mov edi,dst
-	mov ebx,w
-	mov edx,h
-	or ebx,ebx
-	jz short fin_f_3
-	or edx,edx
-	jz short fin_f_3		
-loop_1_f_3:
-	mov ecx,ebx
-	rep movsd
-	add esi,src_modulo
-	add edi,dst_modulo
-	dec edx
-	jnz short loop_1_f_3
-	
-fin_f_3:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Move32_Full endp
-
-
-
-JPSDR_Deinterlace_Move8_Full proc src:dword,dst:dword,w:dword,h:dword,src_modulo:dword,dst_modulo:dword
-
-	public JPSDR_Deinterlace_Move8_Full
-
-	push esi
-	push edi
-	push ebx
-	
-	cld
-	mov esi,src
-	mov edi,dst
-	mov ebx,w
-	mov edx,h
-	or ebx,ebx
-	jz short fin_f_4
-	or edx,edx
-	jz short fin_f_4			
-loop_1_f_4:
-	mov ecx,ebx
-	shr ecx,2
-	jz short loop_2_f_4
-	rep movsd
-loop_2_f_4:
-	mov ecx,ebx	
-	and ecx,3
-	jz short loop_3_f_4
-	rep movsb
-loop_3_f_4:	
-	add esi,src_modulo
-	add edi,dst_modulo
-	dec edx
-	jnz short loop_1_f_4
-	
-fin_f_4:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Move8_Full endp
-
-
-
 JPSDR_Deinterlace_Blend_Non_MMX_24 proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
 	src_pitch:dword,dst_pitch:dword
 
@@ -323,150 +163,9 @@ fin_j:
 
 JPSDR_Deinterlace_Blend_Non_MMX_8 endp
 
-.mmx
 
-JPSDR_Deinterlace_Blend_MMX proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
-	dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_MMX
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src1
-	mov ebx,src_pitch
-	mov edx,src2
-	mov edi,dst
-	pxor mm2,mm2
-
-loop_1_b:
-	xor eax,eax
-	mov ecx,w
-loop_2_b:
-	movd mm0,dword ptr[esi+4*eax]
-	movd mm1,dword ptr[edx+4*eax]
-	punpcklbw mm0,mm2
-	punpcklbw mm1,mm2
-	paddusw mm0,mm1
-	psrlw mm0,1
-	packuswb mm0,mm2
-	movd dword ptr[edi+4*eax],mm0
-	inc eax
-	loop loop_2_b
-	add esi,ebx
-	add edi,dst_pitch
-	add edx,ebx
-	dec h
-	jnz short loop_1_b
-
-	emms
-	
-fin_b:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_MMX endp
-
-
-JPSDR_Deinterlace_Blend_Tri_MMX proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
-	dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_Tri_MMX
-
-	push esi
-	push edi
-	push ebx
-	
-	pxor mm3,mm3
-	
-	mov esi,src
-	mov edi,dst
-	mov ebx,esi
-	mov ecx,w
-	add ebx,src_pitch
-	xor eax,eax
-loop_0_h:	
-	movd mm0,dword ptr[esi+4*eax]
-	movd mm1,dword ptr[ebx+4*eax]
-	punpcklbw mm0,mm3
-	punpcklbw mm1,mm3
-	paddusw mm0,mm1
-	psrlw mm0,1
-	packuswb mm0,mm3
-	movd dword ptr[edi+4*eax],mm0
-	inc eax
-	loop loop_0_h
-	
-	mov eax,02020202h
-	mov ebx,src					;ebx=ln-1
-	mov edi,dst
-	movd mm4,eax
-	add edi,dst_pitch
-	mov esi,ebx
-	add esi,src_pitch			;esi=ln
-	mov edx,esi
-	add edx,src_pitch			;edx=ln+1
-	punpcklbw mm4,mm3
-	
-loop_1_h:
-	xor eax,eax
-	mov ecx,w
-loop_2_h:
-	movd mm0,dword ptr[ebx+4*eax]
-	movd mm1,dword ptr[edx+4*eax]
-	punpcklbw mm0,mm3
-	movd mm2,dword ptr[esi+4*eax]
-	punpcklbw mm1,mm3
-	punpcklbw mm2,mm3		;mm0=ln-1 mm1=ln+1 mm2=ln
-	paddw mm1,mm0
-	psllw mm2,1
-	paddw mm1,mm2
-	paddw mm1,mm4
-	psrlw mm1,2
-	packuswb mm1,mm3
-	movd dword ptr[edi+4*eax],mm1
-	inc eax
-	loop loop_2_h
-	add esi,src_pitch
-	add ebx,src_pitch
-	add edx,src_pitch
-	add edi,dst_pitch
-	dec h
-	jnz short loop_1_h
-
-	mov ecx,w
-	xor eax,eax
-loop_3_h:	
-	movd mm0,dword ptr[ebx+4*eax]
-	movd mm1,dword ptr[esi+4*eax]
-	punpcklbw mm0,mm3
-	punpcklbw mm1,mm3
-	paddusw mm0,mm1
-	psrlw mm0,1
-	packuswb mm0,mm3
-	movd dword ptr[edi+4*eax],mm0
-	inc eax
-	loop loop_3_h
-
-	emms
-	
-fin_h:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_Tri_MMX endp
 
 .xmm
-
-
-
 
 
 JPSDR_Deinterlace_YadifAbsDiffAvg_SSE proc src_a:dword,src_b:dword,dst_abs:dword,dst_avg:dword,src_pitch:dword,dst_pitch:dword,w:dword,h:dword
@@ -595,179 +294,6 @@ JPSDR_Deinterlace_YadifAvg_SSE endp
 
 
 
-JPSDR_Deinterlace_Blend_SSE proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
-	dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_SSE
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src1
-	mov ebx,src_pitch
-	mov edx,src2
-	mov edi,dst
-
-loop_1_c:
-	xor eax,eax
-	mov ecx,w
-loop_2_c:
-	movd mm0,dword ptr[esi+4*eax]
-	movd mm1,dword ptr[edx+4*eax]
-	pavgb mm0,mm1
-	movd dword ptr[edi+4*eax],mm0
-	inc eax
-	loop loop_2_c
-	add esi,ebx
-	add edi,dst_pitch
-	add edx,ebx
-	dec h
-	jnz short loop_1_c
-
-	emms
-	
-fin_c:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_SSE endp
-
-
-
-JPSDR_Deinterlace_Blend_SSE_2 proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
-	src_pitch:dword,dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_SSE_2
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src1
-	mov ebx,src_pitch
-	mov edx,src2
-	mov edi,dst
-
-loop_1_d:
-	xor eax,eax
-	mov ecx,w
-loop_2_d:
-	movq mm0,qword ptr[esi+8*eax]
-	pavgb mm0,qword ptr[edx+8*eax]
-	movq qword ptr[edi+8*eax],mm0
-	inc eax
-	loop loop_2_d
-	add esi,ebx
-	add edi,dst_pitch
-	add edx,ebx
-	dec h
-	jnz short loop_1_d
-
-	emms
-	
-fin_d:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_SSE_2 endp
-
-
-
-JPSDR_Deinterlace_Blend_SSE_2b proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
-	src_pitch:dword,dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_SSE_2b
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src1
-	mov ebx,src_pitch
-	mov edx,src2
-	mov edi,dst
-
-loop_1_d_2:
-	xor eax,eax
-	mov ecx,w
-loop_2_d_2:
-	movq mm0,qword ptr[esi+8*eax]
-	pavgb mm0,qword ptr[edx+8*eax]
-	movq qword ptr[edi+8*eax],mm0
-	inc eax
-	loop loop_2_d_2
-	add esi,ebx
-	add edi,dst_pitch
-	add edx,ebx
-	dec h
-	jnz short loop_1_d_2
-
-	emms
-	
-fin_d_2:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_SSE_2b endp
-
-
-JPSDR_Deinterlace_Blend_SSE_2c proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
-	src_pitch:dword,dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_SSE_2c
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src1
-	mov ebx,src_pitch
-	mov edx,src2
-	mov edi,dst
-
-loop_1_d_3:
-	xor eax,eax
-	mov ecx,w
-loop_2_d_3:
-	movq mm0,qword ptr[esi+8*eax]
-	pavgb mm0,qword ptr[edx+8*eax]
-	movq qword ptr[edi+8*eax],mm0
-	inc eax
-	loop loop_2_d_3
-	
-	movd mm0,dword ptr[esi+8*eax]
-	movd mm1,dword ptr[edx+8*eax]
-	pavgb mm0,mm1
-	movd dword ptr[edi+8*eax],mm0
-	
-	add esi,ebx
-	add edi,dst_pitch
-	add edx,ebx
-	dec h
-	jnz short loop_1_d_3
-	
-	emms
-
-fin_d_3:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_SSE_2c endp
-
-
 JPSDR_Deinterlace_Blend_SSE_3 proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
 	src_pitch:dword,dst_pitch:dword
 
@@ -778,26 +304,41 @@ JPSDR_Deinterlace_Blend_SSE_3 proc src1:dword,src2:dword,dst:dword,w:dword,h:dwo
 	push ebx
 	
 	mov esi,src1
-	mov ebx,src_pitch
+	mov ebx,w
 	mov edx,src2
 	mov edi,dst
 
-loop_1_e:
+loop_1_d:
 	xor eax,eax
-	mov ecx,w
-loop_2_e:
-	movdqa xmm0,oword ptr[esi+eax]
-	pavgb xmm0,oword ptr[edx+eax]
-	movdqa oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_2_e
-	add esi,ebx
-	add edi,dst_pitch
-	add edx,ebx
-	dec h
-	jnz short loop_1_e
+	mov ecx,ebx
+	shr ecx,2
+	jz short Suite_d_1
+loop_2_d:
+	movq xmm0,qword ptr[esi+8*eax]
+	movq xmm1,qword ptr[edx+8*eax]
+	pavgb xmm0,xmm1
+	movq qword ptr[edi+8*eax],xmm0
+	inc eax
+	loop loop_2_d
 	
-fin_e:
+Suite_d_1:
+	mov ecx,ebx
+	and ecx,1
+	jz short Suite_d_2
+	
+	movd xmm0,dword ptr[esi+8*eax]
+	movd xmm1,dword ptr[edx+8*eax]
+	pavgb xmm0,xmm1
+	movd dword ptr[edi+8*eax],xmm0	
+	
+Suite_d_2:	
+	add esi,src_pitch
+	add edx,src_pitch
+	add edi,dst_pitch
+	dec h
+	jnz short loop_1_d
+	
+fin_d:
 	pop ebx
 	pop edi
 	pop esi
@@ -808,605 +349,71 @@ JPSDR_Deinterlace_Blend_SSE_3 endp
 
 
 
-JPSDR_Deinterlace_Blend_SSE_3b proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+JPSDR_Deinterlace_Blend_SSE_3_A proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
 	src_pitch:dword,dst_pitch:dword
 
-	public JPSDR_Deinterlace_Blend_SSE_3b
+	public JPSDR_Deinterlace_Blend_SSE_3_A
 
 	push esi
 	push edi
 	push ebx
 	
 	mov esi,src1
-	mov ebx,src_pitch
+	mov ebx,16
 	mov edx,src2
 	mov edi,dst
 
-loop_1_e_2:
+loop_1_e:
 	xor eax,eax
 	mov ecx,w
-loop_2_e_2:
+	shr ecx,2
+	jz short Suite_e_1
+loop_2_e:
 	movdqa xmm0,oword ptr[esi+eax]
 	pavgb xmm0,oword ptr[edx+eax]
 	movdqa oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_2_e_2
-
+	add eax,ebx
+	loop loop_2_e
+	
+Suite_e_1:
+	mov ecx,w
+	and ecx,3
+	jz short Suite_e_3
+	and ecx,2
+	jz short Suite_e_2
+	
 	movq xmm0,qword ptr[esi+eax]
 	movq xmm1,qword ptr[edx+eax]
 	pavgb xmm0,xmm1
 	movq qword ptr[edi+eax],xmm0	
 	
-	add esi,ebx
-	add edi,dst_pitch
-	add edx,ebx
-	dec h
-	jnz short loop_1_e_2
-	
-fin_e_2:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_SSE_3b endp
-
-
-JPSDR_Deinterlace_Blend_SSE_3_A_U proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
-	src_pitch:dword,dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_SSE_3_A_U
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src1
-	mov ebx,src_pitch
-	mov edx,src2
-	mov edi,dst
-
-loop_1_e_1:
-	xor eax,eax
 	mov ecx,w
-loop_2_e_1:
-	movdqa xmm0,oword ptr[esi+eax]
-	pavgb xmm0,oword ptr[edx+eax]
-	movdqu oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_2_e_1
-	add esi,ebx
-	add edi,dst_pitch
-	add edx,ebx
-	dec h
-	jnz short loop_1_e_1
+	and ecx,1
+	jz short Suite_e_3
+	add eax,8	
 	
-fin_e_1:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_SSE_3_A_U endp
-
-
-
-JPSDR_Deinterlace_Blend_SSE_3_A_Ub proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
-	src_pitch:dword,dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_SSE_3_A_Ub
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src1
-	mov ebx,src_pitch
-	mov edx,src2
-	mov edi,dst
-
-loop_1_e_1_2:
-	xor eax,eax
-	mov ecx,w
-loop_2_e_1_2:
-	movdqa xmm0,oword ptr[esi+eax]
-	pavgb xmm0,oword ptr[edx+eax]
-	movdqu oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_2_e_1_2
-
-	movq xmm0,qword ptr[esi+eax]
-	movq xmm1,qword ptr[edx+eax]
+Suite_e_2:	
+	movd xmm0,dword ptr[esi+eax]
+	movd xmm1,dword ptr[edx+eax]
 	pavgb xmm0,xmm1
-	movq qword ptr[edi+eax],xmm0
+	movd dword ptr[edi+eax],xmm0	
 	
-	add esi,ebx
-	add edi,dst_pitch
-	add edx,ebx
-	dec h
-	jnz short loop_1_e_1_2
-	
-fin_e_1_2:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_SSE_3_A_Ub endp
-
-
-JPSDR_Deinterlace_Blend_SSE_3_U_A proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
-	src_pitch:dword,dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_SSE_3_U_A
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src1
-	mov ebx,src_pitch
-	mov edx,src2
-	mov edi,dst
-
-loop_1_e_2:
-	xor eax,eax
-	mov ecx,w
-loop_2_e_2:
-	movdqu xmm0,oword ptr[esi+eax]
-	movdqu xmm1,oword ptr[edx+eax]
-	pavgb xmm0,xmm1
-	movdqa oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_2_e_2
-	add esi,ebx
-	add edi,dst_pitch
-	add edx,ebx
-	dec h
-	jnz short loop_1_e_2
-	
-fin_e_2:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_SSE_3_U_A endp
-
-
-
-JPSDR_Deinterlace_Blend_SSE_3_U_Ab proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
-	src_pitch:dword,dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_SSE_3_U_Ab
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src1
-	mov ebx,src_pitch
-	mov edx,src2
-	mov edi,dst
-
-loop_1_e_2_2:
-	xor eax,eax
-	mov ecx,w
-loop_2_e_2_2:
-	movdqu xmm0,oword ptr[esi+eax]
-	movdqu xmm1,oword ptr[edx+eax]
-	pavgb xmm0,xmm1
-	movdqa oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_2_e_2_2
-
-	movq xmm0,qword ptr[esi+eax]
-	movq xmm1,qword ptr[edx+eax]
-	pavgb xmm0,xmm1
-	movq qword ptr[edi+eax],xmm0
-	
-	add esi,ebx
-	add edi,dst_pitch
-	add edx,ebx
-	dec h
-	jnz short loop_1_e_2_2
-	
-fin_e_2_2:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_SSE_3_U_Ab endp
-
-
-JPSDR_Deinterlace_Blend_SSE_3_U proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
-	src_pitch:dword,dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_SSE_3_U
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src1
-	mov ebx,src_pitch
-	mov edx,src2
-	mov edi,dst
-
-loop_1_e_3:
-	xor eax,eax
-	mov ecx,w
-loop_2_e_3:
-	movdqu xmm0,oword ptr[esi+eax]
-	movdqu xmm1,oword ptr[edx+eax]
-	pavgb xmm0,xmm1
-	movdqu oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_2_e_3
-	add esi,ebx
-	add edi,dst_pitch
-	add edx,ebx
-	dec h
-	jnz short loop_1_e_3
-	
-fin_e_3:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_SSE_3_U endp
-
-
-
-JPSDR_Deinterlace_Blend_SSE_3_Ub proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
-	src_pitch:dword,dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_SSE_3_Ub
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src1
-	mov ebx,src_pitch
-	mov edx,src2
-	mov edi,dst
-
-loop_1_e_3_2:
-	xor eax,eax
-	mov ecx,w
-loop_2_e_3_2:
-	movdqu xmm0,oword ptr[esi+eax]
-	movdqu xmm1,oword ptr[edx+eax]
-	pavgb xmm0,xmm1
-	movdqu oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_2_e_3_2
-	
-	movq xmm0,qword ptr[esi+eax]
-	movq xmm1,qword ptr[edx+eax]
-	pavgb xmm0,xmm1
-	movq qword ptr[edi+eax],xmm0
-	
-	add esi,ebx
-	add edi,dst_pitch
-	add edx,ebx
-	dec h
-	jnz short loop_1_e_3_2
-	
-fin_e_3_2:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_SSE_3_Ub endp
-
-
-
-JPSDR_Deinterlace_Blend_Tri_SSE proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
-	dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_Tri_SSE
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src
-	mov edi,dst
-	mov ebx,esi
-	mov ecx,w
-	add ebx,src_pitch
-	xor eax,eax
-loop_0_g:	
-	movd mm0,dword ptr[esi+4*eax]
-	movd mm1,dword ptr[ebx+4*eax]
-	pavgb mm0,mm1
-	movd dword ptr[edi+4*eax],mm0
-	inc eax
-	loop loop_0_g
-
-	mov ebx,src					;ebx=ln-1
-	mov edi,dst
-	add edi,dst_pitch
-	mov esi,ebx
-	add esi,src_pitch			;esi=ln
-	mov edx,esi
-	add edx,src_pitch			;edx=ln+1
-
-loop_1_g:
-	xor eax,eax
-	mov ecx,w
-loop_2_g:
-	movd mm0,dword ptr[ebx+4*eax]
-	movd mm1,dword ptr[edx+4*eax]
-	movd mm2,dword ptr[esi+4*eax]
-	pavgb mm0,mm1
-	pavgb mm0,mm2
-	movd dword ptr[edi+4*eax],mm0
-	inc eax
-	loop loop_2_g
+Suite_e_3:	
 	add esi,src_pitch
-	add ebx,src_pitch
 	add edx,src_pitch
 	add edi,dst_pitch
 	dec h
-	jnz short loop_1_g
-
-	mov ecx,w
-	xor eax,eax
-loop_3_g:	
-	movd mm0,dword ptr[ebx+4*eax]
-	movd mm1,dword ptr[esi+4*eax]
-	pavgb mm0,mm1
-	movd dword ptr[edi+4*eax],mm0
-	inc eax
-	loop loop_3_g
+	jnz short loop_1_e
 	
-fin_g:
-	emms
-	
+fin_e:
 	pop ebx
 	pop edi
 	pop esi
 
 	ret
 
-JPSDR_Deinterlace_Blend_Tri_SSE endp
+JPSDR_Deinterlace_Blend_SSE_3_A endp
 
-
-JPSDR_Deinterlace_Blend_Tri_SSE_2 proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
-	dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_Tri_SSE_2
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src
-	mov edi,dst
-	mov ebx,esi
-	mov ecx,w
-	add ebx,src_pitch
-	xor eax,eax
-loop_0_g_1:	
-	movq mm0,qword ptr[esi+8*eax]
-	pavgb mm0,qword ptr[ebx+8*eax]
-	movq qword ptr[edi+8*eax],mm0
-	inc eax
-	loop loop_0_g_1
-	
-	mov ebx,src					;ebx=ln-1
-	mov edi,dst
-	add edi,dst_pitch
-	mov esi,ebx
-	add esi,src_pitch			;esi=ln
-	mov edx,esi
-	add edx,src_pitch			;edx=ln+1
-
-loop_1_g_1:
-	xor eax,eax
-	mov ecx,w
-loop_2_g_1:
-	movq mm0,qword ptr[ebx+8*eax]
-	pavgb mm0,qword ptr[edx+8*eax]
-	pavgb mm0,qword ptr[esi+8*eax]
-	movq qword ptr[edi+8*eax],mm0
-	inc eax
-	loop loop_2_g_1
-	add esi,src_pitch
-	add ebx,src_pitch
-	add edx,src_pitch
-	add edi,dst_pitch
-	dec h
-	jnz short loop_1_g_1
-
-	mov ecx,w
-	xor eax,eax
-loop_3_g_1:	
-	movq mm0,qword ptr[ebx+8*eax]
-	pavgb mm0,qword ptr[esi+8*eax]
-	movq qword ptr[edi+8*eax],mm0
-	inc eax
-	loop loop_3_g_1
-	
-fin_g_1:
-	emms
-	
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_Tri_SSE_2 endp
-
-
-
-JPSDR_Deinterlace_Blend_Tri_SSE_2b proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
-	dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_Tri_SSE_2b
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src
-	mov edi,dst
-	mov ebx,esi
-	mov ecx,w
-	add ebx,src_pitch
-	xor eax,eax
-loop_0_g_1_2:	
-	movq mm0,qword ptr[esi+8*eax]
-	pavgb mm0,qword ptr[ebx+8*eax]
-	movq qword ptr[edi+8*eax],mm0
-	inc eax
-	loop loop_0_g_1_2
-	
-	mov ebx,src					;ebx=ln-1
-	mov edi,dst
-	add edi,dst_pitch
-	mov esi,ebx
-	add esi,src_pitch			;esi=ln
-	mov edx,esi
-	add edx,src_pitch			;edx=ln+1
-
-loop_1_g_1_2:
-	xor eax,eax
-	mov ecx,w
-loop_2_g_1_2:
-	movq mm0,qword ptr[ebx+8*eax]
-	pavgb mm0,qword ptr[edx+8*eax]
-	pavgb mm0,qword ptr[esi+8*eax]
-	movq qword ptr[edi+8*eax],mm0
-	inc eax
-	loop loop_2_g_1_2
-	add esi,src_pitch
-	add ebx,src_pitch
-	add edx,src_pitch
-	add edi,dst_pitch
-	dec h
-	jnz short loop_1_g_1_2
-
-	mov ecx,w
-	xor eax,eax
-loop_3_g_1_2:	
-	movq mm0,qword ptr[ebx+8*eax]
-	pavgb mm0,qword ptr[esi+8*eax]
-	movq qword ptr[edi+8*eax],mm0
-	inc eax
-	loop loop_3_g_1_2
-	
-	emms
-	
-fin_g_1_2:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_Tri_SSE_2b endp
-
-
-
-JPSDR_Deinterlace_Blend_Tri_SSE_2c proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
-	dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_Tri_SSE_2c
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src
-	mov edi,dst
-	mov ebx,esi
-	mov ecx,w
-	add ebx,src_pitch
-	xor eax,eax
-loop_0_g_1_3:	
-	movq mm0,qword ptr[esi+8*eax]
-	pavgb mm0,qword ptr[ebx+8*eax]
-	movq qword ptr[edi+8*eax],mm0
-	inc eax
-	loop loop_0_g_1_3
-
-	movd mm0,dword ptr[esi+8*eax]
-	movd mm1,dword ptr[ebx+8*eax]
-	pavgb mm0,mm1
-	movd dword ptr[edi+8*eax],mm0
-	
-	mov ebx,src					;ebx=ln-1
-	mov edi,dst
-	add edi,dst_pitch
-	mov esi,ebx
-	add esi,src_pitch			;esi=ln
-	mov edx,esi
-	add edx,src_pitch			;edx=ln+1
-
-loop_1_g_1_3:
-	xor eax,eax
-	mov ecx,w
-loop_2_g_1_3:
-	movq mm0,qword ptr[ebx+8*eax]
-	pavgb mm0,qword ptr[edx+8*eax]
-	pavgb mm0,qword ptr[esi+8*eax]
-	movq qword ptr[edi+8*eax],mm0
-	inc eax
-	loop loop_2_g_1_3
-	
-	movd mm0,dword ptr[ebx+8*eax]
-	movd mm1,dword ptr[edx+8*eax]
-	movd mm2,dword ptr[esi+8*eax]
-	pavgb mm0,mm1
-	pavgb mm0,mm2
-	movd dword ptr[edi+8*eax],mm0
-	
-	add esi,src_pitch
-	add ebx,src_pitch
-	add edx,src_pitch
-	add edi,dst_pitch
-	dec h
-	jnz short loop_1_g_1_3
-
-	mov ecx,w
-	xor eax,eax
-loop_3_g_1_3:	
-	movq mm0,qword ptr[ebx+8*eax]
-	pavgb mm0,qword ptr[esi+8*eax]
-	movq qword ptr[edi+8*eax],mm0
-	inc eax
-	loop loop_3_g_1_3
-	
-	movd mm0,dword ptr[ebx+8*eax]
-	movd mm1,dword ptr[esi+8*eax]
-	pavgb mm0,mm1
-	movd dword ptr[edi+8*eax],mm0
-	
-	emms
-		
-fin_g_1_3:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_Tri_SSE_2c endp
 
 
 JPSDR_Deinterlace_Blend_Tri_SSE_3 proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
@@ -1420,10 +427,126 @@ JPSDR_Deinterlace_Blend_Tri_SSE_3 proc src:dword,dst:dword,w:dword,h:dword,src_p
 	
 	mov esi,src
 	mov edi,dst
-	mov ecx,w
 	mov ebx,esi
 	add ebx,src_pitch
+	
 	xor eax,eax
+	mov ecx,w
+	shr ecx,1
+	jz short Suite_1_f
+loop_0_f_2:
+	movq xmm0,qword ptr[esi+8*eax]
+	movq xmm1,qword ptr[ebx+8*eax]
+	pavgb xmm0,xmm1
+	movq qword ptr[edi+8*eax],xmm0
+	inc eax
+	loop loop_0_f_2
+	
+Suite_1_f:	
+	mov ecx,w
+	and ecx,1
+	jz short Suite_2_f
+
+	movd xmm0,dword ptr[esi+8*eax]
+	movd xmm1,dword ptr[ebx+8*eax]
+	pavgb xmm0,xmm1
+	movd dword ptr[edi+8*eax],xmm0
+	
+Suite_2_f:
+	mov ebx,src					;ebx=ln-1
+	mov edi,dst
+	add edi,dst_pitch
+	mov esi,ebx
+	add esi,src_pitch			;esi=ln
+	mov edx,esi
+	add edx,src_pitch			;edx=ln+1
+
+loop_1_f_2:
+	xor eax,eax
+	mov ecx,w
+	shr ecx,1
+	jz short Suite_4_f
+loop_2_f_2:
+	movq xmm0,qword ptr[ebx+8*eax]
+	movq xmm1,qword ptr[edx+8*eax]
+	movq xmm2,qword ptr[esi+8*eax]
+	pavgb xmm0,xmm1
+	pavgb xmm0,xmm2
+	movq qword ptr[edi+8*eax],xmm0
+	inc eax
+	loop loop_2_f_2
+	
+Suite_4_f:
+	mov ecx,w
+	and ecx,1
+	jz short Suite_5_f
+	
+	movd xmm0,dword ptr[ebx+8*eax]
+	movd xmm1,dword ptr[edx+8*eax]
+	movd xmm2,dword ptr[esi+8*eax]
+	pavgb xmm0,xmm1
+	pavgb xmm0,xmm2
+	movd dword ptr[edi+8*eax],xmm0
+	
+Suite_5_f:
+	add esi,src_pitch
+	add ebx,src_pitch
+	add edx,src_pitch
+	add edi,dst_pitch
+	dec h
+	jnz short loop_1_f_2
+
+	xor eax,eax
+	mov ecx,w
+	shr ecx,1
+	jz short Suite_7_f	
+loop_3_f_2:
+	movq xmm0,qword ptr[ebx+8*eax]
+	movq xmm1,qword ptr[esi+8*eax]
+	pavgb xmm0,xmm1
+	movq qword ptr[edi+8*eax],xmm0
+	inc eax
+	loop loop_3_f_2
+	
+Suite_7_f:
+	mov ecx,w
+	and ecx,1
+	jz short fin_f_2
+	
+	movd xmm0,dword ptr[ebx+8*eax]
+	movd xmm1,dword ptr[esi+8*eax]
+	pavgb xmm0,xmm1
+	movd dword ptr[edi+8*eax],xmm0
+	
+fin_f_2:
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_Deinterlace_Blend_Tri_SSE_3 endp
+
+
+
+JPSDR_Deinterlace_Blend_Tri_SSE_3_A proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
+	dst_pitch:dword
+
+	public JPSDR_Deinterlace_Blend_Tri_SSE_3_A
+
+	push esi
+	push edi
+	push ebx
+	
+	mov esi,src
+	mov edi,dst
+	mov ebx,esi
+	add ebx,src_pitch
+	
+	xor eax,eax
+	mov ecx,w
+	shr ecx,2
+	jz short Suite_1_g
 loop_0_g_2:
 	movdqa xmm0,oword ptr[esi+eax]
 	pavgb xmm0,oword ptr[ebx+eax]
@@ -1431,6 +554,30 @@ loop_0_g_2:
 	add eax,16
 	loop loop_0_g_2
 	
+Suite_1_g:	
+	mov ecx,w
+	and ecx,3
+	jz short Suite_3_g
+	and ecx,2
+	jz short Suite_2_g
+
+	movq xmm0,qword ptr[esi+eax]
+	movq xmm1,qword ptr[ebx+eax]
+	pavgb xmm0,xmm1
+	movq qword ptr[edi+eax],xmm0
+	
+	mov ecx,w
+	and ecx,1
+	jz short Suite_3_g
+	add eax,8
+
+Suite_2_g:		
+	movd xmm0,dword ptr[esi+eax]
+	movd xmm1,dword ptr[ebx+eax]
+	pavgb xmm0,xmm1
+	movd dword ptr[edi+eax],xmm0
+	
+Suite_3_g:	
 	mov ebx,src					;ebx=ln-1
 	mov edi,dst
 	add edi,dst_pitch
@@ -1442,6 +589,8 @@ loop_0_g_2:
 loop_1_g_2:
 	xor eax,eax
 	mov ecx,w
+	shr ecx,2
+	jz short Suite_4_g	
 loop_2_g_2:
 	movdqa xmm0,oword ptr[ebx+eax]
 	pavgb xmm0,oword ptr[edx+eax]
@@ -1449,21 +598,75 @@ loop_2_g_2:
 	movdqa oword ptr[edi+eax],xmm0
 	add eax,16
 	loop loop_2_g_2
+	
+Suite_4_g:
+	mov ecx,w
+	and ecx,3
+	jz short Suite_6_g
+	and ecx,2
+	jz short Suite_5_g
+
+	movq xmm0,qword ptr[ebx+eax]
+	movq xmm1,qword ptr[edx+eax]
+	movq xmm2,qword ptr[esi+eax]
+	pavgb xmm0,xmm1
+	pavgb xmm0,xmm2
+	movq qword ptr[edi+eax],xmm0
+	
+	mov ecx,w
+	and ecx,1
+	jz short Suite_6_g
+	add eax,8
+
+Suite_5_g:		
+	movd xmm0,dword ptr[ebx+eax]
+	movd xmm1,dword ptr[edx+eax]
+	movd xmm2,dword ptr[esi+eax]
+	pavgb xmm0,xmm1
+	pavgb xmm0,xmm2
+	movd dword ptr[edi+eax],xmm0
+	
+Suite_6_g:
 	add esi,src_pitch
 	add ebx,src_pitch
 	add edx,src_pitch
 	add edi,dst_pitch
 	dec h
-	jnz short loop_1_g_2
+	jnz loop_1_g_2
 
-	mov ecx,w
 	xor eax,eax
+	mov ecx,w
+	shr ecx,2
+	jz short Suite_7_g	
 loop_3_g_2:
 	movdqa xmm0,oword ptr[ebx+eax]
 	pavgb xmm0,oword ptr[esi+eax]
 	movdqa oword ptr[edi+eax],xmm0
 	add eax,16
 	loop loop_3_g_2
+	
+Suite_7_g:
+	mov ecx,w
+	and ecx,3
+	jz short fin_g_2
+	and ecx,2
+	jz short Suite_8_g
+	
+	movq xmm0,qword ptr[ebx+eax]
+	movq xmm1,qword ptr[esi+eax]
+	pavgb xmm0,xmm1
+	movq qword ptr[edi+eax],xmm0
+	
+	mov ecx,w
+	and ecx,1
+	jz short fin_g_2
+	add eax,8
+
+Suite_8_g:		
+	movd xmm0,dword ptr[ebx+eax]
+	movd xmm1,dword ptr[esi+eax]
+	pavgb xmm0,xmm1
+	movd dword ptr[edi+eax],xmm0
 	
 fin_g_2:
 	pop ebx
@@ -1472,563 +675,8 @@ fin_g_2:
 
 	ret
 
-JPSDR_Deinterlace_Blend_Tri_SSE_3 endp
+JPSDR_Deinterlace_Blend_Tri_SSE_3_A endp
 
-
-
-JPSDR_Deinterlace_Blend_Tri_SSE_3b proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
-	dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_Tri_SSE_3b
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src
-	mov edi,dst
-	mov ecx,w
-	mov ebx,esi
-	add ebx,src_pitch
-	xor eax,eax
-loop_0_g_2_2:
-	movdqa xmm0,oword ptr[esi+eax]
-	pavgb xmm0,oword ptr[ebx+eax]
-	movdqa oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_0_g_2_2
-	
-	movq xmm0,qword ptr[esi+eax]
-	movq xmm1,qword ptr[ebx+eax]
-	pavgb xmm0,xmm1
-	movq qword ptr[edi+eax],xmm0	
-	
-	mov ebx,src					;ebx=ln-1
-	mov edi,dst
-	add edi,dst_pitch
-	mov esi,ebx
-	add esi,src_pitch			;esi=ln
-	mov edx,esi
-	add edx,src_pitch			;edx=ln+1
-
-loop_1_g_2_2:
-	xor eax,eax
-	mov ecx,w
-loop_2_g_2_2:
-	movdqa xmm0,oword ptr[ebx+eax]
-	pavgb xmm0,oword ptr[edx+eax]
-	pavgb xmm0,oword ptr[esi+eax]
-	movdqa oword ptr[edi+eax],xmm0
-	add eax,16	
-	loop loop_2_g_2_2
-	
-	movq xmm0,qword ptr[ebx+eax]
-	movq xmm1,qword ptr[edx+eax]
-	movq xmm2,qword ptr[esi+eax]
-	pavgb xmm0,xmm1
-	pavgb xmm0,xmm2
-	movq qword ptr[edi+eax],xmm0
-	
-	add esi,src_pitch
-	add ebx,src_pitch
-	add edx,src_pitch
-	add edi,dst_pitch
-	dec h
-	jnz short loop_1_g_2_2
-
-	mov ecx,w
-	xor eax,eax
-loop_3_g_2_2:
-	movdqa xmm0,oword ptr[ebx+eax]
-	pavgb xmm0,oword ptr[esi+eax]
-	movdqa oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_3_g_2_2
-	
-	movq xmm0,qword ptr[ebx+eax]
-	movq xmm1,qword ptr[esi+eax]
-	pavgb xmm0,xmm1
-	movq qword ptr[edi+eax],xmm0	
-	
-fin_g_2_2:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_Tri_SSE_3b endp
-
-
-
-JPSDR_Deinterlace_Blend_Tri_SSE_3_A_U proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
-	dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_Tri_SSE_3_A_U
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src
-	mov edi,dst
-	mov ebx,esi
-	mov ecx,w
-	add ebx,src_pitch
-	xor eax,eax
-loop_0_g_3:
-	movdqa xmm0,oword ptr[esi+eax]
-	pavgb xmm0,oword ptr[ebx+eax]
-	movdqu oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_0_g_3
-		
-	mov ebx,src					;ebx=ln-1
-	mov edi,dst
-	add edi,dst_pitch
-	mov esi,ebx
-	add esi,src_pitch			;esi=ln
-	mov edx,esi
-	add edx,src_pitch			;edx=ln+1
-
-loop_1_g_3:
-	xor eax,eax
-	mov ecx,w
-loop_2_g_3:
-	movdqa xmm0,oword ptr[ebx+eax]
-	pavgb xmm0,oword ptr[edx+eax]
-	pavgb xmm0,oword ptr[esi+eax]
-	movdqu oword ptr[edi+eax],xmm0
-	add eax,16		
-	loop loop_2_g_3	
-	add esi,src_pitch
-	add ebx,src_pitch
-	add edx,src_pitch
-	add edi,dst_pitch
-	dec h
-	jnz short loop_1_g_3
-
-	mov ecx,w
-loop_3_g_3:
-	movdqa xmm0,oword ptr[ebx+eax]
-	pavgb xmm0,oword ptr[esi+eax]
-	movdqu oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_3_g_3
-	
-fin_g_3:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_Tri_SSE_3_A_U endp
-
-
-JPSDR_Deinterlace_Blend_Tri_SSE_3_A_Ub proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
-	dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_Tri_SSE_3_A_Ub
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src
-	mov edi,dst
-	mov ebx,esi
-	mov ecx,w
-	add ebx,src_pitch
-	xor eax,eax
-loop_0_g_3_2:
-	movdqa xmm0,oword ptr[esi+eax]
-	pavgb xmm0,oword ptr[ebx+eax]
-	movdqu oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_0_g_3_2
-	
-	movq xmm0,qword ptr[esi+eax]
-	movq xmm1,qword ptr[ebx+eax]
-	pavgb xmm0,xmm1
-	movq qword ptr[edi+eax],xmm0	
-	
-	mov ebx,src					;ebx=ln-1
-	mov edi,dst
-	add edi,dst_pitch
-	mov esi,ebx
-	add esi,src_pitch			;esi=ln
-	mov edx,esi
-	add edx,src_pitch			;edx=ln+1
-
-loop_1_g_3_2:
-	xor eax,eax
-	mov ecx,w
-loop_2_g_3_2:
-	movdqa xmm0,oword ptr[ebx+eax]
-	pavgb xmm0,oword ptr[edx+eax]
-	pavgb xmm0,oword ptr[esi+eax]
-	movdqu oword ptr[edi+eax],xmm0
-	add eax,16		
-	loop loop_2_g_3_2
-
-	movq xmm0,qword ptr[ebx+eax]
-	movq xmm1,qword ptr[edx+eax]
-	movq xmm2,qword ptr[esi+eax]
-	pavgb xmm0,xmm1
-	pavgb xmm0,xmm2
-	movq qword ptr[edi+eax],xmm0
-	
-	add esi,src_pitch
-	add ebx,src_pitch
-	add edx,src_pitch
-	add edi,dst_pitch
-	dec h
-	jnz short loop_1_g_3_2
-
-	mov ecx,w
-loop_3_g_3_2:
-	movdqa xmm0,oword ptr[ebx+eax]
-	pavgb xmm0,oword ptr[esi+eax]
-	movdqu oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_3_g_3_2
-	
-	movq xmm0,qword ptr[ebx+eax]
-	movq xmm1,qword ptr[esi+eax]
-	pavgb xmm0,xmm1
-	movq qword ptr[edi+eax],xmm0	
-	
-fin_g_3_2:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_Tri_SSE_3_A_Ub endp
-
-
-
-JPSDR_Deinterlace_Blend_Tri_SSE_3_U_A proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
-	dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_Tri_SSE_3_U_A
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src
-	mov edi,dst
-	mov ebx,esi
-	mov ecx,w
-	add ebx,src_pitch
-	xor eax,eax
-loop_0_g_4:
-	movdqu xmm0,oword ptr[esi+eax]
-	movdqu xmm1,oword ptr[ebx+eax]
-	pavgb xmm0,xmm1
-	movdqa oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_0_g_4
-	
-	mov ebx,src					;ebx=ln-1
-	mov edi,dst
-	add edi,dst_pitch
-	mov esi,ebx
-	add esi,src_pitch			;esi=ln
-	mov edx,esi
-	add edx,src_pitch			;edx=ln+1
-
-loop_1_g_4:
-	xor eax,eax
-	mov ecx,w
-loop_2_g_4:
-	movdqu xmm0,oword ptr[ebx+eax]
-	movdqu xmm1,oword ptr[edx+eax]
-	movdqu xmm2,oword ptr[esi+eax]
-	pavgb xmm0,xmm1
-	pavgb xmm0,xmm2
-	movdqa oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_2_g_4
-	add esi,src_pitch
-	add ebx,src_pitch
-	add edx,src_pitch
-	add edi,dst_pitch
-	dec h
-	jnz short loop_1_g_4
-
-	mov ecx,w
-	xor eax,eax
-loop_3_g_4:
-	movdqu xmm0,oword ptr[ebx+eax]
-	movdqu xmm1,oword ptr[esi+eax]
-	pavgb xmm0,xmm1
-	movdqa oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_3_g_4
-	
-fin_g_4:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_Tri_SSE_3_U_A endp
-
-
-
-
-JPSDR_Deinterlace_Blend_Tri_SSE_3_U_Ab proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
-	dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_Tri_SSE_3_U_Ab
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src
-	mov edi,dst
-	mov ebx,esi
-	mov ecx,w
-	add ebx,src_pitch
-	xor eax,eax
-loop_0_g_4_2:
-	movdqu xmm0,oword ptr[esi+eax]
-	movdqu xmm1,oword ptr[ebx+eax]
-	pavgb xmm0,xmm1
-	movdqa oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_0_g_4_2
-	
-	movq xmm0,qword ptr[esi+eax]
-	movq xmm1,qword ptr[ebx+eax]
-	pavgb xmm0,xmm1
-	movq qword ptr[edi+eax],xmm0		
-	
-	mov ebx,src					;ebx=ln-1
-	mov edi,dst
-	add edi,dst_pitch
-	mov esi,ebx
-	add esi,src_pitch			;esi=ln
-	mov edx,esi
-	add edx,src_pitch			;edx=ln+1
-
-loop_1_g_4_2:
-	xor eax,eax
-	mov ecx,w
-loop_2_g_4_2:
-	movdqu xmm0,oword ptr[ebx+eax]
-	movdqu xmm1,oword ptr[edx+eax]
-	movdqu xmm2,oword ptr[esi+eax]
-	pavgb xmm0,xmm1
-	pavgb xmm0,xmm2
-	movdqa oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_2_g_4_2
-	
-	movq xmm0,qword ptr[ebx+eax]
-	movq xmm1,qword ptr[edx+eax]
-	movq xmm2,qword ptr[esi+eax]
-	pavgb xmm0,xmm1
-	pavgb xmm0,xmm2
-	movq qword ptr[edi+eax],xmm0
-	
-	add esi,src_pitch
-	add ebx,src_pitch
-	add edx,src_pitch
-	add edi,dst_pitch
-	dec h
-	jnz short loop_1_g_4_2
-
-	mov ecx,w
-	xor eax,eax
-loop_3_g_4_2:
-	movdqu xmm0,oword ptr[ebx+eax]
-	movdqu xmm1,oword ptr[esi+eax]
-	pavgb xmm0,xmm1
-	movdqa oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_3_g_4_2
-	
-	movq xmm0,qword ptr[esi+eax]
-	movq xmm1,qword ptr[ebx+eax]
-	pavgb xmm0,xmm1
-	movq qword ptr[edi+eax],xmm0		
-		
-fin_g_4_2:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_Tri_SSE_3_U_Ab endp
-
-
-
-
-JPSDR_Deinterlace_Blend_Tri_SSE_3_U proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
-	dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_Tri_SSE_3_U
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src
-	mov edi,dst
-	mov ebx,esi
-	mov ecx,w
-	add ebx,src_pitch
-	xor eax,eax
-loop_0_g_5:
-	movdqu xmm0,oword ptr[esi+eax]
-	movdqu xmm1,oword ptr[ebx+eax]
-	pavgb xmm0,xmm1
-	movdqu oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_0_g_5
-	
-	mov ebx,src					;ebx=ln-1
-	mov edi,dst
-	add edi,dst_pitch
-	mov esi,ebx
-	add esi,src_pitch			;esi=ln
-	mov edx,esi
-	add edx,src_pitch			;edx=ln+1
-
-loop_1_g_5:
-	xor eax,eax
-	mov ecx,w
-loop_2_g_5:
-	movdqu xmm0,oword ptr[ebx+eax]
-	movdqu xmm1,oword ptr[edx+eax]
-	movdqu xmm2,oword ptr[esi+eax]
-	pavgb xmm0,xmm1
-	pavgb xmm0,xmm2
-	movdqu oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_2_g_5
-	add esi,src_pitch
-	add ebx,src_pitch
-	add edx,src_pitch
-	add edi,dst_pitch
-	dec h
-	jnz short loop_1_g_5
-
-	mov ecx,w
-	xor eax,eax
-loop_3_g_5:
-	movdqu xmm0,oword ptr[ebx+eax]
-	movdqu xmm1,oword ptr[esi+eax]
-	pavgb xmm0,xmm1
-	movdqu oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_3_g_5
-	
-fin_g_5:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_Tri_SSE_3_U endp
-
-
-
-JPSDR_Deinterlace_Blend_Tri_SSE_3_Ub proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
-	dst_pitch:dword
-
-	public JPSDR_Deinterlace_Blend_Tri_SSE_3_Ub
-
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src
-	mov edi,dst
-	mov ebx,esi
-	mov ecx,w
-	add ebx,src_pitch
-	xor eax,eax
-loop_0_g_5_2:
-	movdqu xmm0,oword ptr[esi+eax]
-	movdqu xmm1,oword ptr[ebx+eax]
-	pavgb xmm0,xmm1
-	movdqu oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_0_g_5_2
-	
-	movq xmm0,qword ptr[esi+eax]
-	movq xmm1,qword ptr[ebx+eax]
-	pavgb xmm0,xmm1
-	movq qword ptr[edi+eax],xmm0		
-		
-	mov ebx,src					;ebx=ln-1
-	mov edi,dst
-	add edi,dst_pitch
-	mov esi,ebx
-	add esi,src_pitch			;esi=ln
-	mov edx,esi
-	add edx,src_pitch			;edx=ln+1
-
-loop_1_g_5_2:
-	xor eax,eax
-	mov ecx,w
-loop_2_g_5_2:
-	movdqu xmm0,oword ptr[ebx+eax]
-	movdqu xmm1,oword ptr[edx+eax]
-	movdqu xmm2,oword ptr[esi+eax]
-	pavgb xmm0,xmm1
-	pavgb xmm0,xmm2
-	movdqu oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_2_g_5_2
-	
-	movq xmm0,qword ptr[ebx+eax]
-	movq xmm1,qword ptr[edx+eax]
-	movq xmm2,qword ptr[esi+eax]
-	pavgb xmm0,xmm1
-	pavgb xmm0,xmm2
-	movq qword ptr[edi+eax],xmm0
-		
-	add esi,src_pitch
-	add ebx,src_pitch
-	add edx,src_pitch
-	add edi,dst_pitch
-	dec h
-	jnz short loop_1_g_5_2
-
-	mov ecx,w
-	xor eax,eax
-loop_3_g_5_2:
-	movdqu xmm0,oword ptr[ebx+eax]
-	movdqu xmm1,oword ptr[esi+eax]
-	pavgb xmm0,xmm1
-	movdqu oword ptr[edi+eax],xmm0
-	add eax,16
-	loop loop_3_g_5_2
-	
-	movq xmm0,qword ptr[esi+eax]
-	movq xmm1,qword ptr[ebx+eax]
-	pavgb xmm0,xmm1
-	movq qword ptr[edi+eax],xmm0			
-	
-fin_g_5_2:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Deinterlace_Blend_Tri_SSE_3_Ub endp
 
 
 

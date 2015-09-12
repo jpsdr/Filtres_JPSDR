@@ -9,19 +9,11 @@
 
 #include "..\Filtres_JPSDR\JPSDR_Filter.h"
 
+#include "..\asmlib\asmlib.h"
+
 extern int g_VFVAPIVersion;
 
-
-extern "C" void JPSDR_Field_Shift_Rebuild_Frame32(const void *bottom_src,const void *top_src,void *dst,
-		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch,ptrdiff_t src_modulo,ptrdiff_t dst_modulo);
-extern "C" void JPSDR_Field_Shift_Rebuild_Frame8(const void *bottom_src,const void *top_src,void *dst,
-		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch,ptrdiff_t src_modulo,ptrdiff_t dst_modulo);
-extern "C" void JPSDR_Field_Shift_Move32_Full(const void *src, void *dst, int32_t w,int32_t h,
-		ptrdiff_t src_modulo,ptrdiff_t dst_modulo);
-extern "C" void JPSDR_Field_Shift_Move8_Full(const void *src, void *dst, int32_t w,int32_t h,
-		ptrdiff_t src_modulo,ptrdiff_t dst_modulo);
-
-
+extern "C" int IInstrSet;
 
 
 #define Max_Sequence 2048
@@ -229,6 +221,7 @@ bool JPSDR_Field_ShiftDialog::OnCommand(int cmd)
 class JPSDR_Field_Shift : public VDXVideoFilter
 {
 public:
+	virtual bool Init();
 	virtual uint32 GetParams();
 	virtual void Start();
 	virtual void Run();
@@ -244,12 +237,18 @@ protected:
 	uint32_t debut[Max_Sequence],fin[Max_Sequence];
 	uint8_t tab_mode[Max_Sequence];
 	uint16_t nbre_file_mode;
+	size_t CPU_Cache_Size,Cache_Setting;
 
-	void Blend_Tri_RGB32(const void *src,void *dst,int32_t w,int32_t h,ptrdiff_t src_modulo,
+	inline void Move_Full(const void *src_, void *dst_, const int32_t w,const int32_t h,
+		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+	inline void Rebuild_Frame(const void *top_src, const void *bottom_src, void *dst_, const int32_t w,
+		const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+
+	void Blend_Tri_RGB32(const void *src,void *dst,const int32_t w,const int32_t h,ptrdiff_t src_modulo,
 		ptrdiff_t dst_modulo,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-	void Blend_Tri_YUV32(const void *src,void *dst,int32_t w,int32_t h,ptrdiff_t src_modulo,
+	void Blend_Tri_YUV32(const void *src,void *dst,const int32_t w,const int32_t h,ptrdiff_t src_modulo,
 		ptrdiff_t dst_modulo,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-	void Blend_Tri_Planar(const void *src,void *dst,int32_t w,int32_t h,ptrdiff_t src_modulo,
+	void Blend_Tri_Planar(const void *src,void *dst,const int32_t w,const int32_t h,ptrdiff_t src_modulo,
 		ptrdiff_t dst_modulo,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
 
 	void ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptValue *argv, int argc);
@@ -261,6 +260,15 @@ VDXVF_BEGIN_SCRIPT_METHODS(JPSDR_Field_Shift)
 VDXVF_DEFINE_SCRIPT_METHOD(JPSDR_Field_Shift,ScriptConfig,"iis")
 VDXVF_END_SCRIPT_METHODS()
 
+
+
+bool JPSDR_Field_Shift::Init()
+{
+	if (IInstrSet<0) InstructionSet();
+	CPU_Cache_Size=DataCacheSize(0)>>2;
+
+	return(true);
+}
 
 
 uint32 JPSDR_Field_Shift::GetParams()
@@ -343,6 +351,63 @@ bool JPSDR_Field_Shift::Prefetch2(sint64 frame, IVDXVideoPrefetcher *prefetcher)
 }
 
 
+inline void JPSDR_Field_Shift::Move_Full(const void *src_, void *dst_, const int32_t w,const int32_t h,
+		ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+{
+	const uint8_t *src=(uint8_t *)src_;
+	uint8_t *dst=(uint8_t *)dst_;
+
+	if ((h==1) || ((src_pitch==dst_pitch) && (abs(src_pitch)==w)))
+	{
+		if (src_pitch<0)
+		{
+			src+=(h-1)*src_pitch;
+			dst+=(h-1)*dst_pitch;
+		}
+		A_memcpy(dst,src,(size_t)h*(size_t)w);
+	}
+	else
+	{
+		for(int32_t i=0; i<h; i++)
+		{
+			A_memcpy(dst,src,w);
+			src+=src_pitch;
+			dst+=dst_pitch;
+		}
+	}
+}
+
+
+inline void JPSDR_Field_Shift::Rebuild_Frame(const void *top_src, const void *bottom_src, void *dst_, const int32_t w,
+		const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+{
+	const uint8_t *src;
+	uint8_t *dst;
+	const ptrdiff_t src_pitch2=src_pitch << 1,dst_pitch2=dst_pitch << 1;
+
+	src=(uint8_t *)top_src;
+	dst=(uint8_t *)dst_;
+
+	for(int32_t i=0; i<h; i++)
+	{
+		A_memcpy(dst,src,w);
+		src+=src_pitch2;
+		dst+=dst_pitch2;
+	}
+
+	src=(uint8_t *)bottom_src;
+	dst=(uint8_t *)dst_+dst_pitch;
+
+	for(int32_t i=0; i<h; i++)
+	{
+		A_memcpy(dst,src,w);
+		src+=src_pitch2;
+		dst+=dst_pitch2;
+	}
+
+}
+
+
 void JPSDR_Field_Shift::GetSettingString(char *buf, int maxlen)
 {
 	char output_string[1200];
@@ -361,7 +426,7 @@ void JPSDR_Field_Shift::GetSettingString(char *buf, int maxlen)
 
 
 
-void JPSDR_Field_Shift::Blend_Tri_RGB32(const void *src,void *_dst,int32_t w,int32_t h,
+void JPSDR_Field_Shift::Blend_Tri_RGB32(const void *src,void *_dst,const int32_t w,const int32_t h,
 	ptrdiff_t src_modulo,ptrdiff_t dst_modulo,ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	RGB32BMP *src1,*src2,*src3,*dst;
@@ -369,7 +434,7 @@ void JPSDR_Field_Shift::Blend_Tri_RGB32(const void *src,void *_dst,int32_t w,int
 	src1=(RGB32BMP *)src;
 	src2=(RGB32BMP *)((uint8_t *)src1+src_pitch);
 	src3=(RGB32BMP *)((uint8_t *)src2+src_pitch);
-	memcpy(_dst,src,w << 2);
+	A_memcpy(_dst,src,w << 2);
 	dst=(RGB32BMP *)((uint8_t *)_dst+dst_pitch);
 
 	for (int32_t i=0; i<h; i++)
@@ -391,12 +456,12 @@ void JPSDR_Field_Shift::Blend_Tri_RGB32(const void *src,void *_dst,int32_t w,int
 		dst=(RGB32BMP *)((uint8_t *)dst+dst_modulo);
 	}
 
-	memcpy(dst,src2,w << 2);
+	A_memcpy(dst,src2,w << 2);
 
 }
 
 
-void JPSDR_Field_Shift::Blend_Tri_YUV32(const void *src,void *_dst,int32_t w,int32_t h,
+void JPSDR_Field_Shift::Blend_Tri_YUV32(const void *src,void *_dst,const int32_t w,const int32_t h,
 	ptrdiff_t src_modulo,ptrdiff_t dst_modulo,ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	YUYV *src1,*src2,*src3,*dst;
@@ -404,7 +469,7 @@ void JPSDR_Field_Shift::Blend_Tri_YUV32(const void *src,void *_dst,int32_t w,int
 	src1=(YUYV *)src;
 	src2=(YUYV *)((uint8_t *)src1+src_pitch);
 	src3=(YUYV *)((uint8_t *)src2+src_pitch);
-	memcpy(_dst,src,w << 2);
+	A_memcpy(_dst,src,w << 2);
 	dst=(YUYV *)((uint8_t *)_dst+dst_pitch);
 
 	for (int32_t i=0; i<h; i++)
@@ -426,12 +491,12 @@ void JPSDR_Field_Shift::Blend_Tri_YUV32(const void *src,void *_dst,int32_t w,int
 		dst=(YUYV *)((uint8_t *)dst+dst_modulo);
 	}
 
-	memcpy(dst,src2,w << 2);
+	A_memcpy(dst,src2,w << 2);
 
 }
 
 
-void JPSDR_Field_Shift::Blend_Tri_Planar(const void *src,void *_dst,int32_t w,int32_t h,
+void JPSDR_Field_Shift::Blend_Tri_Planar(const void *src,void *_dst,const int32_t w,const int32_t h,
 	ptrdiff_t src_modulo,ptrdiff_t dst_modulo,ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	uint8_t *src1,*src2,*src3,*dst;
@@ -439,7 +504,7 @@ void JPSDR_Field_Shift::Blend_Tri_Planar(const void *src,void *_dst,int32_t w,in
 	src1=(uint8_t *)src;
 	src2=src1+src_pitch;
 	src3=src2+src_pitch;
-	memcpy(_dst,src,w);
+	A_memcpy(_dst,src,w);
 	dst=(uint8_t *)(((uint8_t *)_dst)+dst_pitch);
 
 	for (int32_t i=0; i<h; i++)
@@ -454,7 +519,7 @@ void JPSDR_Field_Shift::Blend_Tri_Planar(const void *src,void *_dst,int32_t w,in
 		src3+=src_modulo;
 		dst+=dst_modulo;
 	}
-	memcpy(dst,src2,w);
+	A_memcpy(dst,src2,w);
 }
 
 
@@ -476,7 +541,6 @@ void JPSDR_Field_Shift::Run()
 	const void *src_top_Y,*src_bottom_Y,*src_top_U,*src_bottom_U,*src_top_V,*src_bottom_V;
 	void *dst_Y,*dst_U,*dst_V;
 	uint8_t mode;
-	bool w_Y4,w_U4,w_V4;
 	uint16_t i;
 	bool ok;
 
@@ -488,6 +552,9 @@ void JPSDR_Field_Shift::Run()
 	idata.dst_plane0=pxdst.data;
 	idata.dst_plane1=pxdst.data2;
 	idata.dst_plane2=pxdst.data3;
+
+	SetMemcpyCacheLimit(Cache_Setting);
+	SetMemsetCacheLimit(Cache_Setting);
 
 	switch (idata.video_mode)
 	{
@@ -526,9 +593,6 @@ void JPSDR_Field_Shift::Run()
 	src_modulo_V=idata.src_modulo2;
 	dst_pitch_V=idata.dst_pitch2;
 	dst_modulo_V=idata.dst_modulo2;
-	w_Y4=((w_Y%4)==0);
-	w_U4=((w_U%4)==0);
-	w_V4=((w_V%4)==0);
 
 
 	if (mData.file_mode)
@@ -808,37 +872,23 @@ void JPSDR_Field_Shift::Run()
 		{
 			case 0 :
 			case 1 :
-				JPSDR_Field_Shift_Rebuild_Frame32(src_top_Y,src_bottom_Y,dst_Y,w_Y,h_Y>>1,
-					src_pitch_Y,dst_pitch_Y,src_modulo_Y,dst_modulo_Y);
+				Rebuild_Frame(src_top_Y,src_bottom_Y,dst_Y,w_Y<<2,h_Y>>1,src_pitch_Y,dst_pitch_Y);
 				break;
 			case 2 :
 			case 3 :
-				JPSDR_Field_Shift_Rebuild_Frame32(src_top_Y,src_bottom_Y,dst_Y,(w_Y+1)>>1,h_Y>>1,
-					src_pitch_Y,dst_pitch_Y,src_modulo_Y,dst_modulo_Y);
+				Rebuild_Frame(src_top_Y,src_bottom_Y,dst_Y,((w_Y+1)>>1)<<2,h_Y>>1,src_pitch_Y,dst_pitch_Y);
 				break;
 			case 4 :
 			case 5 :
 			case 6 :
 			case 7 :
 			case 8 :
-				if (w_Y4) JPSDR_Field_Shift_Rebuild_Frame32(src_top_Y,src_bottom_Y,dst_Y,w_Y >> 2,h_Y>>1,
-					src_pitch_Y,dst_pitch_Y,src_modulo_Y,dst_modulo_Y);
-				else JPSDR_Field_Shift_Rebuild_Frame8(src_top_Y,src_bottom_Y,dst_Y,w_Y,h_Y>>1,
-					src_pitch_Y,dst_pitch_Y,src_modulo_Y,dst_modulo_Y);
-				if (w_U4) JPSDR_Field_Shift_Rebuild_Frame32(src_top_U,src_bottom_U,dst_U,w_U >> 2,h_U>>1,
-					src_pitch_U,dst_pitch_U,src_modulo_U,dst_modulo_U);
-				else JPSDR_Field_Shift_Rebuild_Frame8(src_top_U,src_bottom_U,dst_U,w_U,h_U>>1,
-					src_pitch_U,dst_pitch_U,src_modulo_U,dst_modulo_U);
-				if (w_V4) JPSDR_Field_Shift_Rebuild_Frame32(src_top_V,src_bottom_V,dst_V,w_V >> 2,h_V>>1,
-					src_pitch_V,dst_pitch_V,src_modulo_V,dst_modulo_V);
-				else JPSDR_Field_Shift_Rebuild_Frame8(src_top_V,src_bottom_V,dst_V,w_V,h_V>>1,
-					src_pitch_V,dst_pitch_V,src_modulo_V,dst_modulo_V);
+				Rebuild_Frame(src_top_Y,src_bottom_Y,dst_Y,w_Y,h_Y>>1,src_pitch_Y,dst_pitch_Y);
+				Rebuild_Frame(src_top_U,src_bottom_U,dst_U,w_U,h_U>>1,src_pitch_U,dst_pitch_U);
+				Rebuild_Frame(src_top_V,src_bottom_V,dst_V,w_V,h_V>>1,src_pitch_V,dst_pitch_V);
 				break;
 			case 9 :
-				if (w_Y4) JPSDR_Field_Shift_Rebuild_Frame32(src_top_Y,src_bottom_Y,dst_Y,w_Y >> 2,h_Y>>1,
-					src_pitch_Y,dst_pitch_Y,src_modulo_Y,dst_modulo_Y);
-				else JPSDR_Field_Shift_Rebuild_Frame8(src_top_Y,src_bottom_Y,dst_Y,w_Y,h_Y>>1,
-					src_pitch_Y,dst_pitch_Y,src_modulo_Y,dst_modulo_Y);
+				Rebuild_Frame(src_top_Y,src_bottom_Y,dst_Y,w_Y,h_Y>>1,src_pitch_Y,dst_pitch_Y);
 				break;
 		}
 	}
@@ -871,27 +921,23 @@ void JPSDR_Field_Shift::Run()
 		{
 			case 0 :
 			case 1 :
-				JPSDR_Field_Shift_Move32_Full(src_top_Y,dst_Y,w_Y,h_Y,src_modulo_Y,dst_modulo_Y);
+				Move_Full(src_top_Y,dst_Y,w_Y<<2,h_Y,src_pitch_Y,dst_pitch_Y);
 				break;
 			case 2 :
 			case 3 :
-				JPSDR_Field_Shift_Move32_Full(src_top_Y,dst_Y,(w_Y+1)>>1,h_Y,src_modulo_Y,dst_modulo_Y);
+				Move_Full(src_top_Y,dst_Y,((w_Y+1)>>1)<<2,h_Y,src_pitch_Y,dst_pitch_Y);
 				break;
 			case 4 :
 			case 5 :
 			case 6 :
 			case 7 :
 			case 8 :
-				if (w_Y4) JPSDR_Field_Shift_Move32_Full(src_top_Y,dst_Y,w_Y >> 2,h_Y,src_modulo_Y,dst_modulo_Y);
-				else JPSDR_Field_Shift_Move8_Full(src_top_Y,dst_Y,w_Y,h_Y,src_modulo_Y,dst_modulo_Y);
-				if (w_U4) JPSDR_Field_Shift_Move32_Full(src_top_U,dst_U,w_U >> 2,h_U,src_modulo_U,dst_modulo_U);
-				else JPSDR_Field_Shift_Move8_Full(src_top_U,dst_U,w_U,h_U,src_modulo_U,dst_modulo_U);
-				if (w_V4) JPSDR_Field_Shift_Move32_Full(src_top_V,dst_V,w_V >> 2,h_V,src_modulo_V,dst_modulo_V);
-				else JPSDR_Field_Shift_Move8_Full(src_top_V,dst_V,w_V,h_V,src_modulo_V,dst_modulo_V);
+				Move_Full(src_top_Y,dst_Y,w_Y,h_Y,src_pitch_Y,dst_pitch_Y);
+				Move_Full(src_top_U,dst_U,w_U,h_U,src_pitch_U,dst_pitch_U);
+				Move_Full(src_top_V,dst_V,w_V,h_V,src_pitch_V,dst_pitch_V);
 				break;
 			case 9 :
-				if (w_Y4) JPSDR_Field_Shift_Move32_Full(src_top_Y,dst_Y,w_Y >> 2,h_Y,src_modulo_Y,dst_modulo_Y);
-				else JPSDR_Field_Shift_Move8_Full(src_top_Y,dst_Y,w_Y,h_Y,src_modulo_Y,dst_modulo_Y);
+				Move_Full(src_top_Y,dst_Y,w_Y,h_Y,src_pitch_Y,dst_pitch_Y);
 				break;
 		}
 	}
@@ -935,7 +981,7 @@ void JPSDR_Field_Shift::Start()
 				idata.src_video_mode=1;
 				idata.video_mode=1;
 				idata.src_modulo0=idata.src_pitch0-4*idata.src_w0;
-				idata.src_size0=idata.src_h0*4*idata.src_w0;
+				idata.src_size0=(size_t)idata.src_h0*(size_t)idata.src_w0*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -954,7 +1000,7 @@ void JPSDR_Field_Shift::Start()
 				idata.src_video_mode=2;
 				idata.video_mode=2;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -973,7 +1019,7 @@ void JPSDR_Field_Shift::Start()
 				idata.src_video_mode=2;
 				idata.video_mode=2;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -992,7 +1038,7 @@ void JPSDR_Field_Shift::Start()
 				idata.src_video_mode=2;
 				idata.video_mode=2;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1011,7 +1057,7 @@ void JPSDR_Field_Shift::Start()
 				idata.src_video_mode=2;
 				idata.video_mode=2;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1030,7 +1076,7 @@ void JPSDR_Field_Shift::Start()
 				idata.src_video_mode=3;
 				idata.video_mode=3;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1049,7 +1095,7 @@ void JPSDR_Field_Shift::Start()
 				idata.src_video_mode=3;
 				idata.video_mode=3;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1068,7 +1114,7 @@ void JPSDR_Field_Shift::Start()
 				idata.src_video_mode=3;
 				idata.video_mode=3;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1087,7 +1133,7 @@ void JPSDR_Field_Shift::Start()
 				idata.src_video_mode=3;
 				idata.video_mode=3;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1112,9 +1158,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_NONE;								
@@ -1129,9 +1175,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_NONE;								
@@ -1146,9 +1192,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_NONE;								
@@ -1163,9 +1209,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_NONE;								
@@ -1180,9 +1226,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_NONE;				
@@ -1197,9 +1243,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_NONE;				
@@ -1214,9 +1260,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_NONE;				
@@ -1231,9 +1277,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_NONE;				
@@ -1248,9 +1294,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=PROGRESSIVE;								
@@ -1265,9 +1311,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED;								
@@ -1282,9 +1328,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_BFF;								
@@ -1299,9 +1345,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_TFF;								
@@ -1316,9 +1362,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=PROGRESSIVE;								
@@ -1333,9 +1379,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED;								
@@ -1350,9 +1396,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_BFF;								
@@ -1367,9 +1413,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_TFF;								
@@ -1384,9 +1430,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=PROGRESSIVE;								
@@ -1401,9 +1447,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED;								
@@ -1418,9 +1464,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_BFF;								
@@ -1435,9 +1481,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_TFF;								
@@ -1452,9 +1498,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=PROGRESSIVE;								
@@ -1469,9 +1515,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED;								
@@ -1486,9 +1532,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_BFF;								
@@ -1503,9 +1549,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_TFF;								
@@ -1520,9 +1566,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_NONE;												
@@ -1537,9 +1583,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_NONE;												
@@ -1554,9 +1600,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_NONE;												
@@ -1571,9 +1617,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_NONE;												
@@ -1588,9 +1634,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=PROGRESSIVE;																
@@ -1605,9 +1651,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=PROGRESSIVE;																
@@ -1622,9 +1668,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=PROGRESSIVE;																
@@ -1639,9 +1685,9 @@ void JPSDR_Field_Shift::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=PROGRESSIVE;																
@@ -1650,7 +1696,7 @@ void JPSDR_Field_Shift::Start()
 				idata.src_video_mode=9;
 				idata.video_mode=9;
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
-				idata.src_size0=idata.src_h0*idata.src_w0;
+				idata.src_size0=(size_t)idata.src_h0*(size_t)idata.src_w0;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1669,7 +1715,7 @@ void JPSDR_Field_Shift::Start()
 				idata.src_video_mode=9;
 				idata.video_mode=9;
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
-				idata.src_size0=idata.src_h0*idata.src_w0;
+				idata.src_size0=(size_t)idata.src_h0*(size_t)idata.src_w0;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1690,7 +1736,7 @@ void JPSDR_Field_Shift::Start()
 			case nsVDXPixmap::kPixFormat_XRGB8888 :
 				idata.dst_video_mode=1;
 				idata.dst_modulo0=idata.dst_pitch0-4*idata.dst_w0;
-				idata.dst_size0=idata.dst_h0*4*idata.dst_w0;
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)idata.dst_w0*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1708,7 +1754,7 @@ void JPSDR_Field_Shift::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_YUYV :
 				idata.dst_video_mode=2;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1726,7 +1772,7 @@ void JPSDR_Field_Shift::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_YUYV_709 :
 				idata.dst_video_mode=2;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1744,7 +1790,7 @@ void JPSDR_Field_Shift::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_YUYV_FR :
 				idata.dst_video_mode=2;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1762,7 +1808,7 @@ void JPSDR_Field_Shift::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_YUYV_709_FR :			
 				idata.dst_video_mode=2;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1780,7 +1826,7 @@ void JPSDR_Field_Shift::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_UYVY :
 				idata.dst_video_mode=3;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1798,7 +1844,7 @@ void JPSDR_Field_Shift::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_UYVY_709 :
 				idata.dst_video_mode=3;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1816,7 +1862,7 @@ void JPSDR_Field_Shift::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_UYVY_FR :
 				idata.dst_video_mode=3;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1834,7 +1880,7 @@ void JPSDR_Field_Shift::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_UYVY_709_FR :			
 				idata.dst_video_mode=3;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1858,9 +1904,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -1874,9 +1920,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -1890,9 +1936,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -1906,9 +1952,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -1922,9 +1968,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -1938,9 +1984,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -1954,9 +2000,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -1970,9 +2016,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -1986,9 +2032,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2002,9 +2048,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED;																																
@@ -2018,9 +2064,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_BFF;																																
@@ -2034,9 +2080,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_TFF;																																
@@ -2050,9 +2096,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2066,9 +2112,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED;																																
@@ -2082,9 +2128,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_BFF;																																
@@ -2098,9 +2144,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_TFF;																																
@@ -2114,9 +2160,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2130,9 +2176,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED;																																
@@ -2146,9 +2192,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_BFF;																																
@@ -2162,9 +2208,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_TFF;																																
@@ -2178,9 +2224,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2194,9 +2240,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED;																																
@@ -2210,9 +2256,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_BFF;																																
@@ -2226,9 +2272,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_TFF;																																
@@ -2242,9 +2288,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -2258,9 +2304,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -2274,9 +2320,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -2290,9 +2336,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -2306,9 +2352,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2322,9 +2368,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2338,9 +2384,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2354,9 +2400,9 @@ void JPSDR_Field_Shift::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2364,7 +2410,7 @@ void JPSDR_Field_Shift::Start()
 			case nsVDXPixmap::kPixFormat_Y8 :
 				idata.dst_video_mode=9;
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
-				idata.dst_size0=idata.dst_h0*idata.dst_w0;
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)idata.dst_w0;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -2382,7 +2428,7 @@ void JPSDR_Field_Shift::Start()
 			case nsVDXPixmap::kPixFormat_Y8_FR :						
 				idata.dst_video_mode=9;
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
-				idata.dst_size0=idata.dst_h0*idata.dst_w0;
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)idata.dst_w0;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -2506,6 +2552,16 @@ void JPSDR_Field_Shift::Start()
 			}
 		}
 	}
+
+	const size_t img_size=idata.dst_size0+idata.dst_size1+idata.dst_size2;
+
+	if (img_size<=MAX_CACHE_SIZE)
+	{
+		if (CPU_Cache_Size>=img_size) Cache_Setting=img_size;
+		else Cache_Setting=16;
+	}
+	else Cache_Setting=16;
+
 }
 
 
@@ -2553,5 +2609,5 @@ void JPSDR_Field_Shift::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_Field_Shift=
-VDXVideoFilterDefinition<JPSDR_Field_Shift>("JPSDR","Field Shift v3.0.3","Shif Field from previous and current frame.");
+VDXVideoFilterDefinition<JPSDR_Field_Shift>("JPSDR","Field Shift v3.1.0","Shif Field from previous and current frame.");
 

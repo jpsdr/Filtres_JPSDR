@@ -5,99 +5,13 @@
 
 align 16
 
-uw_2_0 dword 4 dup(00000002h)
-uw_3_0 dword 4 dup(00000003h)
-uw_4_0 dword 4 dup(00000004h)
-uw_5_0 dword 4 dup(00000005h)
-uw_7_0 dword 4 dup(00000007h)
-
-uw_2_1 dword 4 dup(00020000h)
-uw_3_1 dword 4 dup(00030000h)
-uw_4_1 dword 4 dup(00040000h)
-uw_5_1 dword 4 dup(00050000h)
-uw_7_1 dword 4 dup(00070000h)
+uw_2 word 8 dup(2)
+uw_3 word 8 dup(3)
+uw_4 word 8 dup(4)
+uw_5 word 8 dup(5)
+uw_7 word 8 dup(7)
 
 .code
-
-
-JPSDR_AutoYUY2_Move32_Full proc src:dword,dst:dword,w:dword,h:dword,src_modulo:dword,dst_modulo:dword
-
-	public JPSDR_AutoYUY2_Move32_Full
-
-	push esi
-	push edi
-	push ebx
-	
-	cld
-	mov esi,src
-	mov edi,dst
-	mov eax,src_modulo
-	mov ebx,w
-	or ebx,ebx
-	jz short fin_F	
-	mov edx,h
-	or edx,edx
-	jz short fin_F	
-loop_F:
-	mov ecx,ebx
-	rep movsd
-	add esi,eax
-	add edi,dst_modulo
-	dec edx
-	jnz short loop_F
-	
-fin_F:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_AutoYUY2_Move32_Full endp
-
-
-JPSDR_AutoYUY2_Move8_Full proc src:dword,dst:dword,w:dword,h:dword,src_modulo:dword,dst_modulo:dword
-
-	public JPSDR_AutoYUY2_Move8_Full
-
-	push esi
-	push edi
-	push ebx
-	
-	cld
-	mov esi,src
-	mov edi,dst
-	mov eax,src_modulo
-	mov ebx,w
-	or ebx,ebx
-	jz short fin_F8
-	mov edx,h
-	or edx,edx
-	jz short fin_F8	
-loop_F8:
-	mov ecx,ebx
-	shr ecx,2
-	jz short loop_F8_suite1
-	rep movsd
-loop_F8_suite1:	
-	mov ecx,ebx
-	and ecx,3
-	jz short loop_F8_suite2
-	rep movsb
-loop_F8_suite2:		
-	add esi,eax
-	add edi,dst_modulo
-	dec edx
-	jnz short loop_F8
-	
-fin_F8:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_AutoYUY2_Move8_Full endp
 
 
 JPSDR_AutoYUY2_Convert420_to_YUY2_1 proc src_y:dword,src_u:dword,src_v:dword,dst:dword,w:dword
@@ -172,6 +86,230 @@ JPSDR_AutoYUY2_Convert420_to_UYVY_1 endp
 
 .xmm
 
+
+JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_1 proc src_y:dword,src_u:dword,src_v:dword,dst:dword,w:dword
+
+	public JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_1
+
+	push esi
+	push edi
+	push ebx
+
+	mov esi,src_y
+	mov ebx,src_u
+	mov edx,src_v
+	mov edi,dst
+	mov ecx,w
+	xor eax,eax
+	
+	shr ecx,1
+	jz short _SSE2_1_b
+	
+_SSE2_1_a:
+	movd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm1,xmm0					;00000000VUVUVUVU
+	movq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	inc eax
+	punpcklbw xmm0,xmm1     			;VYUYVYUYVYUYVYUY
+	
+	movq qword ptr[edi],xmm0
+	psrldq xmm0,8
+	movq qword ptr[edi+8],xmm0
+	add edi,16
+	loop _SSE2_1_a
+	
+_SSE2_1_b:
+	mov ecx,w
+	and ecx,1
+	jz short _SSE2_1_c
+	
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm1,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0
+	punpcklbw xmm1,xmm0					;000000000000VUVU
+	movd xmm0,dword ptr[esi+8*eax]		;000000000000YYYY
+	punpcklbw xmm0,xmm1     			;00000000VYUYVYUY
+	movq qword ptr[edi],xmm0		
+	
+_SSE2_1_c:	
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_1 endp
+
+
+
+JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_1b proc src_y:dword,src_u:dword,src_v:dword,dst:dword,w:dword
+
+	public JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_1b
+
+	push esi
+	push edi
+	push ebx
+
+	mov esi,src_y
+	mov ebx,src_u
+	mov edx,src_v
+	mov edi,dst
+	mov ecx,w
+	xor eax,eax
+	
+	shr ecx,1
+	jz short _SSE2_1b_b
+	
+_SSE2_1b_a:
+	movd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm1,xmm0					;00000000VUVUVUVU
+	movq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	inc eax
+	punpcklbw xmm0,xmm1     			;VYUYVYUYVYUYVYUY
+	
+	movdqa oword ptr[edi],xmm0
+	add edi,16
+	loop _SSE2_1b_a
+	
+_SSE2_1b_b:
+	mov ecx,w
+	and ecx,1
+	jz short _SSE2_1b_c
+	
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm1,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0
+	punpcklbw xmm1,xmm0					;000000000000VUVU
+	movd xmm0,dword ptr[esi+8*eax]		;000000000000YYYY
+	punpcklbw xmm0,xmm1     			;00000000VYUYVYUY
+	movq qword ptr[edi],xmm0		
+	
+_SSE2_1b_c:	
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_1b endp
+
+
+
+JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_1 proc src_y:dword,src_u:dword,src_v:dword,dst:dword,w:dword
+
+	public JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_1
+
+	push esi
+	push edi
+	push ebx
+
+	mov esi,src_y
+	mov ebx,src_u
+	mov edx,src_v
+	mov edi,dst
+	mov ecx,w
+	xor eax,eax
+	
+	shr ecx,1
+	jz short _SSE2_0_b
+	
+_SSE2_0_a:
+	movd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm1,xmm0					;00000000VUVUVUVU
+	movq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	inc eax
+	punpcklbw xmm1,xmm0     			;YVYUYVYUYVYUYVYU
+	
+	movq qword ptr[edi],xmm1
+	psrldq xmm1,8
+	movq qword ptr[edi+8],xmm1
+	add edi,16
+	loop _SSE2_0_a
+	
+_SSE2_0_b:
+	mov ecx,w
+	and ecx,1
+	jz short _SSE2_0_c
+	
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm1,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0
+	punpcklbw xmm1,xmm0					;000000000000VUVU
+	movd xmm0,dword ptr[esi+8*eax]		;000000000000YYYY
+	punpcklbw xmm1,xmm0     			;00000000YVYUYVYU
+	movq qword ptr[edi],xmm1		
+	
+_SSE2_0_c:	
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_1 endp
+
+
+JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_1b proc src_y:dword,src_u:dword,src_v:dword,dst:dword,w:dword
+
+	public JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_1b
+
+	push esi
+	push edi
+	push ebx
+
+	mov esi,src_y
+	mov ebx,src_u
+	mov edx,src_v
+	mov edi,dst
+	mov ecx,w
+	xor eax,eax
+	
+	shr ecx,1
+	jz short _SSE2_0b_b
+	
+_SSE2_0b_a:
+	movd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm1,xmm0					;00000000VUVUVUVU
+	movq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	inc eax
+	punpcklbw xmm1,xmm0     			;YVYUYVYUYVYUYVYU
+	
+	movdqa oword ptr[edi],xmm1
+	add edi,16
+	loop _SSE2_0b_a
+	
+_SSE2_0b_b:
+	mov ecx,w
+	and ecx,1
+	jz short _SSE2_0b_c
+	
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm1,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0
+	punpcklbw xmm1,xmm0					;000000000000VUVU
+	movd xmm0,dword ptr[esi+8*eax]		;000000000000YYYY
+	punpcklbw xmm1,xmm0     			;00000000YVYUYVYU
+	movq qword ptr[edi],xmm1		
+	
+_SSE2_0b_c:	
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_1b endp
+
+
+
 JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_2 proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
 
 	public JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_2
@@ -181,224 +319,464 @@ JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_2 proc src_y:dword,src1_u:dword,src2_u:dw
 	push ebx
 	
 	pxor xmm7,xmm7
-	pxor xmm2,xmm2
-	pxor xmm1,xmm1
 	
 	mov edi,dst
 	mov esi,src_y
 	mov ecx,w
-	cld
 	
-	movdqa xmm6,oword ptr uw_4_1
-	movdqa xmm5,oword ptr uw_3_1
-	movdqa xmm4,oword ptr uw_5_1
-
+	movdqa xmm6,oword ptr uw_4
+	movdqa xmm5,oword ptr uw_3
+	movdqa xmm4,oword ptr uw_5
+	
 	xor eax,eax
+	shr ecx,1
+	jz short _SSE2_2_b
 
-SSE2_2_a:
-	pxor xmm0,xmm0
-	lodsb
-	pinsrw xmm0,eax,0
-	lodsb
-	pinsrw xmm0,eax,2
-	lodsb
+_SSE2_2_a:
 	mov ebx,src1_u
-	pinsrw xmm0,eax,4
-	lodsb
-	mov edx,src2_u	
-	pinsrw xmm0,eax,6
-	movzx eax,byte ptr[ebx]					;al=u1 (1)
-	add src1_u,2
-	pinsrw xmm1,eax,1
-	movzx eax,byte ptr[ebx+1]					;al=u1 (2)
-	add src2_u,2
-	pinsrw xmm1,eax,5
-	movzx eax,byte ptr[edx]					;al=u2 (1)
-	mov ebx,src1_v
-	pinsrw xmm2,eax,1
-	movzx eax,byte ptr[edx+1]					;al=u2 (2)
+	mov edx,src1_v
+	movd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm1,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm1,xmm7				;0V0U0V0U0V0U0V0U
+	mov ebx,src2_u
 	mov edx,src2_v
-	pinsrw xmm2,eax,5
-	movzx eax,byte ptr[ebx]					;al=v1 (1)
-	add src1_v,2
-	pinsrw xmm1,eax,3
-	movzx eax,byte ptr[ebx+1]					;al=v1 (2)
-	add src2_v,2
-	pinsrw xmm1,eax,7
-	movzx eax,byte ptr[edx]					;al=v2 (1)
-	pinsrw xmm2,eax,3
-	movzx eax,byte ptr[edx+1]					;al=v2 (2)
-	pinsrw xmm2,eax,7
+	movd xmm2,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm2,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm2,xmm7				;0V0U0V0U0V0U0V0U	
 	
 	pmullw xmm1,xmm5
 	pmullw xmm2,xmm4
 	paddsw xmm1,xmm6
+	movq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	paddsw xmm1,xmm2
+	inc eax
+	psraw xmm1,3
+	packuswb xmm1,xmm7				;00000000VUVUVUVU
+	punpcklbw xmm0,xmm1     		;VYUYVYUYVYUYVYUY
+	
+	movq qword ptr[edi],xmm0
+	psrldq xmm0,8
+	movq qword ptr[edi+8],xmm0
+	add edi,16
+	
+	loop _SSE2_2_a
+	
+_SSE2_2_b:	
+	mov ecx,w
+	and ecx,1
+	jz short _SSE2_2_c
+	
+	mov ebx,src1_u
+	mov edx,src1_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm1,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0
+	punpcklbw xmm1,xmm0				;000000000000VUVU
+	punpcklbw xmm1,xmm7				;000000000V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm2,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0	
+	punpcklbw xmm2,xmm0				;000000000000VUVU
+	punpcklbw xmm2,xmm7				;000000000V0U0V0U	
+	
+	pmullw xmm1,xmm5
+	pmullw xmm2,xmm4
+	paddsw xmm1,xmm6
+	movd xmm0,dword ptr[esi+8*eax]		;000000000000YYYY
 	paddsw xmm1,xmm2
 	psraw xmm1,3
-	paddsw xmm0,xmm1
-	packuswb xmm0,xmm7
-	movq qword ptr[edi],xmm0
-	add edi,8
-	dec ecx
-	jnz SSE2_2_a
+	packuswb xmm1,xmm7				;000000000000VUVU
+	punpcklbw xmm0,xmm1     		;00000000VYUYVYUY
 	
+	movq qword ptr[edi],xmm0
+		
+_SSE2_2_c:		
 	pop ebx
 	pop edi
 	pop esi
 
-	ret	
+	ret
 
 JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_2 endp
 
 
-JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_2 proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
+JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_2b proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
 
-	public JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_2
-
+	public JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_2b
+	
 	push esi
 	push edi
 	push ebx
 	
 	pxor xmm7,xmm7
-	pxor xmm2,xmm2
-	pxor xmm1,xmm1
-		
+	
 	mov edi,dst
 	mov esi,src_y
 	mov ecx,w
-	cld
 	
-	movdqa xmm6,oword ptr uw_4_0
-	movdqa xmm5,oword ptr uw_3_0
-	movdqa xmm4,oword ptr uw_5_0
+	movdqa xmm6,oword ptr uw_4
+	movdqa xmm5,oword ptr uw_3
+	movdqa xmm4,oword ptr uw_5
 	
 	xor eax,eax
+	shr ecx,1
+	jz short _SSE2_2b_b
 
-SSE2_2_b:
-	pxor xmm0,xmm0
-	lodsb
-	pinsrw xmm0,eax,1
-	lodsb
-	pinsrw xmm0,eax,3
-	lodsb
+_SSE2_2b_a:
 	mov ebx,src1_u
-	pinsrw xmm0,eax,5
-	lodsb
-	mov edx,src2_u	
-	pinsrw xmm0,eax,7
-	movzx eax,byte ptr[ebx]					;al=u1 (1)
-	add src1_u,2
-	pinsrw xmm1,eax,0
-	movzx eax,byte ptr[ebx+1]					;al=u1 (2)
-	add src2_u,2
-	pinsrw xmm1,eax,4
-	movzx eax,byte ptr[edx]					;al=u2 (1)
-	mov ebx,src1_v
-	pinsrw xmm2,eax,0
-	movzx eax,byte ptr[edx+1]					;al=u2 (2)
+	mov edx,src1_v
+	movd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm1,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm1,xmm7				;0V0U0V0U0V0U0V0U
+	mov ebx,src2_u
 	mov edx,src2_v
-	pinsrw xmm2,eax,4
-	movzx eax,byte ptr[ebx]					;al=v1 (1)
-	add src1_v,2
-	pinsrw xmm1,eax,2
-	movzx eax,byte ptr[ebx+1]					;al=v1 (2)
-	add src2_v,2
-	pinsrw xmm1,eax,6
-	movzx eax,byte ptr[edx]					;al=v2 (1)
-	pinsrw xmm2,eax,2
-	movzx eax,byte ptr[edx+1]					;al=v2 (2)
-	pinsrw xmm2,eax,6
+	movd xmm2,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm2,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm2,xmm7				;0V0U0V0U0V0U0V0U	
 	
 	pmullw xmm1,xmm5
 	pmullw xmm2,xmm4
 	paddsw xmm1,xmm6
+	movq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	paddsw xmm1,xmm2
+	inc eax
+	psraw xmm1,3
+	packuswb xmm1,xmm7				;00000000VUVUVUVU
+	punpcklbw xmm0,xmm1     		;VYUYVYUYVYUYVYUY
+	
+	movdqa oword ptr[edi],xmm0
+	add edi,16
+	
+	loop _SSE2_2b_a
+	
+_SSE2_2b_b:	
+	mov ecx,w
+	and ecx,1
+	jz short _SSE2_2b_c
+	
+	mov ebx,src1_u
+	mov edx,src1_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm1,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0
+	punpcklbw xmm1,xmm0				;000000000000VUVU
+	punpcklbw xmm1,xmm7				;000000000V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm2,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0	
+	punpcklbw xmm2,xmm0				;000000000000VUVU
+	punpcklbw xmm2,xmm7				;000000000V0U0V0U	
+	
+	pmullw xmm1,xmm5
+	pmullw xmm2,xmm4
+	paddsw xmm1,xmm6
+	movd xmm0,dword ptr[esi+8*eax]		;000000000000YYYY
 	paddsw xmm1,xmm2
 	psraw xmm1,3
-	paddsw xmm0,xmm1
-	packuswb xmm0,xmm7
-	movq qword ptr[edi],xmm0
-	add edi,8
-	dec ecx
-	jnz SSE2_2_b
+	packuswb xmm1,xmm7				;000000000000VUVU
+	punpcklbw xmm0,xmm1     		;00000000VYUYVYUY
 	
+	movq qword ptr[edi],xmm0
+		
+_SSE2_2b_c:		
 	pop ebx
 	pop edi
 	pop esi
 
-	ret	
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_2b endp
+
+
+JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_2 proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
+
+	public JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_2
+	
+	push esi
+	push edi
+	push ebx
+	
+	pxor xmm7,xmm7
+	
+	mov edi,dst
+	mov esi,src_y
+	mov ecx,w
+	
+	movdqa xmm6,oword ptr uw_4
+	movdqa xmm5,oword ptr uw_3
+	movdqa xmm4,oword ptr uw_5
+	
+	xor eax,eax
+	shr ecx,1
+	jz short _SSE2_6_b
+
+_SSE2_6_a:
+	mov ebx,src1_u
+	mov edx,src1_v
+	movd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm1,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm1,xmm7				;0V0U0V0U0V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	movd xmm2,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm2,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm2,xmm7				;0V0U0V0U0V0U0V0U	
+	
+	pmullw xmm1,xmm5
+	pmullw xmm2,xmm4
+	paddsw xmm1,xmm6
+	movq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	paddsw xmm1,xmm2
+	inc eax
+	psraw xmm1,3
+	packuswb xmm1,xmm7				;00000000VUVUVUVU
+	punpcklbw xmm1,xmm0     		;YVYUYVYUYVYUYVYU
+	
+	movq qword ptr[edi],xmm1
+	psrldq xmm1,8
+	movq qword ptr[edi+8],xmm1
+	add edi,16
+	
+	loop _SSE2_6_a
+	
+_SSE2_6_b:	
+	mov ecx,w
+	and ecx,1
+	jz short _SSE2_6_c
+	
+	mov ebx,src1_u
+	mov edx,src1_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm1,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0
+	punpcklbw xmm1,xmm0				;000000000000VUVU
+	punpcklbw xmm1,xmm7				;000000000V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm2,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0	
+	punpcklbw xmm2,xmm0				;000000000000VUVU
+	punpcklbw xmm2,xmm7				;000000000V0U0V0U	
+	
+	pmullw xmm1,xmm5
+	pmullw xmm2,xmm4
+	paddsw xmm1,xmm6
+	movd xmm0,dword ptr[esi+8*eax]		;000000000000YYYY
+	paddsw xmm1,xmm2
+	psraw xmm1,3
+	packuswb xmm1,xmm7				;000000000000VUVU
+	punpcklbw xmm1,xmm0     		;00000000YVYUYVYU
+	
+	movq qword ptr[edi],xmm1
+		
+_SSE2_6_c:		
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
 
 JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_2 endp
+
+
+
+JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_2b proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
+
+	public JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_2b
+	
+	push esi
+	push edi
+	push ebx
+	
+	pxor xmm7,xmm7
+	
+	mov edi,dst
+	mov esi,src_y
+	mov ecx,w
+	
+	movdqa xmm6,oword ptr uw_4
+	movdqa xmm5,oword ptr uw_3
+	movdqa xmm4,oword ptr uw_5
+	
+	xor eax,eax
+	shr ecx,1
+	jz short _SSE2_6b_b
+
+_SSE2_6b_a:
+	mov ebx,src1_u
+	mov edx,src1_v
+	movd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm1,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm1,xmm7				;0V0U0V0U0V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	movd xmm2,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm2,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm2,xmm7				;0V0U0V0U0V0U0V0U	
+	
+	pmullw xmm1,xmm5
+	pmullw xmm2,xmm4
+	paddsw xmm1,xmm6
+	movq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	paddsw xmm1,xmm2
+	inc eax
+	psraw xmm1,3
+	packuswb xmm1,xmm7				;00000000VUVUVUVU
+	punpcklbw xmm1,xmm0     		;YVYUYVYUYVYUYVYU
+	
+	movdqa oword ptr[edi],xmm1
+	add edi,16
+	
+	loop _SSE2_6b_a
+	
+_SSE2_6b_b:	
+	mov ecx,w
+	and ecx,1
+	jz short _SSE2_6b_c
+	
+	mov ebx,src1_u
+	mov edx,src1_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm1,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0
+	punpcklbw xmm1,xmm0				;000000000000VUVU
+	punpcklbw xmm1,xmm7				;000000000V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm2,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0	
+	punpcklbw xmm2,xmm0				;000000000000VUVU
+	punpcklbw xmm2,xmm7				;000000000V0U0V0U	
+	
+	pmullw xmm1,xmm5
+	pmullw xmm2,xmm4
+	paddsw xmm1,xmm6
+	movd xmm0,dword ptr[esi+8*eax]		;000000000000YYYY
+	paddsw xmm1,xmm2
+	psraw xmm1,3
+	packuswb xmm1,xmm7				;000000000000VUVU
+	punpcklbw xmm1,xmm0     		;00000000YVYUYVYU
+	
+	movq qword ptr[edi],xmm1
+		
+_SSE2_6b_c:		
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_2b endp
+
 
 
 
 JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_3 proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
 
 	public JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_3
-
+	
 	push esi
 	push edi
 	push ebx
 	
 	pxor xmm7,xmm7
-	pxor xmm1,xmm1
-	pxor xmm2,xmm2
 	
 	mov edi,dst
 	mov esi,src_y
 	mov ecx,w
-	cld
 	
-	movdqa xmm6,oword ptr uw_4_1
-	movdqa xmm5,oword ptr uw_7_1
+	movdqa xmm6,oword ptr uw_4
+	movdqa xmm5,oword ptr uw_7
+	
+	xor eax,eax
+	shr ecx,1
+	jz short _SSE2_3_b
 
-	xor eax,eax	
-
-SSE2_3_a:
-	pxor xmm0,xmm0
-	lodsb
-	pinsrw xmm0,eax,0
-	lodsb
-	pinsrw xmm0,eax,2
-	lodsb
+_SSE2_3_a:
 	mov ebx,src1_u
-	pinsrw xmm0,eax,4
-	lodsb
-	mov edx,src2_u	
-	pinsrw xmm0,eax,6
-	movzx eax,byte ptr[ebx]					;al=u1 (1)
-	add src1_u,2
-	pinsrw xmm1,eax,1
-	movzx eax,byte ptr[ebx+1]					;al=u1 (2)
-	add src2_u,2
-	pinsrw xmm1,eax,5
-	movzx eax,byte ptr[edx]					;al=u2 (1)
-	mov ebx,src1_v
-	pinsrw xmm2,eax,1
-	movzx eax,byte ptr[edx+1]					;al=u2 (2)
+	mov edx,src1_v
+	movd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm1,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm1,xmm7				;0V0U0V0U0V0U0V0U
+	mov ebx,src2_u
 	mov edx,src2_v
-	pinsrw xmm2,eax,5
-	movzx eax,byte ptr[ebx]					;al=v1 (1)
-	add src1_v,2
-	pinsrw xmm1,eax,3
-	movzx eax,byte ptr[ebx+1]					;al=v1 (2)
-	add src2_v,2
-	pinsrw xmm1,eax,7
-	movzx eax,byte ptr[edx]					;al=v2 (1)
-	pinsrw xmm2,eax,3
-	movzx eax,byte ptr[edx+1]					;al=v2 (2)
-	pinsrw xmm2,eax,7
+	movd xmm2,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm2,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm2,xmm7				;0V0U0V0U0V0U0V0U	
 	
 	pmullw xmm1,xmm5
 	paddsw xmm2,xmm6
+	movq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	paddsw xmm1,xmm2
+	inc eax
+	psraw xmm1,3
+	packuswb xmm1,xmm7				;00000000VUVUVUVU
+	punpcklbw xmm0,xmm1     		;VYUYVYUYVYUYVYUY
+	
+	movq qword ptr[edi],xmm0
+	psrldq xmm0,8
+	movq qword ptr[edi+8],xmm0
+	add edi,16
+	
+	loop _SSE2_3_a
+	
+_SSE2_3_b:	
+	mov ecx,w
+	and ecx,1
+	jz short _SSE2_3_c
+	
+	mov ebx,src1_u
+	mov edx,src1_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm1,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0
+	punpcklbw xmm1,xmm0				;000000000000VUVU
+	punpcklbw xmm1,xmm7				;000000000V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm2,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0	
+	punpcklbw xmm2,xmm0				;000000000000VUVU
+	punpcklbw xmm2,xmm7				;000000000V0U0V0U	
+	
+	pmullw xmm1,xmm5
+	paddsw xmm2,xmm6
+	movd xmm0,dword ptr[esi+8*eax]		;000000000000YYYY
 	paddsw xmm1,xmm2
 	psraw xmm1,3
-	paddsw xmm0,xmm1
-	packuswb xmm0,xmm7
-	movq qword ptr[edi],xmm0
-	add edi,8
-	dec ecx
-	jnz SSE2_3_a
+	packuswb xmm1,xmm7				;000000000000VUVU
+	punpcklbw xmm0,xmm1     		;00000000VYUYVYUY
 	
+	movq qword ptr[edi],xmm0
+		
+_SSE2_3_c:		
 	pop ebx
 	pop edi
 	pop esi
@@ -406,6 +784,97 @@ SSE2_3_a:
 	ret
 
 JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_3 endp
+
+
+JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_3b proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
+
+	public JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_3b
+	
+	push esi
+	push edi
+	push ebx
+	
+	pxor xmm7,xmm7
+	
+	mov edi,dst
+	mov esi,src_y
+	mov ecx,w
+	
+	movdqa xmm6,oword ptr uw_4
+	movdqa xmm5,oword ptr uw_7
+	
+	xor eax,eax
+	shr ecx,1
+	jz short _SSE2_3b_b
+
+_SSE2_3b_a:
+	mov ebx,src1_u
+	mov edx,src1_v
+	movd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm1,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm1,xmm7				;0V0U0V0U0V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	movd xmm2,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm2,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm2,xmm7				;0V0U0V0U0V0U0V0U	
+	
+	pmullw xmm1,xmm5
+	paddsw xmm2,xmm6
+	movq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	paddsw xmm1,xmm2
+	inc eax
+	psraw xmm1,3
+	packuswb xmm1,xmm7				;00000000VUVUVUVU
+	punpcklbw xmm0,xmm1     		;VYUYVYUYVYUYVYUY
+	
+	movdqa oword ptr[edi],xmm0
+	add edi,16
+	
+	loop _SSE2_3b_a
+	
+_SSE2_3b_b:	
+	mov ecx,w
+	and ecx,1
+	jz short _SSE2_3b_c
+	
+	mov ebx,src1_u
+	mov edx,src1_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm1,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0
+	punpcklbw xmm1,xmm0				;000000000000VUVU
+	punpcklbw xmm1,xmm7				;000000000V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm2,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0	
+	punpcklbw xmm2,xmm0				;000000000000VUVU
+	punpcklbw xmm2,xmm7				;000000000V0U0V0U	
+	
+	pmullw xmm1,xmm5
+	paddsw xmm2,xmm6
+	movd xmm0,dword ptr[esi+8*eax]		;000000000000YYYY
+	paddsw xmm1,xmm2
+	psraw xmm1,3
+	packuswb xmm1,xmm7				;000000000000VUVU
+	punpcklbw xmm0,xmm1     		;00000000VYUYVYUY
+	
+	movq qword ptr[edi],xmm0
+		
+_SSE2_3b_c:		
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_3b endp
 
 
 JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_3 proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
@@ -417,65 +886,81 @@ JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_3 proc src_y:dword,src1_u:dword,src2_u:dw
 	push ebx
 	
 	pxor xmm7,xmm7
-	pxor xmm1,xmm1
-	pxor xmm2,xmm2
 	
 	mov edi,dst
 	mov esi,src_y
 	mov ecx,w
-	cld
 	
-	movdqa xmm6,oword ptr uw_4_0
-	movdqa xmm5,oword ptr uw_7_0
+	movdqa xmm6,oword ptr uw_4
+	movdqa xmm5,oword ptr uw_7
 	
-	xor eax,eax		
+	xor eax,eax
+	shr ecx,1
+	jz short _SSE2_7_b
 
-SSE2_3_b:
-	pxor xmm0,xmm0
-	lodsb
-	pinsrw xmm0,eax,1
-	lodsb
-	pinsrw xmm0,eax,3
-	lodsb
+_SSE2_7_a:
 	mov ebx,src1_u
-	pinsrw xmm0,eax,5
-	lodsb
-	mov edx,src2_u	
-	pinsrw xmm0,eax,7
-	movzx eax,byte ptr[ebx]					;al=u1 (1)
-	add src1_u,2
-	pinsrw xmm1,eax,0
-	movzx eax,byte ptr[ebx+1]					;al=u1 (2)
-	add src2_u,2
-	pinsrw xmm1,eax,4
-	movzx eax,byte ptr[edx]					;al=u2 (1)
-	mov ebx,src1_v
-	pinsrw xmm2,eax,0
-	movzx eax,byte ptr[edx+1]					;al=u2 (2)
+	mov edx,src1_v
+	movd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm1,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm1,xmm7				;0V0U0V0U0V0U0V0U
+	mov ebx,src2_u
 	mov edx,src2_v
-	pinsrw xmm2,eax,4
-	movzx eax,byte ptr[ebx]					;al=v1 (1)
-	add src1_v,2
-	pinsrw xmm1,eax,2
-	movzx eax,byte ptr[ebx+1]					;al=v1 (2)
-	add src2_v,2
-	pinsrw xmm1,eax,6
-	movzx eax,byte ptr[edx]					;al=v2 (1)
-	pinsrw xmm2,eax,2
-	movzx eax,byte ptr[edx+1]					;al=v2 (2)
-	pinsrw xmm2,eax,6
+	movd xmm2,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm2,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm2,xmm7				;0V0U0V0U0V0U0V0U	
 	
 	pmullw xmm1,xmm5
 	paddsw xmm2,xmm6
+	movq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	paddsw xmm1,xmm2
+	inc eax
+	psraw xmm1,3
+	packuswb xmm1,xmm7				;00000000VUVUVUVU
+	punpcklbw xmm1,xmm0     		;YVYUYVYUYVYUYVYU
+	
+	movq qword ptr[edi],xmm1
+	psrldq xmm1,8
+	movq qword ptr[edi+8],xmm1
+	add edi,16
+	
+	loop _SSE2_7_a
+	
+_SSE2_7_b:	
+	mov ecx,w
+	and ecx,1
+	jz short _SSE2_7_c
+	
+	mov ebx,src1_u
+	mov edx,src1_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm1,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0
+	punpcklbw xmm1,xmm0				;000000000000VUVU
+	punpcklbw xmm1,xmm7				;000000000V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm2,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0	
+	punpcklbw xmm2,xmm0				;000000000000VUVU
+	punpcklbw xmm2,xmm7				;000000000V0U0V0U	
+	
+	pmullw xmm1,xmm5
+	paddsw xmm2,xmm6
+	movd xmm0,dword ptr[esi+8*eax]		;000000000000YYYY
 	paddsw xmm1,xmm2
 	psraw xmm1,3
-	paddsw xmm0,xmm1
-	packuswb xmm0,xmm7
-	movq qword ptr[edi],xmm0
-	add edi,8
-	dec ecx
-	jnz SSE2_3_b
+	packuswb xmm1,xmm7				;000000000000VUVU
+	punpcklbw xmm1,xmm0     		;00000000YVYUYVYU
 	
+	movq qword ptr[edi],xmm1
+		
+_SSE2_7_c:		
 	pop ebx
 	pop edi
 	pop esi
@@ -483,6 +968,101 @@ SSE2_3_b:
 	ret
 
 JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_3 endp
+
+
+JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_3b proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
+
+	public JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_3b
+	
+	push esi
+	push edi
+	push ebx
+	
+	pxor xmm7,xmm7
+	
+	mov edi,dst
+	mov esi,src_y
+	mov ecx,w
+	
+	movdqa xmm6,oword ptr uw_4
+	movdqa xmm5,oword ptr uw_7
+	
+	xor eax,eax
+	shr ecx,1
+	jz short _SSE2_7b_b
+
+_SSE2_7b_a:
+	mov ebx,src1_u
+	mov edx,src1_v
+	movd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm1,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm1,xmm7				;0V0U0V0U0V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	movd xmm2,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm2,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm2,xmm7				;0V0U0V0U0V0U0V0U	
+	
+	pmullw xmm1,xmm5
+	paddsw xmm2,xmm6
+	movq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	paddsw xmm1,xmm2
+	inc eax
+	psraw xmm1,3
+	packuswb xmm1,xmm7				;00000000VUVUVUVU
+	punpcklbw xmm1,xmm0     		;YVYUYVYUYVYUYVYU
+	
+	movq qword ptr[edi],xmm1
+	psrldq xmm1,8
+	movq qword ptr[edi+8],xmm1
+	add edi,16
+	
+	loop _SSE2_7b_a
+	
+_SSE2_7b_b:	
+	mov ecx,w
+	and ecx,1
+	jz short _SSE2_7b_c
+	
+	mov ebx,src1_u
+	mov edx,src1_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm1,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0
+	punpcklbw xmm1,xmm0				;000000000000VUVU
+	punpcklbw xmm1,xmm7				;000000000V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm2,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0	
+	punpcklbw xmm2,xmm0				;000000000000VUVU
+	punpcklbw xmm2,xmm7				;000000000V0U0V0U	
+	
+	pmullw xmm1,xmm5
+	paddsw xmm2,xmm6
+	movd xmm0,dword ptr[esi+8*eax]		;000000000000YYYY
+	paddsw xmm1,xmm2
+	psraw xmm1,3
+	packuswb xmm1,xmm7				;000000000000VUVU
+	punpcklbw xmm1,xmm0     		;00000000YVYUYVYU
+	
+	movq qword ptr[edi],xmm1
+		
+_SSE2_7b_c:		
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_3b endp
+
+
 
 
 JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_4 proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
@@ -494,65 +1074,81 @@ JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_4 proc src_y:dword,src1_u:dword,src2_u:dw
 	push ebx
 	
 	pxor xmm7,xmm7
-	pxor xmm2,xmm2
-	pxor xmm1,xmm1
 	
 	mov edi,dst
 	mov esi,src_y
 	mov ecx,w
-	cld
 	
-	movdqa xmm6,oword ptr uw_2_1
-	movdqa xmm5,oword ptr uw_3_1
+	movdqa xmm6,oword ptr uw_2
+	movdqa xmm5,oword ptr uw_3
 	
-	xor eax,eax	
+	xor eax,eax
+	shr ecx,1
+	jz short _SSE2_4_b
 
-SSE2_4_a:
-	pxor xmm0,xmm0
-	lodsb
-	pinsrw xmm0,eax,0
-	lodsb
-	pinsrw xmm0,eax,2
-	lodsb
+_SSE2_4_a:
 	mov ebx,src1_u
-	pinsrw xmm0,eax,4
-	lodsb
-	mov edx,src2_u	
-	pinsrw xmm0,eax,6
-	movzx eax,byte ptr[ebx]					;al=u1 (1)
-	add src1_u,2
-	pinsrw xmm1,eax,1
-	movzx eax,byte ptr[ebx+1]					;al=u1 (2)
-	add src2_u,2
-	pinsrw xmm1,eax,5
-	movzx eax,byte ptr[edx]					;al=u2 (1)
-	mov ebx,src1_v
-	pinsrw xmm2,eax,1
-	movzx eax,byte ptr[edx+1]					;al=u2 (2)
+	mov edx,src1_v
+	movd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm1,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm1,xmm7				;0V0U0V0U0V0U0V0U
+	mov ebx,src2_u
 	mov edx,src2_v
-	pinsrw xmm2,eax,5
-	movzx eax,byte ptr[ebx]					;al=v1 (1)
-	add src1_v,2
-	pinsrw xmm1,eax,3
-	movzx eax,byte ptr[ebx+1]					;al=v1 (2)
-	add src2_v,2
-	pinsrw xmm1,eax,7
-	movzx eax,byte ptr[edx]					;al=v2 (1)
-	pinsrw xmm2,eax,3
-	movzx eax,byte ptr[edx+1]					;al=v2 (2)
-	pinsrw xmm2,eax,7
+	movd xmm2,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm2,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm2,xmm7				;0V0U0V0U0V0U0V0U	
 	
 	pmullw xmm1,xmm5
 	paddsw xmm2,xmm6
+	movq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	paddsw xmm1,xmm2
+	inc eax
+	psraw xmm1,2
+	packuswb xmm1,xmm7				;00000000VUVUVUVU
+	punpcklbw xmm0,xmm1     		;VYUYVYUYVYUYVYUY
+	
+	movq qword ptr[edi],xmm0
+	psrldq xmm0,8
+	movq qword ptr[edi+8],xmm0
+	add edi,16
+	
+	loop _SSE2_4_a
+	
+_SSE2_4_b:	
+	mov ecx,w
+	and ecx,1
+	jz short _SSE2_4_c
+	
+	mov ebx,src1_u
+	mov edx,src1_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm1,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0
+	punpcklbw xmm1,xmm0				;000000000000VUVU
+	punpcklbw xmm1,xmm7				;000000000V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm2,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0	
+	punpcklbw xmm2,xmm0				;000000000000VUVU
+	punpcklbw xmm2,xmm7				;000000000V0U0V0U	
+	
+	pmullw xmm1,xmm5
+	paddsw xmm2,xmm6
+	movd xmm0,dword ptr[esi+8*eax]		;000000000000YYYY
 	paddsw xmm1,xmm2
 	psraw xmm1,2
-	paddsw xmm0,xmm1
-	packuswb xmm0,xmm7
-	movq qword ptr[edi],xmm0
-	add edi,8
-	dec ecx
-	jnz SSE2_4_a
+	packuswb xmm1,xmm7				;000000000000VUVU
+	punpcklbw xmm0,xmm1     		;00000000VYUYVYUY
 	
+	movq qword ptr[edi],xmm0
+		
+_SSE2_4_c:		
 	pop ebx
 	pop edi
 	pop esi
@@ -560,6 +1156,99 @@ SSE2_4_a:
 	ret
 
 JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_4 endp
+
+
+
+JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_4b proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
+
+	public JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_4b
+	
+	push esi
+	push edi
+	push ebx
+	
+	pxor xmm7,xmm7
+	
+	mov edi,dst
+	mov esi,src_y
+	mov ecx,w
+	
+	movdqa xmm6,oword ptr uw_2
+	movdqa xmm5,oword ptr uw_3
+	
+	xor eax,eax
+	shr ecx,1
+	jz short _SSE2_4b_b
+
+_SSE2_4b_a:
+	mov ebx,src1_u
+	mov edx,src1_v
+	movd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm1,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm1,xmm7				;0V0U0V0U0V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	movd xmm2,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm2,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm2,xmm7				;0V0U0V0U0V0U0V0U	
+	
+	pmullw xmm1,xmm5
+	paddsw xmm2,xmm6
+	movq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	paddsw xmm1,xmm2
+	inc eax
+	psraw xmm1,2
+	packuswb xmm1,xmm7				;00000000VUVUVUVU
+	punpcklbw xmm0,xmm1     		;VYUYVYUYVYUYVYUY
+	
+	movdqa oword ptr[edi],xmm0
+	add edi,16
+	
+	loop _SSE2_4b_a
+	
+_SSE2_4b_b:	
+	mov ecx,w
+	and ecx,1
+	jz short _SSE2_4b_c
+	
+	mov ebx,src1_u
+	mov edx,src1_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm1,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0
+	punpcklbw xmm1,xmm0				;000000000000VUVU
+	punpcklbw xmm1,xmm7				;000000000V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm2,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0	
+	punpcklbw xmm2,xmm0				;000000000000VUVU
+	punpcklbw xmm2,xmm7				;000000000V0U0V0U	
+	
+	pmullw xmm1,xmm5
+	paddsw xmm2,xmm6
+	movd xmm0,dword ptr[esi+8*eax]		;000000000000YYYY
+	paddsw xmm1,xmm2
+	psraw xmm1,2
+	packuswb xmm1,xmm7				;000000000000VUVU
+	punpcklbw xmm0,xmm1     		;00000000VYUYVYUY
+	
+	movq qword ptr[edi],xmm0
+		
+_SSE2_4b_c:		
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_4b endp
+
 
 
 JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_4 proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
@@ -571,65 +1260,81 @@ JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_4 proc src_y:dword,src1_u:dword,src2_u:dw
 	push ebx
 	
 	pxor xmm7,xmm7
-	pxor xmm2,xmm2
-	pxor xmm1,xmm1
 	
 	mov edi,dst
 	mov esi,src_y
 	mov ecx,w
-	cld
 	
-	movdqa xmm6,oword ptr uw_2_0
-	movdqa xmm5,oword ptr uw_3_0
+	movdqa xmm6,oword ptr uw_2
+	movdqa xmm5,oword ptr uw_3
 	
-	xor eax,eax	
+	xor eax,eax
+	shr ecx,1
+	jz short _SSE2_8_b
 
-SSE2_4_b:
-	pxor xmm0,xmm0
-	lodsb
-	pinsrw xmm0,eax,1
-	lodsb
-	pinsrw xmm0,eax,3
-	lodsb
+_SSE2_8_a:
 	mov ebx,src1_u
-	pinsrw xmm0,eax,5
-	lodsb
-	mov edx,src2_u	
-	pinsrw xmm0,eax,7
-	movzx eax,byte ptr[ebx]					;al=u1 (1)
-	add src1_u,2
-	pinsrw xmm1,eax,0
-	movzx eax,byte ptr[ebx+1]					;al=u1 (2)
-	add src2_u,2
-	pinsrw xmm1,eax,4
-	movzx eax,byte ptr[edx]					;al=u2 (1)
-	mov ebx,src1_v
-	pinsrw xmm2,eax,0
-	movzx eax,byte ptr[edx+1]					;al=u2 (2)
+	mov edx,src1_v
+	movd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm1,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm1,xmm7				;0V0U0V0U0V0U0V0U
+	mov ebx,src2_u
 	mov edx,src2_v
-	pinsrw xmm2,eax,4
-	movzx eax,byte ptr[ebx]					;al=v1 (1)
-	add src1_v,2
-	pinsrw xmm1,eax,2
-	movzx eax,byte ptr[ebx+1]					;al=v1 (2)
-	add src2_v,2
-	pinsrw xmm1,eax,6
-	movzx eax,byte ptr[edx]					;al=v2 (1)
-	pinsrw xmm2,eax,2
-	movzx eax,byte ptr[edx+1]					;al=v2 (2)
-	pinsrw xmm2,eax,6
+	movd xmm2,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm2,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm2,xmm7				;0V0U0V0U0V0U0V0U	
 	
 	pmullw xmm1,xmm5
 	paddsw xmm2,xmm6
+	movq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	paddsw xmm1,xmm2
+	inc eax
+	psraw xmm1,2
+	packuswb xmm1,xmm7				;00000000VUVUVUVU
+	punpcklbw xmm1,xmm0     		;YVYUYVYUYVYUYVYU
+	
+	movq qword ptr[edi],xmm1
+	psrldq xmm1,8
+	movq qword ptr[edi+8],xmm1
+	add edi,16
+	
+	loop _SSE2_8_a
+	
+_SSE2_8_b:	
+	mov ecx,w
+	and ecx,1
+	jz short _SSE2_8_c
+	
+	mov ebx,src1_u
+	mov edx,src1_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm1,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0
+	punpcklbw xmm1,xmm0				;000000000000VUVU
+	punpcklbw xmm1,xmm7				;000000000V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm2,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0	
+	punpcklbw xmm2,xmm0				;000000000000VUVU
+	punpcklbw xmm2,xmm7				;000000000V0U0V0U	
+	
+	pmullw xmm1,xmm5
+	paddsw xmm2,xmm6
+	movd xmm0,dword ptr[esi+8*eax]		;000000000000YYYY
 	paddsw xmm1,xmm2
 	psraw xmm1,2
-	paddsw xmm0,xmm1
-	packuswb xmm0,xmm7
-	movq qword ptr[edi],xmm0
-	add edi,8
-	dec ecx
-	jnz SSE2_4_b
+	packuswb xmm1,xmm7				;000000000000VUVU
+	punpcklbw xmm1,xmm0     		;00000000YVYUYVYU
 	
+	movq qword ptr[edi],xmm1
+		
+_SSE2_8_c:		
 	pop ebx
 	pop edi
 	pop esi
@@ -637,6 +1342,98 @@ SSE2_4_b:
 	ret
 
 JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_4 endp
+
+
+
+JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_4b proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
+
+	public JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_4b
+	
+	push esi
+	push edi
+	push ebx
+	
+	pxor xmm7,xmm7
+	
+	mov edi,dst
+	mov esi,src_y
+	mov ecx,w
+	
+	movdqa xmm6,oword ptr uw_2
+	movdqa xmm5,oword ptr uw_3
+	
+	xor eax,eax
+	shr ecx,1
+	jz short _SSE2_8b_b
+
+_SSE2_8b_a:
+	mov ebx,src1_u
+	mov edx,src1_v
+	movd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm1,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm1,xmm7				;0V0U0V0U0V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	movd xmm2,dword ptr[ebx+4*eax]		;000000000000UUUU
+	movd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	punpcklbw xmm2,xmm0				;00000000VUVUVUVU
+	punpcklbw xmm2,xmm7				;0V0U0V0U0V0U0V0U	
+	
+	pmullw xmm1,xmm5
+	paddsw xmm2,xmm6
+	movq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	paddsw xmm1,xmm2
+	inc eax
+	psraw xmm1,2
+	packuswb xmm1,xmm7				;00000000VUVUVUVU
+	punpcklbw xmm1,xmm0     		;YVYUYVYUYVYUYVYU
+	
+	movdqa oword ptr[edi],xmm1
+	add edi,16
+	
+	loop _SSE2_8b_a
+	
+_SSE2_8b_b:	
+	mov ecx,w
+	and ecx,1
+	jz short _SSE2_8b_c
+	
+	mov ebx,src1_u
+	mov edx,src1_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm1,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0
+	punpcklbw xmm1,xmm0				;000000000000VUVU
+	punpcklbw xmm1,xmm7				;000000000V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	movzx ecx,word ptr[ebx+4*eax]
+	pinsrw xmm2,ecx,0
+	movzx ecx,word ptr[edx+4*eax]
+	pinsrw xmm0,ecx,0	
+	punpcklbw xmm2,xmm0				;000000000000VUVU
+	punpcklbw xmm2,xmm7				;000000000V0U0V0U	
+	
+	pmullw xmm1,xmm5
+	paddsw xmm2,xmm6
+	movd xmm0,dword ptr[esi+8*eax]		;000000000000YYYY
+	paddsw xmm1,xmm2
+	psraw xmm1,2
+	packuswb xmm1,xmm7				;000000000000VUVU
+	punpcklbw xmm1,xmm0     		;00000000YVYUYVYU
+	
+	movq qword ptr[edi],xmm1
+		
+_SSE2_8b_c:		
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_4b endp
 
 
 
@@ -652,27 +1449,45 @@ JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_2 proc src1:dword,src2:dword,dst:dwo
 	mov edi,dst
 	mov esi,src1
 	mov edx,src2
+	xor eax,eax
+	
 	mov ecx,w
-	
-	mov eax,8
-	
-SSE2_2_c:
-	movq xmm0,qword ptr[edx]
-	movq xmm1,qword ptr[esi]
+	shr ecx,1
+	jz short SSE2_2_b
+
+SSE2_2_a:	
+	movq xmm0,qword ptr[edx+8*eax]
+	movq xmm1,qword ptr[esi+8*eax]
 	movq xmm2,xmm0
 	pxor xmm0,xmm3
 	pxor xmm1,xmm3
 	pavgb xmm0,xmm1
-	add esi,eax
 	pavgb xmm0,xmm1
-	add edx,eax
 	pxor xmm0,xmm3
 	pavgb xmm0,xmm2
 
-	movq qword ptr[edi],xmm0
-	add edi,eax
-	loop SSE2_2_c
+	movq qword ptr[edi+8*eax],xmm0
+	inc eax
+	loop SSE2_2_a
+
+SSE2_2_b:
+	mov ecx,w
+	and ecx,1
+	jz short SSE2_2_c
 	
+	movd xmm0,dword ptr[edx+8*eax]
+	movd xmm1,dword ptr[esi+8*eax]
+	movq xmm2,xmm0
+	pxor xmm0,xmm3
+	pxor xmm1,xmm3
+	pavgb xmm0,xmm1
+	pavgb xmm0,xmm1
+	pxor xmm0,xmm3
+	pavgb xmm0,xmm2
+
+	movd dword ptr[edi+8*eax],xmm0
+	
+SSE2_2_c:	
 	pop edi
 	pop esi
 
@@ -688,36 +1503,24 @@ JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_2b proc src1:dword,src2:dword,dst:dw
 
 	push esi
 	push edi
+	push ebx
 	
 	pcmpeqb xmm3,xmm3
 	
 	mov edi,dst
 	mov esi,src1
 	mov edx,src2
+	xor eax,eax
+	
 	mov ecx,w
-	
-	mov eax,8
-	
-SSE2_2_cb:
-	movq xmm0,qword ptr[edx]
-	movq xmm1,qword ptr[esi]
-	movq xmm2,xmm0
-	pxor xmm0,xmm3
-	pxor xmm1,xmm3
-	pavgb xmm0,xmm1
-	add esi,eax
-	pavgb xmm0,xmm1
-	add edx,eax
-	pxor xmm0,xmm3
-	pavgb xmm0,xmm2
+	shr ecx,2
+	jz short SSE2_2b_b
 
-	movq qword ptr[edi],xmm0
-	add edi,eax
-	loop SSE2_2_cb
-
-	movd xmm0,dword ptr[edx]
-	movd xmm1,dword ptr[esi]
-	movq xmm2,xmm0
+	mov ebx,16
+SSE2_2b_a:	
+	movdqa xmm0,oword ptr[edx+eax]
+	movdqa xmm1,oword ptr[esi+eax]
+	movdqa xmm2,xmm0
 	pxor xmm0,xmm3
 	pxor xmm1,xmm3
 	pavgb xmm0,xmm1
@@ -725,8 +1528,49 @@ SSE2_2_cb:
 	pxor xmm0,xmm3
 	pavgb xmm0,xmm2
 
-	movd dword ptr[edi],xmm0
-			
+	movdqa oword ptr[edi+eax],xmm0
+	add eax,ebx
+	loop SSE2_2b_a
+	
+SSE2_2b_b:
+	mov ecx,w
+	and ecx,3
+	jz short SSE2_2b_d
+	and ecx,2
+	jz short SSE2_2b_c
+	
+	movq xmm0,qword ptr[edx+eax]
+	movq xmm1,qword ptr[esi+eax]
+	movq xmm2,xmm0
+	pxor xmm0,xmm3
+	pxor xmm1,xmm3
+	pavgb xmm0,xmm1
+	pavgb xmm0,xmm1
+	pxor xmm0,xmm3
+	pavgb xmm0,xmm2
+
+	movq qword ptr[edi+eax],xmm0
+	
+	mov ecx,w
+	and ecx,1
+	jz short SSE2_2b_d
+	add eax,8
+	
+SSE2_2b_c:	
+	movd xmm0,dword ptr[edx+eax]
+	movd xmm1,dword ptr[esi+eax]
+	movq xmm2,xmm0
+	pxor xmm0,xmm3
+	pxor xmm1,xmm3
+	pavgb xmm0,xmm1
+	pavgb xmm0,xmm1
+	pxor xmm0,xmm3
+	pavgb xmm0,xmm2
+
+	movd dword ptr[edi+eax],xmm0
+	
+SSE2_2b_d:	
+	pop ebx
 	pop edi
 	pop esi
 
@@ -748,27 +1592,45 @@ JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_3 proc src1:dword,src2:dword,dst:dwo
 	mov edi,dst
 	mov esi,src1
 	mov edx,src2
+	xor eax,eax
+	
 	mov ecx,w
+	shr ecx,1
+	jz short SSE2_3_b
 	
-	mov eax,8	
-	
-SSE2_3_c:
-	movq xmm0,qword ptr[esi]
-	movq xmm1,qword ptr[edx]
+SSE2_3_a:
+	movq xmm0,qword ptr[esi+8*eax]
+	movq xmm1,qword ptr[edx+8*eax]
 	movq xmm2,xmm0
 	pxor xmm0,xmm3
 	pxor xmm1,xmm3
-	add esi,eax
 	pavgb xmm1,xmm0
-	add edx,eax
 	pavgb xmm1,xmm0
 	pxor xmm1,xmm3
 	pavgb xmm1,xmm2
 	
-	movq qword ptr[edi],xmm1
-	add edi,eax
-	loop SSE2_3_c
+	movq qword ptr[edi+8*eax],xmm1
+	inc eax
+	loop SSE2_3_a
 	
+SSE2_3_b:
+	mov ecx,w
+	and ecx,1
+	jz short SSE2_3_c
+	
+	movd xmm0,dword ptr[esi+8*eax]
+	movd xmm1,dword ptr[edx+8*eax]
+	movq xmm2,xmm0
+	pxor xmm0,xmm3
+	pxor xmm1,xmm3
+	pavgb xmm1,xmm0
+	pavgb xmm1,xmm0
+	pxor xmm1,xmm3
+	pavgb xmm1,xmm2
+	
+	movd dword ptr[edi+8*eax],xmm1	
+
+SSE2_3_c:
 	pop edi
 	pop esi
 	
@@ -784,36 +1646,24 @@ JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_3b proc src1:dword,src2:dword,dst:dw
 	
 	push esi
 	push edi
+	push ebx
 	
 	pcmpeqb xmm3,xmm3
 	
 	mov edi,dst
 	mov esi,src1
 	mov edx,src2
+	xor eax,eax
+	
 	mov ecx,w
+	shr ecx,2
+	jz short SSE2_3b_b
 	
-	mov eax,8	
-	
-SSE2_3_cb:
-	movq xmm0,qword ptr[esi]
-	movq xmm1,qword ptr[edx]
-	movq xmm2,xmm0
-	pxor xmm0,xmm3
-	pxor xmm1,xmm3
-	add esi,eax
-	pavgb xmm1,xmm0
-	add edx,eax
-	pavgb xmm1,xmm0
-	pxor xmm1,xmm3
-	pavgb xmm1,xmm2
-	
-	movq qword ptr[edi],xmm1
-	add edi,eax
-	loop SSE2_3_cb
-
-	movd xmm0,dword ptr[esi]
-	movd xmm1,dword ptr[edx]
-	movq xmm2,xmm0
+	mov ebx,16
+SSE2_3b_a:
+	movdqa xmm0,oword ptr[esi+eax]
+	movdqa xmm1,oword ptr[edx+eax]
+	movdqa xmm2,xmm0
 	pxor xmm0,xmm3
 	pxor xmm1,xmm3
 	pavgb xmm1,xmm0
@@ -821,14 +1671,56 @@ SSE2_3_cb:
 	pxor xmm1,xmm3
 	pavgb xmm1,xmm2
 	
-	movd dword ptr[edi],xmm1	
-		
+	movdqa oword ptr[edi+eax],xmm1
+	add eax,ebx
+	loop SSE2_3b_a
+	
+SSE2_3b_b:	
+	mov ecx,w
+	and ecx,3
+	jz short SSE2_3b_d
+	and ecx,2
+	jz short SSE2_3b_c
+	
+	movq xmm0,qword ptr[esi+eax]
+	movq xmm1,qword ptr[edx+eax]
+	movq xmm2,xmm0
+	pxor xmm0,xmm3
+	pxor xmm1,xmm3
+	pavgb xmm1,xmm0
+	pavgb xmm1,xmm0
+	pxor xmm1,xmm3
+	pavgb xmm1,xmm2
+	
+	movq qword ptr[edi+eax],xmm1
+	
+	mov ecx,w
+	and ecx,1
+	jz short SSE2_3b_d
+	add eax,8
+	
+SSE2_3b_c:	
+	movd xmm0,dword ptr[esi+eax]
+	movd xmm1,dword ptr[edx+eax]
+	movq xmm2,xmm0
+	pxor xmm0,xmm3
+	pxor xmm1,xmm3
+	pavgb xmm1,xmm0
+	pavgb xmm1,xmm0
+	pxor xmm1,xmm3
+	pavgb xmm1,xmm2
+	
+	movd dword ptr[edi+eax],xmm1
+	
+SSE2_3b_d:	
+	pop ebx
 	pop edi
 	pop esi
 	
 	ret
 
 JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_3b endp
+
 
 
 JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4 proc src1:dword,src2:dword,dst:dword,w:dword
@@ -843,26 +1735,43 @@ JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4 proc src1:dword,src2:dword,dst:dwo
 	mov edi,dst
 	mov esi,src1
 	mov edx,src2
+	xor eax,eax
+	
 	mov ecx,w
+	shr ecx,1
+	jz short SSE2_4_b
 	
-	mov eax,8	
-	
-SSE2_4_c:
-	movq xmm0,qword ptr[esi]
-	movq xmm1,qword ptr[edx]
+SSE2_4_a:
+	movq xmm0,qword ptr[esi+8*eax]
+	movq xmm1,qword ptr[edx+8*eax]
 	movq xmm2,xmm0
 	pxor xmm0,xmm3
 	pxor xmm1,xmm3
 	pavgb xmm0,xmm1
-	add esi,eax
 	pxor xmm0,xmm3
-	add edx,eax
 	pavgb xmm0,xmm2
 	
-	movq qword ptr[edi],xmm0
-	add edi,eax
-	loop SSE2_4_c
+	movq qword ptr[edi+8*eax],xmm0
+	inc eax
+	loop SSE2_4_a
 	
+SSE2_4_b:
+	mov ecx,w
+	and ecx,1
+	jz short SSE2_4_c
+
+	movd xmm0,dword ptr[esi+8*eax]
+	movd xmm1,dword ptr[edx+8*eax]
+	movq xmm2,xmm0
+	pxor xmm0,xmm3
+	pxor xmm1,xmm3
+	pavgb xmm0,xmm1
+	pxor xmm0,xmm3
+	pavgb xmm0,xmm2
+	
+	movd dword ptr[edi+8*eax],xmm0
+	
+SSE2_4_c:
 	pop edi
 	pop esi
 
@@ -871,56 +1780,85 @@ SSE2_4_c:
 JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4 endp
 
 
+
 JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4b proc src1:dword,src2:dword,dst:dword,w:dword
 
 	public JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4b
 	
 	push esi
 	push edi
+	push ebx
 	
 	pcmpeqb xmm3,xmm3
 	
 	mov edi,dst
 	mov esi,src1
 	mov edx,src2
+	xor eax,eax
+	
 	mov ecx,w
+	shr ecx,2
+	jz short SSE2_4b_b
 	
-	mov eax,8	
-	
-SSE2_4_cb:
-	movq xmm0,qword ptr[esi]
-	movq xmm1,qword ptr[edx]
-	movq xmm2,xmm0
-	pxor xmm0,xmm3
-	pxor xmm1,xmm3
-	pavgb xmm0,xmm1
-	add esi,eax
-	pxor xmm0,xmm3
-	add edx,eax
-	pavgb xmm0,xmm2
-	
-	movq qword ptr[edi],xmm0
-	add edi,eax
-	loop SSE2_4_cb
-
-	movd xmm0,dword ptr[esi]
-	movd xmm1,dword ptr[edx]
-	movq xmm2,xmm0
+	mov ebx,16
+SSE2_4b_a:
+	movdqa xmm0,oword ptr[esi+eax]
+	movdqa xmm1,oword ptr[edx+eax]
+	movdqa xmm2,xmm0
 	pxor xmm0,xmm3
 	pxor xmm1,xmm3
 	pavgb xmm0,xmm1
 	pxor xmm0,xmm3
 	pavgb xmm0,xmm2
-
-	movd dword ptr[edi],xmm0
 	
-		
+	movdqa oword ptr[edi+eax],xmm0
+	add eax,ebx
+	loop SSE2_4b_a
+	
+SSE2_4b_b:
+	mov ecx,w
+	and ecx,3
+	jz short SSE2_4b_d
+	and ecx,2
+	jz short SSE2_4b_c
+
+	movq xmm0,qword ptr[esi+eax]
+	movq xmm1,qword ptr[edx+eax]
+	movq xmm2,xmm0
+	pxor xmm0,xmm3
+	pxor xmm1,xmm3
+	pavgb xmm0,xmm1
+	pxor xmm0,xmm3
+	pavgb xmm0,xmm2
+	
+	movq qword ptr[edi+eax],xmm0
+	
+	mov ecx,w
+	and ecx,1
+	jz short SSE2_4b_d
+	add eax,8
+	
+SSE2_4b_c:	
+	movd xmm0,dword ptr[esi+eax]
+	movd xmm1,dword ptr[edx+eax]
+	movq xmm2,xmm0
+	pxor xmm0,xmm3
+	pxor xmm1,xmm3
+	pavgb xmm0,xmm1
+	pxor xmm0,xmm3
+	pavgb xmm0,xmm2
+	
+	movd dword ptr[edi+eax],xmm0
+	
+SSE2_4b_d:	
+	pop ebx
 	pop edi
 	pop esi
 
 	ret
 
 JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4b endp
+
 
 end
 

@@ -431,98 +431,98 @@ protected:
 	uint16_t lookup_420[768];
 	bool Integer_SSE_Enable,SSE2_Enable,MMX_Enable;
 
-	void Deinterlace_Tri_Blend_RGB32(const void *src1,const void *src2,void *dst,int32_t w,int32_t h,
+	void Deinterlace_Tri_Blend_RGB32(const void *src1,const void *src2,void *dst,const int32_t w,const int32_t h,
 		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-	void Deinterlace_RGB32(const void *src1,const void *src2,void *dst,int32_t w,int32_t h,ptrdiff_t src_pitch,
-		ptrdiff_t dst_pitch,bool tri_linear,bool align_data);
-	void Motion_Map_RGB32(const void *src1,const void *src2,void *buffer,uint8_t *dst,int32_t w,int32_t h,
-		ptrdiff_t pitch,ptrdiff_t modulo,int32_t w_map,uint8_t thrs);
-	void Motion_Map_RGB32(const void *src1,const void *src2,uint8_t *dst,int32_t w,int32_t h,
-		ptrdiff_t pitch,ptrdiff_t modulo,int32_t w_map,uint8_t thrs);
-	void Motion_Map_YUYV_Y(const void *src1,const void *src2,uint8_t *dst,int32_t w,int32_t h,
-		ptrdiff_t pitch,ptrdiff_t modulo,int32_t w_map,uint8_t thrs);
-	void Motion_Map_UYVY_Y(const void *src1,const void *src2,uint8_t *dst,int32_t w,int32_t h,
-		ptrdiff_t pitch,ptrdiff_t modulo,int32_t w_map,uint8_t thrs);
-	void Motion_Map_Planar420_Y(const uint8_t *src1,const uint8_t *src2,uint8_t *dst,int32_t w,int32_t h,
-		ptrdiff_t pitch,ptrdiff_t modulo,int32_t w_map,uint8_t thrs);
+	void Deinterlace_RGB32(const void *src1,const void *src2,void *dst,int32_t w,int32_t h,
+		ptrdiff_t src_pitch,ptrdiff_t dst_pitch,bool tri_linear,bool align_data);
+	void Motion_Map_RGB32(const void *src1,const void *src2,void *buffer,uint8_t *dst,const int32_t w,
+		const int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,const int32_t w_map,const uint8_t thrs);
+	void Motion_Map_RGB32(const void *src1,const void *src2,uint8_t *dst,const int32_t w,const int32_t h,
+		ptrdiff_t pitch,ptrdiff_t modulo,const int32_t w_map,const uint8_t thrs);
+	void Motion_Map_YUYV_Y(const void *src1,const void *src2,uint8_t *dst,const int32_t w,const int32_t h,
+		ptrdiff_t pitch,ptrdiff_t modulo,const int32_t w_map,const uint8_t thrs);
+	void Motion_Map_UYVY_Y(const void *src1,const void *src2,uint8_t *dst,const int32_t w,const int32_t h,
+		ptrdiff_t pitch,ptrdiff_t modulo,const int32_t w_map,const uint8_t thrs);
+	void Motion_Map_Planar420_Y(const uint8_t *src1,const uint8_t *src2,uint8_t *dst,const int32_t w,
+		const int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,const int32_t w_map,const uint8_t thrs);
 	void Smart_Deinterlace_Motion_Map_RGB32(const void *src1,const void *src2,void *buffer, uint8_t *dst,
-		int32_t w,int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,int32_t w_map,uint8_t thrs);
+		const int32_t w,const int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,const int32_t w_map,const uint8_t thrs);
 	void Smart_Deinterlace_Tri_Motion_Map_RGB32(const void *src1,const void *src2,void *buffer,
-		uint8_t *dst,int32_t w,int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,int32_t w_map,
-		uint8_t thrs);
-	void Motion_Map_Filter(uint8_t *map,uint8_t *buffer,int32_t w,
-		int32_t h,int32_t w_map);
+		uint8_t *dst,const int32_t w,const int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,const int32_t w_map,
+		const uint8_t thrs);
+	void Motion_Map_Filter(uint8_t *map,uint8_t *buffer,const int32_t w,
+		const int32_t h,const int32_t w_map);
 	uint32_t Norme1_Histogramme_DeltaPicture_RGB32(const void *src1,const void *src2,
 		void *dst,void *buffer,uint8_t *map,uint8_t *buffer_map,
-		uint32_t *histo,uint32_t *repart,int32_t w,int32_t h,ptrdiff_t src_pitch,
+		uint32_t *histo,uint32_t *repart,const int32_t w,const int32_t h,ptrdiff_t src_pitch,
 		ptrdiff_t dst_pitch,ptrdiff_t src_modulo,ptrdiff_t dst_modulo,
-		uint32_t &error_motion_map,uint8_t thrs);
+		uint32_t &error_motion_map,const uint8_t thrs);
 	void Smart_Deinterlace_RGB32(const void *src1,const void *src2,void *dst,void *buffer,
-		uint8_t *map,uint8_t *buffer_map,int32_t w,int32_t h,ptrdiff_t src_pitch,
-		ptrdiff_t dst_pitch,ptrdiff_t src_modulo,ptrdiff_t dst_modulo,uint8_t thrs,
+		uint8_t *map,uint8_t *buffer_map,const int32_t w,const int32_t h,ptrdiff_t src_pitch,
+		ptrdiff_t dst_pitch,ptrdiff_t src_modulo,ptrdiff_t dst_modulo,const uint8_t thrs,
 		bool tri_linear,bool map_filter);
 	uint32_t Norme1_Motion_Map_RGB32(const void *src1,const void *src2,void *buffer,
-		uint8_t *map,uint8_t *buffer_map,int32_t w,int32_t h,ptrdiff_t pitch,
-		ptrdiff_t modulo,uint32_t &error_motion_map,uint8_t thrs);
-	uint32_t Norme1_RGB32(const void *src1,const void *src2,int32_t w,int32_t h,
+		uint8_t *map,uint8_t *buffer_map,const int32_t w,const int32_t h,ptrdiff_t pitch,
+		ptrdiff_t modulo,uint32_t &error_motion_map,const uint8_t thrs);
+	uint32_t Norme1_RGB32(const void *src1,const void *src2,const int32_t w,const int32_t h,
 		ptrdiff_t pitch,ptrdiff_t modulo);
 
-	void Convert_YUYV_to_RGB32(const void *src, void *dst, uint32_t src_size);
-	void Convert_UYVY_to_RGB32(const void *src, void *dst, uint32_t src_size);
-	void Convert_YUYV_to_RGB32(const void *src, void *dst, int32_t w, int32_t h,ptrdiff_t src_modulo);
-	void Convert_UYVY_to_RGB32(const void *src, void *dst, int32_t w, int32_t h,ptrdiff_t src_modulo);
+	void Convert_YUYV_to_RGB32(const void *src, void *dst, const uint32_t src_size);
+	void Convert_UYVY_to_RGB32(const void *src, void *dst, const uint32_t src_size);
+	void Convert_YUYV_to_RGB32(const void *src, void *dst, const int32_t w, const int32_t h,ptrdiff_t src_modulo);
+	void Convert_UYVY_to_RGB32(const void *src, void *dst, const int32_t w, const int32_t h,ptrdiff_t src_modulo);
 
 	void Convert_Planar420_to_RGB32(const uint8_t *src_Y,const uint8_t *src_U,const uint8_t *src_V,
-		void *buffer,void *dst,int32_t w,int32_t h,ptrdiff_t pitch_Y,ptrdiff_t pitch_U,ptrdiff_t pitch_V,ptrdiff_t buffer_pitch);
+		void *buffer,void *dst,const int32_t w,const int32_t h,ptrdiff_t pitch_Y,ptrdiff_t pitch_U,ptrdiff_t pitch_V,ptrdiff_t buffer_pitch);
 	void Convert_Automatic_Planar420_to_YUY2(const uint8_t *src_Y,const uint8_t *src_U,const uint8_t *src_V,
-		void *dst,int32_t w_Y,int32_t h_Y,ptrdiff_t src_pitch_Y,ptrdiff_t src_pitch_U,ptrdiff_t src_pitch_V,ptrdiff_t dst_pitch,
-		uint8_t thrs);
+		void *dst,const int32_t w_Y,const int32_t h_Y,ptrdiff_t src_pitch_Y,ptrdiff_t src_pitch_U,ptrdiff_t src_pitch_V,ptrdiff_t dst_pitch,
+		const uint8_t thrs);
 
-	void Deinterlace_Tri_Blend_YUYV(const void *src1,const void *src2,void *dst,int32_t w,int32_t h,
+	void Deinterlace_Tri_Blend_YUYV(const void *src1,const void *src2,void *dst,const int32_t w,const int32_t h,
 		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-	void Deinterlace_Blend_YUYV(const void *src1,const void *src2,void *dst,int32_t w,int32_t h,
+	void Deinterlace_Blend_YUYV(const void *src1,const void *src2,void *dst,const int32_t w,const int32_t h,
 		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-	void Deinterlace_Tri_Blend_YUYV_Y(const void *src1,const void *src2,void *dst,int32_t w,int32_t h,
+	void Deinterlace_Tri_Blend_YUYV_Y(const void *src1,const void *src2,void *dst,const int32_t w,const int32_t h,
 		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-	void Deinterlace_Blend_YUYV_Y(const void *src1,const void *src2,void *dst,int32_t w,int32_t h,
+	void Deinterlace_Blend_YUYV_Y(const void *src1,const void *src2,void *dst,const int32_t w,const int32_t h,
 		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
 	void Smart_Deinterlace_YUYV(const void *src1,const void *src2,void *dst,void *buffer,
-		uint8_t *map,uint8_t *buffer_map,int32_t w,int32_t h,ptrdiff_t src_pitch,
-		ptrdiff_t dst_pitch,ptrdiff_t src_modulo,ptrdiff_t dst_modulo,uint8_t thrs,
+		uint8_t *map,uint8_t *buffer_map,const int32_t w,const int32_t h,ptrdiff_t src_pitch,
+		ptrdiff_t dst_pitch,ptrdiff_t src_modulo,ptrdiff_t dst_modulo,const uint8_t thrs,
 		bool tri_linear,bool map_filter,const void *RGBBuff_1,const void *RGBBuff_2,
 		ptrdiff_t RGBBuff_pitch,bool Y_only);
 	void Deinterlace_YUYV(const void *src1,const void *src2,void *dst,int32_t w,int32_t h,ptrdiff_t src_pitch,
 		ptrdiff_t dst_pitch,bool tri_linear,bool align_data,bool Y_only);
 
-	void Deinterlace_Tri_Blend_UYVY(const void *src1,const void *src2,void *dst,int32_t w,int32_t h,
+	void Deinterlace_Tri_Blend_UYVY(const void *src1,const void *src2,void *dst,const int32_t w,const int32_t h,
 		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-	void Deinterlace_Blend_UYVY(const void *src1,const void *src2,void *dst,int32_t w,int32_t h,
+	void Deinterlace_Blend_UYVY(const void *src1,const void *src2,void *dst,const int32_t w,const int32_t h,
 		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-	void Deinterlace_Tri_Blend_UYVY_Y(const void *src1,const void *src2,void *dst,int32_t w,int32_t h,
+	void Deinterlace_Tri_Blend_UYVY_Y(const void *src1,const void *src2,void *dst,const int32_t w,const int32_t h,
 		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-	void Deinterlace_Blend_UYVY_Y(const void *src1,const void *src2,void *dst,int32_t w,int32_t h,
+	void Deinterlace_Blend_UYVY_Y(const void *src1,const void *src2,void *dst,const int32_t w,const int32_t h,
 		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
 	void Smart_Deinterlace_UYVY(const void *src1,const void *src2,void *dst,void *buffer,
-		uint8_t *map,uint8_t *buffer_map,int32_t w,int32_t h,ptrdiff_t src_pitch,
-		ptrdiff_t dst_pitch,ptrdiff_t src_modulo,ptrdiff_t dst_modulo,uint8_t thrs,
+		uint8_t *map,uint8_t *buffer_map,const int32_t w,const int32_t h,ptrdiff_t src_pitch,
+		ptrdiff_t dst_pitch,ptrdiff_t src_modulo,ptrdiff_t dst_modulo,const uint8_t thrs,
 		bool tri_linear,bool map_filter,const void *RGBBuff_1,const void *RGBBuff_2,
 		ptrdiff_t RGBBuff_pitch, bool Y_only);
-	void Deinterlace_UYVY(const void *src1,const void *src2,void *dst,int32_t w,int32_t h,ptrdiff_t src_pitch,
-		ptrdiff_t dst_pitch,bool tri_linear,bool align_data, bool Y_only);
+	void Deinterlace_UYVY(const void *src1,const void *src2,void *dst,int32_t w,int32_t h,
+		ptrdiff_t src_pitch,ptrdiff_t dst_pitch,bool tri_linear,bool align_data, bool Y_only);
 
 	void Deinterlace_Tri_Blend_Planar(const uint8_t *src1,const uint8_t *src2,uint8_t *dst,
-		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+		const int32_t w,const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
 	void Deinterlace_Blend_Planar(const uint8_t *src1,const uint8_t *src2,uint8_t *dst,
-		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+		const int32_t w,const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
 	void Smart_Deinterlace_Planar420(const uint8_t *src1_Y,const uint8_t *src2_Y,
 		const uint8_t *src1_U,const uint8_t *src2_U,const uint8_t *src1_V,const uint8_t *src2_V,
 		uint8_t *dst_Y,uint8_t *dst_U,uint8_t *dst_V,uint8_t *buffer_Y,uint8_t *buffer_U,
-		uint8_t *buffer_V,uint8_t *map,uint8_t *buffer_map,int32_t w_Y,int32_t w_U,int32_t w_V,int32_t h_Y,
-		int32_t h_U,int32_t h_V,ptrdiff_t src_pitch_Y,ptrdiff_t src_pitch_U,ptrdiff_t src_pitch_V,ptrdiff_t src_modulo_Y,
+		uint8_t *buffer_V,uint8_t *map,uint8_t *buffer_map,const int32_t w_Y,const int32_t w_U,const int32_t w_V,const int32_t h_Y,
+		const int32_t h_U,const int32_t h_V,ptrdiff_t src_pitch_Y,ptrdiff_t src_pitch_U,ptrdiff_t src_pitch_V,ptrdiff_t src_modulo_Y,
 		ptrdiff_t src_modulo_U,ptrdiff_t src_modulo_V,ptrdiff_t dst_pitch_Y,ptrdiff_t dst_pitch_U,ptrdiff_t dst_pitch_V,
-		ptrdiff_t dst_modulo_Y,ptrdiff_t dst_modulo_U,ptrdiff_t dst_modulo_V,uint8_t thrs,bool tri_linear,
+		ptrdiff_t dst_modulo_Y,ptrdiff_t dst_modulo_U,ptrdiff_t dst_modulo_V,const uint8_t thrs,bool tri_linear,
 		bool map_filter,const void *RGBBuff_1,const void *RGBBuff_2,ptrdiff_t RGBBuff_pitch, bool Y_only);
-		void Deinterlace_Planar(const uint8_t *src1,const uint8_t *src2,uint8_t *dst,
+	void Deinterlace_Planar(const uint8_t *src1,const uint8_t *src2,uint8_t *dst,
 		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch,bool tri_linear,bool align_data);
 
 	void Resize_Planar420(const void *src_y, const void *src_u, const void *src_v, void *dst_y, void *dst_u, void *dst_v,
@@ -764,7 +764,7 @@ void JPSDR_IVTC::Start()
 				idata.src_video_mode=1;
 				idata.video_mode=1;
 				idata.src_modulo0=idata.src_pitch0-4*idata.src_w0;
-				idata.src_size0=idata.src_h0*4*idata.src_w0;
+				idata.src_size0=(size_t)idata.src_h0*(size_t)idata.src_w0*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -783,7 +783,7 @@ void JPSDR_IVTC::Start()
 				idata.src_video_mode=2;
 				idata.video_mode=2;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -802,7 +802,7 @@ void JPSDR_IVTC::Start()
 				idata.src_video_mode=2;
 				idata.video_mode=2;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -821,7 +821,7 @@ void JPSDR_IVTC::Start()
 				idata.src_video_mode=2;
 				idata.video_mode=2;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -840,7 +840,7 @@ void JPSDR_IVTC::Start()
 				idata.src_video_mode=2;
 				idata.video_mode=2;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -859,7 +859,7 @@ void JPSDR_IVTC::Start()
 				idata.src_video_mode=3;
 				idata.video_mode=3;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -878,7 +878,7 @@ void JPSDR_IVTC::Start()
 				idata.src_video_mode=3;
 				idata.video_mode=3;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -897,7 +897,7 @@ void JPSDR_IVTC::Start()
 				idata.src_video_mode=3;
 				idata.video_mode=3;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -916,7 +916,7 @@ void JPSDR_IVTC::Start()
 				idata.src_video_mode=3;
 				idata.video_mode=3;
 				idata.src_modulo0=idata.src_pitch0-4*((idata.src_w0+1)>>1);
-				idata.src_size0=idata.src_h0*4*((idata.src_w0+1)>>1);
+				idata.src_size0=(size_t)idata.src_h0*(size_t)((idata.src_w0+1)>>1)*4;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -941,9 +941,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_NONE;								
@@ -958,9 +958,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_NONE;								
@@ -975,9 +975,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_NONE;								
@@ -992,9 +992,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_NONE;								
@@ -1009,9 +1009,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_NONE;				
@@ -1026,9 +1026,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_NONE;				
@@ -1043,9 +1043,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_NONE;				
@@ -1060,9 +1060,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_NONE;				
@@ -1077,9 +1077,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=PROGRESSIVE;								
@@ -1094,9 +1094,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED;								
@@ -1111,9 +1111,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_BFF;								
@@ -1128,9 +1128,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_TFF;								
@@ -1145,9 +1145,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=PROGRESSIVE;								
@@ -1162,9 +1162,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED;								
@@ -1179,9 +1179,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_BFF;								
@@ -1196,9 +1196,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_TFF;								
@@ -1213,9 +1213,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=PROGRESSIVE;								
@@ -1230,9 +1230,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED;								
@@ -1247,9 +1247,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_BFF;								
@@ -1264,9 +1264,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_TFF;								
@@ -1281,9 +1281,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=PROGRESSIVE;								
@@ -1298,9 +1298,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED;								
@@ -1315,9 +1315,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_BFF;								
@@ -1332,9 +1332,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_TFF;								
@@ -1349,9 +1349,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_NONE;												
@@ -1366,9 +1366,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_NONE;												
@@ -1383,9 +1383,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=INTERLACED_NONE;												
@@ -1400,9 +1400,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=INTERLACED_NONE;												
@@ -1417,9 +1417,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=PROGRESSIVE;																
@@ -1434,9 +1434,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=false;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=PROGRESSIVE;																
@@ -1451,9 +1451,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT601;
 				idata.src_interlaced=PROGRESSIVE;																
@@ -1468,9 +1468,9 @@ void JPSDR_IVTC::Start()
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
 				idata.src_modulo1=idata.src_pitch1-idata.src_w1;
 				idata.src_modulo2=idata.src_pitch2-idata.src_w2;
-				idata.src_size0=idata.src_w0*idata.src_h0;
-				idata.src_size1=idata.src_w1*idata.src_h1;
-				idata.src_size2=idata.src_w2*idata.src_h2;
+				idata.src_size0=(size_t)idata.src_w0*(size_t)idata.src_h0;
+				idata.src_size1=(size_t)idata.src_w1*(size_t)idata.src_h1;
+				idata.src_size2=(size_t)idata.src_w2*(size_t)idata.src_h2;
 				idata.src_full_mode=true;
 				idata.src_color_matrix=MATRIX_BT709;
 				idata.src_interlaced=PROGRESSIVE;																
@@ -1479,7 +1479,7 @@ void JPSDR_IVTC::Start()
 				idata.src_video_mode=9;
 				idata.video_mode=9;
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
-				idata.src_size0=idata.src_h0*idata.src_w0;
+				idata.src_size0=(size_t)idata.src_h0*(size_t)idata.src_w0;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1498,7 +1498,7 @@ void JPSDR_IVTC::Start()
 				idata.src_video_mode=9;
 				idata.video_mode=9;
 				idata.src_modulo0=idata.src_pitch0-idata.src_w0;
-				idata.src_size0=idata.src_h0*idata.src_w0;
+				idata.src_size0=(size_t)idata.src_h0*(size_t)idata.src_w0;
 				idata.src_h1=0;
 				idata.src_h2=0;
 				idata.src_w1=0;
@@ -1519,7 +1519,7 @@ void JPSDR_IVTC::Start()
 			case nsVDXPixmap::kPixFormat_XRGB8888 :
 				idata.dst_video_mode=1;
 				idata.dst_modulo0=idata.dst_pitch0-4*idata.dst_w0;
-				idata.dst_size0=idata.dst_h0*4*idata.dst_w0;
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)idata.dst_w0*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1537,7 +1537,7 @@ void JPSDR_IVTC::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_YUYV :
 				idata.dst_video_mode=2;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1555,7 +1555,7 @@ void JPSDR_IVTC::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_YUYV_709 :
 				idata.dst_video_mode=2;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1573,7 +1573,7 @@ void JPSDR_IVTC::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_YUYV_FR :
 				idata.dst_video_mode=2;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1591,7 +1591,7 @@ void JPSDR_IVTC::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_YUYV_709_FR :			
 				idata.dst_video_mode=2;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1609,7 +1609,7 @@ void JPSDR_IVTC::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_UYVY :
 				idata.dst_video_mode=3;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1627,7 +1627,7 @@ void JPSDR_IVTC::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_UYVY_709 :
 				idata.dst_video_mode=3;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1645,7 +1645,7 @@ void JPSDR_IVTC::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_UYVY_FR :
 				idata.dst_video_mode=3;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1663,7 +1663,7 @@ void JPSDR_IVTC::Start()
 			case nsVDXPixmap::kPixFormat_YUV422_UYVY_709_FR :			
 				idata.dst_video_mode=3;
 				idata.dst_modulo0=idata.dst_pitch0-4*((idata.dst_w0+1)>>1);
-				idata.dst_size0=idata.dst_h0*4*((idata.dst_w0+1)>>1);
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)((idata.dst_w0+1)>>1)*4;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -1687,9 +1687,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -1703,9 +1703,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -1719,9 +1719,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -1735,9 +1735,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -1751,9 +1751,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -1767,9 +1767,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -1783,9 +1783,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -1799,9 +1799,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -1815,9 +1815,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -1831,9 +1831,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED;																																
@@ -1847,9 +1847,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_BFF;																																
@@ -1863,9 +1863,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_TFF;																																
@@ -1879,9 +1879,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -1895,9 +1895,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED;																																
@@ -1911,9 +1911,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_BFF;																																
@@ -1927,9 +1927,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_TFF;																																
@@ -1943,9 +1943,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -1959,9 +1959,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED;																																
@@ -1975,9 +1975,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_BFF;																																
@@ -1991,9 +1991,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_TFF;																																
@@ -2007,9 +2007,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2023,9 +2023,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED;																																
@@ -2039,9 +2039,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_BFF;																																
@@ -2055,9 +2055,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_TFF;																																
@@ -2071,9 +2071,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -2087,9 +2087,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -2103,9 +2103,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -2119,9 +2119,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=INTERLACED_NONE;																																
@@ -2135,9 +2135,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2151,9 +2151,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=false;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2167,9 +2167,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT601;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2183,9 +2183,9 @@ void JPSDR_IVTC::Start()
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
 				idata.dst_modulo1=idata.dst_pitch1-idata.dst_w1;
 				idata.dst_modulo2=idata.dst_pitch2-idata.dst_w2;
-				idata.dst_size0=idata.dst_w0*idata.dst_h0;
-				idata.dst_size1=idata.dst_w1*idata.dst_h1;
-				idata.dst_size2=idata.dst_w2*idata.dst_h2;
+				idata.dst_size0=(size_t)idata.dst_w0*(size_t)idata.dst_h0;
+				idata.dst_size1=(size_t)idata.dst_w1*(size_t)idata.dst_h1;
+				idata.dst_size2=(size_t)idata.dst_w2*(size_t)idata.dst_h2;
 				idata.dst_full_mode=true;
 				idata.dst_color_matrix=MATRIX_BT709;
 				idata.dst_interlaced=PROGRESSIVE;																																
@@ -2193,7 +2193,7 @@ void JPSDR_IVTC::Start()
 			case nsVDXPixmap::kPixFormat_Y8 :
 				idata.dst_video_mode=9;
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
-				idata.dst_size0=idata.dst_h0*idata.dst_w0;
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)idata.dst_w0;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -2211,7 +2211,7 @@ void JPSDR_IVTC::Start()
 			case nsVDXPixmap::kPixFormat_Y8_FR :						
 				idata.dst_video_mode=9;
 				idata.dst_modulo0=idata.dst_pitch0-idata.dst_w0;
-				idata.dst_size0=idata.dst_h0*idata.dst_w0;
+				idata.dst_size0=(size_t)idata.dst_h0*(size_t)idata.dst_w0;
 				idata.dst_h1=0;
 				idata.dst_h2=0;
 				idata.dst_w1=0;
@@ -2731,15 +2731,14 @@ void JPSDR_IVTC::Resize_Planar420(const void *_src_y, const void *_src_u, const 
 
 }
 
-void JPSDR_IVTC::Convert_YUYV_to_RGB32(const void *src_0, void *dst_0, int32_t w, int32_t h,ptrdiff_t src_modulo)
+void JPSDR_IVTC::Convert_YUYV_to_RGB32(const void *src_0, void *dst_0, const int32_t w, const int32_t h,ptrdiff_t src_modulo)
 {		
-	int32_t w1;
 	const YUYV *src;
 	RGB32BMP *dst;
+	const int32_t w1=(w+1)>>1;
 
 	src=(YUYV *)src_0;
 	dst=(RGB32BMP *)dst_0;
-	w1=(w+1)>>1;
 
 	if (SSE2_Enable)
 	{
@@ -2814,7 +2813,7 @@ void JPSDR_IVTC::Convert_YUYV_to_RGB32(const void *src_0, void *dst_0, int32_t w
 }
 
 
-void JPSDR_IVTC::Convert_YUYV_to_RGB32(const void *src_0, void *dst_0, uint32_t src_size)
+void JPSDR_IVTC::Convert_YUYV_to_RGB32(const void *src_0, void *dst_0, const uint32_t src_size)
 {
 	const YUYV *src;
 	RGB32BMP *dst;
@@ -2891,15 +2890,14 @@ void JPSDR_IVTC::Convert_YUYV_to_RGB32(const void *src_0, void *dst_0, uint32_t 
 }
 
 
-void JPSDR_IVTC::Convert_UYVY_to_RGB32(const void *src_0, void *dst_0, int32_t w, int32_t h,ptrdiff_t src_modulo)
+void JPSDR_IVTC::Convert_UYVY_to_RGB32(const void *src_0, void *dst_0, const int32_t w, const int32_t h,ptrdiff_t src_modulo)
 {
-	int32_t w1;
 	const UYVY *src;
 	RGB32BMP *dst;
+	const int32_t w1=(w+1)>>1;
 
 	src=(UYVY *)src_0;
 	dst=(RGB32BMP *)dst_0;
-	w1=(w+1)>>1;
 
 	if (SSE2_Enable)
 	{
@@ -2975,7 +2973,7 @@ void JPSDR_IVTC::Convert_UYVY_to_RGB32(const void *src_0, void *dst_0, int32_t w
 
 
 
-void JPSDR_IVTC::Convert_UYVY_to_RGB32(const void *src_0, void *dst_0, uint32_t src_size)
+void JPSDR_IVTC::Convert_UYVY_to_RGB32(const void *src_0, void *dst_0, const uint32_t src_size)
 {
 	const UYVY *src;
 	RGB32BMP *dst;
@@ -3053,26 +3051,26 @@ void JPSDR_IVTC::Convert_UYVY_to_RGB32(const void *src_0, void *dst_0, uint32_t 
 
 
 void JPSDR_IVTC::Convert_Planar420_to_RGB32(const uint8_t *src_Y,const uint8_t *src_U,const uint8_t *src_V,
-		void *buffer,void *dst,int32_t w,int32_t h,ptrdiff_t pitch_Y,ptrdiff_t pitch_U,ptrdiff_t pitch_V,ptrdiff_t buffer_pitch)
+		void *buffer,void *dst,const int32_t w,const int32_t h,ptrdiff_t pitch_Y,ptrdiff_t pitch_U,ptrdiff_t pitch_V,ptrdiff_t buffer_pitch)
 {
 	Convert_Automatic_Planar420_to_YUY2(src_Y,src_U,src_V,buffer,w,h,pitch_Y,pitch_U,pitch_V,buffer_pitch,Threshold_Convert);
 	Convert_YUYV_to_RGB32(buffer,dst,((w+1)>>1)*h);
 }
 
 void JPSDR_IVTC::Convert_Automatic_Planar420_to_YUY2(const uint8_t *src_Y,const uint8_t *src_U,const uint8_t *src_V,
-		void *_dst,int32_t w_Y,int32_t h_Y,ptrdiff_t src_pitch_Y,ptrdiff_t src_pitch_U,ptrdiff_t src_pitch_V,ptrdiff_t dst_pitch,
-		uint8_t thrs)
+		void *_dst,const int32_t w_Y,const int32_t h_Y,ptrdiff_t src_pitch_Y,ptrdiff_t src_pitch_U,ptrdiff_t src_pitch_V,ptrdiff_t dst_pitch,
+		const uint8_t thrs)
 {
-	int32_t h_4,w_Y2;
 	const uint8_t *src_Up,*src_Upp,*src_Un,*src_Unn,*src_Unnn;
 	const uint8_t *src_Vp,*src_Vpp,*src_Vn,*src_Vnn,*src_Vnnn;
-	int16_t threshold;
-	ptrdiff_t pitch_U_2,pitch_V_2;
 	uint8_t index_tab_0,index_tab_1,index_tab_2;
 	YUYV *dst;
 
-	pitch_U_2=2*src_pitch_U;
-	pitch_V_2=2*src_pitch_V;
+	const ptrdiff_t pitch_U_2=2*src_pitch_U;
+	const ptrdiff_t pitch_V_2=2*src_pitch_V;
+	const int16_t threshold=thrs;
+	const int32_t h_4=h_Y-4,w_Y2=(w_Y+1)>>1;
+
 	src_Up=src_U-src_pitch_U;
 	src_Upp=src_U-2*src_pitch_U;
 	src_Un=src_U+src_pitch_U;
@@ -3084,14 +3082,10 @@ void JPSDR_IVTC::Convert_Automatic_Planar420_to_YUY2(const uint8_t *src_Y,const 
 	src_Vnn=src_V+2*src_pitch_V;
 	src_Vnnn=src_V+3*src_pitch_V;
 	dst=(YUYV *)_dst;
-	threshold=thrs;
-
-	h_4=h_Y-4;
-	w_Y2=(w_Y+1)>>1;
 
 	for(int32_t i=0; i<4; i+=4)
 	{
-		int32_t j_UV;
+		int32_t j_UV=0;
 
 		JPSDR_IVTC_Convert420_to_YUY2_1(src_Y,src_U,src_V,dst,w_Y2);
 		dst=(YUYV *)((uint8_t *)dst+dst_pitch);
@@ -3101,7 +3095,6 @@ void JPSDR_IVTC::Convert_Automatic_Planar420_to_YUY2(const uint8_t *src_Y,const 
 		dst=(YUYV *)((uint8_t *)dst+dst_pitch);
 		src_Y+=src_pitch_Y;
 
-		j_UV=0;
 		for (int32_t j=0; j<w_Y; j+=2)
 		{
 			dst[j_UV].y1=src_Y[j];
@@ -3168,9 +3161,8 @@ void JPSDR_IVTC::Convert_Automatic_Planar420_to_YUY2(const uint8_t *src_Y,const 
 
 	for(int32_t i=4; i<h_4; i+=4)
 	{
-		int32_t j_UV;
+		int32_t j_UV=0;
 
-		j_UV=0;
 		for (int32_t j=0; j<w_Y; j+=2)
 		{
 			dst[j_UV].y1=src_Y[j];
@@ -3301,9 +3293,8 @@ void JPSDR_IVTC::Convert_Automatic_Planar420_to_YUY2(const uint8_t *src_Y,const 
 
 	for(int32_t i=h_4; i<h_Y; i+=4)
 	{
-		int32_t j_UV;
+		int32_t j_UV=0;
 
-		j_UV=0;
 		for (int32_t j=0; j<w_Y; j+=2)
 		{
 			dst[j_UV].y1=src_Y[j];
@@ -3352,7 +3343,7 @@ void JPSDR_IVTC::Convert_Automatic_Planar420_to_YUY2(const uint8_t *src_Y,const 
 }
 
 
-void JPSDR_IVTC::Deinterlace_Tri_Blend_RGB32(const void *src1_0,const void *src2_0,void *dst_0,int32_t w,int32_t h,
+void JPSDR_IVTC::Deinterlace_Tri_Blend_RGB32(const void *src1_0,const void *src2_0,void *dst_0,const int32_t w,const int32_t h,
 	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const RGB32BMP *src1,*src2,*src3,*src4;
@@ -3420,7 +3411,7 @@ void JPSDR_IVTC::Deinterlace_Tri_Blend_RGB32(const void *src1_0,const void *src2
 
 
 
-void JPSDR_IVTC::Deinterlace_Tri_Blend_YUYV(const void *src1_0,const void *src2_0,void *dst_0,int32_t w,int32_t h,
+void JPSDR_IVTC::Deinterlace_Tri_Blend_YUYV(const void *src1_0,const void *src2_0,void *dst_0,const int32_t w,const int32_t h,
 	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const YUYV *src1,*src2,*src3,*src4;
@@ -3490,7 +3481,7 @@ void JPSDR_IVTC::Deinterlace_Tri_Blend_YUYV(const void *src1_0,const void *src2_
 }
 
 
-void JPSDR_IVTC::Deinterlace_Tri_Blend_YUYV_Y(const void *src1_0,const void *src2_0,void *dst_0,int32_t w,int32_t h,
+void JPSDR_IVTC::Deinterlace_Tri_Blend_YUYV_Y(const void *src1_0,const void *src2_0,void *dst_0,const int32_t w,const int32_t h,
 	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const YUYV *src1,*src2,*src3,*src4;
@@ -3553,7 +3544,7 @@ void JPSDR_IVTC::Deinterlace_Tri_Blend_YUYV_Y(const void *src1_0,const void *src
 }
 
 
-void JPSDR_IVTC::Deinterlace_Tri_Blend_UYVY(const void *src1_0,const void *src2_0,void *dst_0,int32_t w,int32_t h,
+void JPSDR_IVTC::Deinterlace_Tri_Blend_UYVY(const void *src1_0,const void *src2_0,void *dst_0,const int32_t w,const int32_t h,
 	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const UYVY *src1,*src2,*src3,*src4;
@@ -3623,7 +3614,7 @@ void JPSDR_IVTC::Deinterlace_Tri_Blend_UYVY(const void *src1_0,const void *src2_
 }
 
 
-void JPSDR_IVTC::Deinterlace_Tri_Blend_UYVY_Y(const void *src1_0,const void *src2_0,void *dst_0,int32_t w,int32_t h,
+void JPSDR_IVTC::Deinterlace_Tri_Blend_UYVY_Y(const void *src1_0,const void *src2_0,void *dst_0,const int32_t w,const int32_t h,
 	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const UYVY *src1,*src2,*src3,*src4;
@@ -3687,7 +3678,7 @@ void JPSDR_IVTC::Deinterlace_Tri_Blend_UYVY_Y(const void *src1_0,const void *src
 
 
 void JPSDR_IVTC::Deinterlace_Tri_Blend_Planar(const uint8_t *src1,const uint8_t *src2,
-	uint8_t *dst,int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+	uint8_t *dst,const int32_t w,const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const uint8_t *src3,*src4;
 	uint8_t *dst1,*dst2;
@@ -3728,7 +3719,7 @@ void JPSDR_IVTC::Deinterlace_Tri_Blend_Planar(const uint8_t *src1,const uint8_t 
 
 
 
-void JPSDR_IVTC::Deinterlace_Blend_YUYV(const void *src1_0,const void *src2_0,void *dst_0,int32_t w,int32_t h,
+void JPSDR_IVTC::Deinterlace_Blend_YUYV(const void *src1_0,const void *src2_0,void *dst_0,const int32_t w,const int32_t h,
 	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const YUYV *src1,*src2,*src3;
@@ -3810,7 +3801,7 @@ void JPSDR_IVTC::Deinterlace_Blend_YUYV(const void *src1_0,const void *src2_0,vo
 }
 
 
-void JPSDR_IVTC::Deinterlace_Blend_YUYV_Y(const void *src1_0,const void *src2_0,void *dst_0,int32_t w,int32_t h,
+void JPSDR_IVTC::Deinterlace_Blend_YUYV_Y(const void *src1_0,const void *src2_0,void *dst_0,const int32_t w,const int32_t h,
 	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const YUYV *src1,*src2,*src3;
@@ -3883,7 +3874,7 @@ void JPSDR_IVTC::Deinterlace_Blend_YUYV_Y(const void *src1_0,const void *src2_0,
 
 }
 
-void JPSDR_IVTC::Deinterlace_Blend_UYVY(const void *src1_0,const void *src2_0,void *dst_0,int32_t w,int32_t h,
+void JPSDR_IVTC::Deinterlace_Blend_UYVY(const void *src1_0,const void *src2_0,void *dst_0,const int32_t w,const int32_t h,
 	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const UYVY *src1,*src2,*src3;
@@ -3965,7 +3956,7 @@ void JPSDR_IVTC::Deinterlace_Blend_UYVY(const void *src1_0,const void *src2_0,vo
 }
 
 
-void JPSDR_IVTC::Deinterlace_Blend_UYVY_Y(const void *src1_0,const void *src2_0,void *dst_0,int32_t w,int32_t h,
+void JPSDR_IVTC::Deinterlace_Blend_UYVY_Y(const void *src1_0,const void *src2_0,void *dst_0,const int32_t w,const int32_t h,
 	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const UYVY *src1,*src2,*src3;
@@ -4040,7 +4031,7 @@ void JPSDR_IVTC::Deinterlace_Blend_UYVY_Y(const void *src1_0,const void *src2_0,
 
 
 void JPSDR_IVTC::Deinterlace_Blend_Planar(const uint8_t *src1,const uint8_t *src2,uint8_t *dst,
-		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+		const int32_t w,const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const uint8_t *src3;
 	uint8_t *dst1,*dst2;
@@ -4269,20 +4260,19 @@ void JPSDR_IVTC::Deinterlace_Planar(const uint8_t *src1,const uint8_t *src2,uint
 
 
 void JPSDR_IVTC::Motion_Map_RGB32(const void *src1_0,const void *src2_0,void *buffer_0,uint8_t *dst,
-		int32_t w,int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,int32_t w_map,uint8_t thrs)
+		const int32_t w,const int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,const int32_t w_map,const uint8_t thrs)
 {
-	int32_t delta_map;
-	uint16_t thr;
 	const RGB32BMP *src1,*src2,*src3,*src4;
 	RGB32BMP *buffer;
 	uint8_t *dst1,*dst2;
+	const uint16_t thr=thrs;
+	const int32_t delta_map=w_map-w;
+	const int32_t h_1=h-1;
 
 	src1=(RGB32BMP *)src1_0;
 	src2=(RGB32BMP *)src2_0;
 	buffer=(RGB32BMP *)buffer_0;
 	dst1=dst;
-	thr=thrs;
-	delta_map=w_map-w;
 
 	for (int32_t i=0; i<w; i++)
 		*dst1++=0;
@@ -4291,8 +4281,8 @@ void JPSDR_IVTC::Motion_Map_RGB32(const void *src1_0,const void *src2_0,void *bu
 	dst2=dst1+w_map;
 	src3=(RGB32BMP *)((uint8_t *)src1+(pitch<<1));
 	src4=(RGB32BMP *)((uint8_t *)src2+(pitch<<1));
-	h--;
-	for (int32_t i=0; i<h; i++)
+
+	for (int32_t i=0; i<h_1; i++)
 	{
 		for (int32_t j=0; j<w; j++)
 		{
@@ -4373,18 +4363,16 @@ void JPSDR_IVTC::Motion_Map_RGB32(const void *src1_0,const void *src2_0,void *bu
 
 
 void JPSDR_IVTC::Motion_Map_RGB32(const void *src1_0,const void *src2_0,uint8_t *dst,
-		int32_t w,int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,int32_t w_map,uint8_t thrs)
+		const int32_t w,const int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,const int32_t w_map,const uint8_t thrs)
 {
-	int32_t delta_map;
-	int16_t thr;
 	const RGB32BMP *src1,*src2,*src3,*src4;
 	uint8_t *dst1,*dst2;
+	const int32_t delta_map=w_map-w,h_1=h-1;
+	const int16_t thr=thrs;
 
 	src1=(RGB32BMP *)src1_0;
 	src2=(RGB32BMP *)src2_0;
 	dst1=dst;
-	thr=thrs;
-	delta_map=w_map-w;
 
 	for (int32_t i=0; i<w; i++)
 		*dst1++=0;
@@ -4393,8 +4381,8 @@ void JPSDR_IVTC::Motion_Map_RGB32(const void *src1_0,const void *src2_0,uint8_t 
 	dst2=dst1+w_map;
 	src3=(RGB32BMP *)((uint8_t *)src1+(pitch<<1));
 	src4=(RGB32BMP *)((uint8_t *)src2+(pitch<<1));
-	h--;
-	for (int32_t i=0; i<h; i++)
+
+	for (int32_t i=0; i<h_1; i++)
 	{
 		for (int32_t j=0; j<w; j++)
 		{
@@ -4448,18 +4436,16 @@ void JPSDR_IVTC::Motion_Map_RGB32(const void *src1_0,const void *src2_0,uint8_t 
 
 
 void JPSDR_IVTC::Motion_Map_YUYV_Y(const void *src1_0,const void *src2_0,uint8_t *dst,
-		int32_t w,int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,int32_t w_map,uint8_t thrs)
+		const int32_t w,const int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,const int32_t w_map,const uint8_t thrs)
 {
-	int32_t delta_map;
-	int16_t thr;
 	const YUYV *src1,*src2,*src3,*src4;
 	uint8_t *dst1,*dst2;
+	const int32_t delta_map=w_map-w,h_1=h-1;
+	const int16_t thr=thrs;
 
 	src1=(YUYV *)src1_0;
 	src2=(YUYV *)src2_0;
 	dst1=dst;
-	thr=thrs;
-	delta_map=w_map-w;
 
 	for (int32_t i=0; i<w; i++)
 		*dst1++=0;
@@ -4468,8 +4454,8 @@ void JPSDR_IVTC::Motion_Map_YUYV_Y(const void *src1_0,const void *src2_0,uint8_t
 	dst2=dst1+w_map;
 	src3=(YUYV *)((uint8_t *)src1+(pitch<<1));
 	src4=(YUYV *)((uint8_t *)src2+(pitch<<1));
-	h--;
-	for (int32_t i=0; i<h; i++)
+
+	for (int32_t i=0; i<h_1; i++)
 	{
 		for (int32_t j=0; j<w; j+=2)
 		{
@@ -4521,18 +4507,16 @@ void JPSDR_IVTC::Motion_Map_YUYV_Y(const void *src1_0,const void *src2_0,uint8_t
 
 
 void JPSDR_IVTC::Motion_Map_UYVY_Y(const void *src1_0,const void *src2_0,uint8_t *dst,
-		int32_t w,int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,int32_t w_map,uint8_t thrs)
+		const int32_t w,const int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,const int32_t w_map,const uint8_t thrs)
 {
-	int32_t delta_map;
-	int16_t thr;
 	const UYVY *src1,*src2,*src3,*src4;
 	uint8_t *dst1,*dst2;
+	const int32_t delta_map=w_map-w,h_1=h-1;
+	const int16_t thr=thrs;
 
 	src1=(UYVY *)src1_0;
 	src2=(UYVY *)src2_0;
 	dst1=dst;
-	thr=thrs;
-	delta_map=w_map-w;
 
 	for (int32_t i=0; i<w; i++)
 		*dst1++=0;
@@ -4541,8 +4525,8 @@ void JPSDR_IVTC::Motion_Map_UYVY_Y(const void *src1_0,const void *src2_0,uint8_t
 	dst2=dst1+w_map;
 	src3=(UYVY *)((uint8_t *)src1+(pitch<<1));
 	src4=(UYVY *)((uint8_t *)src2+(pitch<<1));
-	h--;
-	for (int32_t i=0; i<h; i++)
+
+	for (int32_t i=0; i<h_1; i++)
 	{
 		for (int32_t j=0; j<w; j+=2)
 		{
@@ -4593,16 +4577,14 @@ void JPSDR_IVTC::Motion_Map_UYVY_Y(const void *src1_0,const void *src2_0,uint8_t
 
 
 void JPSDR_IVTC::Motion_Map_Planar420_Y(const uint8_t *src1,const uint8_t *src2,uint8_t *dst,
-		int32_t w,int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,int32_t w_map,uint8_t thrs)
+		const int32_t w,const int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,const int32_t w_map,const uint8_t thrs)
 {
-	int32_t delta_map;
-	int16_t thr;
 	const uint8_t*src3,*src4;
 	uint8_t *dst1,*dst2;
+	const int32_t delta_map=w_map-w,h_1=h-1;
+	const int16_t thr=thrs;
 
 	dst1=dst;
-	thr=thrs;
-	delta_map=w_map-w;
 
 	for (int32_t i=0; i<w; i++)
 		*dst1++=0;
@@ -4611,8 +4593,8 @@ void JPSDR_IVTC::Motion_Map_Planar420_Y(const uint8_t *src1,const uint8_t *src2,
 	dst2=dst1+w_map;
 	src3=src1+(pitch<<1);
 	src4=src2+(pitch<<1);
-	h--;
-	for (int32_t i=0; i<h; i++)
+
+	for (int32_t i=0; i<h_1; i++)
 	{
 		for (int32_t j=0; j<w; j++)
 		{
@@ -4647,22 +4629,20 @@ void JPSDR_IVTC::Motion_Map_Planar420_Y(const uint8_t *src1,const uint8_t *src2,
 
 
 void JPSDR_IVTC::Smart_Deinterlace_Motion_Map_RGB32(const void *src1_0,const void *src2_0,void *buffer_0,
-		uint8_t *dst,int32_t w,int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,int32_t w_map,
-		uint8_t thrs)
+		uint8_t *dst,const int32_t w,const int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,const int32_t w_map,
+		const uint8_t thrs)
 {
-	int32_t delta_map;
-	int16_t thr;
 	const RGB32BMP *src1,*src2,*src3,*src4;
 	RGB32BMP *buffer;
 	uint8_t *dst1,*dst2;
+	const int32_t delta_map=w_map-w,h_1=h-1;
+	const int16_t thr=thrs;
 
 	src1=(RGB32BMP *)src1_0;
 	src2=(RGB32BMP *)src2_0;
 	buffer=(RGB32BMP *)buffer_0;
 
 	dst1=dst;
-	thr=thrs;
-	delta_map=w_map-w;
 
 	for (int32_t i=0; i<w; i++)
 	{
@@ -4685,8 +4665,8 @@ void JPSDR_IVTC::Smart_Deinterlace_Motion_Map_RGB32(const void *src1_0,const voi
 	dst2=dst1+w_map;
 	src3=(RGB32BMP *)((uint8_t *)src1+(pitch<<1));
 	src4=(RGB32BMP *)((uint8_t *)src2+(pitch<<1));
-	h--;
-	for (int32_t i=0; i<h; i++)
+
+	for (int32_t i=0; i<h_1; i++)
 	{
 		for (int32_t j=0; j<w; j++)
 		{
@@ -4744,22 +4724,20 @@ void JPSDR_IVTC::Smart_Deinterlace_Motion_Map_RGB32(const void *src1_0,const voi
 
 
 void JPSDR_IVTC::Smart_Deinterlace_Tri_Motion_Map_RGB32(const void *src1_0,const void *src2_0,void *buffer_0,
-		uint8_t *dst,int32_t w,int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,int32_t w_map,
-		uint8_t thrs)
+		uint8_t *dst,const int32_t w,const int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,const int32_t w_map,
+		const uint8_t thrs)
 {
-	int32_t delta_map;
-	int16_t thr;
 	const RGB32BMP *src1,*src2,*src3,*src4;
 	RGB32BMP *buffer;
 	uint8_t *dst1,*dst2;
+	const int32_t delta_map=w_map-w,h_1=h-1;
+	const int16_t thr=thrs;
 
 	src1=(RGB32BMP *)src1_0;
 	src2=(RGB32BMP *)src2_0;
 	buffer=(RGB32BMP *)buffer_0;
 
 	dst1=dst;
-	thr=thrs;
-	delta_map=w_map-w;
 
 	for (int32_t i=0; i<w; i++)
 	{
@@ -4771,8 +4749,8 @@ void JPSDR_IVTC::Smart_Deinterlace_Tri_Motion_Map_RGB32(const void *src1_0,const
 	dst2=dst1+w_map;
 	src3=(RGB32BMP *)((uint8_t *)src1+(pitch<<1));
 	src4=(RGB32BMP *)((uint8_t *)src2+(pitch<<1));
-	h--;
-	for (int32_t i=0; i<h; i++)
+
+	for (int32_t i=0; i<h_1; i++)
 	{
 		for (int32_t j=0; j<w; j++)
 		{
@@ -4830,17 +4808,14 @@ void JPSDR_IVTC::Smart_Deinterlace_Tri_Motion_Map_RGB32(const void *src1_0,const
 
 
 
-void JPSDR_IVTC::Motion_Map_Filter(uint8_t *map,uint8_t *buffer,int32_t w,
-	int32_t h,int32_t w_map)
+void JPSDR_IVTC::Motion_Map_Filter(uint8_t *map,uint8_t *buffer,const int32_t w,
+	const int32_t h,const int32_t w_map)
 {
-	int32_t delta,h_4,w_2;
+	int32_t delta;
 	uint8_t s,*tab;
 	uint8_t *dst,*src;
-	uint32_t *tab_2,w_map_4;
-
-	w_map_4=w_map >> 2;
-	h_4=h-4;
-	w_2=w-2;
+	uint32_t *tab_2;
+	const int32_t h_4=h-4,w_2=w-2,w_map_4=w_map >> 2;
 
 	tab=map;
 	dst=buffer;
@@ -4901,9 +4876,7 @@ void JPSDR_IVTC::Motion_Map_Filter(uint8_t *map,uint8_t *buffer,int32_t w,
 				tab_2=(uint32_t *)(tab+j-1);
 				for (int32_t k=0; k<5; k++)
 				{
-					const uint32_t mask=0x01010101;
-
-					*tab_2=mask;
+					*tab_2=0x01010101;
 					tab_2+=w_map_4;
 				}
 			}
@@ -4917,13 +4890,13 @@ void JPSDR_IVTC::Motion_Map_Filter(uint8_t *map,uint8_t *buffer,int32_t w,
 
 uint32_t JPSDR_IVTC::Norme1_Histogramme_DeltaPicture_RGB32(const void *src1,const void *src2,
 		void *dst_0,void *buffer_0,uint8_t *map,uint8_t *buffer_map,
-		uint32_t *histo,uint32_t *repart,int32_t w,int32_t h,ptrdiff_t src_pitch,
+		uint32_t *histo,uint32_t *repart,const int32_t w,const int32_t h,ptrdiff_t src_pitch,
 		ptrdiff_t dst_pitch,ptrdiff_t src_modulo,ptrdiff_t dst_modulo,
-		uint32_t &error_motion_map,uint8_t thrs)
+		uint32_t &error_motion_map,const uint8_t thrs)
 {
-	int32_t w_map,delta_map;
 	RGB32BMP *dst,*dst2,*buffer,zero_RGB;
 	uint32_t s,thr,s_motion_map;
+	const int32_t w_map=(((w+3)>>2)<<2)+4,delta_map=w_map-w;
 
 	dst=(RGB32BMP *)dst_0;
 	buffer=(RGB32BMP *)buffer_0;
@@ -4931,10 +4904,6 @@ uint32_t JPSDR_IVTC::Norme1_Histogramme_DeltaPicture_RGB32(const void *src1,cons
 	zero_RGB.g=0;
 	zero_RGB.b=0;
 	zero_RGB.alpha=0;
-
-	if ((w%4)==0) w_map=w+4;
-	else w_map=(((w >> 2)+1)<< 2)+4;
-	delta_map=w_map-w;
 
 	if (Integer_SSE_Enable)
 	{
@@ -5013,23 +4982,19 @@ uint32_t JPSDR_IVTC::Norme1_Histogramme_DeltaPicture_RGB32(const void *src1,cons
 
 
 void JPSDR_IVTC::Smart_Deinterlace_RGB32(const void *src1_0,const void *src2_0,void *dst_0,void *buffer_0,
-		uint8_t *map,uint8_t *buffer_map,int32_t w,int32_t h,ptrdiff_t src_pitch,
-		ptrdiff_t dst_pitch,ptrdiff_t src_modulo,ptrdiff_t dst_modulo,uint8_t thrs,
+		uint8_t *map,uint8_t *buffer_map,const int32_t w,const int32_t h,ptrdiff_t src_pitch,
+		ptrdiff_t dst_pitch,ptrdiff_t src_modulo,ptrdiff_t dst_modulo,const uint8_t thrs,
 		bool tri_linear,bool map_filter)
 {
-	int32_t w_map,delta_map;
 	const RGB32BMP *src1,*src2;
 	RGB32BMP *dst,*dst2,*buffer;
 	uint32_t thr;
+	const int32_t w_map=(((w+3)>>2)<<2)+4,delta_map=w_map-w;
 
 	src1=(RGB32BMP *)src1_0;
 	src2=(RGB32BMP *)src2_0;
 	dst=(RGB32BMP *)dst_0;
 	buffer=(RGB32BMP *)buffer_0;
-
-	if ((w%4)==0) w_map=w+4;
-	else w_map=(((w >> 2)+1)<< 2)+4;
-	delta_map=w_map-w;
 
 	if (Integer_SSE_Enable)
 	{
@@ -5080,25 +5045,19 @@ void JPSDR_IVTC::Smart_Deinterlace_RGB32(const void *src1_0,const void *src2_0,v
 
 
 void JPSDR_IVTC::Smart_Deinterlace_YUYV(const void *src1_0,const void *src2_0,void *dst_0,void *buffer_0,
-		uint8_t *map,uint8_t *buffer_map,int32_t w,int32_t h,ptrdiff_t src_pitch,
-		ptrdiff_t dst_pitch,ptrdiff_t src_modulo,ptrdiff_t dst_modulo,uint8_t thrs,
+		uint8_t *map,uint8_t *buffer_map,const int32_t w,const int32_t h,ptrdiff_t src_pitch,
+		ptrdiff_t dst_pitch,ptrdiff_t src_modulo,ptrdiff_t dst_modulo,const uint8_t thrs,
 		bool tri_linear,bool map_filter,const void *RGBBuff_1,const void *RGBBuff_2,
 		ptrdiff_t RGBBuff_pitch,bool Y_only)
 {
-	int32_t w_map,delta_map;
 	const YUYV *src1,*src2;
 	YUYV *dst,*dst2,*buffer;
-	int32_t w_image;
+	const int32_t w_map=(((w+3)>>2)<<2)+4,delta_map=w_map-w,w_image=(w+1)>>1;
 
 	src1=(YUYV *)src1_0;
 	src2=(YUYV *)src2_0;
 	dst=(YUYV *)dst_0;
 	buffer=(YUYV *)buffer_0;
-	w_image=(w+1)>>1;
-
-	if ((w%4)==0) w_map=w+4;
-	else w_map=(((w >> 2)+1)<< 2)+4;
-	delta_map=w_map-w;
 
 	Deinterlace_YUYV(src1,src2,buffer,w,h,src_pitch,(w_image << 2),tri_linear,true,Y_only);
 
@@ -5139,25 +5098,19 @@ void JPSDR_IVTC::Smart_Deinterlace_YUYV(const void *src1_0,const void *src2_0,vo
 
 
 void JPSDR_IVTC::Smart_Deinterlace_UYVY(const void *src1_0,const void *src2_0,void *dst_0,void *buffer_0,
-		uint8_t *map,uint8_t *buffer_map,int32_t w,int32_t h,ptrdiff_t src_pitch,
-		ptrdiff_t dst_pitch,ptrdiff_t src_modulo,ptrdiff_t dst_modulo,uint8_t thrs,
+		uint8_t *map,uint8_t *buffer_map,const int32_t w,const int32_t h,ptrdiff_t src_pitch,
+		ptrdiff_t dst_pitch,ptrdiff_t src_modulo,ptrdiff_t dst_modulo,const uint8_t thrs,
 		bool tri_linear,bool map_filter,const void *RGBBuff_1,const void *RGBBuff_2,
 		ptrdiff_t RGBBuff_pitch,bool Y_only)
 {
-	int32_t w_map,delta_map;
 	const UYVY *src1,*src2;
 	UYVY *dst,*dst2,*buffer;
-	int32_t w_image;
+	const int32_t w_map=(((w+3)>>2)<<2)+4,delta_map=w_map-w,w_image=(w+1)>>1;
 
 	src1=(UYVY *)src1_0;
 	src2=(UYVY *)src2_0;
 	dst=(UYVY *)dst_0;
 	buffer=(UYVY *)buffer_0;
-	w_image=(w+1)>>1;
-
-	if ((w%4)==0) w_map=w+4;
-	else w_map=(((w >> 2)+1)<< 2)+4;
-	delta_map=w_map-w;
 
 	Deinterlace_UYVY(src1,src2,buffer,w,h,src_pitch,(w_image << 2),tri_linear,true,Y_only);
 
@@ -5200,21 +5153,16 @@ void JPSDR_IVTC::Smart_Deinterlace_UYVY(const void *src1_0,const void *src2_0,vo
 void JPSDR_IVTC::Smart_Deinterlace_Planar420(const uint8_t *src1_Y,const uint8_t *src2_Y,
 	const uint8_t *src1_U,const uint8_t *src2_U,const uint8_t *src1_V,const uint8_t *src2_V,
 	uint8_t *dst_Y,uint8_t *dst_U,uint8_t *dst_V,uint8_t *buffer_Y,uint8_t *buffer_U,
-	uint8_t *buffer_V,uint8_t *map,uint8_t *buffer_map,int32_t w_Y,int32_t w_U,int32_t w_V,int32_t h_Y,
-	int32_t h_U,int32_t h_V,ptrdiff_t src_pitch_Y,ptrdiff_t src_pitch_U,ptrdiff_t src_pitch_V,ptrdiff_t src_modulo_Y,
+	uint8_t *buffer_V,uint8_t *map,uint8_t *buffer_map,const int32_t w_Y,const int32_t w_U,const int32_t w_V,const int32_t h_Y,
+	const int32_t h_U,const int32_t h_V,ptrdiff_t src_pitch_Y,ptrdiff_t src_pitch_U,ptrdiff_t src_pitch_V,ptrdiff_t src_modulo_Y,
 	ptrdiff_t src_modulo_U,ptrdiff_t src_modulo_V,ptrdiff_t dst_pitch_Y,ptrdiff_t dst_pitch_U,ptrdiff_t dst_pitch_V,
-	ptrdiff_t dst_modulo_Y,ptrdiff_t dst_modulo_U,ptrdiff_t dst_modulo_V,uint8_t thrs,bool tri_linear,
+	ptrdiff_t dst_modulo_Y,ptrdiff_t dst_modulo_U,ptrdiff_t dst_modulo_V,const uint8_t thrs,bool tri_linear,
 	bool map_filter,const void *RGBBuff_1,const void *RGBBuff_2,ptrdiff_t RGBBuff_pitch,bool Y_only)
 {
-	int32_t w_map,delta_map,w_map2,w_map3;
 	uint8_t *dst2;
 	uint8_t *map_filtre;
-
-	if ((w_Y%4)==0) w_map=w_Y+4;
-	else w_map=(((w_Y >> 2)+1) << 2)+4;
-	delta_map=w_map-w_Y;
-	w_map2=w_map << 1;
-	w_map3=3*w_map;
+	const int32_t w_map=(((w_Y+3)>>2)<<2)+4,delta_map=w_map-w_Y;
+	const int32_t w_map2=w_map<<1,w_map3=3*w_map;
 
 	Deinterlace_Planar(src1_Y,src2_Y,buffer_Y,w_Y,h_Y,src_pitch_Y,w_Y,tri_linear,true);
 	if (!Y_only)
@@ -5338,19 +5286,15 @@ void JPSDR_IVTC::Smart_Deinterlace_Planar420(const uint8_t *src1_Y,const uint8_t
 
 
 uint32_t JPSDR_IVTC::Norme1_Motion_Map_RGB32(const void *src1,const void *src2,void *buffer_0,
-		uint8_t *map,uint8_t *buffer_map,int32_t w,int32_t h,ptrdiff_t pitch,
-		ptrdiff_t modulo,uint32_t &error_motion_map,uint8_t thrs)
+		uint8_t *map,uint8_t *buffer_map,const int32_t w,const int32_t h,ptrdiff_t pitch,
+		ptrdiff_t modulo,uint32_t &error_motion_map,const uint8_t thrs)
 
 {
-	int32_t w_map,delta_map;
 	uint32_t s,thr,s_motion_map;
 	RGB32BMP *buffer;
+	const int32_t w_map=(((w+3)>>2)<<2)+4,delta_map=w_map-w;
 
 	buffer=(RGB32BMP *)buffer_0;
-
-	if ((w%4)==0) w_map=w+4;
-	else w_map=(((w >> 2)+1)<< 2)+4;
-	delta_map=w_map-w;
 
 	if (Integer_SSE_Enable)
 	{
@@ -5403,7 +5347,7 @@ uint32_t JPSDR_IVTC::Norme1_Motion_Map_RGB32(const void *src1,const void *src2,v
 
 
 
-uint32_t JPSDR_IVTC::Norme1_RGB32(const void *src1_0,const void *src2_0,int32_t w,int32_t h,
+uint32_t JPSDR_IVTC::Norme1_RGB32(const void *src1_0,const void *src2_0,const int32_t w,const int32_t h,
 		ptrdiff_t pitch,ptrdiff_t modulo)
 {
 	uint32_t s;

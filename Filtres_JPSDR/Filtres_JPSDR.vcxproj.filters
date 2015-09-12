@@ -122,9 +122,6 @@
     <MASM Include="..\DeinterlaceII\Filtre_JPSDR_DeinterlaceII_asm.asm">
       <Filter>Fichiers sources</Filter>
     </MASM>
-    <MASM Include="..\Field_Shift\Filtre_JPSDR_Field_Shift_asm.asm">
-      <Filter>Fichiers sources</Filter>
-    </MASM>
     <MASM Include="..\InterlaceMotion\Filtre_JPSDR_InterlaceMotion_asm.asm">
       <Filter>Fichiers sources</Filter>
     </MASM>
@@ -276,9 +273,6 @@
       <Filter>Fichiers sources</Filter>
     </CustomBuild>
     <CustomBuild Include="..\Deinterlace\Filtre_JPSDR_Deinterlace_asm_x64.asm">
-      <Filter>Fichiers sources</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\Field_Shift\Filtre_JPSDR_Field_Shift_asm_x64.asm">
       <Filter>Fichiers sources</Filter>
     </CustomBuild>
     <CustomBuild Include="..\IVTC\Filtre_JPSDR_IVTC_asm_x64.asm">

@@ -78,7 +78,7 @@ typedef struct _Image_Data
 	int32_t src_h0,src_h1,src_h2;
 	ptrdiff_t src_pitch0,src_pitch1,src_pitch2;
 	ptrdiff_t src_modulo0,src_modulo1,src_modulo2;
-	ptrdiff_t src_size0,src_size1,src_size2;
+	size_t src_size0,src_size1,src_size2;
 	bool src_full_mode;
 	uint8_t src_color_matrix,src_interlaced;
 	void *dst_plane0,*dst_plane1,*dst_plane2;
@@ -86,7 +86,7 @@ typedef struct _Image_Data
 	int32_t dst_h0,dst_h1,dst_h2;
 	ptrdiff_t dst_pitch0,dst_pitch1,dst_pitch2;
 	ptrdiff_t dst_modulo0,dst_modulo1,dst_modulo2;
-	ptrdiff_t dst_size0,dst_size1,dst_size2;
+	size_t dst_size0,dst_size1,dst_size2;
 	bool dst_full_mode;
 	uint8_t dst_color_matrix,dst_interlaced;	
 } Image_Data;
@@ -105,6 +105,10 @@ typedef struct _Image_Data
 #define ALIGN_SIZE 64
 #define ALIGN_SHIFT 6
 #define my_aligned_free(ptr) if (ptr!=NULL) { _aligned_free(ptr); ptr=NULL;}
+
+// Cache size for asmlib function, a little more the size of a 720p YV12 frame
+#define MAX_CACHE_SIZE 1400000
+
 /*
 #define abs64(x) (x<0)?-x:x
 */
