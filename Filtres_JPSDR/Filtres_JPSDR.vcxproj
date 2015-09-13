@@ -844,7 +844,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Oa  /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -886,7 +886,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Oa  /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -927,7 +927,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Oa /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -970,7 +970,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Oa /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1012,7 +1012,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Oa /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1057,7 +1057,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Oa /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1101,8 +1101,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa /Qip /Qopenmp %(AdditionalOptions)</AdditionalOptions>
-      <Optimization>MaxSpeed</Optimization>
+      <AdditionalOptions>/Oa /Qip /Qopenmp /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1139,8 +1138,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa /Qip /Qopenmp %(AdditionalOptions)</AdditionalOptions>
-      <Optimization>MaxSpeed</Optimization>
+      <AdditionalOptions>/Oa /Qip /Qopenmp /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1176,7 +1174,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Oa /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1218,7 +1216,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Oa /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1259,7 +1257,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Oa /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1304,7 +1302,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Oa /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1348,7 +1346,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Oa /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1393,7 +1391,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Oa /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1753,7 +1751,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Oa /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1799,7 +1797,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Oa /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1844,7 +1842,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Oa /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1890,7 +1888,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Oa /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1936,7 +1934,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Oa /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -1981,7 +1979,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Oa /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -2026,7 +2024,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Oa /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -2071,7 +2069,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </MASM>
     <ClCompile>
-      <AdditionalOptions>/Oa %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Oa /Qinline-forceinline %(AdditionalOptions)</AdditionalOptions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
