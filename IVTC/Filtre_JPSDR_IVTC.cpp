@@ -10,7 +10,11 @@
 #include "..\Filtres_JPSDR\JPSDR_Filter.h"
 #include "..\Filtres_JPSDR\Pascal.h"
 
+#include "..\asmlib\asmlib.h"
+
 extern int g_VFVAPIVersion;
+
+extern "C" int IInstrSet;
 
 extern "C" uint32_t JPSDR_IVTC_Histogramme_DeltaPicture_Motion_Map_SSE_RGB32(const void *src,
 		uint8_t *map,void *dst,uint32_t *histo,uint32_t *repart,int32_t w,
@@ -422,14 +426,16 @@ protected:
 	uint16_t data_out[5];
 	uint8_t index_out;
 	bool invalid_first_last;
-	bool *interlaced_tab[Interlaced_Tab_Size];
+	bool *interlaced_tab_U[Interlaced_Tab_Size],*interlaced_tab_V[Interlaced_Tab_Size];
 	bool resize_720x480,swap_buffer;
 	sint32 resize_w0[720],resize_h0[240],resize_w1[360],resize_h1[120];
 //	FILE *fic1,*fic2,*fic3;
 
-	int16_t lookup[1280];
+	int16_t lookup_RGB[1280];
 	uint16_t lookup_420[768];
 	bool Integer_SSE_Enable,SSE2_Enable,MMX_Enable;
+
+	size_t CPU_Cache_Size,Cache_Setting;
 
 	void Deinterlace_Tri_Blend_RGB32(const void *src1,const void *src2,void *dst,const int32_t w,const int32_t h,
 		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
@@ -563,20 +569,24 @@ bool JPSDR_IVTC::Init()
 	}
 	for (i=0; i<Interlaced_Tab_Size; i++)
 	{
-		interlaced_tab[i]=NULL;
+		interlaced_tab_U[i]=NULL;
+		interlaced_tab_V[i]=NULL;
 	}
 
 	for (i=0; i<256; i++)
 	{
-		lookup[i]=(int16_t)round(1.164*(i-16)*64.0+32.0);
-		lookup[i+256]=(int16_t)round(1.596*(i-128)*64.0);
-		lookup[i+512]=(int16_t)round(-0.813*(i-128)*64.0);
-		lookup[i+768]=(int16_t)round(-0.391*(i-128)*64.0);
-		lookup[i+1024]=(int16_t)round(2.018*(i-128)*64.0);
+		lookup_RGB[i]=(int16_t)round(1.164*(i-16)*64.0+32.0);
+		lookup_RGB[i+256]=(int16_t)round(1.596*(i-128)*64.0);
+		lookup_RGB[i+512]=(int16_t)round(-0.813*(i-128)*64.0);
+		lookup_RGB[i+768]=(int16_t)round(-0.391*(i-128)*64.0);
+		lookup_RGB[i+1024]=(int16_t)round(2.018*(i-128)*64.0);
 		lookup_420[i]=(uint16_t)(i*3);
 		lookup_420[i+256]=(uint16_t)(i*5);
 		lookup_420[i+512]=(uint16_t)(i*7);
 	}
+
+	if (IInstrSet<0) InstructionSet();
+	CPU_Cache_Size=DataCacheSize(0)>>2;
 
 	return(true);
 }
@@ -2421,7 +2431,8 @@ void JPSDR_IVTC::Start()
 
 	for (i=0; i<Interlaced_Tab_Size; i++)
 	{
-		interlaced_tab[i]=(bool*)malloc(idata.src_w0*sizeof(bool));
+		interlaced_tab_U[i]=(bool*)malloc(idata.src_w0*sizeof(bool));
+		interlaced_tab_V[i]=(bool*)malloc(idata.src_w0*sizeof(bool));
 	}
 
 	if (resize_720x480)
@@ -2484,7 +2495,8 @@ void JPSDR_IVTC::Start()
 	}
 	for (i=0; i<Interlaced_Tab_Size; i++)
 	{
-		test=test && (interlaced_tab[i]!=NULL);
+		test=test && (interlaced_tab_U[i]!=NULL);
+		test=test && (interlaced_tab_V[i]!=NULL);
 	}
 	if (resize_720x480)
 	{
@@ -2509,7 +2521,8 @@ void JPSDR_IVTC::Start()
 		my_aligned_free(buffer_resize_Y);
 		for (i=Interlaced_Tab_Size-1; i>=0; i--)
 		{
-			myfree(interlaced_tab[i]);
+			myfree(interlaced_tab_V[i]);
+			myfree(interlaced_tab_U[i]);
 		}
 		for (i=Data_Buffer_Size-1; i>=0; i--)
 		{
@@ -2609,6 +2622,15 @@ void JPSDR_IVTC::Start()
 		}
 	}
 
+	const size_t img_size=idata.dst_size0+idata.dst_size1+idata.dst_size2;
+
+	if (img_size<=MAX_CACHE_SIZE)
+	{
+		if (CPU_Cache_Size>=img_size) Cache_Setting=img_size;
+		else Cache_Setting=16;
+	}
+	else Cache_Setting=16;
+
 /*	fic1=NULL;
 	fic2=NULL;
 	fic3=NULL;*/
@@ -2654,78 +2676,84 @@ void JPSDR_IVTC::Resize_Planar420(const void *_src_y, const void *_src_u, const 
 	{
 		const uint8_t *src_y;
 		uint8_t *dst_y;
+		const sint32 *rs_w0=resize_w0;
 		
 		src_y=(uint8_t *)_src_y+(resize_h0[i]*(src_pitch_y<<1));
 		dst_y=(uint8_t *)_dst_y+(i*1440);
 
 		for (int32_t j=0; j<720; j++)
 		{
-			*dst_y++=src_y[resize_w0[j]];
+			*dst_y++=src_y[*rs_w0++];
 		}
 	}
 	for (int32_t i=0; i<240; i++)
 	{
 		const uint8_t *src_y;
 		uint8_t *dst_y;
+		const sint32 *rs_w0=resize_w0;
 		
 		src_y=(uint8_t *)_src_y+(src_pitch_y+resize_h0[i]*(src_pitch_y<<1));
 		dst_y=(uint8_t *)_dst_y+(720+i*1440);
 
 		for (int32_t j=0; j<720; j++)
 		{
-			*dst_y++=src_y[resize_w0[j]];
+			*dst_y++=src_y[*rs_w0++];
 		}
 	}
 	for (int32_t i=0; i<120; i++)
 	{
 		const uint8_t *src_u;
 		uint8_t *dst_u;
+		const sint32 *rs_w1=resize_w1;
 		
 		src_u=(uint8_t *)_src_u+(resize_h1[i]*(src_pitch_u<<1));
 		dst_u=(uint8_t *)_dst_u+(i*736);
 
 		for (int32_t j=0; j<360; j++)
 		{
-			*dst_u++=src_u[resize_w1[j]];
+			*dst_u++=src_u[*rs_w1++];
 		}
 	}
 	for (int32_t i=0; i<120; i++)
 	{
 		const uint8_t *src_u;
 		uint8_t *dst_u;
+		const sint32 *rs_w1=resize_w1;
 		
 		src_u=(uint8_t *)_src_u+(src_pitch_u+resize_h1[i]*(src_pitch_u<<1));
 		dst_u=(uint8_t *)_dst_u+(368+i*736);
 
 		for (int32_t j=0; j<360; j++)
 		{
-			*dst_u++=src_u[resize_w1[j]];
+			*dst_u++=src_u[*rs_w1++];
 		}
 	}
 	for (int32_t i=0; i<120; i++)
 	{
 		const uint8_t *src_v;
 		uint8_t *dst_v;
+		const sint32 *rs_w1=resize_w1;
 		
 		src_v=(uint8_t *)_src_v+(resize_h1[i]*(src_pitch_v<<1));
 		dst_v=(uint8_t *)_dst_v+(i*736);
 
 		for (int32_t j=0; j<360; j++)
 		{
-			*dst_v++=src_v[resize_w1[j]];
+			*dst_v++=src_v[*rs_w1++];
 		}
 	}
 	for (int32_t i=0; i<120; i++)
 	{
 		const uint8_t *src_v;
 		uint8_t *dst_v;
+		const sint32 *rs_w1=resize_w1;
 		
 		src_v=(uint8_t *)_src_v+(src_pitch_v+resize_h1[i]*(src_pitch_v<<1));
 		dst_v=(uint8_t *)_dst_v+(368+i*736);
 
 		for (int32_t j=0; j<360; j++)
 		{
-			*dst_v++=src_v[resize_w1[j]];
+			*dst_v++=src_v[*rs_w1++];
 		}
 	}
 
@@ -2736,13 +2764,14 @@ void JPSDR_IVTC::Convert_YUYV_to_RGB32(const void *src_0, void *dst_0, const int
 	const YUYV *src;
 	RGB32BMP *dst;
 	const int32_t w1=(w+1)>>1;
+	const int16_t *lookup=lookup_RGB;
 
 	src=(YUYV *)src_0;
 	dst=(RGB32BMP *)dst_0;
 
 	if (SSE2_Enable)
 	{
-		JPSDR_IVTC_Convert_YUYV_to_RGB32_SSE2_2(src_0,dst_0,lookup,w1,h,src_modulo);
+		JPSDR_IVTC_Convert_YUYV_to_RGB32_SSE2_2(src_0,dst_0,lookup_RGB,w1,h,src_modulo);
 	}
 	else
 	{
@@ -2756,56 +2785,53 @@ void JPSDR_IVTC::Convert_YUYV_to_RGB32(const void *src_0, void *dst_0, const int
 				y1=src->y1;
 				u=src->u;
 				y2=src->y2;
-				v=src->v;
-				src++; 
+				v=(src++)->v;
 
 				r=(lookup[y1]+lookup[256+v])>>6;
 				g=(lookup[y1]+lookup[512+v]+lookup[768+u])>>6;
 				b=(lookup[y1]+lookup[1024+u])>>6;
-				if (r<0) r=0;
+				if (r<0) dst->r=0;
 				else
 				{
-					if (r>255) r=255;
+					if (r>255) dst->r=255;
+					else dst->r=(uint8_t)r;
 				}
-				if (g<0) g=0;
+				if (g<0) dst->g=0;
 				else
 				{
-					if (g>255) g=255;
+					if (g>255) dst->g=255;
+					else dst->g=(uint8_t)g;
 				}
-				if (b<0) b=0;
+				if (b<0) dst->b=0;
 				else
 				{
-					if (b>255) b=255;
+					if (b>255) dst->b=255;
+					else dst->b=(uint8_t)b;
 				}
-				dst->b=(uint8_t)b;
-				dst->g=(uint8_t)g;
-				dst->r=(uint8_t)r;
-				dst->alpha=0;
-				dst++;
+				(dst++)->alpha=0;
 
 				r=(lookup[y2]+lookup[256+v])>>6;
 				g=(lookup[y2]+lookup[512+v]+lookup[768+u])>>6;
 				b=(lookup[y2]+lookup[1024+u])>>6;
-				if (r<0) r=0;
+				if (r<0) dst->r=0;
 				else
 				{
-					if (r>255) r=255;
+					if (r>255) dst->r=255;
+					else dst->r=(uint8_t)r;
 				}
-				if (g<0) g=0;
+				if (g<0) dst->g=0;
 				else
 				{
-					if (g>255) g=255;
+					if (g>255) dst->g=255;
+					else dst->g=(uint8_t)g;
 				}
-				if (b<0) b=0;
+				if (b<0) dst->b=0;
 				else
 				{
-					if (b>255) b=255;
+					if (b>255) dst->b=255;
+					else dst->b=(uint8_t)b;
 				}
-				dst->b=(uint8_t)b;
-				dst->g=(uint8_t)g;
-				dst->r=(uint8_t)r;
-				dst->alpha=0;
-				dst++;
+				(dst++)->alpha=0;
 			}
 			src=(YUYV *)((uint8_t *)src+src_modulo);
 		}
@@ -2817,13 +2843,14 @@ void JPSDR_IVTC::Convert_YUYV_to_RGB32(const void *src_0, void *dst_0, const uin
 {
 	const YUYV *src;
 	RGB32BMP *dst;
+	const int16_t *lookup=lookup_RGB;
 
 	src=(YUYV *)src_0;
 	dst=(RGB32BMP *)dst_0;
 
 	if (SSE2_Enable)
 	{
-		JPSDR_IVTC_Convert_YUYV_to_RGB32_SSE2(src_0,dst_0,lookup,src_size);
+		JPSDR_IVTC_Convert_YUYV_to_RGB32_SSE2(src_0,dst_0,lookup_RGB,src_size);
 	}
 	else
 	{
@@ -2835,56 +2862,53 @@ void JPSDR_IVTC::Convert_YUYV_to_RGB32(const void *src_0, void *dst_0, const uin
 			y1=src->y1;
 			u=src->u;
 			y2=src->y2;
-			v=src->v;
-			src++; 
+			v=(src++)->v;
 
 			r=(lookup[y1]+lookup[256+v])>>6;
 			g=(lookup[y1]+lookup[512+v]+lookup[768+u])>>6;
 			b=(lookup[y1]+lookup[1024+u])>>6;
-			if (r<0) r=0;
+			if (r<0) dst->r=0;
 			else
 			{
-				if (r>255) r=255;
+				if (r>255) dst->r=255;
+				else dst->r=(uint8_t)r;
 			}
-			if (g<0) g=0;
+			if (g<0) dst->g=0;
 			else
 			{
-				if (g>255) g=255;
+				if (g>255) dst->g=255;
+				else dst->g=(uint8_t)g;
 			}
-			if (b<0) b=0;
+			if (b<0) dst->b=0;
 			else
 			{
-				if (b>255) b=255;
+				if (b>255) dst->b=255;
+				else dst->b=(uint8_t)b;
 			}
-			dst->b=(uint8_t)b;
-			dst->g=(uint8_t)g;
-			dst->r=(uint8_t)r;
-			dst->alpha=0;
-			dst++;
+			(dst++)->alpha=0;
 
 			r=(lookup[y2]+lookup[256+v])>>6;
 			g=(lookup[y2]+lookup[512+v]+lookup[768+u])>>6;
 			b=(lookup[y2]+lookup[1024+u])>>6;
-			if (r<0) r=0;
+			if (r<0) dst->r=0;
 			else
 			{
-				if (r>255) r=255;
+				if (r>255) dst->r=255;
+				else dst->r=(uint8_t)r;
 			}
-			if (g<0) g=0;
+			if (g<0) dst->g=0;
 			else
 			{
-				if (g>255) g=255;
+				if (g>255) dst->g=255;
+				else dst->g=(uint8_t)g;
 			}
-			if (b<0) b=0;
+			if (b<0) dst->b=0;
 			else
 			{
-				if (b>255) b=255;
+				if (b>255) dst->b=255;
+				else dst->b=(uint8_t)b;
 			}
-			dst->b=(uint8_t)b;
-			dst->g=(uint8_t)g;
-			dst->r=(uint8_t)r;
-			dst->alpha=0;
-			dst++;
+			(dst++)->alpha=0;
 		}
 	}
 }
@@ -2895,13 +2919,14 @@ void JPSDR_IVTC::Convert_UYVY_to_RGB32(const void *src_0, void *dst_0, const int
 	const UYVY *src;
 	RGB32BMP *dst;
 	const int32_t w1=(w+1)>>1;
+	const int16_t *lookup=lookup_RGB;
 
 	src=(UYVY *)src_0;
 	dst=(RGB32BMP *)dst_0;
 
 	if (SSE2_Enable)
 	{
-		JPSDR_IVTC_Convert_UYVY_to_RGB32_SSE2_2(src_0,dst_0,lookup,w1,h,src_modulo);
+		JPSDR_IVTC_Convert_UYVY_to_RGB32_SSE2_2(src_0,dst_0,lookup_RGB,w1,h,src_modulo);
 	}
 	else
 	{
@@ -2915,56 +2940,53 @@ void JPSDR_IVTC::Convert_UYVY_to_RGB32(const void *src_0, void *dst_0, const int
 				u=src->u;
 				y1=src->y1;
 				v=src->v;
-				y2=src->y2;
-				src++;
+				y2=(src++)->y2;
 
 				r=(lookup[y1]+lookup[256+v])>>6;
 				g=(lookup[y1]+lookup[512+v]+lookup[768+u])>>6;
 				b=(lookup[y1]+lookup[1024+u])>>6;
-				if (r<0) r=0;
+				if (r<0) dst->r=0;
 				else
 				{
-					if (r>255) r=255;
+					if (r>255) dst->r=255;
+					else dst->r=(uint8_t)r;
 				}
-				if (g<0) g=0;
+				if (g<0) dst->g=0;
 				else
 				{
-					if (g>255) g=255;
+					if (g>255) dst->g=255;
+					else dst->g=(uint8_t)g;
 				}
-				if (b<0) b=0;
+				if (b<0) dst->b=0;
 				else
 				{
-					if (b>255) b=255;
+					if (b>255) dst->b=255;
+					else dst->b=(uint8_t)b;
 				}
-				dst->b=(uint8_t)b;
-				dst->g=(uint8_t)g;
-				dst->r=(uint8_t)r;
-				dst->alpha=0;
-				dst++;
+				(dst++)->alpha=0;
 
 				r=(lookup[y2]+lookup[256+v])>>6;
 				g=(lookup[y2]+lookup[512+v]+lookup[768+u])>>6;
 				b=(lookup[y2]+lookup[1024+u])>>6;
-				if (r<0) r=0;
+				if (r<0) dst->r=0;
 				else
 				{
-					if (r>255) r=255;
+					if (r>255) dst->r=255;
+					else dst->r=(uint8_t)r;
 				}
-				if (g<0) g=0;
+				if (g<0) dst->g=0;
 				else
 				{
-					if (g>255) g=255;
+					if (g>255) dst->g=255;
+					else dst->g=(uint8_t)g;
 				}
-				if (b<0) b=0;
+				if (b<0) dst->b=0;
 				else
 				{
-					if (b>255) b=255;
+					if (b>255) dst->b=255;
+					else dst->b=(uint8_t)b;
 				}
-				dst->b=(uint8_t)b;
-				dst->g=(uint8_t)g;
-				dst->r=(uint8_t)r;
-				dst->alpha=0;
-				dst++;
+				(dst++)->alpha=0;
 			}
 			src=(UYVY *)((uint8_t *)src+src_modulo);
 		}
@@ -2977,13 +2999,14 @@ void JPSDR_IVTC::Convert_UYVY_to_RGB32(const void *src_0, void *dst_0, const uin
 {
 	const UYVY *src;
 	RGB32BMP *dst;
+	const int16_t *lookup=lookup_RGB;
 
 	src=(UYVY *)src_0;
 	dst=(RGB32BMP *)dst_0;
 
 	if (SSE2_Enable)
 	{
-		JPSDR_IVTC_Convert_UYVY_to_RGB32_SSE2(src_0,dst_0,lookup,src_size);
+		JPSDR_IVTC_Convert_UYVY_to_RGB32_SSE2(src_0,dst_0,lookup_RGB,src_size);
 	}
 	else
 	{
@@ -2995,56 +3018,53 @@ void JPSDR_IVTC::Convert_UYVY_to_RGB32(const void *src_0, void *dst_0, const uin
 			u=src->u;
 			y1=src->y1;
 			v=src->v;
-			y2=src->y2;
-			src++;
+			y2=(src++)->y2;
 
 			r=(lookup[y1]+lookup[256+v])>>6;
 			g=(lookup[y1]+lookup[512+v]+lookup[768+u])>>6;
 			b=(lookup[y1]+lookup[1024+u])>>6;
-			if (r<0) r=0;
+			if (r<0) dst->r=0;
 			else
 			{
-				if (r>255) r=255;
+				if (r>255) dst->r=255;
+				else dst->r=(uint8_t)r;
 			}
-			if (g<0) g=0;
+			if (g<0) dst->g=0;
 			else
 			{
-				if (g>255) g=255;
+				if (g>255) dst->g=255;
+				else dst->g=(uint8_t)g;
 			}
-			if (b<0) b=0;
+			if (b<0) dst->b=0;
 			else
 			{
-				if (b>255) b=255;
+				if (b>255) dst->b=255;
+				else dst->b=(uint8_t)b;
 			}
-			dst->b=(uint8_t)b;
-			dst->g=(uint8_t)g;
-			dst->r=(uint8_t)r;
-			dst->alpha=0;
-			dst++;
+			(dst++)->alpha=0;
 
 			r=(lookup[y2]+lookup[256+v])>>6;
 			g=(lookup[y2]+lookup[512+v]+lookup[768+u])>>6;
 			b=(lookup[y2]+lookup[1024+u])>>6;
-			if (r<0) r=0;
+			if (r<0) dst->r=0;
 			else
 			{
-				if (r>255) r=255;
+				if (r>255) dst->r=255;
+				else dst->r=(uint8_t)r;
 			}
-			if (g<0) g=0;
+			if (g<0) dst->g=0;
 			else
 			{
-				if (g>255) g=255;
+				if (g>255) dst->g=255;
+				else dst->g=(uint8_t)g;
 			}
-			if (b<0) b=0;
+			if (b<0) dst->b=0;
 			else
 			{
-				if (b>255) b=255;
+				if (b>255) dst->b=255;
+				else dst->b=(uint8_t)b;
 			}
-			dst->b=(uint8_t)b;
-			dst->g=(uint8_t)g;
-			dst->r=(uint8_t)r;
-			dst->alpha=0;
-			dst++;
+			(dst++)->alpha=0;
 		}
 	}
 }
@@ -3064,7 +3084,8 @@ void JPSDR_IVTC::Convert_Automatic_Planar420_to_YUY2(const uint8_t *src_Y,const 
 	const uint8_t *src_Up,*src_Upp,*src_Un,*src_Unn,*src_Unnn;
 	const uint8_t *src_Vp,*src_Vpp,*src_Vn,*src_Vnn,*src_Vnnn;
 	uint8_t index_tab_0,index_tab_1,index_tab_2;
-	YUYV *dst;
+	uint8_t *dst;
+	const uint16_t *lookup=lookup_420;
 
 	const ptrdiff_t pitch_U_2=2*src_pitch_U;
 	const ptrdiff_t pitch_V_2=2*src_pitch_V;
@@ -3081,63 +3102,80 @@ void JPSDR_IVTC::Convert_Automatic_Planar420_to_YUY2(const uint8_t *src_Y,const 
 	src_Vn=src_V+src_pitch_V;
 	src_Vnn=src_V+2*src_pitch_V;
 	src_Vnnn=src_V+3*src_pitch_V;
-	dst=(YUYV *)_dst;
+	dst=(uint8_t *)_dst;
 
 	for(int32_t i=0; i<4; i+=4)
 	{
-		int32_t j_UV=0;
-
 		JPSDR_IVTC_Convert420_to_YUY2_1(src_Y,src_U,src_V,dst,w_Y2);
-		dst=(YUYV *)((uint8_t *)dst+dst_pitch);
+		dst+=dst_pitch;
 		src_Y+=src_pitch_Y;
 
 		JPSDR_IVTC_Convert420_to_YUY2_1(src_Y,src_Un,src_Vn,dst,w_Y2);
-		dst=(YUYV *)((uint8_t *)dst+dst_pitch);
+		dst+=dst_pitch;
 		src_Y+=src_pitch_Y;
 
-		for (int32_t j=0; j<w_Y; j+=2)
 		{
-			dst[j_UV].y1=src_Y[j];
-			dst[j_UV].y2=src_Y[j+1];
-			dst[j_UV].u=(uint8_t)((lookup_420[src_Unn[j_UV]]+lookup_420[src_U[j_UV]+256]+4)>>3);
-			dst[j_UV].v=(uint8_t)((lookup_420[src_Vnn[j_UV]]+lookup_420[src_V[j_UV]+256]+4)>>3);
-			j_UV++;
+			const uint8_t *srcY=src_Y,*srcU=src_U,*srcUnn=src_Unn,*srcV=src_V,*srcVnn=src_Vnn;
+			YUYV *dst0=(YUYV *)dst;
+
+			for (int32_t j=0; j<w_Y; j+=2)
+			{
+				dst0->y1=*srcY++;
+				dst0->y2=*srcY++;
+				dst0->u=(uint8_t)((lookup[*srcUnn++]+lookup[(uint16_t)(*srcU++)+256]+4)>>3);
+				(dst0++)->v=(uint8_t)((lookup[*srcVnn++]+lookup[(uint16_t)(*srcV++)+256]+4)>>3);
+			}
 		}
-		dst=(YUYV *)((uint8_t *)dst+dst_pitch);
+		dst+=dst_pitch;
 		src_Y+=src_pitch_Y;
 
-		j_UV=0;
-		for (int32_t j=0; j<w_Y; j+=2)
 		{
-			dst[j_UV].y1=src_Y[j];
-			dst[j_UV].y2=src_Y[j+1];
-			dst[j_UV].u=(uint8_t)((lookup_420[src_Un[j_UV]+512]+(uint16_t)src_Unnn[j_UV]+4)>>3);
-			dst[j_UV].v=(uint8_t)((lookup_420[src_Vn[j_UV]+512]+(uint16_t)src_Vnnn[j_UV]+4)>>3);
-	
-			if (((abs((int16_t)src_Un[j_UV]-(int16_t)src_Unn[j_UV])>=threshold) &&
-				(abs((int16_t)src_Unnn[j_UV]-(int16_t)src_Unn[j_UV])>=threshold) &&
-				((src_Un[j_UV]>src_Unn[j_UV]) && (src_Unnn[j_UV]>src_Unn[j_UV]) ||
-				(src_Un[j_UV]<src_Unn[j_UV]) && (src_Unnn[j_UV]<src_Unn[j_UV]))) ||
-				((abs((int16_t)src_Vn[j_UV]-(int16_t)src_Vnn[j_UV])>=threshold) &&
-				(abs((int16_t)src_Vnnn[j_UV]-(int16_t)src_Vnn[j_UV])>=threshold) &&
-				((src_Vn[j_UV]>src_Vnn[j_UV]) && (src_Vnnn[j_UV]>src_Vnn[j_UV]) ||
-				(src_Vn[j_UV]<src_Vnn[j_UV]) && (src_Vnnn[j_UV]<src_Vnn[j_UV]))))
-				interlaced_tab[1][j_UV]=true;
-			else interlaced_tab[1][j_UV]=false;
-			if (((abs((int16_t)src_U[j_UV]-(int16_t)src_Un[j_UV])>=threshold) &&
-				(abs((int16_t)src_Unn[j_UV]-(int16_t)src_Un[j_UV])>=threshold) &&
-				((src_U[j_UV]>src_Un[j_UV]) && (src_Unn[j_UV]>src_Un[j_UV]) ||
-				(src_U[j_UV]<src_Un[j_UV]) && (src_Unn[j_UV]<src_Un[j_UV]))) ||
-				((abs((int16_t)src_V[j_UV]-(int16_t)src_Vn[j_UV])>=threshold) &&
-				(abs((int16_t)src_Vnn[j_UV]-(int16_t)src_Vn[j_UV])>=threshold) &&
-				((src_V[j_UV]>src_Vn[j_UV]) && (src_Vnn[j_UV]>src_Vn[j_UV]) ||
-				(src_V[j_UV]<src_Vn[j_UV]) && (src_Vnn[j_UV]<src_Vn[j_UV]))))
-				interlaced_tab[0][j_UV]=true;
-			else interlaced_tab[0][j_UV]=false;
+			const uint8_t *srcY=src_Y;
+			const uint8_t *srcU=src_U,*srcUn=src_Un,*srcUnn=src_Unn,*srcUnnn=src_Unnn;
+			const uint8_t *srcV=src_V,*srcVn=src_Vn,*srcVnn=src_Vnn,*srcVnnn=src_Vnnn;
+			YUYV *dst0=(YUYV *)dst;
+			bool *itabu0=interlaced_tab_U[0],*itabu1=interlaced_tab_U[1];
+			bool *itabv0=interlaced_tab_V[0],*itabv1=interlaced_tab_V[1];
 
-			j_UV++;
+			for (int32_t j=0; j<w_Y; j+=2)
+			{
+				if (((abs((int16_t)*srcU-(int16_t)*srcUn)>=threshold) &&
+					(abs((int16_t)*srcUnn-(int16_t)*srcUn)>=threshold) &&
+					((*srcU>*srcUn) && (*srcUnn>*srcUn) ||
+					(*srcU<*srcUn) && (*srcUnn<*srcUn))))
+					*itabu0++=true;
+				else *itabu0++=false;
+				if (((abs((int16_t)*srcUn-(int16_t)*srcUnn)>=threshold) &&
+					(abs((int16_t)*srcUnnn-(int16_t)*srcUnn)>=threshold) &&
+					((*srcUn>*srcUnn) && (*srcUnnn>*srcUnn) ||
+					(*srcUn<*srcUnn) && (*srcUnnn<*srcUnn))))
+					*itabu1++=true;
+				else *itabu1++=false;
+				if	(((abs((int16_t)*srcV-(int16_t)*srcVn)>=threshold) &&
+					(abs((int16_t)*srcVnn-(int16_t)*srcVn)>=threshold) &&
+					((*srcV>*srcVn) && (*srcVnn>*srcVn) ||
+					(*srcV<*srcVn) && (*srcVnn<*srcVn))))
+					*itabv0++=true;
+				else *itabv0++=false;
+				if	(((abs((int16_t)*srcVn-(int16_t)*srcVnn)>=threshold) &&
+					(abs((int16_t)*srcVnnn-(int16_t)*srcVnn)>=threshold) &&
+					((*srcVn>*srcVnn) && (*srcVnnn>*srcVnn) ||
+					(*srcVn<*srcVnn) && (*srcVnnn<*srcVnn))))
+					*itabv1++=true;
+				else *itabv1++=false;
+
+				dst0->y1=*srcY++;
+				dst0->y2=*srcY++;
+				dst0->u=(uint8_t)((lookup[(uint16_t)(*srcUn++)+512]+(uint16_t)(*srcUnnn++)+4)>>3);
+				(dst0++)->v=(uint8_t)((lookup[(uint16_t)(*srcVn++)+512]+(uint16_t)(*srcVnnn++)+4)>>3);
+
+				srcU++;
+				srcUnn++;
+				srcV++;
+				srcVnn++;
+			}
 		}
-		dst=(YUYV *)((uint8_t *)dst+dst_pitch);
+		dst+=dst_pitch;
 		src_Y+=src_pitch_Y;
 
 		src_U+=pitch_U_2;
@@ -3161,115 +3199,201 @@ void JPSDR_IVTC::Convert_Automatic_Planar420_to_YUY2(const uint8_t *src_Y,const 
 
 	for(int32_t i=4; i<h_4; i+=4)
 	{
-		int32_t j_UV=0;
-
-		for (int32_t j=0; j<w_Y; j+=2)
 		{
-			dst[j_UV].y1=src_Y[j];
-			dst[j_UV].y2=src_Y[j+1];
+			const uint8_t *srcY=src_Y;
+			const uint8_t *srcU=src_U,*srcUp=src_Up,*srcUpp=src_Upp;
+			const uint8_t *srcV=src_V,*srcVp=src_Vp,*srcVpp=src_Vpp;
+			YUYV *dst0=(YUYV *)dst;
+			const bool *itabu0=interlaced_tab_U[index_tab_0],*itabu1=interlaced_tab_U[index_tab_1];
+			const bool *itabv0=interlaced_tab_V[index_tab_0],*itabv1=interlaced_tab_V[index_tab_1];
 
-			// Upsample as needed.
-			if ((interlaced_tab[index_tab_1][j_UV]) || (interlaced_tab[index_tab_0][j_UV]))
+			for (int32_t j=0; j<w_Y; j+=2)
 			{
-				dst[j_UV].u=(uint8_t)((lookup_420[src_U[j_UV]+512]+(uint16_t)src_Upp[j_UV]+4) >> 3);
-				dst[j_UV].v=(uint8_t)((lookup_420[src_V[j_UV]+512]+(uint16_t)src_Vpp[j_UV]+4) >> 3);
+				dst0->y1=*srcY++;
+				dst0->y2=*srcY++;
+
+				// Upsample as needed.
+				if ((*itabu0++) || (*itabu1))
+				{
+					dst0->u=(uint8_t)((lookup[(uint16_t)(*srcU++)+512]+(uint16_t)(*srcUpp++)+4) >> 3);
+					srcUp++;
+				}
+				else
+				{
+					dst0->u=(uint8_t)((lookup[*srcU++]+(uint16_t)(*srcUp++)+2) >> 2);
+					srcUpp++;
+				}
+				itabu1++;
+				// Upsample as needed.
+				if ((*itabv0++) || (*itabv1))
+				{
+					(dst0++)->v=(uint8_t)((lookup[(uint16_t)(*srcV++)+512]+(uint16_t)(*srcVpp++)+4) >> 3);
+					srcVp++;
+				}
+				else
+				{
+					(dst0++)->v=(uint8_t)((lookup[*srcV++]+(uint16_t)(*srcVp++)+2) >> 2);
+					srcVpp++;
+				}
+				itabv1++;
 			}
-			else
-			{
-				dst[j_UV].u=(uint8_t)((lookup_420[src_U[j_UV]]+(uint16_t)src_Up[j_UV]+2) >> 2);
-				dst[j_UV].v=(uint8_t)((lookup_420[src_V[j_UV]]+(uint16_t)src_Vp[j_UV]+2) >> 2);
-			}
-			j_UV++;
 		}
-		dst=(YUYV *)((uint8_t *)dst+dst_pitch);
+		dst+=dst_pitch;
 		src_Y+=src_pitch_Y;
 
-		j_UV=0;
-		for (int32_t j=0; j<w_Y; j+=2)
 		{
-			dst[j_UV].y1=src_Y[j];
-			dst[j_UV].y2=src_Y[j+1];
+			const uint8_t *srcY=src_Y;
+			const uint8_t *srcU=src_U,*srcUn=src_Un,*srcUp=src_Up,*srcUnn=src_Unn;
+			const uint8_t *srcV=src_V,*srcVn=src_Vn,*srcVp=src_Vp,*srcVnn=src_Vnn;
+			YUYV *dst0=(YUYV *)dst;
+			const bool *itabu1=interlaced_tab_U[index_tab_1],*itabv1=interlaced_tab_V[index_tab_1];
+			bool *itabu2=interlaced_tab_U[index_tab_2],*itabv2=interlaced_tab_V[index_tab_2];
 
-			if (((abs((int16_t)src_U[j_UV]-(int16_t)src_Un[j_UV])>=threshold) &&
-				(abs((int16_t)src_Unn[j_UV]-(int16_t)src_Un[j_UV])>=threshold) &&
-				((src_U[j_UV]>src_Un[j_UV]) && (src_Unn[j_UV]>src_Un[j_UV]) ||
-				(src_U[j_UV]<src_Un[j_UV]) && (src_Unn[j_UV]<src_Un[j_UV]))) ||
-				((abs((int16_t)src_V[j_UV]-(int16_t)src_Vn[j_UV])>=threshold) &&
-				(abs((int16_t)src_Vnn[j_UV]-(int16_t)src_Vn[j_UV])>=threshold) &&
-				((src_V[j_UV]>src_Vn[j_UV]) && (src_Vnn[j_UV]>src_Vn[j_UV]) ||
-				(src_V[j_UV]<src_Vn[j_UV]) && (src_Vnn[j_UV]<src_Vn[j_UV]))))
-				interlaced_tab[index_tab_2][j_UV]=true;
-			else interlaced_tab[index_tab_2][j_UV]=false;			
+			for (int32_t j=0; j<w_Y; j+=2)
+			{
+				if (((abs((int16_t)*srcU-(int16_t)*srcUn)>=threshold) &&
+					(abs((int16_t)*srcUnn-(int16_t)*srcUn)>=threshold) &&
+					((*srcU>*srcUn) && (*srcUnn>*srcUn) ||
+					(*srcU<*srcUn) && (*srcUnn<*srcUn))))
+					*itabu2=true;
+				else *itabu2=false;			
+				if	(((abs((int16_t)*srcV-(int16_t)*srcVn)>=threshold) &&
+					(abs((int16_t)*srcVnn-(int16_t)*srcVn)>=threshold) &&
+					((*srcV>*srcVn) && (*srcVnn>*srcVn) ||
+					(*srcV<*srcVn) && (*srcVnn<*srcVn))))
+					*itabv2=true;
+				else *itabv2=false;			
 
-			// Upsample as needed.
-			if ((interlaced_tab[index_tab_1][j_UV]) || (interlaced_tab[index_tab_2][j_UV]))
-			{
-				dst[j_UV].u=(uint8_t)((lookup_420[src_Up[j_UV]]+lookup_420[src_Un[j_UV]+256]+4)>>3);
-				dst[j_UV].v=(uint8_t)((lookup_420[src_Vp[j_UV]]+lookup_420[src_Vn[j_UV]+256]+4)>>3);
+				dst0->y1=*srcY++;
+				dst0->y2=*srcY++;
+
+				// Upsample as needed.
+				if ((*itabu1++) || (*itabu2))
+				{
+					dst0->u=(uint8_t)((lookup[*srcUp++]+lookup[(uint16_t)(*srcUn++)+256]+4)>>3);
+					srcU++;
+				}
+				else
+				{
+					dst0->u=(uint8_t)((lookup[*srcU++]+(uint16_t)(*srcUn++)+2)>>2);
+					srcUp++;
+				}
+				itabu2++;
+				// Upsample as needed.
+				if ((*itabv1++) || (*itabv2))
+				{
+					(dst0++)->v=(uint8_t)((lookup[*srcVp++]+lookup[(uint16_t)(*srcVn++)+256]+4)>>3);
+					srcV++;
+				}
+				else
+				{
+					(dst0++)->v=(uint8_t)((lookup[*srcV++]+(uint16_t)(*srcVn++)+2)>>2);
+					srcVp++;
+				}
+				itabv2++;
+
+				srcUnn++;
+				srcVnn++;
 			}
-			else
-			{
-				dst[j_UV].u=(uint8_t)((lookup_420[src_U[j_UV]]+(uint16_t)src_Un[j_UV]+2)>>2);
-				dst[j_UV].v=(uint8_t)((lookup_420[src_V[j_UV]]+(uint16_t)src_Vn[j_UV]+2)>>2);
-			}
-			j_UV++;
 		}
-		dst=(YUYV *)((uint8_t *)dst+dst_pitch);
+		dst+=dst_pitch;
 		src_Y+=src_pitch_Y;
 
-		j_UV=0;
-		for (int32_t j=0; j<w_Y; j+=2)
 		{
-			dst[j_UV].y1=src_Y[j];
-			dst[j_UV].y2=src_Y[j+1];
+			const uint8_t *srcY=src_Y;
+			const uint8_t *srcU=src_U,*srcUn=src_Un,*srcUnn=src_Unn;
+			const uint8_t *srcV=src_V,*srcVn=src_Vn,*srcVnn=src_Vnn;
+			YUYV *dst0=(YUYV *)dst;
+			const bool *itabu1=interlaced_tab_U[index_tab_1],*itabu2=interlaced_tab_U[index_tab_2];
+			const bool *itabv1=interlaced_tab_V[index_tab_1],*itabv2=interlaced_tab_V[index_tab_2];
 
-			// Upsample as needed.
-			if ((interlaced_tab[index_tab_1][j_UV]) || (interlaced_tab[index_tab_2][j_UV]))
+			for (int32_t j=0; j<w_Y; j+=2)
 			{
-				dst[j_UV].u=(uint8_t)((lookup_420[src_Unn[j_UV]]+lookup_420[src_U[j_UV]+256]+4)>>3);
-				dst[j_UV].v=(uint8_t)((lookup_420[src_Vnn[j_UV]]+lookup_420[src_V[j_UV]+256]+4)>>3);
+				dst0->y1=*srcY++;
+				dst0->y2=*srcY++;
+
+				// Upsample as needed.
+				if ((*itabu1++) || (*itabu2))
+				{
+					dst0->u=(uint8_t)((lookup[*srcUnn++]+lookup[(uint16_t)(*srcU++)+256]+4)>>3);
+					srcUn++;
+				}
+				else
+				{
+					dst0->u=(uint8_t)((lookup[*srcUn++]+(uint16_t)(*srcU++)+2)>>2);
+					srcUnn++;
+				}
+				itabu2++;
+				// Upsample as needed.
+				if ((*itabv1++) || (*itabv2))
+				{
+					(dst0++)->v=(uint8_t)((lookup[*srcVnn++]+lookup[(uint16_t)(*srcV++)+256]+4)>>3);
+					srcVn++;
+				}
+				else
+				{
+					(dst0++)->v=(uint8_t)((lookup[*srcVn++]+(uint16_t)(*srcV++)+2)>>2);
+					srcVnn++;
+				}
+				itabv2++;
 			}
-			else
-			{
-				dst[j_UV].u=(uint8_t)((lookup_420[src_Un[j_UV]]+(uint16_t)src_U[j_UV]+2)>>2);
-				dst[j_UV].v=(uint8_t)((lookup_420[src_Vn[j_UV]]+(uint16_t)src_V[j_UV]+2)>>2);
-			}
-			j_UV++;
 		}
-		dst=(YUYV *)((uint8_t *)dst+dst_pitch);
+		dst+=dst_pitch;
 		src_Y+=src_pitch_Y;
 
-		j_UV=0;
-		for (int32_t j=0; j<w_Y; j+=2)
 		{
-			dst[j_UV].y1=src_Y[j];
-			dst[j_UV].y2=src_Y[j+1];
+			const uint8_t *srcY=src_Y;
+			const uint8_t *srcUn=src_Un,*srcUnn=src_Unn,*srcUnnn=src_Unnn;
+			const uint8_t *srcVn=src_Vn,*srcVnn=src_Vnn,*srcVnnn=src_Vnnn;
+			YUYV *dst0=(YUYV *)dst;
+			bool *itabu0=interlaced_tab_U[index_tab_0],*itabv0=interlaced_tab_V[index_tab_0];
+			const bool *itabu2=interlaced_tab_U[index_tab_2],*itabv2=interlaced_tab_V[index_tab_2];
 
-			if (((abs((int16_t)src_Un[j_UV]-(int16_t)src_Unn[j_UV])>=threshold) &&
-				(abs((int16_t)src_Unnn[j_UV]-(int16_t)src_Unn[j_UV])>=threshold) &&
-				((src_Un[j_UV]>src_Unn[j_UV]) && (src_Unnn[j_UV]>src_Unn[j_UV]) ||
-				(src_Un[j_UV]<src_Unn[j_UV]) && (src_Unnn[j_UV]<src_Unn[j_UV]))) ||
-				((abs((int16_t)src_Vn[j_UV]-(int16_t)src_Vnn[j_UV])>=threshold) &&
-				(abs((int16_t)src_Vnnn[j_UV]-(int16_t)src_Vnn[j_UV])>=threshold) &&
-				((src_Vn[j_UV]>src_Vnn[j_UV]) && (src_Vnnn[j_UV]>src_Vnn[j_UV]) ||
-				(src_Vn[j_UV]<src_Vnn[j_UV]) && (src_Vnnn[j_UV]<src_Vnn[j_UV]))))
-				interlaced_tab[index_tab_0][j_UV]=true;
-			else interlaced_tab[index_tab_0][j_UV]=false;
+			for (int32_t j=0; j<w_Y; j+=2)
+			{
+				if (((abs((int16_t)*srcUn-(int16_t)*srcUnn)>=threshold) &&
+					(abs((int16_t)*srcUnnn-(int16_t)*srcUnn)>=threshold) &&
+					((*srcUn>*srcUnn) && (*srcUnnn>*srcUnn) ||
+					(*srcUn<*srcUnn) && (*srcUnnn<*srcUnn))))
+					*itabu0=true;
+				else *itabu0=false;
+				if	(((abs((int16_t)*srcVn-(int16_t)*srcVnn)>=threshold) &&
+					(abs((int16_t)*srcVnnn-(int16_t)*srcVnn)>=threshold) &&
+					((*srcVn>*srcVnn) && (*srcVnnn>*srcVnn) ||
+					(*srcVn<*srcVnn) && (*srcVnnn<*srcVnn))))
+					*itabv0=true;
+				else *itabv0=false;
 
-			// Upsample as needed.
-			if ((interlaced_tab[index_tab_2][j_UV]) || (interlaced_tab[index_tab_0][j_UV]))
-			{
-				dst[j_UV].u=(uint8_t)((lookup_420[src_Un[j_UV]+512]+(uint16_t)src_Unnn[j_UV]+4)>>3);
-				dst[j_UV].v=(uint8_t)((lookup_420[src_Vn[j_UV]+512]+(uint16_t)src_Vnnn[j_UV]+4)>>3);
+				dst0->y1=*srcY++;
+				dst0->y2=*srcY++;
+
+				// Upsample as needed.
+				if ((*itabu0++) || (*itabu2))
+				{
+					dst0->u=(uint8_t)((lookup[(uint16_t)(*srcUn++)+512]+(uint16_t)(*srcUnnn++)+4)>>3);
+					srcUnn++;
+				}
+				else
+				{
+					dst0->u=(uint8_t)((lookup[*srcUn++]+(uint16_t)(*srcUnn++)+2)>>2);
+					srcUnnn++;
+				}
+				itabu2++;
+				// Upsample as needed.
+				if ((*itabv0++) || (*itabv2))
+				{
+					(dst0++)->v=(uint8_t)((lookup[(uint16_t)(*srcVn++)+512]+(uint16_t)(*srcVnnn++)+4)>>3);
+					srcVnn++;
+				}
+				else
+				{
+					(dst0++)->v=(uint8_t)((lookup[*srcVn++]+(uint16_t)(*srcVnn)+2)>>2);
+					srcVnnn++;
+				}
+				itabv2++;
 			}
-			else
-			{
-				dst[j_UV].u=(uint8_t)((lookup_420[src_Un[j_UV]]+(uint16_t)src_Unn[j_UV]+2)>>2);
-				dst[j_UV].v=(uint8_t)((lookup_420[src_Vn[j_UV]]+(uint16_t)src_Vnn[j_UV]+2)>>2);
-			}
-			j_UV++;
 		}
-		dst=(YUYV *)((uint8_t *)dst+dst_pitch);
+		dst+=dst_pitch;
 		src_Y+=src_pitch_Y;
 
 		index_tab_0=(index_tab_0+2)%Interlaced_Tab_Size;
@@ -3293,37 +3417,47 @@ void JPSDR_IVTC::Convert_Automatic_Planar420_to_YUY2(const uint8_t *src_Y,const 
 
 	for(int32_t i=h_4; i<h_Y; i+=4)
 	{
-		int32_t j_UV=0;
 
-		for (int32_t j=0; j<w_Y; j+=2)
 		{
-			dst[j_UV].y1=src_Y[j];
-			dst[j_UV].y2=src_Y[j+1];
-			dst[j_UV].u=(uint8_t)((lookup_420[src_U[j_UV]+512]+(uint16_t)src_Upp[j_UV]+4)>>3);
-			dst[j_UV].v=(uint8_t)((lookup_420[src_V[j_UV]+512]+(uint16_t)src_Vpp[j_UV]+4)>>3);
-			j_UV++;
+			const uint8_t *srcY=src_Y;
+			const uint8_t *srcU=src_U,*srcUpp=src_Upp;
+			const uint8_t *srcV=src_V,*srcVpp=src_Vpp;
+			YUYV *dst0=(YUYV *)dst;
+
+			for (int32_t j=0; j<w_Y; j+=2)
+			{
+				dst0->y1=*srcY++;
+				dst0->y2=*srcY++;
+				dst0->u=(uint8_t)((lookup[(uint16_t)(*srcU++)+512]+(uint16_t)(*srcUpp++)+4)>>3);
+				(dst0++)->v=(uint8_t)((lookup[(uint16_t)(*srcV++)+512]+(uint16_t)(*srcVpp++)+4)>>3);
+			}
 		}
-		dst=(YUYV *)((uint8_t *)dst+dst_pitch);
+		dst+=dst_pitch;
 		src_Y+=src_pitch_Y;
 
-		j_UV=0;
-		for (int32_t j=0; j<w_Y; j+=2)
 		{
-			dst[j_UV].y1=src_Y[j];
-			dst[j_UV].y2=src_Y[j+1];
-			dst[j_UV].u=(uint8_t)((lookup_420[src_Up[j_UV]]+lookup_420[src_Un[j_UV]+256]+4)>>3);
-			dst[j_UV].v=(uint8_t)((lookup_420[src_Vp[j_UV]]+lookup_420[src_Vn[j_UV]+256]+4)>>3);
-			j_UV++;
+			const uint8_t *srcY=src_Y;
+			const uint8_t *srcUn=src_Un,*srcUp=src_Up;
+			const uint8_t *srcVn=src_Vn,*srcVp=src_Vp;
+			YUYV *dst0=(YUYV *)dst;
+
+			for (int32_t j=0; j<w_Y; j+=2)
+			{
+				dst0->y1=*srcY++;
+				dst0->y2=*srcY++;
+				dst0->u=(uint8_t)((lookup[*srcUp++]+lookup[(uint16_t)(*srcUn++)+256]+4)>>3);
+				(dst0++)->v=(uint8_t)((lookup[*srcVp++]+lookup[(uint16_t)(*srcVn++)+256]+4)>>3);
+			}
 		}
-		dst=(YUYV *)((uint8_t *)dst+dst_pitch);
+		dst+=dst_pitch;
 		src_Y+=src_pitch_Y;
 
 		JPSDR_IVTC_Convert420_to_YUY2_1(src_Y,src_U,src_V,dst,w_Y2);
-		dst=(YUYV *)((uint8_t *)dst+dst_pitch);
+		dst+=dst_pitch;
 		src_Y+=src_pitch_Y;
 
 		JPSDR_IVTC_Convert420_to_YUY2_1(src_Y,src_Un,src_Vn,dst,w_Y2);
-		dst=(YUYV *)((uint8_t *)dst+dst_pitch);
+		dst+=dst_pitch;
 		src_Y+=src_pitch_Y;
 
 		src_U+=pitch_U_2;
@@ -3347,54 +3481,50 @@ void JPSDR_IVTC::Deinterlace_Tri_Blend_RGB32(const void *src1_0,const void *src2
 	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const RGB32BMP *src1,*src2,*src3,*src4;
-	RGB32BMP *dst,*dst1,*dst2;
+	RGB32BMP *dst1,*dst2;
 
 	src1=(RGB32BMP *)src1_0;
 	src2=(RGB32BMP *)src2_0;
-	dst=(RGB32BMP *)dst_0;
 	src3=(RGB32BMP *)((uint8_t *)src1+ (src_pitch << 1));
 	src4=(RGB32BMP *)((uint8_t *)src2+ (src_pitch << 1));
 
-	memcpy(dst,src1,w*4);
+	A_memcpy(dst_0,src1,w*4);
 
-	dst1=(RGB32BMP *)((uint8_t *)dst+dst_pitch);
+	dst1=(RGB32BMP *)((uint8_t *)dst_0+dst_pitch);
 	dst2=(RGB32BMP *)((uint8_t *)dst1+dst_pitch);
 
 	for (int32_t i=0; i<h; i++)
 	{
+		const RGB32BMP *srca=src1,*srcb=src2,*srcc=src3,*srcd=src4;
+		RGB32BMP *dsta=dst1,*dstb=dst2;
+
 		for (int32_t j=0; j<w; j++)
 		{
-			uint16_t r,r1,r2,r3,g,g1,g2,g3,b,b1,b2,b3;
+			uint16_t r1,r2,r3,g1,g2,g3,b1,b2,b3;
 			uint8_t alpha1,alpha2;
 
-			b1=src1[j].b;
-			g1=src1[j].g;
-			r1=src1[j].r;
-			b2=src2[j].b;
-			g2=src2[j].g;
-			r2=src2[j].r;
-			alpha1=src2[j].alpha;
-			b3=src3[j].b;
-			g3=src3[j].g;
-			r3=src3[j].r;
-			alpha2=src3[j].alpha;
-			b=((b1+b3)+(b2 << 1)+2) >> 2;
-			g=((g1+g3)+(g2 << 1)+2) >> 2;
-			r=((r1+r3)+(r2 << 1)+2) >> 2;
-			dst1[j].b=(uint8_t)b;
-			dst1[j].g=(uint8_t)g;
-			dst1[j].r=(uint8_t)r;
-			dst1[j].alpha=alpha1;
-			b1=src4[j].b;
-			g1=src4[j].g;
-			r1=src4[j].r;
-			b=((b1+b2)+(b3 << 1)+2) >> 2;
-			g=((g1+g2)+(g3 << 1)+2) >> 2;
-			r=((r1+r2)+(r3 << 1)+2) >> 2;
-			dst2[j].b=(uint8_t)b;
-			dst2[j].g=(uint8_t)g;
-			dst2[j].r=(uint8_t)r;
-			dst2[j].alpha=alpha2;
+			b1=srca->b;
+			g1=srca->g;
+			r1=(srca++)->r;
+			b2=srcb->b;
+			g2=srcb->g;
+			r2=srcb->r;
+			alpha1=(srcb++)->alpha;
+			b3=srcc->b;
+			g3=srcc->g;
+			r3=srcc->r;
+			alpha2=(srcc++)->alpha;
+			dsta->b=(uint8_t)((b1+b3)+(b2 << 1)+2) >> 2;
+			dsta->g=(uint8_t)((g1+g3)+(g2 << 1)+2) >> 2;
+			dsta->r=(uint8_t)((r1+r3)+(r2 << 1)+2) >> 2;
+			(dsta++)->alpha=alpha1;
+			b1=srcd->b;
+			g1=srcd->g;
+			r1=(srcd++)->r;
+			dstb->b=(uint8_t)((b1+b2)+(b3 << 1)+2) >> 2;
+			dstb->g=(uint8_t)((g1+g2)+(g3 << 1)+2) >> 2;
+			dstb->r=(uint8_t)((r1+r2)+(r3 << 1)+2) >> 2;
+			(dstb++)->alpha=alpha2;
 		}
 		src1=(RGB32BMP *)((uint8_t *)src1+(src_pitch << 1));
 		src2=(RGB32BMP *)((uint8_t *)src2+(src_pitch << 1));
@@ -3404,7 +3534,7 @@ void JPSDR_IVTC::Deinterlace_Tri_Blend_RGB32(const void *src1_0,const void *src2
 		dst2=(RGB32BMP *)((uint8_t *)dst2+(dst_pitch << 1));
 	}
 
-	memcpy(dst1,src2,w*4);
+	A_memcpy(dst1,src2,w*4);
 
 }
 
@@ -3423,50 +3553,53 @@ void JPSDR_IVTC::Deinterlace_Tri_Blend_YUYV(const void *src1_0,const void *src2_
 	src3=(YUYV *)((uint8_t *)src1+ (src_pitch << 1));
 	src4=(YUYV *)((uint8_t *)src2+ (src_pitch << 1));
 
-	memcpy(dst,src1,w*4);
+	A_memcpy(dst,src1,w*4);
 
 	dst1=(YUYV *)((uint8_t *)dst+dst_pitch);
 	dst2=(YUYV *)((uint8_t *)dst1+dst_pitch);
 
 	for (int32_t i=0; i<h; i++)
 	{
+		const YUYV *srca=src1,*srcb=src2,*srcc=src3,*srcd=src4;
+		YUYV *dsta=dst1,*dstb=dst2;
+
 		for (int32_t j=0; j<w; j++)
 		{
 			uint16_t y1_1,y1_2,u1,v1,y2_1,y2_2,u2,v2,y3_1,y3_2,u3,v3;
 			uint16_t y1,y2,u,v;
 
-			y1_1=src1[j].y1;
-			u1=src1[j].u;
-			y1_2=src1[j].y2;
-			v1=src1[j].v;
-			y2_1=src2[j].y1;
-			u2=src2[j].u;
-			y2_2=src2[j].y2;
-			v2=src2[j].v;
-			y3_1=src3[j].y1;
-			u3=src3[j].u;
-			y3_2=src3[j].y2;
-			v3=src3[j].v;
+			y1_1=srca->y1;
+			u1=srca->u;
+			y1_2=srca->y2;
+			v1=(srca++)->v;
+			y2_1=srcb->y1;
+			u2=srcb->u;
+			y2_2=srcb->y2;
+			v2=(srcb++)->v;
+			y3_1=srcc->y1;
+			u3=srcc->u;
+			y3_2=srcc->y2;
+			v3=(srcc++)->v;
 			y1=((y1_1+y3_1)+(y2_1 << 1)+2) >> 2;
 			u=((u1+u3)+(u2 << 1)+2) >> 2;
 			y2=((y1_2+y3_2)+(y2_2 << 1)+2) >> 2;
 			v=((v1+v3)+(v2 << 1)+2) >> 2;
-			dst1[j].y1=(uint8_t)y1;
-			dst1[j].u=(uint8_t)u;
-			dst1[j].y2=(uint8_t)y2;
-			dst1[j].v=(uint8_t)v;
-			y1_1=src4[j].y1;
-			u1=src4[j].u;
-			y1_2=src4[j].y2;
-			v1=src4[j].v;
+			dsta->y1=(uint8_t)y1;
+			dsta->u=(uint8_t)u;
+			dsta->y2=(uint8_t)y2;
+			(dsta++)->v=(uint8_t)v;
+			y1_1=srcd->y1;
+			u1=srcd->u;
+			y1_2=srcd->y2;
+			v1=(srcd++)->v;
 			y1=((y1_1+y2_1)+(y3_1 << 1)+2) >> 2;
 			u=((u1+u2)+(u3 << 1)+2) >> 2;
 			y2=((y1_2+y2_2)+(y3_2 << 1)+2) >> 2;
 			v=((v1+v2)+(v3 << 1)+2) >> 2;
-			dst2[j].y1=(uint8_t)y1;
-			dst2[j].u=(uint8_t)u;
-			dst2[j].y2=(uint8_t)y2;
-			dst2[j].v=(uint8_t)v;
+			dstb->y1=(uint8_t)y1;
+			dstb->u=(uint8_t)u;
+			dstb->y2=(uint8_t)y2;
+			(dstb++)->v=(uint8_t)v;
 		}
 		src1=(YUYV *)((uint8_t *)src1+(src_pitch << 1));
 		src2=(YUYV *)((uint8_t *)src2+(src_pitch << 1));
@@ -3476,7 +3609,7 @@ void JPSDR_IVTC::Deinterlace_Tri_Blend_YUYV(const void *src1_0,const void *src2_
 		dst2=(YUYV *)((uint8_t *)dst2+(dst_pitch << 1));
 	}
 
-	memcpy(dst1,src2,w*4);
+	A_memcpy(dst1,src2,w*4);
 
 }
 
@@ -3493,43 +3626,46 @@ void JPSDR_IVTC::Deinterlace_Tri_Blend_YUYV_Y(const void *src1_0,const void *src
 	src3=(YUYV *)((uint8_t *)src1+ (src_pitch << 1));
 	src4=(YUYV *)((uint8_t *)src2+ (src_pitch << 1));
 
-	memcpy(dst,src1,w*4);
+	A_memcpy(dst,src1,w*4);
 
 	dst1=(YUYV *)((uint8_t *)dst+dst_pitch);
 	dst2=(YUYV *)((uint8_t *)dst1+dst_pitch);
 
 	for (int32_t i=0; i<h; i++)
 	{
+		const YUYV *srca=src1,*srcb=src2,*srcc=src3,*srcd=src4;
+		YUYV *dsta=dst1,*dstb=dst2;
+
 		for (int32_t j=0; j<w; j++)
 		{
 			uint16_t y1_1,y1_2,y2_1,y2_2,y3_1,y3_2;
 			uint16_t y1,y2;
 			uint8_t u1,v1,u2,v2;
 
-			y1_1=src1[j].y1;
-			y1_2=src1[j].y2;
-			y2_1=src2[j].y1;
-			u1=src2[j].u;
-			y2_2=src2[j].y2;
-			v1=src2[j].v;
-			y3_1=src3[j].y1;
-			u2=src2[j].u;
-			y3_2=src3[j].y2;
-			v2=src2[j].v;
+			y1_1=srca->y1;
+			y1_2=(srca++)->y2;
+			y2_1=srcb->y1;
+			u1=srcb->u;
+			y2_2=srcb->y2;
+			v1=(srcb++)->v;
+			y3_1=srcc->y1;
+			u2=srcc->u;
+			y3_2=srcc->y2;
+			v2=(srcc++)->v;
 			y1=((y1_1+y3_1)+(y2_1 << 1)+2) >> 2;
 			y2=((y1_2+y3_2)+(y2_2 << 1)+2) >> 2;
-			dst1[j].y1=(uint8_t)y1;
-			dst1[j].u=u1;
-			dst1[j].y2=(uint8_t)y2;
-			dst1[j].v=v1;
-			y1_1=src4[j].y1;
-			y1_2=src4[j].y2;
+			dsta->y1=(uint8_t)y1;
+			dsta->u=u1;
+			dsta->y2=(uint8_t)y2;
+			(dsta++)->v=v1;
+			y1_1=srcd->y1;
+			y1_2=srcd++->y2;
 			y1=((y1_1+y2_1)+(y3_1 << 1)+2) >> 2;
 			y2=((y1_2+y2_2)+(y3_2 << 1)+2) >> 2;
-			dst2[j].y1=(uint8_t)y1;
-			dst2[j].u=u2;
-			dst2[j].y2=(uint8_t)y2;
-			dst2[j].v=v2;
+			dstb->y1=(uint8_t)y1;
+			dstb->u=u2;
+			dstb->y2=(uint8_t)y2;
+			(dstb++)->v=v2;
 		}
 		src1=(YUYV *)((uint8_t *)src1+(src_pitch << 1));
 		src2=(YUYV *)((uint8_t *)src2+(src_pitch << 1));
@@ -3539,7 +3675,7 @@ void JPSDR_IVTC::Deinterlace_Tri_Blend_YUYV_Y(const void *src1_0,const void *src
 		dst2=(YUYV *)((uint8_t *)dst2+(dst_pitch << 1));
 	}
 
-	memcpy(dst1,src2,w*4);
+	A_memcpy(dst1,src2,w*4);
 
 }
 
@@ -3556,50 +3692,53 @@ void JPSDR_IVTC::Deinterlace_Tri_Blend_UYVY(const void *src1_0,const void *src2_
 	src3=(UYVY *)((uint8_t *)src1+ (src_pitch << 1));
 	src4=(UYVY *)((uint8_t *)src2+ (src_pitch << 1));
 
-	memcpy(dst,src1,w*4);
+	A_memcpy(dst,src1,w*4);
 
 	dst1=(UYVY *)((uint8_t *)dst+dst_pitch);
 	dst2=(UYVY *)((uint8_t *)dst1+dst_pitch);
 
 	for (int32_t i=0; i<h; i++)
 	{
+		const UYVY *srca=src1,*srcb=src2,*srcc=src3,*srcd=src4;
+		UYVY *dsta=dst1,*dstb=dst2;
+
 		for (int32_t j=0; j<w; j++)
 		{
 			uint16_t y1_1,y1_2,u1,v1,y2_1,y2_2,u2,v2,y3_1,y3_2,u3,v3;
 			uint16_t y1,y2,u,v;
 
-			u1=src1[j].u;
-			y1_1=src1[j].y1;
-			v1=src1[j].v;
-			y1_2=src1[j].y2;
-			u2=src2[j].u;
-			y2_1=src2[j].y1;
-			v2=src2[j].v;
-			y2_2=src2[j].y2;
-			u3=src3[j].u;
-			y3_1=src3[j].y1;
-			v3=src3[j].v;
-			y3_2=src3[j].y2;
+			u1=srca->u;
+			y1_1=srca->y1;
+			v1=srca->v;
+			y1_2=(srca++)->y2;
+			u2=srcb->u;
+			y2_1=srcb->y1;
+			v2=srcb->v;
+			y2_2=(srcb++)->y2;
+			u3=srcc->u;
+			y3_1=srcc->y1;
+			v3=srcc->v;
+			y3_2=(srcc++)->y2;
 			y1=((y1_1+y3_1)+(y2_1 << 1)+2) >> 2;
 			u=((u1+u3)+(u2 << 1)+2) >> 2;
 			y2=((y1_2+y3_2)+(y2_2 << 1)+2) >> 2;
 			v=((v1+v3)+(v2 << 1)+2) >> 2;
-			dst1[j].u=(uint8_t)u;
-			dst1[j].y1=(uint8_t)y1;
-			dst1[j].v=(uint8_t)v;
-			dst1[j].y2=(uint8_t)y2;
-			u1=src4[j].u;
-			y1_1=src4[j].y1;
-			v1=src4[j].v;
-			y1_2=src4[j].y2;
+			dsta->u=(uint8_t)u;
+			dsta->y1=(uint8_t)y1;
+			dsta->v=(uint8_t)v;
+			(dsta++)->y2=(uint8_t)y2;
+			u1=srcd->u;
+			y1_1=srcd->y1;
+			v1=srcd->v;
+			y1_2=(srcd++)->y2;
 			y1=((y1_1+y2_1)+(y3_1 << 1)+2) >> 2;
 			u=((u1+u2)+(u3 << 1)+2) >> 2;
 			y2=((y1_2+y2_2)+(y3_2 << 1)+2) >> 2;
 			v=((v1+v2)+(v3 << 1)+2) >> 2;
-			dst2[j].u=(uint8_t)u;
-			dst2[j].y1=(uint8_t)y1;
-			dst2[j].v=(uint8_t)v;
-			dst2[j].y2=(uint8_t)y2;
+			dstb->u=(uint8_t)u;
+			dstb->y1=(uint8_t)y1;
+			dstb->v=(uint8_t)v;
+			(dstb++)->y2=(uint8_t)y2;
 		}
 		src1=(UYVY *)((uint8_t *)src1+(src_pitch << 1));
 		src2=(UYVY *)((uint8_t *)src2+(src_pitch << 1));
@@ -3609,7 +3748,7 @@ void JPSDR_IVTC::Deinterlace_Tri_Blend_UYVY(const void *src1_0,const void *src2_
 		dst2=(UYVY *)((uint8_t *)dst2+(dst_pitch << 1));
 	}
 
-	memcpy(dst1,src2,w*4);
+	A_memcpy(dst1,src2,w*4);
 
 }
 
@@ -3626,43 +3765,46 @@ void JPSDR_IVTC::Deinterlace_Tri_Blend_UYVY_Y(const void *src1_0,const void *src
 	src3=(UYVY *)((uint8_t *)src1+ (src_pitch << 1));
 	src4=(UYVY *)((uint8_t *)src2+ (src_pitch << 1));
 
-	memcpy(dst,src1,w*4);
+	A_memcpy(dst,src1,w*4);
 
 	dst1=(UYVY *)((uint8_t *)dst+dst_pitch);
 	dst2=(UYVY *)((uint8_t *)dst1+dst_pitch);
 
 	for (int32_t i=0; i<h; i++)
 	{
+		const UYVY *srca=src1,*srcb=src2,*srcc=src3,*srcd=src4;
+		UYVY *dsta=dst1,*dstb=dst2;
+
 		for (int32_t j=0; j<w; j++)
 		{
 			uint16_t y1_1,y1_2,y2_1,y2_2,y3_1,y3_2;
 			uint16_t y1,y2;
 			uint8_t u1,v1,u2,v2;
 
-			y1_1=src1[j].y1;
-			y1_2=src1[j].y2;
-			u1=src2[j].u;
-			y2_1=src2[j].y1;
-			v1=src2[j].v;
-			y2_2=src2[j].y2;
-			u2=src3[j].u;
-			y3_1=src3[j].y1;
-			v2=src3[j].v;
-			y3_2=src3[j].y2;
+			y1_1=srca->y1;
+			y1_2=(srca++)->y2;
+			u1=srcb->u;
+			y2_1=srcb->y1;
+			v1=srcb->v;
+			y2_2=(srcb++)->y2;
+			u2=srcc->u;
+			y3_1=srcc->y1;
+			v2=srcc->v;
+			y3_2=(srcc++)->y2;
 			y1=((y1_1+y3_1)+(y2_1 << 1)+2) >> 2;
 			y2=((y1_2+y3_2)+(y2_2 << 1)+2) >> 2;
-			dst1[j].u=u1;
-			dst1[j].y1=(uint8_t)y1;
-			dst1[j].v=v1;
-			dst1[j].y2=(uint8_t)y2;
-			y1_1=src4[j].y1;
-			y1_2=src4[j].y2;
+			dsta->u=u1;
+			dsta->y1=(uint8_t)y1;
+			dsta->v=v1;
+			(dsta++)->y2=(uint8_t)y2;
+			y1_1=srcd->y1;
+			y1_2=(srcd++)->y2;
 			y1=((y1_1+y2_1)+(y3_1 << 1)+2) >> 2;
 			y2=((y1_2+y2_2)+(y3_2 << 1)+2) >> 2;
-			dst2[j].u=u2;
-			dst2[j].y1=(uint8_t)y1;
-			dst2[j].v=v2;
-			dst2[j].y2=(uint8_t)y2;
+			dstb->u=u2;
+			dstb->y1=(uint8_t)y1;
+			dstb->v=v2;
+			(dstb++)->y2=(uint8_t)y2;
 		}
 		src1=(UYVY *)((uint8_t *)src1+(src_pitch << 1));
 		src2=(UYVY *)((uint8_t *)src2+(src_pitch << 1));
@@ -3672,7 +3814,7 @@ void JPSDR_IVTC::Deinterlace_Tri_Blend_UYVY_Y(const void *src1_0,const void *src
 		dst2=(UYVY *)((uint8_t *)dst2+(dst_pitch << 1));
 	}
 
-	memcpy(dst1,src2,w*4);
+	A_memcpy(dst1,src2,w*4);
 
 }
 
@@ -3686,23 +3828,26 @@ void JPSDR_IVTC::Deinterlace_Tri_Blend_Planar(const uint8_t *src1,const uint8_t 
 	src3=src1+(src_pitch << 1);
 	src4=src2+(src_pitch << 1);
 
-	memcpy(dst,src1,w);
+	A_memcpy(dst,src1,w);
 
 	dst1=dst+dst_pitch;
 	dst2=dst1+dst_pitch;
 
 	for (int32_t i=0; i<h; i++)
 	{
+		const uint8_t *srca=src1,*srcb=src2,*srcc=src3,*srcd=src4;
+		uint8_t *dsta=dst1,*dstb=dst2;
+
 		for (int32_t j=0; j<w; j++)
 		{
 			uint16_t a1,a2,a3;
 
-			a1=src1[j];
-			a2=src2[j];
-			a3=src3[j];
-			dst1[j]=(uint8_t)(((a1+a3)+(a2 << 1)+2) >> 2);
-			a1=src4[j];
-			dst2[j]=(uint8_t)(((a1+a2)+(a3 << 1)+2) >> 2);
+			a1=*srca++;
+			a2=*srcb++;
+			a3=*srcc++;
+			*dsta++=(uint8_t)(((a1+a3)+(a2 << 1)+2) >> 2);
+			a1=*srcd++;
+			*dstb++=(uint8_t)(((a1+a2)+(a3 << 1)+2) >> 2);
 		}
 		src1+=(src_pitch << 1);
 		src2+=(src_pitch << 1);
@@ -3712,7 +3857,7 @@ void JPSDR_IVTC::Deinterlace_Tri_Blend_Planar(const uint8_t *src1,const uint8_t 
 		dst2+=(dst_pitch << 1);
 	}
 
-	memcpy(dst1,src2,w);
+	A_memcpy(dst1,src2,w);
 
 }
 
@@ -3734,39 +3879,42 @@ void JPSDR_IVTC::Deinterlace_Blend_YUYV(const void *src1_0,const void *src2_0,vo
 
 	for (int32_t i=0; i<h; i++)
 	{
+		const YUYV *srca=src1,*srcb=src2,*srcc=src3;
+		YUYV *dsta=dst1,*dstb=dst2;
+
 		for (int32_t j=0; j<w; j++)
 		{
 			uint16_t y1_1,y1_2,u1,v1,y2_1,y2_2,u2,v2,y3_1,y3_2,u3,v3;
 			uint16_t y1,y2,u,v;
 
-			y1_1=src1[j].y1;
-			u1=src1[j].u;
-			y1_2=src1[j].y2;
-			v1=src1[j].v;
-			y2_1=src2[j].y1;
-			u2=src2[j].u;
-			y2_2=src2[j].y2;
-			v2=src2[j].v;
-			y3_1=src3[j].y1;
-			u3=src3[j].u;
-			y3_2=src3[j].y2;
-			v3=src3[j].v;
+			y1_1=srca->y1;
+			u1=srca->u;
+			y1_2=srca->y2;
+			v1=(srca++)->v;
+			y2_1=srcb->y1;
+			u2=srcb->u;
+			y2_2=srcb->y2;
+			v2=(srcb++)->v;
+			y3_1=srcc->y1;
+			u3=srcc->u;
+			y3_2=srcc->y2;
+			v3=(srcc++)->v;
 			y1=(y1_1+y2_1) >> 1;
 			u=(u1+u2) >> 1;
 			y2=(y1_2+y2_2) >> 1;
 			v=(v1+v2) >> 1;
-			dst1[j].y1=(uint8_t)y1;
-			dst1[j].u=(uint8_t)u;
-			dst1[j].y2=(uint8_t)y2;
-			dst1[j].v=(uint8_t)v;
+			dsta->y1=(uint8_t)y1;
+			dsta->u=(uint8_t)u;
+			dsta->y2=(uint8_t)y2;
+			(dsta++)->v=(uint8_t)v;
 			y1=(y2_1+y3_1) >> 1;
 			u=(u2+u3) >> 1;
 			y2=(y2_2+y3_2) >> 1;
 			v=(v2+v3) >> 1;
-			dst2[j].y1=(uint8_t)y1;
-			dst2[j].u=(uint8_t)u;
-			dst2[j].y2=(uint8_t)y2;
-			dst2[j].v=(uint8_t)v;
+			dstb->y1=(uint8_t)y1;
+			dstb->u=(uint8_t)u;
+			dstb->y2=(uint8_t)y2;
+			(dstb++)->v=(uint8_t)v;
 		}
 		src1=(YUYV *)((uint8_t *)src1+(src_pitch << 1));
 		src2=(YUYV *)((uint8_t *)src2+(src_pitch << 1));
@@ -3775,28 +3923,33 @@ void JPSDR_IVTC::Deinterlace_Blend_YUYV(const void *src1_0,const void *src2_0,vo
 		dst2=(YUYV *)((uint8_t *)dst2+(dst_pitch << 1));
 	}
 
-	for (int32_t j=0; j<w; j++)
 	{
-		uint16_t y1_1,y1_2,u1,v1,y2_1,y2_2,u2,v2,y1,y2,u,v;
+		const YUYV *srca=src1,*srcb=src2;
+		YUYV *dsta=dst1;
 
-		y1_1=src1[j].y1;
-		u1=src1[j].u;
-		y1_2=src1[j].y2;
-		v1=src1[j].v;
-		y2_1=src2[j].y1;
-		u2=src2[j].u;
-		y2_2=src2[j].y2;
-		v2=src2[j].v;
-		y1=(y1_1+y2_1) >> 1;
-		u=(u1+u2) >> 1;
-		y2=(y1_2+y2_2) >> 1;
-		v=(v1+v2) >> 1;
-		dst1[j].y1=(uint8_t)y1;
-		dst1[j].u=(uint8_t)u;
-		dst1[j].y2=(uint8_t)y2;
-		dst1[j].v=(uint8_t)v;
+		for (int32_t j=0; j<w; j++)
+		{
+			uint16_t y1_1,y1_2,u1,v1,y2_1,y2_2,u2,v2,y1,y2,u,v;
+
+			y1_1=srca->y1;
+			u1=srca->u;
+			y1_2=srca->y2;
+			v1=(srca++)->v;
+			y2_1=srcb->y1;
+			u2=srcb->u;
+			y2_2=srcb->y2;
+			v2=(srcb++)->v;
+			y1=(y1_1+y2_1) >> 1;
+			u=(u1+u2) >> 1;
+			y2=(y1_2+y2_2) >> 1;
+			v=(v1+v2) >> 1;
+			dsta->y1=(uint8_t)y1;
+			dsta->u=(uint8_t)u;
+			dsta->y2=(uint8_t)y2;
+			(dsta++)->v=(uint8_t)v;
+		}
 	}
-	memcpy(dst2,src2,w*4);
+	A_memcpy(dst2,src2,w*4);
 
 }
 
@@ -3816,34 +3969,37 @@ void JPSDR_IVTC::Deinterlace_Blend_YUYV_Y(const void *src1_0,const void *src2_0,
 
 	for (int32_t i=0; i<h; i++)
 	{
+		const YUYV *srca=src1,*srcb=src2,*srcc=src3;
+		YUYV *dsta=dst1,*dstb=dst2;
+
 		for (int32_t j=0; j<w; j++)
 		{
 			uint16_t y1_1,y1_2,y2_1,y2_2,y3_1,y3_2;
 			uint16_t y1,y2;
 			uint8_t u1,v1,u2,v2;
 
-			y1_1=src1[j].y1;
-			u1=src1[j].u;
-			y1_2=src1[j].y2;
-			v1=src1[j].v;
-			y2_1=src2[j].y1;
-			u2=src2[j].u;
-			y2_2=src2[j].y2;
-			v2=src2[j].v;
-			y3_1=src3[j].y1;
-			y3_2=src3[j].y2;
+			y1_1=srca->y1;
+			u1=srca->u;
+			y1_2=srca->y2;
+			v1=(srca++)->v;
+			y2_1=srcb->y1;
+			u2=srcb->u;
+			y2_2=srcb->y2;
+			v2=(srcb++)->v;
+			y3_1=srcc->y1;
+			y3_2=(srcc++)->y2;
 			y1=(y1_1+y2_1) >> 1;
 			y2=(y1_2+y2_2) >> 1;
-			dst1[j].y1=(uint8_t)y1;
-			dst1[j].u=u1;
-			dst1[j].y2=(uint8_t)y2;
-			dst1[j].v=v1;
+			dsta->y1=(uint8_t)y1;
+			dsta->u=u1;
+			dsta->y2=(uint8_t)y2;
+			(dsta++)->v=v1;
 			y1=(y2_1+y3_1) >> 1;
 			y2=(y2_2+y3_2) >> 1;
-			dst2[j].y1=(uint8_t)y1;
-			dst2[j].u=u2;
-			dst2[j].y2=(uint8_t)y2;
-			dst2[j].v=v2;
+			dstb->y1=(uint8_t)y1;
+			dstb->u=u2;
+			dstb->y2=(uint8_t)y2;
+			(dstb++)->v=v2;
 		}
 		src1=(YUYV *)((uint8_t *)src1+(src_pitch << 1));
 		src2=(YUYV *)((uint8_t *)src2+(src_pitch << 1));
@@ -3852,25 +4008,30 @@ void JPSDR_IVTC::Deinterlace_Blend_YUYV_Y(const void *src1_0,const void *src2_0,
 		dst2=(YUYV *)((uint8_t *)dst2+(dst_pitch << 1));
 	}
 
-	for (int32_t j=0; j<w; j++)
 	{
-		uint16_t y1_1,y1_2,y2_1,y2_2,y1,y2;
-		uint8_t u1,v1;
+		const YUYV *srca=src1,*srcb=src2;
+		YUYV *dsta=dst1;
 
-		y1_1=src1[j].y1;
-		u1=src1[j].u;
-		y1_2=src1[j].y2;
-		v1=src1[j].v;
-		y2_1=src2[j].y1;
-		y2_2=src2[j].y2;
-		y1=(y1_1+y2_1) >> 1;
-		y2=(y1_2+y2_2) >> 1;
-		dst1[j].y1=(uint8_t)y1;
-		dst1[j].u=u1;
-		dst1[j].y2=(uint8_t)y2;
-		dst1[j].v=v1;
+		for (int32_t j=0; j<w; j++)
+		{
+			uint16_t y1_1,y1_2,y2_1,y2_2,y1,y2;
+			uint8_t u1,v1;
+			
+			y1_1=srca->y1;
+			u1=srca->u;
+			y1_2=srca->y2;
+			v1=(srca++)->v;
+			y2_1=srcb->y1;
+			y2_2=srcb++->y2;
+			y1=(y1_1+y2_1) >> 1;
+			y2=(y1_2+y2_2) >> 1;
+			dsta->y1=(uint8_t)y1;
+			dsta->u=u1;
+			dsta->y2=(uint8_t)y2;
+			(dsta++)->v=v1;
+		}
 	}
-	memcpy(dst2,src2,w*4);
+	A_memcpy(dst2,src2,w*4);
 
 }
 
@@ -3889,39 +4050,25 @@ void JPSDR_IVTC::Deinterlace_Blend_UYVY(const void *src1_0,const void *src2_0,vo
 
 	for (int32_t i=0; i<h; i++)
 	{
+		const UYVY *srca=src1,*srcb=src2,*srcc=src3;
+		UYVY *dsta=dst1,*dstb=dst2;
+
 		for (int32_t j=0; j<w; j++)
 		{
-			uint16_t y1_1,y1_2,u1,v1,y2_1,y2_2,u2,v2,y3_1,y3_2,u3,v3;
-			uint16_t y1,y2,u,v;
+			uint16_t y2_1,y2_2,u2,v2;
 
-			u1=src1[j].u;
-			y1_1=src1[j].y1;
-			v1=src1[j].v;
-			y1_2=src1[j].y2;
-			u2=src2[j].u;
-			y2_1=src2[j].y1;
-			v2=src2[j].v;
-			y2_2=src2[j].y2;
-			u3=src3[j].u;
-			y3_1=src3[j].y1;
-			v3=src3[j].v;
-			y3_2=src3[j].y2;
-			y1=(y1_1+y2_1) >> 1;
-			u=(u1+u2) >> 1;
-			y2=(y1_2+y2_2) >> 1;
-			v=(v1+v2) >> 1;
-			dst1[j].u=(uint8_t)u;
-			dst1[j].y1=(uint8_t)y1;
-			dst1[j].v=(uint8_t)v;
-			dst1[j].y2=(uint8_t)y2;
-			y1=(y2_1+y3_1) >> 1;
-			u=(u2+u3) >> 1;
-			y2=(y2_2+y3_2) >> 1;
-			v=(v2+v3) >> 1;
-			dst2[j].u=(uint8_t)u;
-			dst2[j].y1=(uint8_t)y1;
-			dst2[j].v=(uint8_t)v;
-			dst2[j].y2=(uint8_t)y2;
+			u2=srcb->u;
+			y2_1=srcb->y1;
+			v2=srcb->v;
+			y2_2=(srcb++)->y2;
+			dsta->u=(uint8_t)(((uint16_t)srca->u+u2) >> 1);
+			dsta->y1=(uint8_t)(((uint16_t)srca->y1+y2_1) >> 1);
+			dsta->v=(uint8_t)(((uint16_t)srca->v+v2) >> 1);
+			(dsta++)->y2=(uint8_t)(((uint16_t)(srca++)->y2+y2_2) >> 1);
+			dstb->u=(uint8_t)((u2+(uint16_t)srcc->u) >> 1);
+			dstb->y1=(uint8_t)((y2_1+(uint16_t)srcc->y1) >> 1);
+			dstb->v=(uint8_t)((v2+(uint16_t)srcc->v) >> 1);
+			(dstb++)->y2=(uint8_t)((y2_2+(uint16_t)(srcc++)->y2) >> 1);
 		}
 		src1=(UYVY *)((uint8_t *)src1+(src_pitch << 1));
 		src2=(UYVY *)((uint8_t *)src2+(src_pitch << 1));
@@ -3930,28 +4077,19 @@ void JPSDR_IVTC::Deinterlace_Blend_UYVY(const void *src1_0,const void *src2_0,vo
 		dst2=(UYVY *)((uint8_t *)dst2+(dst_pitch << 1));
 	}
 
-	for (int32_t j=0; j<w; j++)
 	{
-		uint16_t y1_1,y1_2,u1,v1,y2_1,y2_2,u2,v2,y1,y2,u,v;
+		const UYVY *srca=src1,*srcb=src2;
+		UYVY *dsta=dst1;
 
-		u1=src1[j].u;
-		y1_1=src1[j].y1;
-		v1=src1[j].v;
-		y1_2=src1[j].y2;
-		u2=src2[j].u;
-		y2_1=src2[j].y1;
-		v2=src2[j].v;
-		y2_2=src2[j].y2;
-		y1=(y1_1+y2_1) >> 1;
-		u=(u1+u2) >> 1;
-		y2=(y1_2+y2_2) >> 1;
-		v=(v1+v2) >> 1;
-		dst1[j].u=(uint8_t)u;
-		dst1[j].y1=(uint8_t)y1;
-		dst1[j].v=(uint8_t)v;
-		dst1[j].y2=(uint8_t)y2;
+		for (int32_t j=0; j<w; j++)
+		{
+			dsta->u=(uint8_t)(((uint16_t)srca->u+(uint16_t)srcb->u) >> 1);
+			dsta->y1=(uint8_t)(((uint16_t)srca->y1+(uint16_t)srcb->y1) >> 1);
+			dsta->v=(uint8_t)(((uint16_t)srca->v+(uint16_t)srcb->v) >> 1);
+			(dsta++)->y2=(uint8_t)(((uint16_t)(srca++)->y2+(uint16_t)(srcb++)->y2) >> 1);
+		}
 	}
-	memcpy(dst2,src2,w*4);
+	A_memcpy(dst2,src2,w*4);
 
 }
 
@@ -3971,34 +4109,23 @@ void JPSDR_IVTC::Deinterlace_Blend_UYVY_Y(const void *src1_0,const void *src2_0,
 
 	for (int32_t i=0; i<h; i++)
 	{
+		const UYVY *srca=src1,*srcb=src2,*srcc=src3;
+		UYVY *dsta=dst1,*dstb=dst2;
+
 		for (int32_t j=0; j<w; j++)
 		{
-			uint16_t y1_1,y1_2,y2_1,y2_2,y3_1,y3_2;
-			uint16_t y1,y2;
-			uint8_t u1,v1,u2,v2;
+			uint16_t y2_1,y2_2;
 
-			u1=src1[j].u;
-			y1_1=src1[j].y1;
-			v1=src1[j].v;
-			y1_2=src1[j].y2;
-			u2=src2[j].u;
-			y2_1=src2[j].y1;
-			v2=src2[j].v;
-			y2_2=src2[j].y2;
-			y3_1=src3[j].y1;
-			y3_2=src3[j].y2;
-			y1=(y1_1+y2_1) >> 1;
-			y2=(y1_2+y2_2) >> 1;
-			dst1[j].u=u1;
-			dst1[j].y1=(uint8_t)y1;
-			dst1[j].v=v1;
-			dst1[j].y2=(uint8_t)y2;
-			y1=(y2_1+y3_1) >> 1;
-			y2=(y2_2+y3_2) >> 1;
-			dst2[j].u=u2;
-			dst2[j].y1=(uint8_t)y1;
-			dst2[j].v=v2;
-			dst2[j].y2=(uint8_t)y2;
+			y2_1=srcb->y1;
+			y2_2=srcb->y2;
+			dsta->u=srca->u;
+			dsta->y1=(uint8_t)(((uint16_t)srca->y1+y2_1) >> 1);
+			dsta->v=srca->v;
+			(dsta++)->y2=(uint8_t)(((uint16_t)(srca++)->y2+y2_2) >> 1);
+			dstb->u=srcb->u;
+			dstb->y1=(uint8_t)((y2_1+(uint16_t)srcc->y1) >> 1);
+			dstb->v=(srcb++)->v;
+			(dstb++)->y2=(uint8_t)((y2_2+(uint16_t)(srcc++)->y2) >> 1);
 		}
 		src1=(UYVY *)((uint8_t *)src1+(src_pitch << 1));
 		src2=(UYVY *)((uint8_t *)src2+(src_pitch << 1));
@@ -4007,25 +4134,19 @@ void JPSDR_IVTC::Deinterlace_Blend_UYVY_Y(const void *src1_0,const void *src2_0,
 		dst2=(UYVY *)((uint8_t *)dst2+(dst_pitch << 1));
 	}
 
-	for (int32_t j=0; j<w; j++)
 	{
-		uint16_t y1_1,y1_2,y2_1,y2_2,y1,y2;
-		uint8_t u1,v1;
+		const UYVY *srca=src1,*srcb=src2;
+		UYVY *dsta=dst1;
 
-		u1=src1[j].u;
-		y1_1=src1[j].y1;
-		v1=src1[j].v;
-		y1_2=src1[j].y2;
-		y2_1=src2[j].y1;
-		y2_2=src2[j].y2;
-		y1=(y1_1+y2_1) >> 1;
-		y2=(y1_2+y2_2) >> 1;
-		dst1[j].u=u1;
-		dst1[j].y1=(uint8_t)y1;
-		dst1[j].v=v1;
-		dst1[j].y2=(uint8_t)y2;
+		for (int32_t j=0; j<w; j++)
+		{
+			dsta->u=srca->u;
+			dsta->y1=(uint8_t)(((uint16_t)srca->y1+(uint16_t)srcb->y1) >> 1);
+			dsta->v=srca->v;
+			(dsta++)->y2=(uint8_t)(((uint16_t)(srca++)->y2+(uint16_t)(srcb++)->y2) >> 1);
+		}
 	}
-	memcpy(dst2,src2,w*4);
+	A_memcpy(dst2,src2,w*4);
 
 }
 
@@ -4043,15 +4164,15 @@ void JPSDR_IVTC::Deinterlace_Blend_Planar(const uint8_t *src1,const uint8_t *src
 
 	for (int32_t i=0; i<h; i++)
 	{
+		const uint8_t *srca=src1,*srcb=src2,*srcc=src3;
+		uint8_t *dsta=dst1,*dstb=dst2;
+
 		for (int32_t j=0; j<w; j++)
 		{
-			uint16_t a1,a2,a3;
+			const uint16_t a2=*srcb++;;
 
-			a1=src1[j];
-			a2=src2[j];
-			a3=src3[j];
-			dst1[j]=(uint8_t)((a1+a2)>>1);
-			dst2[j]=(uint8_t)((a2+a3)>>1);
+			*dsta++=(uint8_t)(((uint16_t)(*srca++)+a2)>>1);
+			*dstb++=(uint8_t)((a2+(uint16_t)(*srcc++))>>1);
 		}
 		src1+=(src_pitch << 1);
 		src2+=(src_pitch << 1);
@@ -4060,16 +4181,15 @@ void JPSDR_IVTC::Deinterlace_Blend_Planar(const uint8_t *src1,const uint8_t *src
 		dst2+=(dst_pitch << 1);
 	}
 
-	for (int32_t j=0; j<w; j++)
 	{
-		uint16_t a1,a2;
+		const uint8_t *srca=src1,*srcb=src2;
+		uint8_t *dsta=dst1;
 
-		a1=src1[j];
-		a2=src2[j];
-		dst1[j]=(uint8_t)((a1+a2)>>1);
+		for (int32_t j=0; j<w; j++)
+			*dsta++=(uint8_t)(((uint16_t)(*srca++)+(uint16_t)(*srcb++))>>1);
 	}
 
-	memcpy(dst2,src2,w);
+	A_memcpy(dst2,src2,w);
 }
 
 
@@ -4290,13 +4410,13 @@ void JPSDR_IVTC::Motion_Map_RGB32(const void *src1_0,const void *src2_0,void *bu
 
 			b1=src1->b;
 			g1=src1->g;
-			r1=src1->r;
+			r1=(src1++)->r;
 			b2=src2->b;
 			g2=src2->g;
-			r2=src2->r;
+			r2=(src2++)->r;
 			b3=src3->b;
 			g3=src3->g;
-			r3=src3->r;
+			r3=(src3++)->r;
 			b=(int16_t)abs(b2-b1);
 			g=(int16_t)abs(g2-g1);
 			r=(int16_t)abs(r2-r1);
@@ -4310,22 +4430,18 @@ void JPSDR_IVTC::Motion_Map_RGB32(const void *src1_0,const void *src2_0,void *bu
 
 			b1=src4->b;
 			g1=src4->g;
-			r1=src4->r;
+			r1=(src4++)->r;
 			b=(int16_t)abs(b3-b2);
 			g=(int16_t)abs(g3-g2);
 			r=(int16_t)abs(r3-r2);
 			buffer[w].b=(uint8_t)(b&0xFC);
 			buffer[w].g=(uint8_t)(g&0xFC);
 			buffer[w].r=(uint8_t)(r&0xFC);
+			buffer++;
 			if ( (!((g3>g1)^(g3>g2)) && ((g>thr) && (abs(g3-g1)>thr))) 
 				|| (!((r3>r1)^(r3>r2)) && ((r>thr) && (abs(r3-r1)>thr)))
 				|| (!((b3>b1)^(b3>b2)) && ((b>thr) && (abs(b3-b1)>thr))) ) *dst2++=1;
 			else *dst2++=0;
-			src1++;
-			src2++;
-			src3++;
-			src4++;
-			buffer++;
 		}
 		src1=(RGB32BMP *)((uint8_t *)src1+(modulo+pitch));
 		src2=(RGB32BMP *)((uint8_t *)src2+(modulo+pitch));
@@ -4342,10 +4458,10 @@ void JPSDR_IVTC::Motion_Map_RGB32(const void *src1_0,const void *src2_0,void *bu
 
 		b1=src1->b;
 		g1=src1->g;
-		r1=src1->r;
+		r1=(src1++)->r;
 		b2=src2->b;
 		g2=src2->g;
-		r2=src2->r;
+		r2=(src2++)->r;
 		b=(int16_t)abs(b2-b1)&0xFC;
 		g=(int16_t)abs(g2-g1)&0xFC;
 		r=(int16_t)abs(r2-r1)&0xFC;
@@ -4353,10 +4469,8 @@ void JPSDR_IVTC::Motion_Map_RGB32(const void *src1_0,const void *src2_0,void *bu
 		buffer->g=(uint8_t)g;
 		buffer->r=(uint8_t)r;
 		buffer[w]=*buffer;
-		*dst1++=0;
 		buffer++;
-		src1++;
-		src2++;
+		*dst1++=0;
 	}
 }
 
@@ -4390,13 +4504,13 @@ void JPSDR_IVTC::Motion_Map_RGB32(const void *src1_0,const void *src2_0,uint8_t 
 
 			b1=src1->b;
 			g1=src1->g;
-			r1=src1->r;
+			r1=(src1++)->r;
 			b2=src2->b;
 			g2=src2->g;
-			r2=src2->r;
+			r2=(src2++)->r;
 			b3=src3->b;
 			g3=src3->g;
-			r3=src3->r;
+			r3=(src3++)->r;
 			b=(int16_t)abs(b2-b1);
 			g=(int16_t)abs(g2-g1);
 			r=(int16_t)abs(r2-r1);
@@ -4407,7 +4521,7 @@ void JPSDR_IVTC::Motion_Map_RGB32(const void *src1_0,const void *src2_0,uint8_t 
 
 			b1=src4->b;
 			g1=src4->g;
-			r1=src4->r;
+			r1=(src4++)->r;
 			b=(int16_t)abs(b3-b2);
 			g=(int16_t)abs(g3-g2);
 			r=(int16_t)abs(r3-r2);
@@ -4415,10 +4529,6 @@ void JPSDR_IVTC::Motion_Map_RGB32(const void *src1_0,const void *src2_0,uint8_t 
 				|| (!((r3>r1)^(r3>r2)) && ((r>thr) && (abs(r3-r1)>thr)))
 				|| (!((b3>b1)^(b3>b2)) && ((b>thr) && (abs(b3-b1)>thr))) ) *dst2++=1;
 			else *dst2++=0;
-			src1++;
-			src2++;
-			src3++;
-			src4++;
 		}
 		src1=(RGB32BMP *)((uint8_t *)src1+(modulo+pitch));
 		src2=(RGB32BMP *)((uint8_t *)src2+(modulo+pitch));
@@ -4473,22 +4583,17 @@ void JPSDR_IVTC::Motion_Map_YUYV_Y(const void *src1_0,const void *src2_0,uint8_t
 			if (!((y3>y1)^(y3>y2)) && ((y>thr) && (abs(y3-y1)>thr))) *dst2++=1;
 			else *dst2++=0;
 
-			y1=src1->y2;
-			y2=src2->y2;
-			y3=src3->y2;
+			y1=(src1++)->y2;
+			y2=(src2++)->y2;
+			y3=(src3++)->y2;
 			y=(int16_t)abs(y2-y1);
 			if (!((y2>y1)^(y2>y3)) && ((y>thr) && (abs(y2-y3)>thr))) *dst1++=1;
 			else *dst1++=0;
 
-			y1=src4->y2;
+			y1=(src4++)->y2;
 			y=(int16_t)abs(y3-y2);
 			if (!((y3>y1)^(y3>y2)) && ((y>thr) && (abs(y3-y1)>thr))) *dst2++=1;
 			else *dst2++=0;
-
-			src1++;
-			src2++;
-			src3++;
-			src4++;
 		}
 		src1=(YUYV *)((uint8_t *)src1+(modulo+pitch));
 		src2=(YUYV *)((uint8_t *)src2+(modulo+pitch));
@@ -4544,22 +4649,17 @@ void JPSDR_IVTC::Motion_Map_UYVY_Y(const void *src1_0,const void *src2_0,uint8_t
 			if (!((y3>y1)^(y3>y2)) && ((y>thr) && (abs(y3-y1)>thr))) *dst2++=1;
 			else *dst2++=0;
 
-			y1=src1->y2;
-			y2=src2->y2;
-			y3=src3->y2;
+			y1=(src1++)->y2;
+			y2=(src2++)->y2;
+			y3=(src3++)->y2;
 			y=(int16_t)abs(y2-y1);
 			if (!((y2>y1)^(y2>y3)) && ((y>thr) && (abs(y2-y3)>thr))) *dst1++=1;
 			else *dst1++=0;
 
-			y1=src4->y2;
+			y1=(src4++)->y2;
 			y=(int16_t)abs(y3-y2);
 			if (!((y3>y1)^(y3>y2)) && ((y>thr) && (abs(y3-y1)>thr))) *dst2++=1;
 			else *dst2++=0;
-
-			src1++;
-			src2++;
-			src3++;
-			src4++;
 		}
 		src1=(UYVY *)((uint8_t *)src1+(modulo+pitch));
 		src2=(UYVY *)((uint8_t *)src2+(modulo+pitch));
@@ -4672,15 +4772,15 @@ void JPSDR_IVTC::Smart_Deinterlace_Motion_Map_RGB32(const void *src1_0,const voi
 		{
 			int16_t r1,r2,r3,g1,g2,g3,b1,b2,b3;
 
-			b1=src1[i].b;
-			g1=src1[i].g;
-			r1=src1[i].r;
-			b2=src2[i].b;
-			g2=src2[i].g;
-			r2=src2[i].r;
-			b3=src3[i].b;
-			g3=src3[i].g;
-			r3=src3[i].r;
+			b1=src1->b;
+			g1=src1->g;
+			r1=(src1++)->r;
+			b2=src2->b;
+			g2=src2->g;
+			r2=(src2++)->r;
+			b3=src3->b;
+			g3=src3->g;
+			r3=(src3++)->r;
 			buffer->b=(uint8_t)((b3+b2)>>1);
 			buffer->g=(uint8_t)((g3+g2)>>1);
 			buffer->r=(uint8_t)((r3+r2)>>1);
@@ -4688,21 +4788,17 @@ void JPSDR_IVTC::Smart_Deinterlace_Motion_Map_RGB32(const void *src1_0,const voi
 				|| (!((r2>r1)^(r2>r3)) && ((abs(r2-r1)>thr) && (abs(r2-r3)>thr)))
 				|| (!((b2>b1)^(b2>b3)) && ((abs(b2-b1)>thr) && (abs(b2-b3)>thr))) ) *dst1++=1;
 			else *dst1++=0;
-			b1=src4[i].b;
-			g1=src4[i].g;
-			r1=src4[i].r;
+			b1=src4->b;
+			g1=src4->g;
+			r1=(src4++)->r;
 			buffer[w].b=(uint8_t)((b1+b3)>>1);
 			buffer[w].g=(uint8_t)((g1+g3)>>1);
 			buffer[w].r=(uint8_t)((r1+r3)>>1);
+			buffer++;
 			if ( (!((g3>g1)^(g3>g2)) && ((abs(g3-g2)>thr) && (abs(g3-g1)>thr))) 
 				|| (!((r3>r1)^(r3>r2)) && ((abs(r3-r2)>thr) && (abs(r3-r1)>thr)))
 				|| (!((b3>b1)^(b3>b2)) && ((abs(b3-b2)>thr) && (abs(b3-b1)>thr))) ) *dst2++=1;
 			else *dst2++=0;
-			src1++;
-			src2++;
-			src3++;
-			src4++;
-			buffer++;
 		}
 		src1=(RGB32BMP *)((uint8_t *)src1+(modulo+pitch));
 		src2=(RGB32BMP *)((uint8_t *)src2+(modulo+pitch));
@@ -4756,15 +4852,15 @@ void JPSDR_IVTC::Smart_Deinterlace_Tri_Motion_Map_RGB32(const void *src1_0,const
 		{
 			int16_t r1,r2,r3,g1,g2,g3,b1,b2,b3;
 
-			b1=src1[i].b;
-			g1=src1[i].g;
-			r1=src1[i].r;
-			b2=src2[i].b;
-			g2=src2[i].g;
-			r2=src2[i].r;
-			b3=src3[i].b;
-			g3=src3[i].g;
-			r3=src3[i].r;
+			b1=src1->b;
+			g1=src1->g;
+			r1=(src1++)->r;
+			b2=src2->b;
+			g2=src2->g;
+			r2=(src2++)->r;
+			b3=src3->b;
+			g3=src3->g;
+			r3=(src3++)->r;
 			buffer->b=(uint8_t)(((b1+b3)+(b2 << 1)+2)>>2);
 			buffer->g=(uint8_t)(((g1+g3)+(g2 << 1)+2)>>2);
 			buffer->r=(uint8_t)(((r1+r3)+(r2 << 1)+2)>>2);
@@ -4772,21 +4868,17 @@ void JPSDR_IVTC::Smart_Deinterlace_Tri_Motion_Map_RGB32(const void *src1_0,const
 				|| (!((r2>r1)^(r2>r3)) && ((abs(r2-r1)>thr) && (abs(r2-r3)>thr)))
 				|| (!((b2>b1)^(b2>b3)) && ((abs(b2-b1)>thr) && (abs(b2-b3)>thr))) ) *dst1++=1;
 			else *dst1++=0;
-			b1=src4[i].b;
-			g1=src4[i].g;
-			r1=src4[i].r;
+			b1=src4->b;
+			g1=src4->g;
+			r1=(src4++)->r;
 			buffer[w].b=(uint8_t)(((b1+b2)+(b3 << 1)+2)>>2);
 			buffer[w].g=(uint8_t)(((g1+g2)+(g3 << 1)+2)>>2);
 			buffer[w].r=(uint8_t)(((r1+r2)+(r3 << 1)+2)>>2);
+			buffer++;
 			if ( (!((g3>g1)^(g3>g2)) && ((abs(g3-g2)>thr) && (abs(g3-g1)>thr))) 
 				|| (!((r3>r1)^(r3>r2)) && ((abs(r3-r2)>thr) && (abs(r3-r1)>thr)))
 				|| (!((b3>b1)^(b3>b2)) && ((abs(b3-b2)>thr) && (abs(b3-b1)>thr))) ) *dst2++=1;
 			else *dst2++=0;
-			src1++;
-			src2++;
-			src3++;
-			src4++;
-			buffer++;
 		}
 		src1=(RGB32BMP *)((uint8_t *)src1+(modulo+pitch));
 		src2=(RGB32BMP *)((uint8_t *)src2+(modulo+pitch));
@@ -4811,14 +4903,13 @@ void JPSDR_IVTC::Smart_Deinterlace_Tri_Motion_Map_RGB32(const void *src1_0,const
 void JPSDR_IVTC::Motion_Map_Filter(uint8_t *map,uint8_t *buffer,const int32_t w,
 	const int32_t h,const int32_t w_map)
 {
-	int32_t delta;
-	uint8_t s,*tab;
+	uint8_t *tab;
 	uint8_t *dst,*src;
-	uint32_t *tab_2;
 	const int32_t h_4=h-4,w_2=w-2,w_map_4=w_map >> 2;
 
 	tab=map;
 	dst=buffer;
+
 	for (int32_t i=0; i<w; i++)
 	{
 		dst[i]=0;
@@ -4826,54 +4917,68 @@ void JPSDR_IVTC::Motion_Map_Filter(uint8_t *map,uint8_t *buffer,const int32_t w,
 		dst[i+(h-2)*w_map]=0;
 		dst[i+(h-1)*w_map]=0;
 	}
+
 	dst+=(w_map<<1);
 	src=map+(w_map<<1);
+
 	for (int32_t i=0; i<h_4; i++)
 	{
+		uint8_t *dst0=dst;
+
 		for (int32_t j=0; j<2; j++)
-		{
-			dst[j]=0;
-			dst[w-1-j]=0;
-		}
+			*dst0++=0;
+
+		const uint8_t *src0=src+2;
+
 		for (int32_t j=2; j<w_2; j++)
 		{
-			if (src[j])
+			if (*src0++)
 			{
-				int32_t j_m2,j_p2;
+				uint8_t s=0;
+				const uint8_t *tab0=tab+j-2;
 
-				j_m2=j-2;
-				j_p2=j+2;
-				s=0;
-				delta=0;
 				for (int32_t k=0; k<5; k++)
 				{
-					for (int32_t l=j_m2; l<=j_p2; l++)
-						s+=tab[delta+l];
-					delta+=w_map;
+					const uint8_t *tab1=tab0;
+
+					for (int32_t l=0; l<5; l++)
+						s+=*tab1++;
+					tab0+=w_map;
 				}
-				if (s<=9) dst[j]=0;
-				else dst[j]=1;
+				if (s<=9) *dst0++=0;
+				else *dst0++=1;
 			}
-			else dst[j]=0;
+			else *dst0++=0;
 		}
+
+		for (int32_t j=0; j<2; j++)
+			*dst0++=0;
+
 		src+=w_map;
 		dst+=w_map;
 		tab+=w_map;
 	}
 
-	tab_2=(uint32_t *)map;
-	delta=h*w_map_4;
-	for (int32_t i=0; i<delta; i++)
-		*tab_2++=0;
+	{
+		uint32_t *tab_2=(uint32_t *)map;
+		const int32_t delta=h*w_map_4;
+
+		for (int32_t i=0; i<delta; i++)
+			*tab_2++=0;
+	}
 	tab=map;
 	src=buffer+(w_map<<1);
+
 	for (int32_t i=0; i<h_4; i++)
 	{
+		const uint8_t *src0=src+2;
+
 		for (int32_t j=2; j<w_2; j++)
 		{
-			if (src[j])
+			if (*src0++)
 			{
-				tab_2=(uint32_t *)(tab+j-1);
+				uint32_t *tab_2=(uint32_t *)(tab+j-1);
+
 				for (int32_t k=0; k<5; k++)
 				{
 					*tab_2=0x01010101;
@@ -4949,6 +5054,7 @@ uint32_t JPSDR_IVTC::Norme1_Histogramme_DeltaPicture_RGB32(const void *src1,cons
 				b=buffer[w].b;
 				g=buffer[w].g;
 				r=buffer[w].r;
+				buffer++;
 				histo[r]++;
 				histo[g]++;
 				histo[b]++;
@@ -4958,7 +5064,6 @@ uint32_t JPSDR_IVTC::Norme1_Histogramme_DeltaPicture_RGB32(const void *src1,cons
 					*dst2++=buffer[w];
 				}
 				else *dst2++=zero_RGB;
-				buffer++;
 				map++;
 			}
 			map+=(w_map+delta_map);
@@ -5027,8 +5132,8 @@ void JPSDR_IVTC::Smart_Deinterlace_RGB32(const void *src1_0,const void *src2_0,v
 			else *dst++=*src1;
 			if (map[w_map]) *dst2++=buffer[w];
 			else *dst2++=*src2;
-			buffer++;
 			map++;
+			buffer++;
 			src1++;
 			src2++;
 		}
@@ -5081,8 +5186,8 @@ void JPSDR_IVTC::Smart_Deinterlace_YUYV(const void *src1_0,const void *src2_0,vo
 			else *dst++=*src1;
 			if (map[w_map] || map[w_map+1]) *dst2++=buffer[w_image];
 			else *dst2++=*src2;
-			buffer++;
 			map+=2;
+			buffer++;
 			src1++;
 			src2++;
 		}
@@ -5134,8 +5239,8 @@ void JPSDR_IVTC::Smart_Deinterlace_UYVY(const void *src1_0,const void *src2_0,vo
 			else *dst++=*src1;
 			if (map[w_map] || map[w_map+1]) *dst2++=buffer[w_image];
 			else *dst2++=*src2;
-			buffer++;
 			map+=2;
+			buffer++;
 			src1++;
 			src2++;
 		}
@@ -5192,8 +5297,8 @@ void JPSDR_IVTC::Smart_Deinterlace_Planar420(const uint8_t *src1_Y,const uint8_t
 			else *dst_Y++=*src1_Y;
 			if (map_filtre[w_map]) *dst2++=buffer_Y[w_Y];
 			else *dst2++=*src2_Y;
-			buffer_Y++;
 			map_filtre++;
+			buffer_Y++;
 			src1_Y++;
 			src2_Y++;
 		}
@@ -5218,8 +5323,8 @@ void JPSDR_IVTC::Smart_Deinterlace_Planar420(const uint8_t *src1_Y,const uint8_t
 				if ((map_filtre[w_map])||(map_filtre[1+w_map])||(map_filtre[w_map2+w_map])
 					||(map_filtre[w_map2+w_map+1])) *dst2++=buffer_U[w_U];
 				else *dst2++=*src2_U;
-				buffer_U++;
 				map_filtre+=2;
+				buffer_U++;
 				src1_U++;
 				src2_U++;
 			}
@@ -5242,8 +5347,8 @@ void JPSDR_IVTC::Smart_Deinterlace_Planar420(const uint8_t *src1_Y,const uint8_t
 				if ((map_filtre[w_map])||(map_filtre[1+w_map])||(map_filtre[w_map2+w_map])
 					||(map_filtre[w_map2+w_map+1])) *dst2++=buffer_V[w_V];
 				else *dst2++=*src2_V;
-				buffer_V++;
 				map_filtre+=2;
+				buffer_V++;
 				src1_V++;
 				src2_V++;
 			}
@@ -5260,8 +5365,8 @@ void JPSDR_IVTC::Smart_Deinterlace_Planar420(const uint8_t *src1_Y,const uint8_t
 		dst2=dst_U+dst_pitch_U;
 		for (int32_t i=0; i<h_U; i++)
 		{
-			memcpy(dst_U,src1_U,w_U);
-			memcpy(dst2,src2_U,w_U);
+			A_memcpy(dst_U,src1_U,w_U);
+			A_memcpy(dst2,src2_U,w_U);
 			dst_U+=(dst_pitch_U << 1);
 			dst2+=(dst_pitch_U << 1);
 			src1_U+=(src_pitch_U << 1);
@@ -5271,8 +5376,8 @@ void JPSDR_IVTC::Smart_Deinterlace_Planar420(const uint8_t *src1_Y,const uint8_t
 		dst2=dst_V+dst_pitch_V;
 		for (int32_t i=0; i<h_V; i++)
 		{
-			memcpy(dst_V,src1_V,w_V);
-			memcpy(dst2,src2_V,w_V);
+			A_memcpy(dst_V,src1_V,w_V);
+			A_memcpy(dst2,src2_V,w_V);
 			dst_V+=(dst_pitch_V << 1);
 			dst2+=(dst_pitch_V << 1);
 			src1_V+=(src_pitch_V << 1);
@@ -5332,8 +5437,8 @@ uint32_t JPSDR_IVTC::Norme1_Motion_Map_RGB32(const void *src1,const void *src2,v
 					r=buffer[w].r;
 					s_motion_map+=(r+g+b);
 				}
-				buffer++;
 				map++;
+				buffer++;
 			}
 			map+=(w_map+delta_map);
 			buffer+=w;
@@ -5365,16 +5470,14 @@ uint32_t JPSDR_IVTC::Norme1_RGB32(const void *src1_0,const void *src2_0,const in
 
 			b1=src1->b;
 			g1=src1->g;
-			r1=src1->r;
+			r1=(src1++)->r;
 			b2=src2->b;
 			g2=src2->g;
-			r2=src2->r;
+			r2=(src2++)->r;
 			r=abs(r1-r2)&0xFC;				// Noise removal
 			g=abs(g1-g2)&0xFC;
 			b=abs(b1-b2)&0xFC;
 			s+=(r+g+b);
-			src1++;
-			src2++;
 		}
 		src1=(RGB32BMP *)((uint8_t *)src1 + (modulo+pitch));
 		src2=(RGB32BMP *)((uint8_t *)src2 + (modulo+pitch));
@@ -5463,6 +5566,8 @@ void JPSDR_IVTC::Run()
 	idata.dst_plane0=pxdst.data;
 	idata.dst_plane1=pxdst.data2;
 	idata.dst_plane2=pxdst.data3;
+
+	SetMemcpyCacheLimit(Cache_Setting);
 
 	w=idata.src_w0;
 	h=idata.src_h0;
@@ -11357,7 +11462,8 @@ void JPSDR_IVTC::End()
 
 	for (i=Interlaced_Tab_Size-1; i>=0; i--)
 	{
-		myfree(interlaced_tab[i]);
+		myfree(interlaced_tab_V[i]);
+		myfree(interlaced_tab_U[i]);
 	}
 	for (i=Data_Buffer_Size-1; i>=0; i--)
 	{
@@ -11446,5 +11552,5 @@ void JPSDR_IVTC::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_IVTC=
-VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v5.2.0","IVTC Filter. [MMX][SSE] Optimised.");
+VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v5.3.0","IVTC Filter. [MMX][SSE] Optimised.");
 
