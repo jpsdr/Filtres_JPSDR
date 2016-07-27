@@ -10,6 +10,8 @@
 #include "..\Filtres_JPSDR\JPSDR_Filter.h"
 #include "..\Filtres_JPSDR\Pascal.h"
 
+#define MAX_MT_THREADS 128
+
 extern int g_VFVAPIVersion;
 
 
@@ -32,10 +34,60 @@ extern "C" void JPSDR_RGBConvert_RGB32toYV12_SSE(const void *src,void *dst_y,voi
 	int16_t offset_Y,int16_t offset_U,int16_t offset_V,int16_t *lookup, ptrdiff_t src_pitch,ptrdiff_t src_modulo,
 	ptrdiff_t dst_pitch_Y,ptrdiff_t dst_modulo_Y,ptrdiff_t dst_modulo_U,ptrdiff_t dst_modulo_V,
 	int16_t Min_Y,int16_t Max_Y,int16_t Min_U,int16_t Max_U,int16_t Min_V,int16_t Max_V);
+extern "C" void JPSDR_RGBConvert_RGB32toYV12_SSE_1(const void *src,void *dst_y,void *dst_u,void *dst_v,int32_t w,int32_t h,
+	int16_t offset_Y,int16_t offset_U,int16_t offset_V,int16_t *lookup, ptrdiff_t src_pitch,ptrdiff_t src_modulo,
+	ptrdiff_t dst_pitch_Y,ptrdiff_t dst_modulo_Y,ptrdiff_t dst_modulo_U,ptrdiff_t dst_modulo_V,
+	int16_t Min_Y,int16_t Max_Y,int16_t Min_U,int16_t Max_U,int16_t Min_V,int16_t Max_V);
+extern "C" void JPSDR_RGBConvert_RGB32toYV12_SSE_2(const void *src,void *dst_y,void *dst_u,void *dst_v,int32_t w,int32_t h,
+	int16_t offset_Y,int16_t offset_U,int16_t offset_V,int16_t *lookup, ptrdiff_t src_pitch,ptrdiff_t src_modulo,
+	ptrdiff_t dst_pitch_Y,ptrdiff_t dst_modulo_Y,ptrdiff_t dst_modulo_U,ptrdiff_t dst_modulo_V,
+	int16_t Min_Y,int16_t Max_Y,int16_t Min_U,int16_t Max_U,int16_t Min_V,int16_t Max_V);
 
 extern "C" void JPSDR_RGBConvert_YV24toRGB32_SSE(const void *src_y,const void *src_u,const void *src_v,void *dst,int32_t w,
 	int32_t h,int16_t offset_R,int16_t offset_G,int16_t offset_B,int16_t *lookup,
 	ptrdiff_t src_modulo_Y,ptrdiff_t src_modulo_U,ptrdiff_t src_modulo_V,ptrdiff_t dst_modulo);
+
+
+typedef struct _MT_Data_Info
+{
+	void *src1,*src2,*src3;
+	void *dst1,*dst2,*dst3;
+	ptrdiff_t src_pitch1,src_pitch2,src_pitch3;
+	ptrdiff_t dst_pitch1,dst_pitch2,dst_pitch3;
+	ptrdiff_t src_modulo1,src_modulo2,src_modulo3;
+	ptrdiff_t dst_modulo1,dst_modulo2,dst_modulo3;
+	int32_t src_Y_h_min,src_Y_h_max,src_Y_w;
+	int32_t src_UV_h_min,src_UV_h_max,src_UV_w;
+	int32_t dst_Y_h_min,dst_Y_h_max,dst_Y_w;
+	int32_t dst_UV_h_min,dst_UV_h_max,dst_UV_w;
+	bool top,bottom;
+	bool src_w,src_h;
+} MT_Data_Info;
+
+
+typedef struct _MT_Data_Thread
+{
+	void *pClass;
+	uint8_t f_process,thread_Id;
+	HANDLE nextJob, jobFinished;
+} MT_Data_Thread;
+
+
+
+static int num_processors()
+{
+#ifdef _DEBUG
+	return 1;
+#else
+	int pcount = 0;
+	ULONG_PTR p_aff=0, s_aff=0;
+	GetProcessAffinityMask(GetCurrentProcess(), &p_aff, &s_aff);
+	for(; p_aff != 0; p_aff>>=1) 
+		pcount += (p_aff&1);
+	return pcount;
+#endif
+}
+
 
 
 
@@ -44,6 +96,7 @@ class JPSDR_RGBConvertData
 public:
 	uint8_t color_matrix,output_mode;
 	bool full_range,auto_detect;
+	bool mt_mode;
 
 	JPSDR_RGBConvertData(void);
 };
@@ -55,6 +108,7 @@ JPSDR_RGBConvertData::JPSDR_RGBConvertData(void)
 	output_mode=0;
 	full_range=false;
 	auto_detect=false;
+	mt_mode=true;
 }
 
 class JPSDR_RGBConvert;
@@ -93,6 +147,7 @@ public:
 	virtual bool Init();
 	virtual uint32 GetParams();
 	virtual void Start();
+	virtual void End();
 	virtual void Run();
 	virtual bool Configure(VDXHWND hwnd);
 	virtual void GetSettingString(char *buf, int maxlen);
@@ -100,10 +155,13 @@ public:
 	void Compute_Lookup(void);
 	
 	VDXVF_DECLARE_SCRIPT_METHODS();
+
+private:
+	static DWORD WINAPI StaticThreadpool( LPVOID lpParam );
 	
 protected:
 	Image_Data image_data;
-	int16_t lookup[2304];
+	int16_t Tlookup[2304];
 	uint8_t convertion_mode,autodetect_color;
 	int16_t Min_U,Max_U,Min_Y,Max_Y,Min_V,Max_V;
 	int16_t Offset_Y,Offset_U,Offset_V,Offset_R,Offset_G,Offset_B;
@@ -111,14 +169,32 @@ protected:
 	bool autodetect_range;
 	bool SSE2_Enable;
 
+	HANDLE thds[MAX_MT_THREADS];
+	MT_Data_Thread MT_Thread[MAX_MT_THREADS];
+	MT_Data_Info MT_Data[MAX_MT_THREADS];
+	DWORD tids[MAX_MT_THREADS];
+	uint8_t CPUs_number,threads_number;
+
+	uint8_t CreateMTData(uint8_t max_threads,int32_t src_size_x,int32_t src_size_y,int32_t dst_size_x,int32_t dst_size_y,bool src_UV_w,bool src_UV_h,bool dst_UV_w,bool dst_UV_h);
+
 	void ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptValue *argv, int argc);
+
+	void RGB32toYV12_SSE_MT(uint8_t thread_num);
+
+	void RGB32toYV24_MT(uint8_t thread_num);
+	void RGB32toYV16_MT(uint8_t thread_num);
+	void RGB32toYUY2_MT(uint8_t thread_num);
+	void RGB32toYV12_MT(uint8_t thread_num);
+	void YV24toRGB32_MT(uint8_t thread_num);
+
 	void RGB32toYV24(const void *src,void *dst_y,void *dst_u,void *dst_v,const int32_t w,const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch_y,
 		ptrdiff_t dst_pitch_u,ptrdiff_t dst_pitch_v);
 	void RGB32toYV16(const void *src,void *dst_y,void *dst_u,void *dst_v,const int32_t w,const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch_y,
 		ptrdiff_t dst_pitch_u,ptrdiff_t dst_pitch_v);
 	void RGB32toYUY2(const void *src,void *dst,const int32_t w,const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+/*
 	void RGB32toYV12(const void *src,void *dst_y,void *dst_u,void *dst_v,const int32_t w,const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch_y,
-		ptrdiff_t dst_pitch_u,ptrdiff_t dst_pitch_v);
+		ptrdiff_t dst_pitch_u,ptrdiff_t dst_pitch_v);*/
 	void YV24toRGB32(const void *src_y,const void *src_u,const void *src_v, void *dst,const int32_t w,const int32_t h,ptrdiff_t src_pitch_y,ptrdiff_t src_pitch_u,
 		ptrdiff_t src_pitch_v,ptrdiff_t dst_pitch);
 		
@@ -126,7 +202,7 @@ protected:
 };
 
 VDXVF_BEGIN_SCRIPT_METHODS(JPSDR_RGBConvert)
-VDXVF_DEFINE_SCRIPT_METHOD(JPSDR_RGBConvert,ScriptConfig,"iiii")
+VDXVF_DEFINE_SCRIPT_METHOD(JPSDR_RGBConvert,ScriptConfig,"iiiii")
 VDXVF_END_SCRIPT_METHODS()
 
 
@@ -167,6 +243,7 @@ bool JPSDR_RGBConvertDialog::OnInit()
 		case 3 : CheckDlgButton(mhdlg,IDC_OUTPUT_YV12,1); break;
 	}
 
+	CheckDlgButton(mhdlg,IDC_ENABLE_MT,mData.mt_mode?BST_CHECKED:BST_UNCHECKED);
 	CheckDlgButton(mhdlg,IDC_FULL_RANGE,mData.full_range?BST_CHECKED:BST_UNCHECKED);
 	CheckDlgButton(mhdlg,IDC_AUTODETECT,mData.auto_detect?BST_CHECKED:BST_UNCHECKED);
 
@@ -198,6 +275,7 @@ bool JPSDR_RGBConvertDialog::SaveToData()
 	if (!!IsDlgButtonChecked(mhdlg,IDC_OUTPUT_YUY2)) mData.output_mode=2;
 	if (!!IsDlgButtonChecked(mhdlg,IDC_OUTPUT_YV12)) mData.output_mode=3;
 
+	mData.mt_mode=!!IsDlgButtonChecked(mhdlg,IDC_ENABLE_MT);
 	mData.full_range=!!IsDlgButtonChecked(mhdlg,IDC_FULL_RANGE);
 	mData.auto_detect=!!IsDlgButtonChecked(mhdlg,IDC_AUTODETECT);
 
@@ -234,6 +312,7 @@ bool JPSDR_RGBConvertDialog::OnCommand(int cmd)
 		case IDC_OUTPUT_YV16 :
 		case IDC_OUTPUT_YUY2 :
 		case IDC_OUTPUT_YV12 :
+		case IDC_ENABLE_MT :
 			if (mifp && SaveToData()) mifp->RedoSystem();
 			return true;
 		case IDC_PREVIEW:
@@ -249,8 +328,142 @@ bool JPSDR_RGBConvert::Init()
 {
 	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
 
+	for (uint16_t i=0; i<MAX_MT_THREADS; i++)
+	{
+		MT_Thread[i].pClass=NULL;
+		MT_Thread[i].f_process=0;
+		MT_Thread[i].thread_Id=(uint8_t)i;
+		MT_Thread[i].jobFinished=NULL;
+		MT_Thread[i].nextJob=NULL;
+		thds[i]=NULL;
+	}
+
+	CPUs_number=(uint8_t)num_processors();
+	if (CPUs_number>MAX_MT_THREADS) CPUs_number=MAX_MT_THREADS;
+	threads_number=1;
+
 	return(true);
 }
+
+
+uint8_t JPSDR_RGBConvert::CreateMTData(uint8_t max_threads,int32_t src_size_x,int32_t src_size_y,int32_t dst_size_x,int32_t dst_size_y,bool src_UV_w,bool src_UV_h,bool dst_UV_w,bool dst_UV_h)
+{
+	if ((max_threads<=1) || (max_threads>threads_number))
+	{
+		MT_Data[0].top=true;
+		MT_Data[0].bottom=true;
+		MT_Data[0].src_Y_h_min=0;
+		MT_Data[0].dst_Y_h_min=0;
+		MT_Data[0].src_Y_h_max=src_size_y;
+		MT_Data[0].dst_Y_h_max=dst_size_y;
+		MT_Data[0].src_UV_h_min=0;
+		MT_Data[0].dst_UV_h_min=0;
+		if (src_UV_h) MT_Data[0].src_UV_h_max=src_size_y >> 1;
+		else MT_Data[0].src_UV_h_max=src_size_y;
+		if (dst_UV_h) MT_Data[0].dst_UV_h_max=dst_size_y >> 1;
+		else MT_Data[0].dst_UV_h_max=dst_size_y;
+		MT_Data[0].src_Y_w=src_size_x;
+		MT_Data[0].dst_Y_w=dst_size_x;
+		if (src_UV_w) MT_Data[0].src_UV_w=src_size_x >> 1;
+		else MT_Data[0].src_UV_w=src_size_x;
+		if (dst_UV_w) MT_Data[0].dst_UV_w=dst_size_x >> 1;
+		else MT_Data[0].dst_UV_w=dst_size_x;
+		return(1);
+	}
+
+	int32_t src_dh_Y,src_dh_UV,dst_dh_Y,dst_dh_UV;
+	int32_t h_y;
+	uint8_t i,max=0;
+
+	dst_dh_Y=(dst_size_y+(uint32_t)max_threads-1)/(uint32_t)max_threads;
+	if (dst_dh_Y<16) dst_dh_Y=16;
+	if ((dst_dh_Y & 3)!=0) dst_dh_Y=((dst_dh_Y+3) >> 2) << 2;
+
+	if (src_size_y==dst_size_y) src_dh_Y=dst_dh_Y;
+	else src_dh_Y=trunc((((float)src_size_y)/((float)dst_size_y))*(float)dst_dh_Y);
+	if ((src_dh_Y & 1)!=0) src_dh_Y++;
+
+	h_y=0;
+	while (h_y<(dst_size_y-16))
+	{
+		max++;
+		h_y+=dst_dh_Y;
+	}
+
+	if (max==1)
+	{
+		MT_Data[0].top=true;
+		MT_Data[0].bottom=true;
+		MT_Data[0].src_Y_h_min=0;
+		MT_Data[0].dst_Y_h_min=0;
+		MT_Data[0].src_Y_h_max=src_size_y;
+		MT_Data[0].dst_Y_h_max=dst_size_y;
+		MT_Data[0].src_UV_h_min=0;
+		MT_Data[0].dst_UV_h_min=0;
+		if (src_UV_h) MT_Data[0].src_UV_h_max=src_size_y >> 1;
+		else MT_Data[0].src_UV_h_max=src_size_y;
+		if (dst_UV_h) MT_Data[0].dst_UV_h_max=dst_size_y >> 1;
+		else MT_Data[0].dst_UV_h_max=dst_size_y;
+		MT_Data[0].src_Y_w=src_size_x;
+		MT_Data[0].dst_Y_w=dst_size_x;
+		if (src_UV_w) MT_Data[0].src_UV_w=src_size_x >> 1;
+		else MT_Data[0].src_UV_w=src_size_x;
+		if (dst_UV_w) MT_Data[0].dst_UV_w=dst_size_x >> 1;
+		else MT_Data[0].dst_UV_w=dst_size_x;
+		return(1);
+	}
+
+	src_dh_UV= src_UV_h ? src_dh_Y>>1 : src_dh_Y;
+	dst_dh_UV= dst_UV_h ? dst_dh_Y>>1 : dst_dh_Y;
+
+	MT_Data[0].top=true;
+	MT_Data[0].bottom=false;
+	MT_Data[0].src_Y_h_min=0;
+	MT_Data[0].src_Y_h_max=src_dh_Y;
+	MT_Data[0].dst_Y_h_min=0;
+	MT_Data[0].dst_Y_h_max=dst_dh_Y;
+	MT_Data[0].src_UV_h_min=0;
+	MT_Data[0].src_UV_h_max=src_dh_UV;
+	MT_Data[0].dst_UV_h_min=0;
+	MT_Data[0].dst_UV_h_max=dst_dh_UV;
+
+	i=1;
+	while (i<max)
+	{
+		MT_Data[i].top=false;
+		MT_Data[i].bottom=false;
+		MT_Data[i].src_Y_h_min=MT_Data[i-1].src_Y_h_max;
+		MT_Data[i].src_Y_h_max=MT_Data[i].src_Y_h_min+src_dh_Y;
+		MT_Data[i].dst_Y_h_min=MT_Data[i-1].dst_Y_h_max;
+		MT_Data[i].dst_Y_h_max=MT_Data[i].dst_Y_h_min+dst_dh_Y;
+		MT_Data[i].src_UV_h_min=MT_Data[i-1].src_UV_h_max;
+		MT_Data[i].src_UV_h_max=MT_Data[i].src_UV_h_min+src_dh_UV;
+		MT_Data[i].dst_UV_h_min=MT_Data[i-1].dst_UV_h_max;
+		MT_Data[i].dst_UV_h_max=MT_Data[i].dst_UV_h_min+dst_dh_UV;
+		i++;
+	}
+
+	MT_Data[max-1].bottom=true;
+	MT_Data[max-1].src_Y_h_max=src_size_y;
+	MT_Data[max-1].dst_Y_h_max=dst_size_y;
+	if (src_UV_h) MT_Data[max-1].src_UV_h_max=src_size_y >> 1;
+	else MT_Data[max-1].src_UV_h_max=src_size_y;
+	if (dst_UV_h) MT_Data[max-1].dst_UV_h_max=dst_size_y >> 1;
+	else MT_Data[max-1].dst_UV_h_max=dst_size_y;
+
+	for (i=0; i<max; i++)
+	{
+		MT_Data[i].src_Y_w=src_size_x;
+		MT_Data[i].dst_Y_w=dst_size_x;
+		if (src_UV_w) MT_Data[i].src_UV_w=src_size_x >> 1;
+		else MT_Data[i].src_UV_w=src_size_x;
+		if (dst_UV_w) MT_Data[i].dst_UV_w=dst_size_x >> 1;
+		else MT_Data[i].dst_UV_w=dst_size_x;
+	}
+
+	return(max);
+}
+
 
 
 void JPSDR_RGBConvert::Compute_Lookup(void)
@@ -326,15 +539,15 @@ void JPSDR_RGBConvert::Compute_Lookup(void)
 		case 0 :
 			for (i=0; i<=255; i++)
 			{
-				lookup[i]=(int16_t)round((i*kr*Coeff_Y*64.0)/255.0);
-				lookup[i+256]=(int16_t)round((i*kg*Coeff_Y*64.0)/255.0);
-				lookup[i+512]=(int16_t)round((i*kb*Coeff_Y*64.0)/255.0);
-				lookup[i+768]=(int16_t)round((i*u1*Coeff_U*0.5*64.0)/255.0);
-				lookup[i+1024]=(int16_t)round((i*u2*Coeff_U*0.5*64.0)/255.0);
-				lookup[i+1280]=(int16_t)round((i*Coeff_U*0.5*64.0)/255.0);
-				lookup[i+1536]=(int16_t)round((i*Coeff_V*0.5*64.0)/255.0);
-				lookup[i+1792]=(int16_t)round((i*v1*Coeff_V*0.5*64.0)/255.0);
-				lookup[i+2048]=(int16_t)round((i*v2*Coeff_V*0.5*64.0)/255.0);
+				Tlookup[i]=(int16_t)round((i*kr*Coeff_Y*64.0)/255.0);
+				Tlookup[i+256]=(int16_t)round((i*kg*Coeff_Y*64.0)/255.0);
+				Tlookup[i+512]=(int16_t)round((i*kb*Coeff_Y*64.0)/255.0);
+				Tlookup[i+768]=(int16_t)round((i*u1*Coeff_U*0.5*64.0)/255.0);
+				Tlookup[i+1024]=(int16_t)round((i*u2*Coeff_U*0.5*64.0)/255.0);
+				Tlookup[i+1280]=(int16_t)round((i*Coeff_U*0.5*64.0)/255.0);
+				Tlookup[i+1536]=(int16_t)round((i*Coeff_V*0.5*64.0)/255.0);
+				Tlookup[i+1792]=(int16_t)round((i*v1*Coeff_V*0.5*64.0)/255.0);
+				Tlookup[i+2048]=(int16_t)round((i*v2*Coeff_V*0.5*64.0)/255.0);
 			}
 			break;
 		case 1 :
@@ -344,15 +557,15 @@ void JPSDR_RGBConvert::Compute_Lookup(void)
 		case 5 :
 			for (i=0; i<=255; i++)
 			{
-				lookup[i]=(int16_t)round((i*255.0*32.0)/Coeff_Y);
-				lookup[i+256]=(int16_t)round((i*r1*255.0*32.0)/Coeff_V);
-				lookup[i+512]=(int16_t)round((i*g1*255.0*32.0)/Coeff_U);
-				lookup[i+768]=(int16_t)round((i*g2*255.0*32.0)/Coeff_V);
-				lookup[i+1024]=(int16_t)round((i*b1*255.0*32.0)/Coeff_U);
-				lookup[i+1280]=0;
-				lookup[i+1536]=0;
-				lookup[i+1792]=0;
-				lookup[i+2048]=0;
+				Tlookup[i]=(int16_t)round((i*255.0*32.0)/Coeff_Y);
+				Tlookup[i+256]=(int16_t)round((i*r1*255.0*32.0)/Coeff_V);
+				Tlookup[i+512]=(int16_t)round((i*g1*255.0*32.0)/Coeff_U);
+				Tlookup[i+768]=(int16_t)round((i*g2*255.0*32.0)/Coeff_V);
+				Tlookup[i+1024]=(int16_t)round((i*b1*255.0*32.0)/Coeff_U);
+				Tlookup[i+1280]=0;
+				Tlookup[i+1536]=0;
+				Tlookup[i+1792]=0;
+				Tlookup[i+2048]=0;
 			}
 			break;
 	}
@@ -2105,11 +2318,141 @@ void JPSDR_RGBConvert::Start()
 
 	image_data=idata;
 
+	if  (mData.mt_mode && (idata.src_h0>=32) && (idata.dst_h0>=32)) threads_number=CPUs_number;
+	else threads_number=1;
+
+	bool div_src_w,div_dst_w,div_src_h,div_dst_h;
+
+	switch (idata.src_video_mode)
+	{
+		case 0 :
+		case 1 :
+		case 4 :
+			div_src_w=false;
+			div_src_h=false;
+		case 2 :
+		case 3 :
+		case 5 :
+			div_src_w=true;
+			div_src_h=false;
+			break;
+		case 6 :
+			div_src_w=true;
+			div_src_h=true;
+			break;
+		default :
+			div_src_w=false;
+			div_src_h=false;
+			break;
+	}
+
+	switch (idata.dst_video_mode)
+	{
+		case 0 :
+		case 1 :
+		case 4 :
+			div_dst_w=false;
+			div_dst_h=false;
+		case 2 :
+		case 3 :
+		case 5 :
+			div_dst_w=true;
+			div_dst_h=false;
+			break;
+		case 6 :
+			div_dst_w=true;
+			div_dst_h=true;
+			break;
+		default :
+			div_dst_w=false;
+			div_dst_h=false;
+			break;
+	}
+
+	threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,idata.dst_w0,idata.dst_h0,
+		div_src_w,div_src_h,div_dst_w,div_dst_h);
+
+	int16_t i;
+	bool test_ok;
+
+	if (threads_number>1)
+	{
+		test_ok=true;
+		i=0;
+		while ((i<threads_number) && test_ok)
+		{
+			MT_Thread[i].pClass=this;
+			MT_Thread[i].f_process=0;
+			MT_Thread[i].jobFinished=CreateEvent(NULL,TRUE,TRUE,NULL);
+			MT_Thread[i].nextJob=CreateEvent(NULL,TRUE,FALSE,NULL);
+			test_ok=test_ok && ((MT_Thread[i].jobFinished!=NULL) && (MT_Thread[i].nextJob!=NULL));
+			i++;
+		}
+		if (!test_ok)
+		{
+			ff->Except("Unable to create events !");
+			return;
+		}
+
+		DWORD_PTR dwpProcessAffinityMask;
+		DWORD_PTR dwpSystemAffinityMask;
+		DWORD_PTR dwpThreadAffinityMask=1;
+
+		GetProcessAffinityMask(GetCurrentProcess(), &dwpProcessAffinityMask, &dwpSystemAffinityMask);
+
+		test_ok=true;
+		i=0;
+		while ((i<threads_number) && test_ok)
+		{
+			if ((dwpProcessAffinityMask & dwpThreadAffinityMask)!=0)
+			{
+				thds[i]=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)StaticThreadpool,&MT_Thread[i],CREATE_SUSPENDED,&tids[i]);
+				test_ok=test_ok && (thds[i]!=NULL);
+				if (test_ok)
+				{
+					SetThreadAffinityMask(thds[i],dwpThreadAffinityMask);
+					ResumeThread(thds[i]);
+				}
+				i++;
+			}
+			dwpThreadAffinityMask<<=1;
+		}
+		if (!test_ok)
+		{
+			ff->Except("Unable to create threads pool !");
+			return;
+		}
+	}
+
 	Compute_Lookup();
 }
 
 
 
+
+void JPSDR_RGBConvert::End()
+{
+	int16_t i;
+
+	if (threads_number>1)
+	{
+		for (i=threads_number-1; i>=0; i--)
+		{
+			if (thds[i]!=NULL)
+			{
+				MT_Thread[i].f_process=255;
+				SetEvent(MT_Thread[i].nextJob);
+				WaitForSingleObject(thds[i],INFINITE);
+				myCloseHandle(thds[i]);
+			}
+		}
+		for (i=threads_number-1; i>=0; i--)
+		{
+			myCloseHandle(MT_Thread[i].nextJob);
+			myCloseHandle(MT_Thread[i].jobFinished);
+		}
+	}
+}
 
 
 void JPSDR_RGBConvert::GetSettingString(char *buf, int maxlen)
@@ -2157,6 +2500,8 @@ void JPSDR_RGBConvert::RGB32toYV24(const void *src_,void *dst_y_,void *dst_u_,vo
 {
 	const RGB32BMP *src;
 	uint8_t *dst_y,*dst_u,*dst_v;
+
+	const int16 *lookup=Tlookup;
 
 	src=(RGB32BMP *)src_;
 	dst_y=(uint8_t *)dst_y_;
@@ -2206,6 +2551,8 @@ void JPSDR_RGBConvert::RGB32toYV16(const void *src_,void *dst_y_,void *dst_u_,vo
 {
 	const RGB32BMP *src;
 	uint8_t *dst_y,*dst_u,*dst_v;
+
+	const int16 *lookup=Tlookup;
 	const int32_t w0=((w+1) >> 1)-1;
 
 	src=(RGB32BMP *)src_;
@@ -2317,6 +2664,8 @@ void JPSDR_RGBConvert::RGB32toYUY2(const void *src_,void *dst_,const int32_t w,c
 {
 	const RGB32BMP *src;
 	uint32_t *dst;
+
+	const int16 *lookup=Tlookup;
 	const int32_t w0=((w+1) >> 1)-1;
 
 	src=(RGB32BMP *)src_;
@@ -2425,13 +2774,28 @@ void JPSDR_RGBConvert::RGB32toYUY2(const void *src_,void *dst_,const int32_t w,c
 }
 
 
-void JPSDR_RGBConvert::RGB32toYV12(const void *src_,void *dst_y_,void *dst_u_,void *dst_v_,const int32_t w,
-	 const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch_y,ptrdiff_t dst_pitch_u,ptrdiff_t dst_pitch_v)
+
+void JPSDR_RGBConvert::RGB32toYV12_MT(uint8_t thread_num)
 {
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	const void *src_=mt_data_inf.src1;
+	const void *dst_y_=mt_data_inf.dst1;
+	const void *dst_u_=mt_data_inf.dst2;
+	const void *dst_v_=mt_data_inf.dst3;
+	const int32_t h = mt_data_inf.src_h ? mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min : mt_data_inf.dst_Y_h_max-mt_data_inf.dst_Y_h_min;
+	const int32_t w = mt_data_inf.src_w ? mt_data_inf.src_Y_w : mt_data_inf.dst_Y_w;
+	ptrdiff_t src_pitch=mt_data_inf.src_pitch1;
+	ptrdiff_t dst_pitch_y=mt_data_inf.dst_pitch1;
+	const ptrdiff_t dst_pitch_u=mt_data_inf.dst_pitch2;
+	const ptrdiff_t dst_pitch_v=mt_data_inf.dst_pitch3;
+
 	const RGB32BMP *src,*src2;
 	uint8_t *dst_y,*dst_y2,*dst_u,*dst_v;
+
+	const int16 *lookup=Tlookup;
 	const int32_t w0=((w+1) >> 1)-1;
-	const int32_t h0=((h+1) >> 1)-1;
+	const int32_t h0=mt_data_inf.bottom ? ((h+1) >> 1)-1:((h+1) >> 1);
 
 	src=(RGB32BMP *)src_;
 	src2=(RGB32BMP *)((uint8_t *)src_+src_pitch);
@@ -2591,13 +2955,81 @@ void JPSDR_RGBConvert::RGB32toYV12(const void *src_,void *dst_y_,void *dst_u_,vo
 		dst_v+=dst_pitch_v;
 	}
 
-	if ((h&1)==0)
+	if (mt_data_inf.bottom)
 	{
-		int32_t k;
-
-		k=0;
-		for (int32_t j=0; j<w0; j++)
+		if ((h&1)==0)
 		{
+			int32_t k;
+
+			k=0;
+			for (int32_t j=0; j<w0; j++)
+			{
+				int16_t y,u,v;
+				uint16_t b,g,r,b2,r2,g2;
+
+				b=src[k].b;
+				g=src[k].g;
+				r=src[k].r;
+				b2=src2[k].b;
+				g2=src2[k].g;
+				r2=src2[k].r;
+				y=(Offset_Y+lookup[r]+lookup[g+256]+lookup[b+512]) >> 6;
+				if (y<Min_Y) dst_y[k]=(uint8_t)Min_Y;
+				else
+				{
+					if (y>Max_Y) dst_y[k]=(uint8_t)Max_Y;
+					else dst_y[k]=(uint8_t)y;
+				}
+				y=(Offset_Y+lookup[r2]+lookup[g2+256]+lookup[b2+512]) >> 6;
+				if (y<Min_Y) dst_y2[k]=(uint8_t)Min_Y;
+				else
+				{
+					if (y>Max_Y) dst_y2[k]=(uint8_t)Max_Y;
+					else dst_y2[k]=(uint8_t)y;
+				}
+				k++;
+
+				r+=r2; r>>=1;
+				g+=g2; g>>=1;
+				b+=b2; b>>=1;
+				u=(Offset_U+lookup[r+768]+lookup[g+1024]+lookup[b+1280]) >> 6;
+				v=(Offset_V+lookup[r+1536]+lookup[g+1792]+lookup[b+2048]) >> 6;
+				if (u<Min_U) dst_u[j]=(uint8_t)Min_U;
+				else
+				{
+					if (u>Max_U) dst_u[j]=(uint8_t)Max_U;
+					else dst_u[j]=(uint8_t)u;
+				}
+				if (v<Min_V) dst_v[j]=(uint8_t)Min_V;
+				else
+				{
+					if (v>Max_V) dst_v[j]=(uint8_t)Max_V;
+					else dst_v[j]=(uint8_t)v;
+				}
+
+				b=src[k].b;
+				g=src[k].g;
+				r=src[k].r;
+				b2=src2[k].b;
+				g2=src2[k].g;
+				r2=src2[k].r;
+				y=(Offset_Y+lookup[r]+lookup[g+256]+lookup[b+512]) >> 6;
+				if (y<Min_Y) dst_y[k]=(uint8_t)Min_Y;
+				else
+				{
+					if (y>Max_Y) dst_y[k]=(uint8_t)Max_Y;
+					else dst_y[k]=(uint8_t)y;
+				}
+				y=(Offset_Y+lookup[r2]+lookup[g2+256]+lookup[b2+512]) >> 6;
+				if (y<Min_Y) dst_y2[k]=(uint8_t)Min_Y;
+				else
+				{
+					if (y>Max_Y) dst_y2[k]=(uint8_t)Max_Y;
+					else dst_y2[k]=(uint8_t)y;
+				}
+				k++;
+			}
+
 			int16_t y,u,v;
 			uint16_t b,g,r,b2,r2,g2;
 
@@ -2628,116 +3060,92 @@ void JPSDR_RGBConvert::RGB32toYV12(const void *src_,void *dst_y_,void *dst_u_,vo
 			b+=b2; b>>=1;
 			u=(Offset_U+lookup[r+768]+lookup[g+1024]+lookup[b+1280]) >> 6;
 			v=(Offset_V+lookup[r+1536]+lookup[g+1792]+lookup[b+2048]) >> 6;
-			if (u<Min_U) dst_u[j]=(uint8_t)Min_U;
+			if (u<Min_U) dst_u[w0]=(uint8_t)Min_U;
 			else
 			{
-				if (u>Max_U) dst_u[j]=(uint8_t)Max_U;
-				else dst_u[j]=(uint8_t)u;
+				if (u>Max_U) dst_u[w0]=(uint8_t)Max_U;
+				else dst_u[w0]=(uint8_t)u;
 			}
-			if (v<Min_V) dst_v[j]=(uint8_t)Min_V;
+			if (v<Min_V) dst_v[w0]=(uint8_t)Min_V;
 			else
 			{
-				if (v>Max_V) dst_v[j]=(uint8_t)Max_V;
-				else dst_v[j]=(uint8_t)v;
+				if (v>Max_V) dst_v[w0]=(uint8_t)Max_V;
+				else dst_v[w0]=(uint8_t)v;
 			}
 
-			b=src[k].b;
-			g=src[k].g;
-			r=src[k].r;
-			b2=src2[k].b;
-			g2=src2[k].g;
-			r2=src2[k].r;
-			y=(Offset_Y+lookup[r]+lookup[g+256]+lookup[b+512]) >> 6;
-			if (y<Min_Y) dst_y[k]=(uint8_t)Min_Y;
-			else
+			if (k<w)
 			{
-				if (y>Max_Y) dst_y[k]=(uint8_t)Max_Y;
-				else dst_y[k]=(uint8_t)y;
-			}
-			y=(Offset_Y+lookup[r2]+lookup[g2+256]+lookup[b2+512]) >> 6;
-			if (y<Min_Y) dst_y2[k]=(uint8_t)Min_Y;
-			else
-			{
-				if (y>Max_Y) dst_y2[k]=(uint8_t)Max_Y;
+				b=src[k].b;
+				g=src[k].g;
+				r=src[k].r;
+				b2=src2[k].b;
+				g2=src2[k].g;
+				r2=src2[k].r;
+				y=(Offset_Y+lookup[r]+lookup[g+256]+lookup[b+512]) >> 6;
+				if (y<Min_Y) dst_y[k]=(uint8_t)Min_Y;
+				else
+				{
+					if (y>Max_Y) dst_y[k]=(uint8_t)Max_Y;
+					else dst_y[k]=(uint8_t)y;
+				}
+				y=(Offset_Y+lookup[r2]+lookup[g2+256]+lookup[b2+512]) >> 6;
+				if (y<Min_Y) dst_y2[k]=(uint8_t)Min_Y;
+				else
+				{
+					if (y>Max_Y) dst_y2[k]=(uint8_t)Max_Y;
 				else dst_y2[k]=(uint8_t)y;
+				}
 			}
-			k++;
 		}
-
-		int16_t y,u,v;
-		uint16_t b,g,r,b2,r2,g2;
-
-		b=src[k].b;
-		g=src[k].g;
-		r=src[k].r;
-		b2=src2[k].b;
-		g2=src2[k].g;
-		r2=src2[k].r;
-		y=(Offset_Y+lookup[r]+lookup[g+256]+lookup[b+512]) >> 6;
-		if (y<Min_Y) dst_y[k]=(uint8_t)Min_Y;
 		else
 		{
-			if (y>Max_Y) dst_y[k]=(uint8_t)Max_Y;
-			else dst_y[k]=(uint8_t)y;
-		}
-		y=(Offset_Y+lookup[r2]+lookup[g2+256]+lookup[b2+512]) >> 6;
-		if (y<Min_Y) dst_y2[k]=(uint8_t)Min_Y;
-		else
-		{
-			if (y>Max_Y) dst_y2[k]=(uint8_t)Max_Y;
-			else dst_y2[k]=(uint8_t)y;
-		}
-		k++;
+			int32_t k;
 
-		r+=r2; r>>=1;
-		g+=g2; g>>=1;
-		b+=b2; b>>=1;
-		u=(Offset_U+lookup[r+768]+lookup[g+1024]+lookup[b+1280]) >> 6;
-		v=(Offset_V+lookup[r+1536]+lookup[g+1792]+lookup[b+2048]) >> 6;
-		if (u<Min_U) dst_u[w0]=(uint8_t)Min_U;
-		else
-		{
-			if (u>Max_U) dst_u[w0]=(uint8_t)Max_U;
-			else dst_u[w0]=(uint8_t)u;
-		}
-		if (v<Min_V) dst_v[w0]=(uint8_t)Min_V;
-		else
-		{
-			if (v>Max_V) dst_v[w0]=(uint8_t)Max_V;
-			else dst_v[w0]=(uint8_t)v;
-		}
-
-		if (k<w)
-		{
-			b=src[k].b;
-			g=src[k].g;
-			r=src[k].r;
-			b2=src2[k].b;
-			g2=src2[k].g;
-			r2=src2[k].r;
-			y=(Offset_Y+lookup[r]+lookup[g+256]+lookup[b+512]) >> 6;
-			if (y<Min_Y) dst_y[k]=(uint8_t)Min_Y;
-			else
+			k=0;
+			for (int32_t j=0; j<w0; j++)
 			{
-				if (y>Max_Y) dst_y[k]=(uint8_t)Max_Y;
-				else dst_y[k]=(uint8_t)y;
-			}
-			y=(Offset_Y+lookup[r2]+lookup[g2+256]+lookup[b2+512]) >> 6;
-			if (y<Min_Y) dst_y2[k]=(uint8_t)Min_Y;
-			else
-			{
-				if (y>Max_Y) dst_y2[k]=(uint8_t)Max_Y;
-				else dst_y2[k]=(uint8_t)y;
-			}
-		}
-	}
-	else
-	{
-		int32_t k;
+				int16_t y,u,v;
+				uint16_t b,g,r;
 
-		k=0;
-		for (int32_t j=0; j<w0; j++)
-		{
+				b=src[k].b;
+				g=src[k].g;
+				r=src[k].r;
+				y=(Offset_Y+lookup[r]+lookup[g+256]+lookup[b+512]) >> 6;
+				u=(Offset_U+lookup[r+768]+lookup[g+1024]+lookup[b+1280]) >> 6;
+				v=(Offset_V+lookup[r+1536]+lookup[g+1792]+lookup[b+2048]) >> 6;
+				if (y<Min_Y) dst_y[k]=(uint8_t)Min_Y;
+				else
+				{
+					if (y>Max_Y) dst_y[k]=(uint8_t)Max_Y;
+					else dst_y[k]=(uint8_t)y;
+				}
+				if (u<Min_U) dst_u[j]=(uint8_t)Min_U;
+				else
+				{
+					if (u>Max_U) dst_u[j]=(uint8_t)Max_U;
+					else dst_u[j]=(uint8_t)u;
+				}
+				if (v<Min_V) dst_v[j]=(uint8_t)Min_V;
+				else
+				{
+					if (v>Max_V) dst_v[j]=(uint8_t)Max_V;
+					else dst_v[j]=(uint8_t)v;
+				}
+				k++;
+
+				b=src[k].b;
+				g=src[k].g;
+				r=src[k].r;
+				y=(Offset_Y+lookup[r]+lookup[g+256]+lookup[b+512]) >> 6;
+				if (y<Min_Y) dst_y[k]=(uint8_t)Min_Y;
+				else
+				{
+					if (y>Max_Y) dst_y[k]=(uint8_t)Max_Y;
+					else dst_y[k]=(uint8_t)y;
+				}
+				k++;
+			}
+
 			int16_t y,u,v;
 			uint16_t b,g,r;
 
@@ -2753,84 +3161,64 @@ void JPSDR_RGBConvert::RGB32toYV12(const void *src_,void *dst_y_,void *dst_u_,vo
 				if (y>Max_Y) dst_y[k]=(uint8_t)Max_Y;
 				else dst_y[k]=(uint8_t)y;
 			}
-			if (u<Min_U) dst_u[j]=(uint8_t)Min_U;
+			if (u<Min_U) dst_u[w0]=(uint8_t)Min_U;
 			else
 			{
-				if (u>Max_U) dst_u[j]=(uint8_t)Max_U;
-				else dst_u[j]=(uint8_t)u;
+				if (u>Max_U) dst_u[w0]=(uint8_t)Max_U;
+				else dst_u[w0]=(uint8_t)u;
 			}
-			if (v<Min_V) dst_v[j]=(uint8_t)Min_V;
+			if (v<Min_V) dst_v[w0]=(uint8_t)Min_V;
 			else
 			{
-				if (v>Max_V) dst_v[j]=(uint8_t)Max_V;
-				else dst_v[j]=(uint8_t)v;
-			}
-			k++;
-
-			b=src[k].b;
-			g=src[k].g;
-			r=src[k].r;
-			y=(Offset_Y+lookup[r]+lookup[g+256]+lookup[b+512]) >> 6;
-			if (y<Min_Y) dst_y[k]=(uint8_t)Min_Y;
-			else
-			{
-				if (y>Max_Y) dst_y[k]=(uint8_t)Max_Y;
-				else dst_y[k]=(uint8_t)y;
+				if (v>Max_V) dst_v[w0]=(uint8_t)Max_V;
+				else dst_v[w0]=(uint8_t)v;
 			}
 			k++;
-		}
 
-		int16_t y,u,v;
-		uint16_t b,g,r;
-
-		b=src[k].b;
-		g=src[k].g;
-		r=src[k].r;
-		y=(Offset_Y+lookup[r]+lookup[g+256]+lookup[b+512]) >> 6;
-		u=(Offset_U+lookup[r+768]+lookup[g+1024]+lookup[b+1280]) >> 6;
-		v=(Offset_V+lookup[r+1536]+lookup[g+1792]+lookup[b+2048]) >> 6;
-		if (y<Min_Y) dst_y[k]=(uint8_t)Min_Y;
-		else
-		{
-			if (y>Max_Y) dst_y[k]=(uint8_t)Max_Y;
-			else dst_y[k]=(uint8_t)y;
-		}
-		if (u<Min_U) dst_u[w0]=(uint8_t)Min_U;
-		else
-		{
-			if (u>Max_U) dst_u[w0]=(uint8_t)Max_U;
-			else dst_u[w0]=(uint8_t)u;
-		}
-		if (v<Min_V) dst_v[w0]=(uint8_t)Min_V;
-		else
-		{
-			if (v>Max_V) dst_v[w0]=(uint8_t)Max_V;
-			else dst_v[w0]=(uint8_t)v;
-		}
-		k++;
-
-		if (k<w)
-		{
-			b=src[k].b;
-			g=src[k].g;
-			r=src[k].r;
-			y=(Offset_Y+lookup[r]+lookup[g+256]+lookup[b+512]) >> 6;
-			if (y<Min_Y) dst_y[k]=(uint8_t)Min_Y;
-			else
+			if (k<w)
 			{
-				if (y>Max_Y) dst_y[k]=(uint8_t)Max_Y;
-				else dst_y[k]=(uint8_t)y;
+				b=src[k].b;
+				g=src[k].g;
+				r=src[k].r;
+				y=(Offset_Y+lookup[r]+lookup[g+256]+lookup[b+512]) >> 6;
+				if (y<Min_Y) dst_y[k]=(uint8_t)Min_Y;
+				else
+				{
+					if (y>Max_Y) dst_y[k]=(uint8_t)Max_Y;
+					else dst_y[k]=(uint8_t)y;
+				}
 			}
 		}
 	}
 }
 
 
+void JPSDR_RGBConvert::RGB32toYV12_SSE_MT(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	const int32_t h = mt_data_inf.src_h ? mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min : mt_data_inf.dst_Y_h_max-mt_data_inf.dst_Y_h_min;
+	const int32_t w = mt_data_inf.src_w ? mt_data_inf.src_Y_w : mt_data_inf.dst_Y_w;
+
+	if (mt_data_inf.bottom)
+		JPSDR_RGBConvert_RGB32toYV12_SSE_2(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.dst2,mt_data_inf.dst3,
+			w,h,Offset_Y,Offset_U,Offset_V,Tlookup,mt_data_inf.src_pitch1,mt_data_inf.src_modulo1,mt_data_inf.dst_pitch1,
+			mt_data_inf.dst_modulo1,mt_data_inf.dst_modulo2,mt_data_inf.dst_modulo3,Min_Y,Max_Y,Min_U,Max_U,
+			Min_V,Max_V);
+	else
+		JPSDR_RGBConvert_RGB32toYV12_SSE_1(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.dst2,mt_data_inf.dst3,
+			w,h,Offset_Y,Offset_U,Offset_V,Tlookup,mt_data_inf.src_pitch1,mt_data_inf.src_modulo1,mt_data_inf.dst_pitch1,
+			mt_data_inf.dst_modulo1,mt_data_inf.dst_modulo2,mt_data_inf.dst_modulo3,Min_Y,Max_Y,Min_U,Max_U,
+			Min_V,Max_V);
+}
+
 void JPSDR_RGBConvert::YV24toRGB32(const void *src_y_,const void *src_u_,const void *src_v_, void *dst_,
 	const int32_t w,const int32_t h,ptrdiff_t src_pitch_y,ptrdiff_t src_pitch_u,ptrdiff_t src_pitch_v,ptrdiff_t dst_pitch)
 {
 	RGB32BMP *dst;
 	const uint8_t *src_y,*src_u,*src_v;
+
+	const int16 *lookup=Tlookup;
 
 	dst=(RGB32BMP *)dst_;
 	src_y=(uint8_t *)src_y_;
@@ -2877,6 +3265,97 @@ void JPSDR_RGBConvert::YV24toRGB32(const void *src_y_,const void *src_u_,const v
 }
 
 
+void JPSDR_RGBConvert::RGB32toYV24_MT(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	const int32_t h = mt_data_inf.src_h ? mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min : mt_data_inf.dst_Y_h_max-mt_data_inf.dst_Y_h_min;
+	const int32_t w = mt_data_inf.src_w ? mt_data_inf.src_Y_w : mt_data_inf.dst_Y_w;
+
+	if (SSE2_Enable)
+		JPSDR_RGBConvert_RGB32toYV24_SSE(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.dst2,mt_data_inf.dst3,
+			w,h,Offset_Y,Offset_U,Offset_V,Tlookup,mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1,
+			mt_data_inf.dst_modulo2,mt_data_inf.dst_modulo3,Min_Y,Max_Y,Min_U,Max_U,Min_V,Max_V);
+	else
+		RGB32toYV24(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.dst2,mt_data_inf.dst3,w,h,mt_data_inf.src_pitch1,
+			mt_data_inf.dst_pitch1,mt_data_inf.dst_pitch2,mt_data_inf.dst_pitch3);
+}
+
+
+void JPSDR_RGBConvert::RGB32toYV16_MT(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	const int32_t h = mt_data_inf.src_h ? mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min : mt_data_inf.dst_Y_h_max-mt_data_inf.dst_Y_h_min;
+	const int32_t w = mt_data_inf.src_w ? mt_data_inf.src_Y_w : mt_data_inf.dst_Y_w;
+
+	if (SSE2_Enable)
+		JPSDR_RGBConvert_RGB32toYV16_SSE(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.dst2,mt_data_inf.dst3,
+			w,h,Offset_Y,Offset_U,Offset_V,Tlookup,mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1,
+			mt_data_inf.dst_modulo2,mt_data_inf.dst_modulo3,Min_Y,Max_Y,Min_U,Max_U,Min_V,Max_V);
+	else
+		RGB32toYV16(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.dst2,mt_data_inf.dst3,w,h,mt_data_inf.src_pitch1,
+			mt_data_inf.dst_pitch1,mt_data_inf.dst_pitch2,mt_data_inf.dst_pitch3);
+}
+
+
+void JPSDR_RGBConvert::RGB32toYUY2_MT(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	const int32_t h = mt_data_inf.src_h ? mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min : mt_data_inf.dst_Y_h_max-mt_data_inf.dst_Y_h_min;
+	const int32_t w = mt_data_inf.src_w ? mt_data_inf.src_Y_w : mt_data_inf.dst_Y_w;
+
+	if (SSE2_Enable)
+		JPSDR_RGBConvert_RGB32toYUYV_SSE(mt_data_inf.src1,mt_data_inf.dst1,w,h,Offset_Y,Offset_U,Offset_V,
+			Tlookup,mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1,Min_Y,Max_Y,Min_U,Max_U,Min_V,Max_V);
+	else
+		RGB32toYUY2(mt_data_inf.src1,mt_data_inf.dst1,w,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+}
+
+
+void JPSDR_RGBConvert::YV24toRGB32_MT(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	const int32_t h = mt_data_inf.src_h ? mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min : mt_data_inf.dst_Y_h_max-mt_data_inf.dst_Y_h_min;
+	const int32_t w = mt_data_inf.src_w ? mt_data_inf.src_Y_w : mt_data_inf.dst_Y_w;
+
+	if (SSE2_Enable)
+		JPSDR_RGBConvert_YV24toRGB32_SSE(mt_data_inf.src1,mt_data_inf.src2,mt_data_inf.src3,mt_data_inf.dst1,
+			w,h,Offset_R,Offset_G,Offset_B,Tlookup,mt_data_inf.src_modulo1,mt_data_inf.src_modulo2,
+			mt_data_inf.src_modulo3,mt_data_inf.dst_modulo1);
+	else
+		YV24toRGB32(mt_data_inf.src1,mt_data_inf.src2,mt_data_inf.src3,mt_data_inf.dst1,w,h,mt_data_inf.src_pitch1,
+			mt_data_inf.src_pitch2,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch1);
+}
+
+
+
+DWORD WINAPI JPSDR_RGBConvert::StaticThreadpool( LPVOID lpParam )
+{
+	const MT_Data_Thread *data=(const MT_Data_Thread *)lpParam;
+	JPSDR_RGBConvert *ptrClass=(JPSDR_RGBConvert *)data->pClass;
+	
+	while (true)
+	{
+		WaitForSingleObject(data->nextJob,INFINITE);
+		switch(data->f_process)
+		{
+			case 1 : ptrClass->RGB32toYV24_MT(data->thread_Id); break;
+			case 2 : ptrClass->RGB32toYV16_MT(data->thread_Id); break;
+			case 3 : ptrClass->RGB32toYUY2_MT(data->thread_Id); break;
+			case 4 : ptrClass->YV24toRGB32_MT(data->thread_Id); break;
+			case 5 : ptrClass->RGB32toYV12_MT(data->thread_Id); break;
+			case 6 : ptrClass->RGB32toYV12_SSE_MT(data->thread_Id); break;
+			case 255 : return(0); break;
+			default : ;
+		}
+		ResetEvent(data->nextJob);
+		SetEvent(data->jobFinished);
+	}
+}
+
 
 void JPSDR_RGBConvert::Run()
 {
@@ -2884,6 +3363,7 @@ void JPSDR_RGBConvert::Run()
 	int32_t w,h;
 	ptrdiff_t d_dst0,d_dst1,d_dst2;
 	ptrdiff_t d_src0,d_src1,d_src2;
+	bool src_w,src_h;
 
 	idata=image_data;
 
@@ -2907,16 +3387,20 @@ void JPSDR_RGBConvert::Run()
 				case 0 :
 					w=idata.src_w0;
 					h=idata.src_h0;
+					src_w=true;
+					src_h=true;
 					d_src0=0; d_src1=0; d_src2=0; 
 					d_dst0=0; d_dst1=0; d_dst2=0;
 					break;
 				case 1 :
 					h=idata.src_h0;
+					src_h=true;
 					d_dst1=0; d_dst2=0;
 					d_src1=0; d_src2=0;
 					if (idata.src_w0<idata.dst_w0)
 					{
 						w=idata.src_w0;
+						src_w=true;
 						d_src0=0;
 						d_dst0=idata.dst_w0-idata.src_w0;
 					}
@@ -2925,23 +3409,27 @@ void JPSDR_RGBConvert::Run()
 						if (idata.src_w0>idata.dst_w0)
 						{
 							w=idata.dst_w0;
+							src_w=false;
 							d_dst0=0;
 							d_src0=(idata.src_w0-idata.dst_w0) << 2;
 						}
 						else
 						{
 							w=idata.src_w0;
+							src_w=true;
 							d_dst0=0; d_src0=0;
 						}
 					}
 					break;
 				case 2 :
 					h=idata.src_h0;
+					src_h=true;
 					d_dst1=0; d_dst2=0;
 					d_src1=0; d_src2=0;
 					if (idata.src_w0<idata.dst_w0)
 					{
 						w=idata.src_w0;
+						src_w=true;
 						d_src0=0;
 						d_dst0=0;
 					}
@@ -2950,12 +3438,14 @@ void JPSDR_RGBConvert::Run()
 						if (idata.src_w0>idata.dst_w0)
 						{
 							w=idata.dst_w0;
+							src_w=false;
 							d_dst0=0;
 							d_src0=(idata.src_w0-idata.dst_w0) << 2;
 						}
 						else
 						{
 							w=idata.src_w0;
+							src_w=true;
 							d_dst0=0; d_src0=0;
 						}
 					}
@@ -2966,6 +3456,7 @@ void JPSDR_RGBConvert::Run()
 					if (idata.src_w0<idata.dst_w0)
 					{
 						w=idata.src_w0;
+						src_w=true;
 						d_src0=0;
 						d_dst0=idata.dst_w0-idata.src_w0;
 					}
@@ -2974,17 +3465,27 @@ void JPSDR_RGBConvert::Run()
 						if (idata.src_w0>idata.dst_w0)
 						{
 							w=idata.dst_w0;
+							src_w=false;
 							d_dst0=0;
 							d_src0=(idata.src_w0-idata.dst_w0) << 2;
 						}
 						else
 						{
 							w=idata.src_w0;
+							src_w=true;
 							d_dst0=0; d_src0=0;
 						}
 					}
-					if (idata.src_h0<idata.dst_h0) h=idata.src_h0;
-					else h=idata.dst_h0;
+					if (idata.src_h0<idata.dst_h0)
+					{
+						h=idata.src_h0;
+						src_h=true;
+					}
+					else
+					{
+						h=idata.dst_h0;
+						src_h=false;
+					}
 					break;
 				default :
 					w=idata.src_w0;
@@ -2996,80 +3497,97 @@ void JPSDR_RGBConvert::Run()
 		case 3 :
 			w=idata.src_w0;
 			h=idata.src_h0;
+			src_w=true;
+			src_h=true;
 			d_src0=0; d_src1=0; d_src2=0; 
 			d_dst0=0; d_dst1=0; d_dst2=0;
 			break;
 		default :
 			w=idata.src_w0;
 			h=idata.src_h0;
+			src_w=true;
+			src_h=true;
 			d_src0=0; d_src1=0; d_src2=0; 
 			d_dst0=0; d_dst1=0; d_dst2=0;
 			break;
 	}
 
-	if (SSE2_Enable)
+	for (uint8_t i=0; i<threads_number; i++)
+	{
+		MT_Data[i].src1=(void *)((uint8_t *)idata.src_plane0+(idata.src_pitch0*MT_Data[i].src_Y_h_min));
+		MT_Data[i].src2=(void *)((uint8_t *)idata.src_plane1+(idata.src_pitch1*MT_Data[i].src_UV_h_min));
+		MT_Data[i].src3=(void *)((uint8_t *)idata.src_plane2+(idata.src_pitch2*MT_Data[i].src_UV_h_min));
+		MT_Data[i].dst1=(void *)((uint8_t *)idata.dst_plane0+(idata.dst_pitch0*MT_Data[i].dst_Y_h_min));
+		MT_Data[i].dst2=(void *)((uint8_t *)idata.dst_plane1+(idata.dst_pitch1*MT_Data[i].dst_UV_h_min));
+		MT_Data[i].dst3=(void *)((uint8_t *)idata.dst_plane2+(idata.dst_pitch2*MT_Data[i].dst_UV_h_min));
+		MT_Data[i].src_pitch1=idata.src_pitch0;
+		MT_Data[i].src_pitch2=idata.src_pitch1;
+		MT_Data[i].src_pitch3=idata.src_pitch2;
+		MT_Data[i].dst_pitch1=idata.dst_pitch0;
+		MT_Data[i].dst_pitch2=idata.dst_pitch1;
+		MT_Data[i].dst_pitch3=idata.dst_pitch2;
+		MT_Data[i].src_modulo1=idata.src_modulo0+d_src0;
+		MT_Data[i].src_modulo2=idata.src_modulo1+d_src1;
+		MT_Data[i].src_modulo3=idata.src_modulo2+d_src2;
+		MT_Data[i].dst_modulo1=idata.dst_modulo0+d_dst0;
+		MT_Data[i].dst_modulo2=idata.dst_modulo1+d_dst1;
+		MT_Data[i].dst_modulo3=idata.dst_modulo2+d_dst2;
+		MT_Data[i].src_w=src_w;
+		MT_Data[i].src_h=src_h;
+	}
+
+	if (threads_number>1)
+	{
+		uint8_t f_proc=0;
+
+		switch(convertion_mode)
+		{
+			case 0 :
+				switch(mData.output_mode)
+				{
+					case 0 : f_proc=1; break;
+					case 1 : f_proc=2; break;
+					case 2 : f_proc=3; break;
+					case 3 : 
+						if (SSE2_Enable) f_proc=6;
+						else f_proc=5;
+						break;
+				}
+				break;
+			case 3 : f_proc=4; break;
+		}
+
+		for(uint8_t i=0; i<threads_number; i++)
+		{
+			MT_Thread[i].f_process=f_proc;
+			ResetEvent(MT_Thread[i].jobFinished);
+			SetEvent(MT_Thread[i].nextJob);
+		}
+		for(uint8_t i=0; i<threads_number; i++)
+			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
+		for(uint8_t i=0; i<threads_number; i++)
+			MT_Thread[i].f_process=0;
+	}
+	else
 	{
 		switch(convertion_mode)
 		{
 			case 0 :
 				switch(mData.output_mode)
 				{
-					case 0 :
-						JPSDR_RGBConvert_RGB32toYV24_SSE(idata.src_plane0,idata.dst_plane0,idata.dst_plane1,idata.dst_plane2,w,h,
-							Offset_Y,Offset_U,Offset_V,lookup,idata.src_modulo0+d_src0,idata.dst_modulo0+d_dst0,idata.dst_modulo1+d_dst1,
-							idata.dst_modulo2+d_dst2,Min_Y,Max_Y,Min_U,Max_U,Min_V,Max_V);
-						break;
-					case 1 :
-						JPSDR_RGBConvert_RGB32toYV16_SSE(idata.src_plane0,idata.dst_plane0,idata.dst_plane1,idata.dst_plane2,w,h,
-							Offset_Y,Offset_U,Offset_V,lookup,idata.src_modulo0+d_src0,idata.dst_modulo0+d_dst0,idata.dst_modulo1+d_dst1,
-							idata.dst_modulo2+d_dst2,Min_Y,Max_Y,Min_U,Max_U,Min_V,Max_V);
-						break;
-					case 2 :
-						JPSDR_RGBConvert_RGB32toYUYV_SSE(idata.src_plane0,idata.dst_plane0,w,h,
-							Offset_Y,Offset_U,Offset_V,lookup,idata.src_modulo0+d_src0,idata.dst_modulo0+d_dst0,
-							Min_Y,Max_Y,Min_U,Max_U,Min_V,Max_V);
-						break;
+					case 0 : RGB32toYV24_MT(0); break;
+					case 1 : RGB32toYV16_MT(0); break;
+					case 2 : RGB32toYUY2_MT(0); break;
 					case 3 :
-						JPSDR_RGBConvert_RGB32toYV12_SSE(idata.src_plane0,idata.dst_plane0,idata.dst_plane1,idata.dst_plane2,w,h,
-								Offset_Y,Offset_U,Offset_V,lookup,idata.src_pitch0,idata.src_modulo0+d_src0,idata.dst_pitch0,idata.dst_modulo0+d_dst0,
-								idata.dst_modulo1+d_dst1,idata.dst_modulo2+d_dst2,Min_Y,Max_Y,Min_U,Max_U,Min_V,Max_V);
+						if (SSE2_Enable)
+							JPSDR_RGBConvert_RGB32toYV12_SSE(idata.src_plane0,idata.dst_plane0,idata.dst_plane1,idata.dst_plane2,w,h,
+									Offset_Y,Offset_U,Offset_V,Tlookup,idata.src_pitch0,idata.src_modulo0+d_src0,idata.dst_pitch0,idata.dst_modulo0+d_dst0,
+									idata.dst_modulo1+d_dst1,idata.dst_modulo2+d_dst2,Min_Y,Max_Y,Min_U,Max_U,Min_V,Max_V);
+						else RGB32toYV12_MT(0);
 						break;
 				}
 				break;
-			case 3 :
-					JPSDR_RGBConvert_YV24toRGB32_SSE(idata.src_plane0,idata.src_plane1,idata.src_plane2,idata.dst_plane0,w,h,
-						Offset_R,Offset_G,Offset_B,lookup,idata.src_modulo0+d_src0,idata.src_modulo1+d_src1,idata.src_modulo2+d_src2,
-						idata.dst_modulo0+d_dst0);
-					break;
-		}
-	}
-	else
-	{
-		switch(convertion_mode)
-		{
-			case 0 : 
-				switch(mData.output_mode)
-				{
-					case 0 :
-						RGB32toYV24(idata.src_plane0,idata.dst_plane0,idata.dst_plane1,idata.dst_plane2,w,h,idata.src_pitch0,
-							idata.dst_pitch0,idata.dst_pitch1,idata.dst_pitch2);
-						break;
-					case 1 :
-						RGB32toYV16(idata.src_plane0,idata.dst_plane0,idata.dst_plane1,idata.dst_plane2,w,h,idata.src_pitch0,
-							idata.dst_pitch0,idata.dst_pitch1,idata.dst_pitch2);
-						break;
-					case 2 :
-						RGB32toYUY2(idata.src_plane0,idata.dst_plane0,w,h,idata.src_pitch0,idata.dst_pitch0);
-						break;
-					case 3 :
-						RGB32toYV12(idata.src_plane0,idata.dst_plane0,idata.dst_plane1,idata.dst_plane2,w,h,idata.src_pitch0,
-							idata.dst_pitch0,idata.dst_pitch1,idata.dst_pitch2);
-						break;
-				}
-				break;
-			case 3 : YV24toRGB32(idata.src_plane0,idata.src_plane1,idata.src_plane2,idata.dst_plane0,w,h,idata.src_pitch0,
-						 idata.src_pitch1,idata.src_pitch2,idata.dst_pitch0);
-					break;
+			case 3 : YV24toRGB32_MT(0); break;
 		}
 	}
 }
@@ -3082,6 +3600,7 @@ void JPSDR_RGBConvert::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptV
 	mData.full_range=!!argv[1].asInt();
 	mData.output_mode=argv[2].asInt();
 	mData.auto_detect=!!argv[3].asInt();
+	mData.mt_mode=!!argv[4].asInt();
 }
 
 bool JPSDR_RGBConvert::Configure(VDXHWND hwnd)
@@ -3093,12 +3612,11 @@ bool JPSDR_RGBConvert::Configure(VDXHWND hwnd)
 
 
 void JPSDR_RGBConvert::GetScriptString(char *buf, int maxlen)
-{
- 
-  
-	SafePrintf(buf, maxlen, "Config(%d, %d, %d, %d)",mData.color_matrix,mData.full_range,mData.output_mode,mData.auto_detect);
+{ 
+ 	SafePrintf(buf, maxlen, "Config(%d, %d, %d, %d, %d)",mData.color_matrix,mData.full_range,
+		mData.output_mode,mData.auto_detect,mData.mt_mode);
 }
 
 
 extern VDXFilterDefinition filterDef_JPSDR_RGBConvert=
-VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGB Convert v1.4.0","RGB <-> YCbCr convertion with color matrix option.\n[ASM][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGB Convert v2.0.0","RGB <-> YCbCr convertion with color matrix option.\n[ASM][SSE2] Optimised.");

@@ -27,6 +27,7 @@
 #define IDC_FILENAME                    3021
 #define IDC_BROWSE                      3022
 #define IDC_Y_ONLY                      3023
+#define IDC_ENABLE_MT                   3024
 #define IDC_IVTC_STATIC                 -1
 
 // Next default values for new objects
@@ -35,7 +36,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        302
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         3024
+#define _APS_NEXT_CONTROL_VALUE         3025
 #define _APS_NEXT_SYMED_VALUE           301
 #endif
 #endif

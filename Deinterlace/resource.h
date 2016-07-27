@@ -18,6 +18,7 @@
 #define IDC_DISCARD                     2012
 #define IDC_FIELD_ORDER                 2013
 #define IDC_PREVIEW                     2014
+#define IDC_ENABLE_MT                   2015
 
 // Next default values for new objects
 // 
@@ -25,7 +26,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        202
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         2015
+#define _APS_NEXT_CONTROL_VALUE         2016
 #define _APS_NEXT_SYMED_VALUE           201
 #endif
 #endif

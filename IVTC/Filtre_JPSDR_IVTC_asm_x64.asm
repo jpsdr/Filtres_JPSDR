@@ -292,6 +292,7 @@ w_map equ dword ptr[rbp+88]
 	mov eax,00FCFCFCh
 	movd mm7,eax
 	
+	xor r12,r12
 	mov rsi,rcx
 	mov r10,pitch
 	mov r11,modulo
@@ -312,7 +313,7 @@ w_map equ dword ptr[rbp+88]
 	xor r9,r9
 	mov r8d,w
 	mov r9d,h
-	xor r15,r15
+	xor r14,r14
 
 Loop_A0_1:
 	mov r14d,r8d
@@ -471,6 +472,718 @@ Loop_A0_3:
 
 JPSDR_IVTC_Motion_Map_SSE_RGB32 endp
 
+
+
+;JPSDR_IVTC_Motion_Map_SSE_RGB32 proc src1:dword,src2:dword,buffer:dword,dst:dword,w:dword,h:dword,
+;	pitch:dword,modulo:dword,thr:dword,w_map:dword
+; src1 = rcx
+; src2 = rdx
+; buffer = r8
+; dst = r9
+
+JPSDR_IVTC_Motion_Map_SSE_RGB32_a proc public frame
+
+w equ dword ptr[rbp+48]
+h equ dword ptr[rbp+56]
+pitch equ qword ptr[rbp+64]
+modulo equ qword ptr[rbp+72]
+thr equ dword ptr[rbp+80]
+w_map equ dword ptr[rbp+88]
+
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	.endprolog
+
+	movd mm6,thr
+	pxor mm7,mm7
+	punpcklbw mm6,mm7
+	mov eax,00FCFCFCh
+	movd mm7,eax
+	
+	xor r12,r12
+	mov rsi,rcx
+	mov r10,pitch
+	mov r11,modulo
+	mov r12d,w_map
+	mov r13,4
+	xor rcx,rcx
+	
+	mov rdi,r9
+	xor rax,rax
+	cld
+	mov ecx,r12d
+	shr ecx,2
+	rep stosd
+	mov rbx,rdi
+	
+	mov rdi,rdx
+	mov rcx,r8
+	xor r8,r8
+	xor r9,r9
+	mov r8d,w
+	mov r9d,h
+	xor r14,r14
+
+Loop_A0_1_1:
+	mov r14d,r8d
+Loop_A0_2_1:
+	mov rdx,r10
+	pxor mm5,mm5
+	shl rdx,1
+	movd mm0,dword ptr[rsi]				;mm0=src1
+	movd mm1,dword ptr[rdi]				;mm1=src2
+	movd mm2,dword ptr[rsi+rdx]			;mm2=src3
+	movq mm3,mm0
+	movq mm4,mm2
+	punpcklbw mm1,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm1
+	pcmpgtw mm4,mm1
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm1,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+	movd eax,mm3				;EAX = FF si produit est négatif
+	movq mm3,mm0
+	pminub mm0,mm1
+	pmaxub mm3,mm1
+	psubb mm3,mm0				; mm3=abs(src1-src2)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	xor eax,00FFFFFFh			; EAX = FF si produit est positif
+	jz short Next_A0_1_1			; Si tous négatif, pas la peine continuer, EAX=0 => AL=0
+	pxor mm5,mm5
+	movq mm0,mm2
+	movq mm4,mm2
+	pminub mm0,mm1
+	pmaxub mm4,mm1
+	psubb mm4,mm0				; mm4=abs(sr3-src2)
+	pminub mm4,mm3				; mm4 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm4,mm5
+	pcmpgtw mm4,mm6				; mm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm4,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm4,mm5				; mm4=(FF) si max>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+Next_A0_1_1:
+	pand mm3,mm7				; Filtre par 0xFC, pour lever le bruit
+	movd dword ptr[rcx],mm3
+	mov byte ptr[rbx],al
+
+	pxor mm5,mm5
+	movd mm0,dword ptr[rdi+rdx]			;Ici : mm0=src4, mm1=src2, mm2=src3
+	movq mm3,mm0
+	movq mm4,mm1
+	punpcklbw mm2,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm2
+	pcmpgtw mm4,mm2
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm2,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+	movd eax,mm3				;EAX = FF si produit est négatif
+	movq mm3,mm1
+	pminub mm1,mm2
+	pmaxub mm3,mm2
+	xor rdx,rdx
+	psubb mm3,mm1				; mm3=abs(src2-src3)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	mov edx,r8d
+	xor eax,00FFFFFFh			; Si tous négatif, pas la peine continuer.
+	jz short Next_A0_2_1
+	pxor mm5,mm5
+	movq mm1,mm0
+	pminub mm1,mm2
+	pmaxub mm0,mm2
+	psubb mm0,mm1				; mm0=abs(sr4-src3)
+	pminub mm0,mm3				; mm0 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm0,mm5
+	pcmpgtw mm0,mm6				; mm0=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm0,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm5,mm0				; mm5=(FF) si min>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm5
+	or eax,eax					; si aucun ne satisfait les 2...
+	setnz al
+Next_A0_2_1:
+	pand mm3,mm7
+	movd dword ptr[rcx+4*rdx],mm3
+	mov edx,r12d
+	mov byte ptr[rbx+rdx],al
+
+	add rsi,r13
+	add rdi,r13
+	add rcx,r13
+	inc rbx
+
+	dec r14d
+	jnz Loop_A0_2_1
+
+	shl rdx,1
+	sub rdx,r8
+	add rbx,rdx
+	xor rdx,rdx
+	mov edx,r8d
+	shl rdx,2
+	add rcx,rdx
+	mov rdx,r11
+	add rdx,r10
+	add rsi,rdx
+	add rdi,rdx
+
+	dec r9d
+	jnz Loop_A0_1_1
+
+
+	mov rdx,r10
+	mov r14d,r8d
+	shl rdx,1
+Loop_A0_2_1_a:
+	pxor mm5,mm5
+	movd mm0,dword ptr[rsi]				;mm0=src1
+	movd mm1,dword ptr[rdi]				;mm1=src2
+	movd mm2,dword ptr[rsi+rdx]			;mm2=src3
+	movq mm3,mm0
+	movq mm4,mm2
+	punpcklbw mm1,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm1
+	pcmpgtw mm4,mm1
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm1,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+	movd eax,mm3				;EAX = FF si produit est négatif
+	movq mm3,mm0
+	pminub mm0,mm1
+	pmaxub mm3,mm1
+	psubb mm3,mm0				; mm3=abs(src1-src2)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	xor eax,00FFFFFFh			; EAX = FF si produit est positif
+	jz short Next_A0_1_1_a			; Si tous négatif, pas la peine continuer, EAX=0 => AL=0
+	pxor mm5,mm5
+	movq mm0,mm2
+	movq mm4,mm2
+	pminub mm0,mm1
+	pmaxub mm4,mm1
+	psubb mm4,mm0				; mm4=abs(sr3-src2)
+	pminub mm4,mm3				; mm4 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm4,mm5
+	pcmpgtw mm4,mm6				; mm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm4,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm4,mm5				; mm4=(FF) si max>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+Next_A0_1_1_a:
+	pand mm3,mm7				; Filtre par 0xFC, pour lever le bruit
+	movd dword ptr[rcx],mm3
+	mov byte ptr[rbx],al	
+	
+	add rsi,r13
+	add rdi,r13
+	add rcx,r13
+	inc rbx
+
+	dec r14d
+	jnz Loop_A0_2_1_a	
+
+	emms
+	
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Motion_Map_SSE_RGB32_a endp
+
+
+;JPSDR_IVTC_Motion_Map_SSE_RGB32 proc src1:dword,src2:dword,buffer:dword,dst:dword,w:dword,h:dword,
+;	pitch:dword,modulo:dword,thr:dword,w_map:dword
+; src1 = rcx
+; src2 = rdx
+; buffer = r8
+; dst = r9
+
+JPSDR_IVTC_Motion_Map_SSE_RGB32_b proc public frame
+
+w equ dword ptr[rbp+48]
+h equ dword ptr[rbp+56]
+pitch equ qword ptr[rbp+64]
+modulo equ qword ptr[rbp+72]
+thr equ dword ptr[rbp+80]
+w_map equ dword ptr[rbp+88]
+
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	push r15
+	.pushreg r15
+	.endprolog
+
+	movd mm6,thr
+	pxor mm7,mm7
+	punpcklbw mm6,mm7
+	mov eax,00FCFCFCh
+	movd mm7,eax
+	
+	xor r12,r12
+	mov rsi,rcx
+	mov r10,pitch
+	mov r11,modulo
+	mov r12d,w_map
+	mov r13,4
+	mov rbx,r9
+	mov rdi,rdx
+	mov rcx,r8
+	xor r8,r8
+	xor r9,r9
+	mov r8d,w
+	mov r9d,h
+	xor r14,r14
+
+Loop_A0_1_2:
+	mov r14d,r8d
+Loop_A0_2_2:
+	mov rdx,r10
+	pxor mm5,mm5
+	shl rdx,1
+	movd mm0,dword ptr[rsi]				;mm0=src1
+	movd mm1,dword ptr[rdi]				;mm1=src2
+	movd mm2,dword ptr[rsi+rdx]			;mm2=src3
+	movq mm3,mm0
+	movq mm4,mm2
+	punpcklbw mm1,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm1
+	pcmpgtw mm4,mm1
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm1,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+	movd eax,mm3				;EAX = FF si produit est négatif
+	movq mm3,mm0
+	pminub mm0,mm1
+	pmaxub mm3,mm1
+	psubb mm3,mm0				; mm3=abs(src1-src2)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	xor eax,00FFFFFFh			; EAX = FF si produit est positif
+	jz short Next_A0_1_2			; Si tous négatif, pas la peine continuer, EAX=0 => AL=0
+	pxor mm5,mm5
+	movq mm0,mm2
+	movq mm4,mm2
+	pminub mm0,mm1
+	pmaxub mm4,mm1
+	psubb mm4,mm0				; mm4=abs(sr3-src2)
+	pminub mm4,mm3				; mm4 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm4,mm5
+	pcmpgtw mm4,mm6				; mm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm4,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm4,mm5				; mm4=(FF) si max>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+Next_A0_1_2:
+	pand mm3,mm7				; Filtre par 0xFC, pour lever le bruit
+	movd dword ptr[rcx],mm3
+	mov byte ptr[rbx],al
+
+	pxor mm5,mm5
+	movd mm0,dword ptr[rdi+rdx]			;Ici : mm0=src4, mm1=src2, mm2=src3
+	movq mm3,mm0
+	movq mm4,mm1
+	punpcklbw mm2,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm2
+	pcmpgtw mm4,mm2
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm2,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+	movd eax,mm3				;EAX = FF si produit est négatif
+	movq mm3,mm1
+	pminub mm1,mm2
+	pmaxub mm3,mm2
+	xor rdx,rdx
+	psubb mm3,mm1				; mm3=abs(src2-src3)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	mov edx,r8d
+	xor eax,00FFFFFFh			; Si tous négatif, pas la peine continuer.
+	jz short Next_A0_2_2
+	pxor mm5,mm5
+	movq mm1,mm0
+	pminub mm1,mm2
+	pmaxub mm0,mm2
+	psubb mm0,mm1				; mm0=abs(sr4-src3)
+	pminub mm0,mm3				; mm0 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm0,mm5
+	pcmpgtw mm0,mm6				; mm0=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm0,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm5,mm0				; mm5=(FF) si min>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm5
+	or eax,eax					; si aucun ne satisfait les 2...
+	setnz al
+Next_A0_2_2:
+	pand mm3,mm7
+	movd dword ptr[rcx+4*rdx],mm3
+	mov edx,r12d
+	mov byte ptr[rbx+rdx],al
+
+	add rsi,r13
+	add rdi,r13
+	add rcx,r13
+	inc rbx
+
+	dec r14d
+	jnz Loop_A0_2_2
+
+	shl rdx,1
+	sub rdx,r8
+	add rbx,rdx
+	xor rdx,rdx
+	mov edx,r8d
+	shl rdx,2
+	add rcx,rdx
+	mov rdx,r11
+	add rdx,r10
+	add rsi,rdx
+	add rdi,rdx
+
+	dec r9d
+	jnz Loop_A0_1_2
+
+	emms
+	
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Motion_Map_SSE_RGB32_b endp
+
+
+
+;JPSDR_IVTC_Motion_Map_SSE_RGB32 proc src1:dword,src2:dword,buffer:dword,dst:dword,w:dword,h:dword,
+;	pitch:dword,modulo:dword,thr:dword,w_map:dword
+; src1 = rcx
+; src2 = rdx
+; buffer = r8
+; dst = r9
+
+JPSDR_IVTC_Motion_Map_SSE_RGB32_c proc public frame
+
+w equ dword ptr[rbp+48]
+h equ dword ptr[rbp+56]
+pitch equ qword ptr[rbp+64]
+modulo equ qword ptr[rbp+72]
+thr equ dword ptr[rbp+80]
+w_map equ dword ptr[rbp+88]
+
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	push r15
+	.pushreg r15
+	.endprolog
+
+	movd mm6,thr
+	pxor mm7,mm7
+	punpcklbw mm6,mm7
+	mov eax,00FCFCFCh
+	movd mm7,eax
+	
+	xor r12,r12
+	mov rsi,rcx
+	mov r10,pitch
+	mov r11,modulo
+	mov r12d,w_map
+	mov r13,4
+	mov rbx,r9
+	mov rdi,rdx
+	mov rcx,r8
+	xor r8,r8
+	xor r9,r9
+	mov r8d,w
+	mov r9d,h
+	xor r14,r14
+
+Loop_A0_1_3:
+	mov r14d,r8d
+Loop_A0_2_3:
+	mov rdx,r10
+	pxor mm5,mm5
+	shl rdx,1
+	movd mm0,dword ptr[rsi]				;mm0=src1
+	movd mm1,dword ptr[rdi]				;mm1=src2
+	movd mm2,dword ptr[rsi+rdx]			;mm2=src3
+	movq mm3,mm0
+	movq mm4,mm2
+	punpcklbw mm1,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm1
+	pcmpgtw mm4,mm1
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm1,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+	movd eax,mm3				;EAX = FF si produit est négatif
+	movq mm3,mm0
+	pminub mm0,mm1
+	pmaxub mm3,mm1
+	psubb mm3,mm0				; mm3=abs(src1-src2)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	xor eax,00FFFFFFh			; EAX = FF si produit est positif
+	jz short Next_A0_1_3			; Si tous négatif, pas la peine continuer, EAX=0 => AL=0
+	pxor mm5,mm5
+	movq mm0,mm2
+	movq mm4,mm2
+	pminub mm0,mm1
+	pmaxub mm4,mm1
+	psubb mm4,mm0				; mm4=abs(sr3-src2)
+	pminub mm4,mm3				; mm4 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm4,mm5
+	pcmpgtw mm4,mm6				; mm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm4,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm4,mm5				; mm4=(FF) si max>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+Next_A0_1_3:
+	pand mm3,mm7				; Filtre par 0xFC, pour lever le bruit
+	movd dword ptr[rcx],mm3
+	mov byte ptr[rbx],al
+
+	pxor mm5,mm5
+	movd mm0,dword ptr[rdi+rdx]			;Ici : mm0=src4, mm1=src2, mm2=src3
+	movq mm3,mm0
+	movq mm4,mm1
+	punpcklbw mm2,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm2
+	pcmpgtw mm4,mm2
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm2,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+	movd eax,mm3				;EAX = FF si produit est négatif
+	movq mm3,mm1
+	pminub mm1,mm2
+	pmaxub mm3,mm2
+	xor rdx,rdx
+	psubb mm3,mm1				; mm3=abs(src2-src3)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	mov edx,r8d
+	xor eax,00FFFFFFh			; Si tous négatif, pas la peine continuer.
+	jz short Next_A0_2_3
+	pxor mm5,mm5
+	movq mm1,mm0
+	pminub mm1,mm2
+	pmaxub mm0,mm2
+	psubb mm0,mm1				; mm0=abs(sr4-src3)
+	pminub mm0,mm3				; mm0 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm0,mm5
+	pcmpgtw mm0,mm6				; mm0=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm0,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm5,mm0				; mm5=(FF) si min>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm5
+	or eax,eax					; si aucun ne satisfait les 2...
+	setnz al
+Next_A0_2_3:
+	pand mm3,mm7
+	movd dword ptr[rcx+4*rdx],mm3
+	mov edx,r12d
+	mov byte ptr[rbx+rdx],al
+
+	add rsi,r13
+	add rdi,r13
+	add rcx,r13
+	inc rbx
+
+	dec r14d
+	jnz Loop_A0_2_3
+
+	shl rdx,1
+	sub rdx,r8
+	add rbx,rdx
+	xor rdx,rdx
+	mov edx,r8d
+	shl rdx,2
+	add rcx,rdx
+	mov rdx,r11
+	add rdx,r10
+	add rsi,rdx
+	add rdi,rdx
+
+	dec r9d
+	jnz Loop_A0_1_3
+	
+	
+	mov r14d,r8d
+Loop_A0_2_3_c:
+    mov rdx,r10
+	pxor mm5,mm5
+	shl rdx,1
+	movd mm0,dword ptr[rsi]				;mm0=src1
+	movd mm1,dword ptr[rdi]				;mm1=src2
+	movd mm2,dword ptr[rsi+rdx]			;mm2=src3
+	movq mm3,mm0
+	movq mm4,mm2
+	punpcklbw mm1,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm1
+	pcmpgtw mm4,mm1
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm1,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+	movd eax,mm3				;EAX = FF si produit est négatif
+	movq mm3,mm0
+	pminub mm0,mm1
+	pmaxub mm3,mm1
+	psubb mm3,mm0				; mm3=abs(src1-src2)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	xor eax,00FFFFFFh			; EAX = FF si produit est positif
+	jz short Next_A0_1_3_c			; Si tous négatif, pas la peine continuer, EAX=0 => AL=0
+	pxor mm5,mm5
+	movq mm0,mm2
+	movq mm4,mm2
+	pminub mm0,mm1
+	pmaxub mm4,mm1
+	psubb mm4,mm0				; mm4=abs(sr3-src2)
+	pminub mm4,mm3				; mm4 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm4,mm5
+	pcmpgtw mm4,mm6				; mm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm4,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm4,mm5				; mm4=(FF) si max>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+Next_A0_1_3_c:
+	pand mm3,mm7				; Filtre par 0xFC, pour lever le bruit
+	movd dword ptr[rcx],mm3
+	mov byte ptr[rbx],al	
+
+
+	movq mm3,mm1                ;Ici : mm1=src2, mm2=src3
+	pminub mm1,mm2
+	pmaxub mm3,mm2
+	xor rdx,rdx
+	psubb mm3,mm1				; mm3=abs(src2-src3)
+	mov edx,r8d
+	pand mm3,mm7
+	movd dword ptr[rcx+4*rdx],mm3	
+	
+	add rsi,r13
+	add rdi,r13
+	add rcx,r13
+	inc rbx
+
+	dec r14d
+	jnz Loop_A0_2_3_c		
+	
+	add rbx,r12
+	sub rbx,r8
+	
+	mov rdx,rcx
+	xor rcx,rcx
+	mov ecx,r12d
+	xor rax,rax
+	shr ecx,2
+	mov rdi,rbx
+	rep stosd	
+	mov rcx,rdx
+	
+	mov rsi,rcx
+	xor rdx,rdx
+	mov edx,r8d
+	shl rdx,2
+	add rcx,rdx
+	mov rdi,rcx
+	xor rcx,rcx
+	mov ecx,r8d
+	rep stosd
+	
+	emms
+	
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Motion_Map_SSE_RGB32_c endp
 
 
 
@@ -693,13 +1406,720 @@ JPSDR_IVTC_Smart_Deinterlace_Motion_Map_SSE_RGB32 endp
 
 
 
+;JPSDR_IVTC_Smart_Deinterlace_Motion_Map_SSE_RGB32 proc src1:dword,src2:dword,buffer:dword,dst:dword,w:dword,
+;	h:dword,pitch:dword,modulo:dword,thr:dword,w_map:dword
+; src1 = rcx
+; src2 = rdx
+; buffer = r8
+; dst = r9
+
+JPSDR_IVTC_Smart_Deinterlace_Motion_Map_SSE_RGB32_a proc public frame
+
+w equ dword ptr[rbp+48]
+h equ dword ptr[rbp+56]
+pitch equ qword ptr[rbp+64]
+modulo equ qword ptr[rbp+72]
+thr equ dword ptr[rbp+80]
+w_map equ dword ptr[rbp+88]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	.endprolog
+
+	movd mm6,thr
+	pxor mm7,mm7
+	punpcklbw mm6,mm7
+
+	mov rsi,rcx
+	mov r10,pitch
+	mov r11,modulo
+	mov r12d,w_map
+	mov r13,4
+	xor rcx,rcx
+
+	mov rdi,r9
+	xor rax,rax
+	cld
+	mov ecx,r12d
+	shr ecx,2
+	rep stosd
+	mov rbx,rdi
+	mov rdi,rdx
+	mov rdx,r8
+	xor r8,r8
+	mov r8d,w
+	mov r9d,h
+
+	mov ecx,r8d
+	xor rax,rax
+Loop_A2_0_1:
+	movd mm0,dword ptr[rsi+4*rax]
+	movd mm1,dword ptr[rdi+4*rax]
+	pavgb mm0,mm1
+	movd dword ptr[rdx+4*rax],mm0
+	inc rax
+	loop Loop_A2_0_1
+	shl rax,2
+	add rdx,rax
+	
+	mov rcx,rdx				;rcx=buffer + w
+	
+Loop_A2_1_1:
+	mov r14d,r8d
+Loop_A2_2_1:
+	mov rdx,r10
+	shl rdx,1	
+	pxor mm5,mm5
+	movd mm0,dword ptr[rsi]				;mm0=src1
+	movd mm1,dword ptr[rdi]				;mm1=src2
+	movd mm2,dword ptr[rsi+rdx]			;mm2=src3
+	movq mm3,mm0
+	movq mm4,mm2
+	punpcklbw mm1,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm1
+	pcmpgtw mm4,mm1
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm1,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+
+	movq mm7,mm2
+	pavgb mm7,mm1				;mm7=(sr3+src2)/2
+
+	movd eax,mm3				;EAX = FF si produit est négatif
+	movq mm3,mm0
+	pminub mm0,mm1
+	pmaxub mm3,mm1
+	psubb mm3,mm0				; mm3=abs(src1-src2)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	xor eax,00FFFFFFh			; EAX = FF si produit est positif
+	jz short Next_A2_1_1		; Si tous négatif, pas la peine continuer, EAX=0 => AL=0
+	movq mm0,mm2
+	movq mm4,mm2
+	pminub mm0,mm1
+	pmaxub mm4,mm1
+	psubb mm4,mm0				; mm4=abs(sr3-src2)
+	pminub mm4,mm3				; mm4 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm4,mm5
+	pcmpgtw mm4,mm6				; mm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm4,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm4,mm5				; mm4=(FF) si max>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+Next_A2_1_1:
+	movd dword ptr[rcx],mm7
+	mov byte ptr[rbx],al
+
+	pxor mm5,mm5
+	movd mm0,dword ptr[rdi+rdx]			;Ici : mm0=src4, mm1=src2, mm2=src3
+	movq mm3,mm0
+	movq mm4,mm1
+	punpcklbw mm2,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm2
+	pcmpgtw mm4,mm2
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm2,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+
+	movq mm7,mm2
+	pavgb mm7,mm0				;mm7=(src4+src3)/2
+
+	movd eax,mm3				;EAX = FF si produit est négatif
+	movq mm3,mm1
+	pminub mm1,mm2
+	pmaxub mm3,mm2
+	xor rdx,rdx
+	psubb mm3,mm1				; mm3=abs(src2-src3)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	mov edx,r8d
+	xor eax,00FFFFFFh			; Si tous négatif, pas la peine continuer.
+	jz short Next_A2_2_1
+	movq mm1,mm0
+	pminub mm1,mm2
+	pmaxub mm0,mm2
+	psubb mm0,mm1				; mm0=abs(sr4-src3)
+	pminub mm0,mm3				; mm0 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm0,mm5
+	pcmpgtw mm0,mm6				; mm0=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm0,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm5,mm0				; mm5=(FF) si min>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm5
+	or eax,eax					; si aucun ne satisfait les 2...
+	setnz al
+Next_A2_2_1:
+	movd dword ptr[rcx+4*rdx],mm7
+	mov edx,r12d
+	mov byte ptr[rbx+rdx],al
+
+	add rsi,r13
+	add rdi,r13
+	add rcx,r13
+	inc rbx
+
+	dec r14d
+	jnz Loop_A2_2_1
+
+	shl rdx,1
+	sub rdx,r8
+	add rbx,rdx
+	xor rdx,rdx
+	mov edx,r8d
+	shl rdx,2
+	add rcx,rdx
+	mov rdx,r11
+	add rdx,r10
+	add rsi,rdx
+	add rdi,rdx
+
+	dec r9d
+	jnz Loop_A2_1_1
+	
+	mov r14d,r8d
+	mov rdx,r10
+	shl rdx,1	
+Loop_A2_2_1_a:
+	pxor mm5,mm5
+	movd mm0,dword ptr[rsi]				;mm0=src1
+	movd mm1,dword ptr[rdi]				;mm1=src2
+	movd mm2,dword ptr[rsi+rdx]			;mm2=src3
+	movq mm3,mm0
+	movq mm4,mm2
+	punpcklbw mm1,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm1
+	pcmpgtw mm4,mm1
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm1,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+
+	movq mm7,mm2
+	pavgb mm7,mm1				;mm7=(sr3+src2)/2
+
+	movd eax,mm3				;EAX = FF si produit est négatif
+	movq mm3,mm0
+	pminub mm0,mm1
+	pmaxub mm3,mm1
+	psubb mm3,mm0				; mm3=abs(src1-src2)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	xor eax,00FFFFFFh			; EAX = FF si produit est positif
+	jz short Next_A2_1_1_a		; Si tous négatif, pas la peine continuer, EAX=0 => AL=0
+	movq mm0,mm2
+	movq mm4,mm2
+	pminub mm0,mm1
+	pmaxub mm4,mm1
+	psubb mm4,mm0				; mm4=abs(sr3-src2)
+	pminub mm4,mm3				; mm4 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm4,mm5
+	pcmpgtw mm4,mm6				; mm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm4,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm4,mm5				; mm4=(FF) si max>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+Next_A2_1_1_a:
+	movd dword ptr[rcx],mm7
+	mov byte ptr[rbx],al
+
+	add rsi,r13
+	add rdi,r13
+	add rcx,r13
+	inc rbx
+
+	dec r14d
+	jnz Loop_A2_2_1_a
+
+	emms
+	
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Smart_Deinterlace_Motion_Map_SSE_RGB32_a endp
+
+
+
+;JPSDR_IVTC_Smart_Deinterlace_Motion_Map_SSE_RGB32 proc src1:dword,src2:dword,buffer:dword,dst:dword,w:dword,
+;	h:dword,pitch:dword,modulo:dword,thr:dword,w_map:dword
+; src1 = rcx
+; src2 = rdx
+; buffer = r8
+; dst = r9
+
+JPSDR_IVTC_Smart_Deinterlace_Motion_Map_SSE_RGB32_b proc public frame
+
+w equ dword ptr[rbp+48]
+h equ dword ptr[rbp+56]
+pitch equ qword ptr[rbp+64]
+modulo equ qword ptr[rbp+72]
+thr equ dword ptr[rbp+80]
+w_map equ dword ptr[rbp+88]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	.endprolog
+
+	movd mm6,thr
+	pxor mm7,mm7
+	punpcklbw mm6,mm7
+
+	mov rsi,rcx
+	mov r10,pitch
+	mov r11,modulo
+	mov r12d,w_map
+	mov r13,4
+
+	mov rbx,r9
+	mov rdi,rdx
+	mov rcx,r8
+	xor r8,r8
+	mov r8d,w
+	mov r9d,h
+	
+Loop_A2_1_2:
+	mov r14d,r8d
+Loop_A2_2_2:
+	mov rdx,r10
+	shl rdx,1	
+	pxor mm5,mm5
+	movd mm0,dword ptr[rsi]				;mm0=src1
+	movd mm1,dword ptr[rdi]				;mm1=src2
+	movd mm2,dword ptr[rsi+rdx]			;mm2=src3
+	movq mm3,mm0
+	movq mm4,mm2
+	punpcklbw mm1,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm1
+	pcmpgtw mm4,mm1
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm1,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+
+	movq mm7,mm2
+	pavgb mm7,mm1				;mm7=(sr3+src2)/2
+
+	movd eax,mm3				;EAX = FF si produit est négatif
+	movq mm3,mm0
+	pminub mm0,mm1
+	pmaxub mm3,mm1
+	psubb mm3,mm0				; mm3=abs(src1-src2)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	xor eax,00FFFFFFh			; EAX = FF si produit est positif
+	jz short Next_A2_1_2		; Si tous négatif, pas la peine continuer, EAX=0 => AL=0
+	movq mm0,mm2
+	movq mm4,mm2
+	pminub mm0,mm1
+	pmaxub mm4,mm1
+	psubb mm4,mm0				; mm4=abs(sr3-src2)
+	pminub mm4,mm3				; mm4 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm4,mm5
+	pcmpgtw mm4,mm6				; mm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm4,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm4,mm5				; mm4=(FF) si max>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+Next_A2_1_2:
+	movd dword ptr[rcx],mm7
+	mov byte ptr[rbx],al
+
+	pxor mm5,mm5
+	movd mm0,dword ptr[rdi+rdx]			;Ici : mm0=src4, mm1=src2, mm2=src3
+	movq mm3,mm0
+	movq mm4,mm1
+	punpcklbw mm2,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm2
+	pcmpgtw mm4,mm2
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm2,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+
+	movq mm7,mm2
+	pavgb mm7,mm0				;mm7=(src4+src3)/2
+
+	movd eax,mm3				;EAX = FF si produit est négatif
+	movq mm3,mm1
+	pminub mm1,mm2
+	pmaxub mm3,mm2
+	xor rdx,rdx
+	psubb mm3,mm1				; mm3=abs(src2-src3)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	mov edx,r8d
+	xor eax,00FFFFFFh			; Si tous négatif, pas la peine continuer.
+	jz short Next_A2_2_2
+	movq mm1,mm0
+	pminub mm1,mm2
+	pmaxub mm0,mm2
+	psubb mm0,mm1				; mm0=abs(sr4-src3)
+	pminub mm0,mm3				; mm0 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm0,mm5
+	pcmpgtw mm0,mm6				; mm0=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm0,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm5,mm0				; mm5=(FF) si min>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm5
+	or eax,eax					; si aucun ne satisfait les 2...
+	setnz al
+Next_A2_2_2:
+	movd dword ptr[rcx+4*rdx],mm7
+	mov edx,r12d
+	mov byte ptr[rbx+rdx],al
+
+	add rsi,r13
+	add rdi,r13
+	add rcx,r13
+	inc rbx
+
+	dec r14d
+	jnz Loop_A2_2_2
+
+	shl rdx,1
+	sub rdx,r8
+	add rbx,rdx
+	xor rdx,rdx
+	mov edx,r8d
+	shl rdx,2
+	add rcx,rdx
+	mov rdx,r11
+	add rdx,r10
+	add rsi,rdx
+	add rdi,rdx
+
+	dec r9d
+	jnz Loop_A2_1_2
+
+	emms
+	
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Smart_Deinterlace_Motion_Map_SSE_RGB32_b endp
+
+
+
+;JPSDR_IVTC_Smart_Deinterlace_Motion_Map_SSE_RGB32 proc src1:dword,src2:dword,buffer:dword,dst:dword,w:dword,
+;	h:dword,pitch:dword,modulo:dword,thr:dword,w_map:dword
+; src1 = rcx
+; src2 = rdx
+; buffer = r8
+; dst = r9
+
+JPSDR_IVTC_Smart_Deinterlace_Motion_Map_SSE_RGB32_c proc public frame
+
+w equ dword ptr[rbp+48]
+h equ dword ptr[rbp+56]
+pitch equ qword ptr[rbp+64]
+modulo equ qword ptr[rbp+72]
+thr equ dword ptr[rbp+80]
+w_map equ dword ptr[rbp+88]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	.endprolog
+
+	movd mm6,thr
+	pxor mm7,mm7
+	punpcklbw mm6,mm7
+	
+	xor r12,r12
+	mov rsi,rcx
+	mov r10,pitch
+	mov r11,modulo
+	mov r12d,w_map
+	mov r13,4
+
+	mov rbx,r9
+	mov rdi,rdx
+	mov rcx,r8
+	xor r8,r8
+	mov r8d,w
+	mov r9d,h
+	
+Loop_A2_1_3:
+	mov r14d,r8d
+Loop_A2_2_3:
+	mov rdx,r10
+	shl rdx,1	
+	pxor mm5,mm5
+	movd mm0,dword ptr[rsi]				;mm0=src1
+	movd mm1,dword ptr[rdi]				;mm1=src2
+	movd mm2,dword ptr[rsi+rdx]			;mm2=src3
+	movq mm3,mm0
+	movq mm4,mm2
+	punpcklbw mm1,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm1
+	pcmpgtw mm4,mm1
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm1,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+
+	movq mm7,mm2
+	pavgb mm7,mm1				;mm7=(sr3+src2)/2
+
+	movd eax,mm3				;EAX = FF si produit est négatif
+	movq mm3,mm0
+	pminub mm0,mm1
+	pmaxub mm3,mm1
+	psubb mm3,mm0				; mm3=abs(src1-src2)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	xor eax,00FFFFFFh			; EAX = FF si produit est positif
+	jz short Next_A2_1_3		; Si tous négatif, pas la peine continuer, EAX=0 => AL=0
+	movq mm0,mm2
+	movq mm4,mm2
+	pminub mm0,mm1
+	pmaxub mm4,mm1
+	psubb mm4,mm0				; mm4=abs(sr3-src2)
+	pminub mm4,mm3				; mm4 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm4,mm5
+	pcmpgtw mm4,mm6				; mm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm4,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm4,mm5				; mm4=(FF) si max>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+Next_A2_1_3:
+	movd dword ptr[rcx],mm7
+	mov byte ptr[rbx],al
+
+	pxor mm5,mm5
+	movd mm0,dword ptr[rdi+rdx]			;Ici : mm0=src4, mm1=src2, mm2=src3
+	movq mm3,mm0
+	movq mm4,mm1
+	punpcklbw mm2,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm2
+	pcmpgtw mm4,mm2
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm2,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+
+	movq mm7,mm2
+	pavgb mm7,mm0				;mm7=(src4+src3)/2
+
+	movd eax,mm3				;EAX = FF si produit est négatif
+	movq mm3,mm1
+	pminub mm1,mm2
+	pmaxub mm3,mm2
+	xor rdx,rdx
+	psubb mm3,mm1				; mm3=abs(src2-src3)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	mov edx,r8d
+	xor eax,00FFFFFFh			; Si tous négatif, pas la peine continuer.
+	jz short Next_A2_2_3
+	movq mm1,mm0
+	pminub mm1,mm2
+	pmaxub mm0,mm2
+	psubb mm0,mm1				; mm0=abs(sr4-src3)
+	pminub mm0,mm3				; mm0 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm0,mm5
+	pcmpgtw mm0,mm6				; mm0=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm0,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm5,mm0				; mm5=(FF) si min>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm5
+	or eax,eax					; si aucun ne satisfait les 2...
+	setnz al
+Next_A2_2_3:
+	movd dword ptr[rcx+4*rdx],mm7
+	mov edx,r12d
+	mov byte ptr[rbx+rdx],al
+
+	add rsi,r13
+	add rdi,r13
+	add rcx,r13
+	inc rbx
+
+	dec r14d
+	jnz Loop_A2_2_3
+
+	shl rdx,1
+	sub rdx,r8
+	add rbx,rdx
+	xor rdx,rdx
+	mov edx,r8d
+	shl rdx,2
+	add rcx,rdx
+	mov rdx,r11
+	add rdx,r10
+	add rsi,rdx
+	add rdi,rdx
+
+	dec r9d
+	jnz Loop_A2_1_3
+	
+	mov r14d,r8d
+	mov rdx,r10
+	shl rdx,1	
+Loop_A2_2_3_c:
+	pxor mm5,mm5
+	movd mm0,dword ptr[rsi]				;mm0=src1
+	movd mm1,dword ptr[rdi]				;mm1=src2
+	movd mm2,dword ptr[rsi+rdx]			;mm2=src3
+	movq mm3,mm0
+	movq mm4,mm2
+	punpcklbw mm1,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm1
+	pcmpgtw mm4,mm1
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm1,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+
+	movq mm7,mm2
+	pavgb mm7,mm1				;mm7=(sr3+src2)/2
+
+	movd eax,mm3				;EAX = FF si produit est négatif
+	movq mm3,mm0
+	pminub mm0,mm1
+	pmaxub mm3,mm1
+	psubb mm3,mm0				; mm3=abs(src1-src2)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	xor eax,00FFFFFFh			; EAX = FF si produit est positif
+	jz short Next_A2_1_3_c		; Si tous négatif, pas la peine continuer, EAX=0 => AL=0
+	movq mm0,mm2
+	movq mm4,mm2
+	pminub mm0,mm1
+	pmaxub mm4,mm1
+	psubb mm4,mm0				; mm4=abs(sr3-src2)
+	pminub mm4,mm3				; mm4 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm4,mm5
+	pcmpgtw mm4,mm6				; mm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm4,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm4,mm5				; mm4=(FF) si max>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+Next_A2_1_3_c:
+	movd dword ptr[rcx],mm7
+	mov byte ptr[rbx],al
+
+	add rsi,r13
+	add rdi,r13
+	add rcx,r13
+	inc rbx
+
+	dec r14d
+	jnz Loop_A2_2_3_c	
+	
+	add rbx,r12
+	sub rbx,r8
+	
+	xor rax,rax
+	mov rsi,rcx
+	mov eax,r8d
+	shl rax,2
+	sub rsi,rax
+	mov rdi,rcx
+	xor rcx,rcx
+	cld
+	mov ecx,r8d
+	rep movsd
+	
+	xor rax,rax
+	mov ecx,r12d
+	shr rcx,2
+	mov rdi,rbx
+	rep stosd
+	
+	emms
+	
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Smart_Deinterlace_Motion_Map_SSE_RGB32_c endp
+
+
+
 ;JPSDR_IVTC_Smart_Deinterlace_Tri_Motion_Map_SSE_RGB32 proc src1:dword,src2:dword,buffer:dword,dst:dword,
 ;	w:dword,h:dword,pitch:dword,modulo:dword,thr:dword,w_map:dword
 ; src1 = rcx
 ; src2 = rdx
 ; buffer = r8
 ; dst = r9
-
 
 JPSDR_IVTC_Smart_Deinterlace_Tri_Motion_Map_SSE_RGB32 proc public frame
 
@@ -752,14 +2172,16 @@ w_map equ dword ptr[rbp+88]
 	mov rbx,rdi
 
 	mov rsi,r13
-	mov rdi,rdx
-	mov ecx,r8d
-	rep movsd
-
-	mov rsi,r13
 	mov rdi,r14
-	mov eax,r8d
-
+	mov ecx,r8d
+	xor rax,rax
+Loop_E2_0_1:
+	movd mm0,dword ptr[rsi+4*rax]
+	movd mm1,dword ptr[rdi+4*rax]
+	pavgb mm0,mm1
+	movd dword ptr[rdx+4*rax],mm0
+	inc rax
+	loop Loop_E2_0_1
 	shl rax,2
 	add rdx,rax
 	
@@ -911,13 +2333,18 @@ Next_E2_2:
 	dec r9d
 	jnz Loop_E2_1
 
-	mov rsi,rdi
-	mov rdi,rcx
+	mov rdx,rcx
 	xor rcx,rcx
+	xor rax,rax
 	mov ecx,r8d
-	cld
-	rep movsd
-
+Loop_E2_0_2:
+	movd mm0,dword ptr[rsi+4*rax]
+	movd mm1,dword ptr[rdi+4*rax]
+	pavgb mm0,mm1
+	movd dword ptr[rdx+4*rax],mm0
+	inc rax
+	loop Loop_E2_0_2
+	
 	xor rax,rax
 	mov ecx,r12d
 	shr ecx,2
@@ -937,6 +2364,853 @@ Next_E2_2:
 	ret
 
 JPSDR_IVTC_Smart_Deinterlace_Tri_Motion_Map_SSE_RGB32 endp
+
+
+
+
+;JPSDR_IVTC_Smart_Deinterlace_Tri_Motion_Map_SSE_RGB32 proc src1:dword,src2:dword,buffer:dword,dst:dword,
+;	w:dword,h:dword,pitch:dword,modulo:dword,thr:dword,w_map:dword
+; src1 = rcx
+; src2 = rdx
+; buffer = r8
+; dst = r9
+
+JPSDR_IVTC_Smart_Deinterlace_Tri_Motion_Map_SSE_RGB32_a proc public frame
+
+w equ dword ptr[rbp+48]
+h equ dword ptr[rbp+56]
+pitch equ qword ptr[rbp+64]
+modulo equ qword ptr[rbp+72]
+thr equ dword ptr[rbp+80]
+w_map equ dword ptr[rbp+88]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	.endprolog
+
+	movd mm6,thr
+	pxor mm7,mm7
+	punpcklbw mm6,mm7
+	
+	mov r13,rcx
+	mov r14,rdx
+	mov r10,pitch
+	mov r11,modulo
+	mov r12d,w_map
+	mov rdx,r8
+	mov rbx,r9
+	xor r8,r8
+	mov r8d,w
+	mov r9d,h
+	xor rcx,rcx
+
+	cld
+	xor rax,rax
+	mov rdi,rbx
+	mov ecx,r12d
+	shr ecx,2
+	rep stosd
+	mov rbx,rdi
+
+	mov rsi,r13
+	mov rdi,r14
+	mov ecx,r8d
+	xor rax,rax
+Loop_E2_0_1_1:
+	movd mm0,dword ptr[rsi+4*rax]
+	movd mm1,dword ptr[rdi+4*rax]
+	pavgb mm0,mm1
+	movd dword ptr[rdx+4*rax],mm0
+	inc rax
+	loop Loop_E2_0_1_1
+	shl rax,2
+	add rdx,rax
+	
+	mov rcx,rdx				;rcx=buffer + w
+	mov r13,4
+	xor rax,rax
+
+Loop_E2_1_1:
+	mov r14d,r8d
+Loop_E2_2_1:
+	mov rdx,r10
+	shl rdx,1
+	pxor mm5,mm5
+	movd mm0,dword ptr[rsi]				;mm0=src1
+	movd mm1,dword ptr[rdi]				;mm1=src2
+	movd mm2,dword ptr[rsi+rdx]			;mm2=src3
+	movq mm3,mm0
+	movq mm4,mm2
+	punpcklbw mm1,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm1
+	pcmpgtw mm4,mm1
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm1,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+
+	movq mm7,mm2
+	movq mm4,mm0
+	punpcklbw mm7,mm5
+	punpcklbw mm4,mm5
+	mov eax,02020202h
+	paddw mm7,mm4
+	movd mm4,eax
+	movd eax,mm3				;EAX = FF si produit est négatif
+	punpcklbw mm4,mm5
+	movq mm3,mm1
+	paddw mm7,mm4
+	punpcklbw mm3,mm5
+	psllw mm3,1
+	paddw mm7,mm3
+	psrlw mm7,2					
+	packuswb mm7,mm5			;mm7=((src1+src3)+2*src2+2)/4
+
+	movq mm3,mm0
+	pminub mm0,mm1
+	pmaxub mm3,mm1
+	psubb mm3,mm0				; mm3=abs(src1-src2)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	xor eax,00FFFFFFh			; EAX = FF si produit est positif
+	jz short Next_E2_1_1		; Si tous négatif, pas la peine continuer, EAX=0 => AL=0
+	movq mm0,mm2
+	movq mm4,mm2
+	pminub mm0,mm1
+	pmaxub mm4,mm1
+	psubb mm4,mm0				; mm4=abs(sr3-src2)
+	pminub mm4,mm3				; mm4 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm4,mm5
+	pcmpgtw mm4,mm6				; mm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm4,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm4,mm5				; mm4=(FF) si max>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+Next_E2_1_1:
+	movd dword ptr[rcx],mm7
+	mov byte ptr[rbx],al
+
+	pxor mm5,mm5
+	movd mm0,dword ptr[rdi+rdx]			;Ici : mm0=src4, mm1=src2, mm2=src3
+	movq mm3,mm0
+	movq mm4,mm1
+	punpcklbw mm2,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm2
+	pcmpgtw mm4,mm2
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm2,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+
+	movq mm7,mm1
+	movq mm4,mm0
+	punpcklbw mm7,mm5
+	punpcklbw mm4,mm5
+	mov eax,02020202h
+	paddw mm7,mm4
+	movd mm4,eax
+	movd eax,mm3				;EAX = FF si produit est négatif
+	punpcklbw mm4,mm5
+	movq mm3,mm2
+	paddw mm7,mm4
+	punpcklbw mm3,mm5
+	psllw mm3,1
+	paddw mm7,mm3
+	psrlw mm7,2					
+	packuswb mm7,mm5			;mm7=((src2+src4)+2*src3+2)/4
+
+	movq mm3,mm1
+	pminub mm1,mm2
+	pmaxub mm3,mm2
+	xor rdx,rdx
+	psubb mm3,mm1				; mm3=abs(src2-src3)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	mov edx,r8d
+	xor eax,00FFFFFFh			; Si tous négatif, pas la peine continuer.
+	jz short Next_E2_2_1
+	movq mm1,mm0
+	pminub mm1,mm2
+	pmaxub mm0,mm2
+	psubb mm0,mm1				; mm0=abs(sr4-src3)
+	pminub mm0,mm3				; mm0 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm0,mm5
+	pcmpgtw mm0,mm6				; mm0=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm0,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm5,mm0				; mm5=(FF) si min>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm5
+	or eax,eax					; si aucun ne satisfait les 2...
+	setnz al
+Next_E2_2_1:
+	movd dword ptr[rcx+4*rdx],mm7
+	mov edx,r12d
+	mov byte ptr[rbx+rdx],al
+
+	add rsi,r13
+	add rdi,r13
+	add rcx,r13
+	inc rbx
+
+	dec r14d
+	jnz Loop_E2_2_1
+
+	shl rdx,1
+	sub rdx,r8
+	add rbx,rdx
+	xor rdx,rdx
+	mov edx,r8d
+	shl rdx,2
+	add rcx,rdx
+	mov rdx,r11
+	add rdx,r10
+	add rsi,rdx
+	add rdi,rdx
+
+	dec r9d
+	jnz Loop_E2_1_1
+	
+	mov r14d,r8d
+	mov rdx,r10
+	shl rdx,1
+Loop_E2_2_1_a:
+	pxor mm5,mm5
+	movd mm0,dword ptr[rsi]				;mm0=src1
+	movd mm1,dword ptr[rdi]				;mm1=src2
+	movd mm2,dword ptr[rsi+rdx]			;mm2=src3
+	movq mm3,mm0
+	movq mm4,mm2
+	punpcklbw mm1,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm1
+	pcmpgtw mm4,mm1
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm1,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+
+	movq mm7,mm2
+	movq mm4,mm0
+	punpcklbw mm7,mm5
+	punpcklbw mm4,mm5
+	mov eax,02020202h
+	paddw mm7,mm4
+	movd mm4,eax
+	movd eax,mm3				;EAX = FF si produit est négatif
+	punpcklbw mm4,mm5
+	movq mm3,mm1
+	paddw mm7,mm4
+	punpcklbw mm3,mm5
+	psllw mm3,1
+	paddw mm7,mm3
+	psrlw mm7,2					
+	packuswb mm7,mm5			;mm7=((src1+src3)+2*src2+2)/4
+
+	movq mm3,mm0
+	pminub mm0,mm1
+	pmaxub mm3,mm1
+	psubb mm3,mm0				; mm3=abs(src1-src2)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	xor eax,00FFFFFFh			; EAX = FF si produit est positif
+	jz short Next_E2_1_1_a		; Si tous négatif, pas la peine continuer, EAX=0 => AL=0
+	movq mm0,mm2
+	movq mm4,mm2
+	pminub mm0,mm1
+	pmaxub mm4,mm1
+	psubb mm4,mm0				; mm4=abs(sr3-src2)
+	pminub mm4,mm3				; mm4 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm4,mm5
+	pcmpgtw mm4,mm6				; mm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm4,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm4,mm5				; mm4=(FF) si max>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+Next_E2_1_1_a:
+	movd dword ptr[rcx],mm7
+	mov byte ptr[rbx],al
+
+	add rsi,r13
+	add rdi,r13
+	add rcx,r13
+	inc rbx
+
+	dec r14d
+	jnz Loop_E2_2_1_a	
+
+	emms
+	
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Smart_Deinterlace_Tri_Motion_Map_SSE_RGB32_a endp
+
+
+
+
+;JPSDR_IVTC_Smart_Deinterlace_Tri_Motion_Map_SSE_RGB32 proc src1:dword,src2:dword,buffer:dword,dst:dword,
+;	w:dword,h:dword,pitch:dword,modulo:dword,thr:dword,w_map:dword
+; src1 = rcx
+; src2 = rdx
+; buffer = r8
+; dst = r9
+
+JPSDR_IVTC_Smart_Deinterlace_Tri_Motion_Map_SSE_RGB32_b proc public frame
+
+w equ dword ptr[rbp+48]
+h equ dword ptr[rbp+56]
+pitch equ qword ptr[rbp+64]
+modulo equ qword ptr[rbp+72]
+thr equ dword ptr[rbp+80]
+w_map equ dword ptr[rbp+88]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	.endprolog
+
+	movd mm6,thr
+	pxor mm7,mm7
+	punpcklbw mm6,mm7
+	
+	mov rsi,rcx
+	mov rdi,rdx
+	mov r10,pitch
+	mov r11,modulo
+	mov r12d,w_map
+	mov rcx,r8
+	mov rbx,r9
+	xor r8,r8
+	mov r8d,w
+	mov r9d,h
+
+	mov r13,4
+	xor rax,rax
+
+Loop_E2_1_2:
+	mov r14d,r8d
+Loop_E2_2_2:
+	mov rdx,r10
+	shl rdx,1
+	pxor mm5,mm5
+	movd mm0,dword ptr[rsi]				;mm0=src1
+	movd mm1,dword ptr[rdi]				;mm1=src2
+	movd mm2,dword ptr[rsi+rdx]			;mm2=src3
+	movq mm3,mm0
+	movq mm4,mm2
+	punpcklbw mm1,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm1
+	pcmpgtw mm4,mm1
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm1,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+
+	movq mm7,mm2
+	movq mm4,mm0
+	punpcklbw mm7,mm5
+	punpcklbw mm4,mm5
+	mov eax,02020202h
+	paddw mm7,mm4
+	movd mm4,eax
+	movd eax,mm3				;EAX = FF si produit est négatif
+	punpcklbw mm4,mm5
+	movq mm3,mm1
+	paddw mm7,mm4
+	punpcklbw mm3,mm5
+	psllw mm3,1
+	paddw mm7,mm3
+	psrlw mm7,2					
+	packuswb mm7,mm5			;mm7=((src1+src3)+2*src2+2)/4
+
+	movq mm3,mm0
+	pminub mm0,mm1
+	pmaxub mm3,mm1
+	psubb mm3,mm0				; mm3=abs(src1-src2)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	xor eax,00FFFFFFh			; EAX = FF si produit est positif
+	jz short Next_E2_1_2		; Si tous négatif, pas la peine continuer, EAX=0 => AL=0
+	movq mm0,mm2
+	movq mm4,mm2
+	pminub mm0,mm1
+	pmaxub mm4,mm1
+	psubb mm4,mm0				; mm4=abs(sr3-src2)
+	pminub mm4,mm3				; mm4 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm4,mm5
+	pcmpgtw mm4,mm6				; mm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm4,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm4,mm5				; mm4=(FF) si max>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+Next_E2_1_2:
+	movd dword ptr[rcx],mm7
+	mov byte ptr[rbx],al
+
+	pxor mm5,mm5
+	movd mm0,dword ptr[rdi+rdx]			;Ici : mm0=src4, mm1=src2, mm2=src3
+	movq mm3,mm0
+	movq mm4,mm1
+	punpcklbw mm2,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm2
+	pcmpgtw mm4,mm2
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm2,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+
+	movq mm7,mm1
+	movq mm4,mm0
+	punpcklbw mm7,mm5
+	punpcklbw mm4,mm5
+	mov eax,02020202h
+	paddw mm7,mm4
+	movd mm4,eax
+	movd eax,mm3				;EAX = FF si produit est négatif
+	punpcklbw mm4,mm5
+	movq mm3,mm2
+	paddw mm7,mm4
+	punpcklbw mm3,mm5
+	psllw mm3,1
+	paddw mm7,mm3
+	psrlw mm7,2					
+	packuswb mm7,mm5			;mm7=((src2+src4)+2*src3+2)/4
+
+	movq mm3,mm1
+	pminub mm1,mm2
+	pmaxub mm3,mm2
+	xor rdx,rdx
+	psubb mm3,mm1				; mm3=abs(src2-src3)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	mov edx,r8d
+	xor eax,00FFFFFFh			; Si tous négatif, pas la peine continuer.
+	jz short Next_E2_2_2
+	movq mm1,mm0
+	pminub mm1,mm2
+	pmaxub mm0,mm2
+	psubb mm0,mm1				; mm0=abs(sr4-src3)
+	pminub mm0,mm3				; mm0 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm0,mm5
+	pcmpgtw mm0,mm6				; mm0=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm0,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm5,mm0				; mm5=(FF) si min>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm5
+	or eax,eax					; si aucun ne satisfait les 2...
+	setnz al
+Next_E2_2_2:
+	movd dword ptr[rcx+4*rdx],mm7
+	mov edx,r12d
+	mov byte ptr[rbx+rdx],al
+
+	add rsi,r13
+	add rdi,r13
+	add rcx,r13
+	inc rbx
+
+	dec r14d
+	jnz Loop_E2_2_2
+
+	shl rdx,1
+	sub rdx,r8
+	add rbx,rdx
+	xor rdx,rdx
+	mov edx,r8d
+	shl rdx,2
+	add rcx,rdx
+	mov rdx,r11
+	add rdx,r10
+	add rsi,rdx
+	add rdi,rdx
+
+	dec r9d
+	jnz Loop_E2_1_2
+
+	mov rdx,rcx
+	xor rcx,rcx
+	xor rax,rax
+	mov ecx,r8d
+Loop_E2_0_2_2:
+	movd mm0,dword ptr[rsi+4*rax]
+	movd mm1,dword ptr[rdi+4*rax]
+	pavgb mm0,mm1
+	movd dword ptr[rdx+4*rax],mm0
+	inc rax
+	loop Loop_E2_0_2_2
+	
+	xor rax,rax
+	mov ecx,r12d
+	shr ecx,2
+	mov rdi,rbx
+	rep stosd
+
+	emms
+	
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Smart_Deinterlace_Tri_Motion_Map_SSE_RGB32_b endp
+
+
+
+;JPSDR_IVTC_Smart_Deinterlace_Tri_Motion_Map_SSE_RGB32 proc src1:dword,src2:dword,buffer:dword,dst:dword,
+;	w:dword,h:dword,pitch:dword,modulo:dword,thr:dword,w_map:dword
+; src1 = rcx
+; src2 = rdx
+; buffer = r8
+; dst = r9
+
+JPSDR_IVTC_Smart_Deinterlace_Tri_Motion_Map_SSE_RGB32_c proc public frame
+
+w equ dword ptr[rbp+48]
+h equ dword ptr[rbp+56]
+pitch equ qword ptr[rbp+64]
+modulo equ qword ptr[rbp+72]
+thr equ dword ptr[rbp+80]
+w_map equ dword ptr[rbp+88]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	.endprolog
+
+	movd mm6,thr
+	pxor mm7,mm7
+	punpcklbw mm6,mm7
+	
+	xor r12,r12
+	mov rsi,rcx
+	mov rdi,rdx
+	mov r10,pitch
+	mov r11,modulo
+	mov r12d,w_map
+	mov rcx,r8
+	mov rbx,r9
+	xor r8,r8
+	mov r9d,h
+	mov r8d,w
+	
+	mov r13,4
+	xor rax,rax
+
+Loop_E2_1_3:
+	mov r14d,r8d
+Loop_E2_2_3:
+	mov rdx,r10
+	shl rdx,1
+	pxor mm5,mm5
+	movd mm0,dword ptr[rsi]				;mm0=src1
+	movd mm1,dword ptr[rdi]				;mm1=src2
+	movd mm2,dword ptr[rsi+rdx]			;mm2=src3
+	movq mm3,mm0
+	movq mm4,mm2
+	punpcklbw mm1,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm1
+	pcmpgtw mm4,mm1
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm1,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+
+	movq mm7,mm2
+	movq mm4,mm0
+	punpcklbw mm7,mm5
+	punpcklbw mm4,mm5
+	mov eax,02020202h
+	paddw mm7,mm4
+	movd mm4,eax
+	movd eax,mm3				;EAX = FF si produit est négatif
+	punpcklbw mm4,mm5
+	movq mm3,mm1
+	paddw mm7,mm4
+	punpcklbw mm3,mm5
+	psllw mm3,1
+	paddw mm7,mm3
+	psrlw mm7,2					
+	packuswb mm7,mm5			;mm7=((src1+src3)+2*src2+2)/4
+
+	movq mm3,mm0
+	pminub mm0,mm1
+	pmaxub mm3,mm1
+	psubb mm3,mm0				; mm3=abs(src1-src2)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	xor eax,00FFFFFFh			; EAX = FF si produit est positif
+	jz short Next_E2_1_3		; Si tous négatif, pas la peine continuer, EAX=0 => AL=0
+	movq mm0,mm2
+	movq mm4,mm2
+	pminub mm0,mm1
+	pmaxub mm4,mm1
+	psubb mm4,mm0				; mm4=abs(sr3-src2)
+	pminub mm4,mm3				; mm4 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm4,mm5
+	pcmpgtw mm4,mm6				; mm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm4,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm4,mm5				; mm4=(FF) si max>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+Next_E2_1_3:
+	movd dword ptr[rcx],mm7
+	mov byte ptr[rbx],al
+
+	pxor mm5,mm5
+	movd mm0,dword ptr[rdi+rdx]			;Ici : mm0=src4, mm1=src2, mm2=src3
+	movq mm3,mm0
+	movq mm4,mm1
+	punpcklbw mm2,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm2
+	pcmpgtw mm4,mm2
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm2,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+
+	movq mm7,mm1
+	movq mm4,mm0
+	punpcklbw mm7,mm5
+	punpcklbw mm4,mm5
+	mov eax,02020202h
+	paddw mm7,mm4
+	movd mm4,eax
+	movd eax,mm3				;EAX = FF si produit est négatif
+	punpcklbw mm4,mm5
+	movq mm3,mm2
+	paddw mm7,mm4
+	punpcklbw mm3,mm5
+	psllw mm3,1
+	paddw mm7,mm3
+	psrlw mm7,2					
+	packuswb mm7,mm5			;mm7=((src2+src4)+2*src3+2)/4
+
+	movq mm3,mm1
+	pminub mm1,mm2
+	pmaxub mm3,mm2
+	xor rdx,rdx
+	psubb mm3,mm1				; mm3=abs(src2-src3)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	mov edx,r8d
+	xor eax,00FFFFFFh			; Si tous négatif, pas la peine continuer.
+	jz short Next_E2_2_3
+	movq mm1,mm0
+	pminub mm1,mm2
+	pmaxub mm0,mm2
+	psubb mm0,mm1				; mm0=abs(sr4-src3)
+	pminub mm0,mm3				; mm0 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm0,mm5
+	pcmpgtw mm0,mm6				; mm0=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm0,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm5,mm0				; mm5=(FF) si min>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm5
+	or eax,eax					; si aucun ne satisfait les 2...
+	setnz al
+Next_E2_2_3:
+	movd dword ptr[rcx+4*rdx],mm7
+	mov edx,r12d
+	mov byte ptr[rbx+rdx],al
+
+	add rsi,r13
+	add rdi,r13
+	add rcx,r13
+	inc rbx
+
+	dec r14d
+	jnz Loop_E2_2_3
+
+	shl rdx,1
+	sub rdx,r8
+	add rbx,rdx
+	xor rdx,rdx
+	mov edx,r8d
+	shl rdx,2
+	add rcx,rdx
+	mov rdx,r11
+	add rdx,r10
+	add rsi,rdx
+	add rdi,rdx
+
+	dec r9d
+	jnz Loop_E2_1_3
+
+	
+	mov r14d,r8d
+	mov rdx,r10
+	shl rdx,1
+Loop_E2_2_3_c:
+	pxor mm5,mm5
+	movd mm0,dword ptr[rsi]				;mm0=src1
+	movd mm1,dword ptr[rdi]				;mm1=src2
+	movd mm2,dword ptr[rsi+rdx]			;mm2=src3
+	movq mm3,mm0
+	movq mm4,mm2
+	punpcklbw mm1,mm5
+	punpcklbw mm3,mm5
+	punpcklbw mm4,mm5
+	pcmpgtw mm3,mm1
+	pcmpgtw mm4,mm1
+	packsswb mm3,mm5
+	packsswb mm4,mm5
+	packuswb mm1,mm5
+	pxor mm3,mm4				;mm3 = FF si produit est négatif
+
+	movq mm7,mm2
+	movq mm4,mm0
+	punpcklbw mm7,mm5
+	punpcklbw mm4,mm5
+	mov eax,02020202h
+	paddw mm7,mm4
+	movd mm4,eax
+	movd eax,mm3				;EAX = FF si produit est négatif
+	punpcklbw mm4,mm5
+	movq mm3,mm1
+	paddw mm7,mm4
+	punpcklbw mm3,mm5
+	psllw mm3,1
+	paddw mm7,mm3
+	psrlw mm7,2					
+	packuswb mm7,mm5			;mm7=((src1+src3)+2*src2+2)/4
+
+	movq mm3,mm0
+	pminub mm0,mm1
+	pmaxub mm3,mm1
+	psubb mm3,mm0				; mm3=abs(src1-src2)
+	and eax,00FFFFFFh			; lève les 8 bits les plus élevés
+	xor eax,00FFFFFFh			; EAX = FF si produit est positif
+	jz short Next_E2_1_3_c		; Si tous négatif, pas la peine continuer, EAX=0 => AL=0
+	movq mm0,mm2
+	movq mm4,mm2
+	pminub mm0,mm1
+	pmaxub mm4,mm1
+	psubb mm4,mm0				; mm4=abs(sr3-src2)
+	pminub mm4,mm3				; mm4 = min(abs(sr3-src2),abs(src1-src2))
+	punpcklbw mm4,mm5
+	pcmpgtw mm4,mm6				; mm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	packsswb mm4,mm5
+	movd mm5,eax				; mm5 = FF seulement aux endroit où produit positif
+	pand mm4,mm5				; mm4=(FF) si max>Threshold & (src2-scr1)*(src2-src3)>0
+	movd eax,mm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+Next_E2_1_3_c:
+	movd dword ptr[rcx],mm7
+	mov byte ptr[rbx],al
+
+	add rsi,r13
+	add rdi,r13
+	add rcx,r13
+	inc rbx
+
+	dec r14d
+	jnz Loop_E2_2_3_c
+	
+	mov rdx,rcx
+	xor rax,rax
+	mov eax,r8d
+	shl rax,2
+	sub rdi,rax
+	add rsi,r11
+	add rsi,r10
+	xor rcx,rcx
+	xor rax,rax
+	mov ecx,r8d
+Loop_E2_0_2_3:
+	movd mm0,dword ptr[rsi+4*rax]
+	movd mm1,dword ptr[rdi+4*rax]
+	pavgb mm0,mm1
+	movd dword ptr[rdx+4*rax],mm0
+	inc rax
+	loop Loop_E2_0_2_3
+	
+	add rbx,r12
+	sub rbx,r8
+	
+	cld
+	xor rax,rax
+	mov ecx,r12d
+	shr ecx,2
+	mov rdi,rbx
+	rep stosd
+
+	emms
+	
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Smart_Deinterlace_Tri_Motion_Map_SSE_RGB32_c endp
 
 
 
@@ -1230,11 +3504,11 @@ loop_2_3:
 	inc eax
 	dec r13d
 	jnz short loop_2_3
-	add r10,r12
-
+	
+	mov rsi,r10
 	cld
+	add r10,r12
 	mov ecx,r8d
-	mov rsi,rdi
 	mov rdi,r10
 	rep movsd
 
@@ -1250,6 +3524,316 @@ loop_2_3:
 
 JPSDR_IVTC_Deinterlace_Blend_Non_MMX_RGB32 endp
 
+
+
+
+;JPSDR_IVTC_Deinterlace_Blend_Non_MMX_RGB32 proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;	src_pitch:dword,dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Blend_Non_MMX_RGB32_a proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	.endprolog
+
+	mov rsi,rcx
+	mov rdi,rdx
+	mov r10,r8
+	mov r8d,r9d
+	mov r9d,h
+	mov r11,src_pitch
+	mov r12,dst_pitch
+	xor rdx,rdx
+	mov edx,000000FFh
+	xor rcx,rcx
+	xor rbx,rbx
+	
+loop_1_1:
+	mov r13d,r8d
+	xor rax,rax
+loop_2_1_1:
+	mov ebx,dword ptr[rsi+4*rax]
+	mov ecx,dword ptr[rdi+4*rax]
+	and ebx,edx
+	and cx,dx
+	add bx,cx
+	shr bx,1
+	mov r14d,ebx
+	mov ebx,dword ptr[rsi+4*rax]
+	mov ecx,dword ptr[rdi+4*rax]
+	shr bx,8
+	shr cx,8
+	and ebx,edx
+	and cx,dx
+	add bx,cx
+	shr bx,1
+	shl bx,8
+	or r14d,ebx
+	mov ebx,dword ptr[rsi+4*rax]
+	mov ecx,dword ptr[rdi+4*rax]
+	shr ebx,16
+	shr ecx,16
+	and ebx,edx
+	and cx,dx
+	add bx,cx
+	shr bx,1
+	shl ebx,16
+	or ebx,r14d
+	mov dword ptr[r10+4*rax],ebx
+	inc rax
+	dec r13d
+	jnz short loop_2_1_1
+	add rsi,r11
+	add r10,r12
+
+	mov r13d,r8d
+	xor rax,rax
+loop_2_2_1:
+	mov ebx,dword ptr[rsi+4*rax]
+	mov ecx,dword ptr[rdi+4*rax]
+	and ebx,edx
+	and cx,dx
+	add bx,cx
+	shr bx,1
+	mov r14d,ebx
+	mov ebx,dword ptr[rsi+4*rax]
+	mov ecx,dword ptr[rdi+4*rax]
+	shr bx,8
+	shr cx,8
+	and ebx,edx
+	and cx,dx
+	add bx,cx
+	shr bx,1
+	shl bx,8
+	or r14d,ebx
+	mov ebx,dword ptr[rsi+4*rax]
+	mov ecx,dword ptr[rdi+4*rax]
+	shr ebx,16
+	shr ecx,16
+	and ebx,edx
+	and cx,dx
+	add bx,cx
+	shr bx,1
+	shl ebx,16
+	or ebx,r14d
+	mov dword ptr[r10+4*rax],ebx
+	inc eax
+	dec r13d
+	jnz short loop_2_2_1
+	add rdi,r11
+	add r10,r12
+
+	dec r9d
+	jnz loop_1_1
+
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Blend_Non_MMX_RGB32_a endp
+
+
+
+;JPSDR_IVTC_Deinterlace_Blend_Non_MMX_RGB32 proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;	src_pitch:dword,dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Blend_Non_MMX_RGB32_b proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	.endprolog
+
+	mov rsi,rcx
+	mov rdi,rdx
+	mov r10,r8
+	mov r8d,r9d
+	mov r9d,h
+	mov r11,src_pitch
+	mov r12,dst_pitch
+	xor rdx,rdx
+	mov edx,000000FFh
+	xor rcx,rcx
+	xor rbx,rbx
+	
+loop_1_2:
+	mov r13d,r8d
+	xor rax,rax
+loop_2_1_2:
+	mov ebx,dword ptr[rsi+4*rax]
+	mov ecx,dword ptr[rdi+4*rax]
+	and ebx,edx
+	and cx,dx
+	add bx,cx
+	shr bx,1
+	mov r14d,ebx
+	mov ebx,dword ptr[rsi+4*rax]
+	mov ecx,dword ptr[rdi+4*rax]
+	shr bx,8
+	shr cx,8
+	and ebx,edx
+	and cx,dx
+	add bx,cx
+	shr bx,1
+	shl bx,8
+	or r14d,ebx
+	mov ebx,dword ptr[rsi+4*rax]
+	mov ecx,dword ptr[rdi+4*rax]
+	shr ebx,16
+	shr ecx,16
+	and ebx,edx
+	and cx,dx
+	add bx,cx
+	shr bx,1
+	shl ebx,16
+	or ebx,r14d
+	mov dword ptr[r10+4*rax],ebx
+	inc rax
+	dec r13d
+	jnz short loop_2_1_2
+	add rsi,r11
+	add r10,r12
+
+	mov r13d,r8d
+	xor rax,rax
+loop_2_2_2:
+	mov ebx,dword ptr[rsi+4*rax]
+	mov ecx,dword ptr[rdi+4*rax]
+	and ebx,edx
+	and cx,dx
+	add bx,cx
+	shr bx,1
+	mov r14d,ebx
+	mov ebx,dword ptr[rsi+4*rax]
+	mov ecx,dword ptr[rdi+4*rax]
+	shr bx,8
+	shr cx,8
+	and ebx,edx
+	and cx,dx
+	add bx,cx
+	shr bx,1
+	shl bx,8
+	or r14d,ebx
+	mov ebx,dword ptr[rsi+4*rax]
+	mov ecx,dword ptr[rdi+4*rax]
+	shr ebx,16
+	shr ecx,16
+	and ebx,edx
+	and cx,dx
+	add bx,cx
+	shr bx,1
+	shl ebx,16
+	or ebx,r14d
+	mov dword ptr[r10+4*rax],ebx
+	inc eax
+	dec r13d
+	jnz short loop_2_2_2
+	add rdi,r11
+	add r10,r12
+
+	dec r9d
+	jnz loop_1_2
+
+	mov r13d,r8d
+	xor rax,rax
+loop_2_3_2:
+	mov ebx,dword ptr[rsi+4*rax]
+	mov ecx,dword ptr[rdi+4*rax]
+	and ebx,edx
+	and cx,dx
+	add bx,cx
+	shr bx,1
+	mov r14d,ebx
+	mov ebx,dword ptr[rsi+4*rax]
+	mov ecx,dword ptr[rdi+4*rax]
+	shr bx,8
+	shr cx,8
+	and ebx,edx
+	and cx,dx
+	add bx,cx
+	shr bx,1
+	shl bx,8
+	or r14d,ebx
+	mov ebx,dword ptr[rsi+4*rax]
+	mov ecx,dword ptr[rdi+4*rax]
+	shr ebx,16
+	shr ecx,16
+	and ebx,edx
+	and cx,dx
+	add bx,cx
+	shr bx,1
+	shl ebx,16
+	or ebx,r14d
+	mov dword ptr[r10+4*rax],ebx
+	inc eax
+	dec r13d
+	jnz short loop_2_3_2
+	
+	mov rsi,r10
+	add r10,r12
+	cld
+	mov rdi,r10
+	mov ecx,r8d
+	rep movsd
+
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Blend_Non_MMX_RGB32_b endp
 
 
 
@@ -1320,11 +3904,11 @@ loop_2_c_3:
 	movd dword ptr[rdi+4*rax],mm0
 	inc rax
 	loop loop_2_c_3
-	add rdi,r11
-
+	
+	mov rsi,rdi
 	cld
+	add rdi,r11
 	mov ecx,r8d
-	mov rsi,rdx
 	rep movsd
 
 	emms
@@ -1336,6 +3920,162 @@ loop_2_c_3:
 	ret
 
 JPSDR_IVTC_Deinterlace_Blend_SSE endp
+
+
+
+;JPSDR_IVTC_Deinterlace_Blend_SSE proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
+;	dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Blend_SSE_a proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	.endprolog
+
+	mov rsi,rcx
+	mov rdi,r8
+	mov r8d,r9d
+	mov r9d,h
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	xor rcx,rcx
+
+loop_1_c_1:
+	xor rax,rax
+	mov ecx,r8d
+loop_2_c_1_1:
+	movd mm0,dword ptr[rsi+4*rax]
+	movd mm1,dword ptr[rdx+4*rax]
+	pavgb mm0,mm1
+	movd dword ptr[rdi+4*rax],mm0
+	inc rax
+	loop loop_2_c_1_1
+	add rsi,r10
+	add rdi,r11
+
+	xor rax,rax
+	mov ecx,r8d
+loop_2_c_2_1:
+	movd mm0,dword ptr[rsi+4*rax]
+	movd mm1,dword ptr[rdx+4*rax]
+	pavgb mm0,mm1
+	movd dword ptr[rdi+4*rax],mm0
+	inc rax
+	loop loop_2_c_2_1
+	add rdx,r10
+	add rdi,r11
+
+	dec r9d
+	jnz short loop_1_c_1
+
+	emms
+	
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Blend_SSE_a endp
+
+
+
+;JPSDR_IVTC_Deinterlace_Blend_SSE proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
+;	dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Blend_SSE_b proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	.endprolog
+
+	mov rsi,rcx
+	mov rdi,r8
+	mov r8d,r9d
+	mov r9d,h
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	xor rcx,rcx
+
+loop_1_c_2:
+	xor rax,rax
+	mov ecx,r8d
+loop_2_c_1_2:
+	movd mm0,dword ptr[rsi+4*rax]
+	movd mm1,dword ptr[rdx+4*rax]
+	pavgb mm0,mm1
+	movd dword ptr[rdi+4*rax],mm0
+	inc rax
+	loop loop_2_c_1_2
+	add rsi,r10
+	add rdi,r11
+
+	xor rax,rax
+	mov ecx,r8d
+loop_2_c_2_2:
+	movd mm0,dword ptr[rsi+4*rax]
+	movd mm1,dword ptr[rdx+4*rax]
+	pavgb mm0,mm1
+	movd dword ptr[rdi+4*rax],mm0
+	inc rax
+	loop loop_2_c_2_2
+	add rdx,r10
+	add rdi,r11
+
+	dec r9d
+	jnz short loop_1_c_2
+
+	xor rax,rax
+	mov ecx,r8d
+loop_2_c_3_2:
+	movd mm0,dword ptr[rsi+4*rax]
+	movd mm1,dword ptr[rdx+4*rax]
+	pavgb mm0,mm1
+	movd dword ptr[rdi+4*rax],mm0
+	inc rax
+	loop loop_2_c_3_2
+	
+	mov rsi,rdi
+	cld
+	add rdi,r11
+	mov ecx,r8d
+	rep movsd
+
+	emms
+	
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Blend_SSE_b endp
 
 
 
@@ -1403,11 +4143,11 @@ loop_2_d_3:
 	movq qword ptr[rdi+8*rax],mm0
 	inc rax
 	loop loop_2_d_3
-	add rdi,r11
-
+	
+	mov rsi,rdi
 	cld
+	add rdi,r11
 	mov ecx,r8d
-	mov rsi,rdx
 	rep movsq
 
 	emms
@@ -1419,6 +4159,157 @@ loop_2_d_3:
 	ret
 
 JPSDR_IVTC_Deinterlace_Blend_SSE_2 endp
+
+
+
+;JPSDR_IVTC_Deinterlace_Blend_SSE_2 proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;	src_pitch:dword,dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Blend_SSE_2_a proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	.endprolog
+
+	mov rsi,rcx
+	mov rdi,r8
+	mov r8d,r9d
+	mov r9d,h
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	xor rcx,rcx
+
+loop_1_d_1:
+	xor rax,rax
+	mov ecx,r8d
+loop_2_d_1_1:
+	movq mm0,qword ptr[rsi+8*rax]
+	pavgb mm0,qword ptr[rdx+8*rax]
+	movq qword ptr[rdi+8*rax],mm0
+	inc rax
+	loop loop_2_d_1_1
+	add rsi,r10
+	add rdi,r11
+
+	xor rax,rax
+	mov ecx,r8d
+loop_2_d_2_1:
+	movq mm0,qword ptr[rsi+8*rax]
+	pavgb mm0,qword ptr[rdx+8*rax]
+	movq qword ptr[rdi+8*rax],mm0
+	inc rax
+	loop loop_2_d_2_1
+	add rdx,r10
+	add rdi,r11
+
+	dec r9d
+	jnz short loop_1_d_1
+
+	emms
+	
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Blend_SSE_2_a endp
+
+
+
+;JPSDR_IVTC_Deinterlace_Blend_SSE_2 proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;	src_pitch:dword,dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Blend_SSE_2_b proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	.endprolog
+
+	mov rsi,rcx
+	mov rdi,r8
+	mov r8d,r9d
+	mov r9d,h
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	xor rcx,rcx
+
+loop_1_d_2:
+	xor rax,rax
+	mov ecx,r8d
+loop_2_d_1_2:
+	movq mm0,qword ptr[rsi+8*rax]
+	pavgb mm0,qword ptr[rdx+8*rax]
+	movq qword ptr[rdi+8*rax],mm0
+	inc rax
+	loop loop_2_d_1_2
+	add rsi,r10
+	add rdi,r11
+
+	xor rax,rax
+	mov ecx,r8d
+loop_2_d_2_2:
+	movq mm0,qword ptr[rsi+8*rax]
+	pavgb mm0,qword ptr[rdx+8*rax]
+	movq qword ptr[rdi+8*rax],mm0
+	inc rax
+	loop loop_2_d_2_2
+	add rdx,r10
+	add rdi,r11
+
+	dec r9d
+	jnz short loop_1_d_2
+
+	xor rax,rax
+	mov ecx,r8d
+loop_2_d_3_2:
+	movq mm0,qword ptr[rsi+8*rax]
+	pavgb mm0,qword ptr[rdx+8*rax]
+	movq qword ptr[rdi+8*rax],mm0
+	inc rax
+	loop loop_2_d_3_2
+	
+	mov rsi,rdi
+	cld
+	add rdi,r11
+	mov ecx,r8d
+	rep movsq
+
+	emms
+	
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Blend_SSE_2_b endp
 
 
 
@@ -1489,12 +4380,12 @@ loop_2_e_3:
 	movdqa [rdi+rax],xmm0
 	add rax,rbx
 	loop loop_2_e_3
+	
+	mov rsi,rdi
 	add rdi,r11
-
-	cld
 	mov ecx,r8d
+	cld
 	shl rcx,1
-	mov rsi,rdx
 	rep movsq
 	
 	pop rbx
@@ -1505,6 +4396,162 @@ loop_2_e_3:
 	ret
 
 JPSDR_IVTC_Deinterlace_Blend_SSE_3 endp
+
+
+
+;JPSDR_IVTC_Deinterlace_Blend_SSE_3 proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;	src_pitch:dword,dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Blend_SSE_3_a proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	.endprolog
+
+	mov rsi,rcx
+	mov rdi,r8
+	mov r8d,r9d
+	mov r9d,h
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	xor rcx,rcx
+	mov rbx,16
+
+loop_1_e_1:
+	xor rax,rax
+	mov ecx,r8d
+loop_2_e_1_1:
+	movdqa xmm0,[rsi+rax]
+	pavgb xmm0,[rdx+rax]
+	movdqa [rdi+rax],xmm0
+	add rax,rbx
+	loop loop_2_e_1_1
+	add rsi,r10
+	add rdi,r11
+
+	xor rax,rax
+	mov ecx,r8d
+loop_2_e_2_1:
+	movdqa xmm0,[rsi+rax]
+	pavgb xmm0,[rdx+rax]
+	movdqa [rdi+rax],xmm0
+	add rax,rbx
+	loop loop_2_e_2_1
+	add rdx,r10
+	add rdi,r11
+
+	dec r9d
+	jnz short loop_1_e_1
+
+	pop rbx
+	pop rsi	
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Blend_SSE_3_a endp
+
+
+
+;JPSDR_IVTC_Deinterlace_Blend_SSE_3 proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;	src_pitch:dword,dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Blend_SSE_3_b proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	.endprolog
+
+	mov rsi,rcx
+	mov rdi,r8
+	mov r8d,r9d
+	mov r9d,h
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	xor rcx,rcx
+	mov rbx,16
+
+loop_1_e_2:
+	xor rax,rax
+	mov ecx,r8d
+loop_2_e_1_2:
+	movdqa xmm0,[rsi+rax]
+	pavgb xmm0,[rdx+rax]
+	movdqa [rdi+rax],xmm0
+	add rax,rbx
+	loop loop_2_e_1_2
+	add rsi,r10
+	add rdi,r11
+
+	xor rax,rax
+	mov ecx,r8d
+loop_2_e_2_2:
+	movdqa xmm0,[rsi+rax]
+	pavgb xmm0,[rdx+rax]
+	movdqa [rdi+rax],xmm0
+	add rax,rbx
+	loop loop_2_e_2_2
+	add rdx,r10
+	add rdi,r11
+
+	dec r9d
+	jnz short loop_1_e_2
+
+	xor rax,rax
+	mov ecx,r8d
+loop_2_e_3_2:
+	movdqa xmm0,[rsi+rax]
+	pavgb xmm0,[rdx+rax]
+	movdqa [rdi+rax],xmm0
+	add rax,rbx
+	loop loop_2_e_3_2
+	
+	mov rsi,rdi
+	add rdi,r11
+	mov ecx,r8d
+	cld
+	shl rcx,1
+	rep movsq
+	
+	pop rbx
+	pop rsi	
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Blend_SSE_3_b endp
 
 
 
@@ -1532,13 +4579,19 @@ dst_pitch equ qword ptr[rbp+64]
 	.pushreg rbx
 	.endprolog
 
-	cld
-	mov r10,rcx
-	mov rsi,rcx
+	mov r10,rcx	
+	
+	mov rsi,rcx	
 	xor rcx,rcx
 	mov rdi,r8
+	xor rax,rax
 	mov ecx,r9d
-	rep movsq
+loop_1_f_c:
+	movq mm0,qword ptr[rsi+8*rax]
+	pavgb mm0,qword ptr[rdx+8*rax]
+	movq qword ptr[rdi+8*rax],mm0
+	inc rax
+	loop loop_1_f_c
 	
 	mov rdi,r8
 	mov rbx,r10	
@@ -1549,12 +4602,12 @@ dst_pitch equ qword ptr[rbp+64]
 	mov r11,dst_pitch
 	mov rdx,rbx
 	add rdx,r10
-	add rdi,r11				;ebx=ln-1   esi=ln    edx=ln+1
+	add rdi,r11				;rbx=ln-1   rsi=ln    rdx=ln+1
 	xor rcx,rcx
 	
 loop_1_f:
-	mov ecx,r8d
 	xor rax,rax
+	mov ecx,r8d
 loop_1_f_a:
 	movq mm0,qword ptr[rbx+8*rax]
 	pavgb mm0,qword ptr[rdx+8*rax]
@@ -1565,10 +4618,10 @@ loop_1_f_a:
 
 	mov rbx,rsi
 	add rbx,r10
-	add rdi,r11				;esi=ln-1	edx=ln	ebx=ln+1
+	add rdi,r11				;rsi=ln-1	rdx=ln	rbx=ln+1
 	
-	mov ecx,r8d
 	xor rax,rax
+	mov ecx,r8d
 loop_1_f_b:
 	movq mm0,qword ptr[rsi+8*rax]
 	pavgb mm0,qword ptr[rbx+8*rax]
@@ -1584,9 +4637,15 @@ loop_1_f_b:
 
 	dec r9d
 	jnz loop_1_f
-
+	
+	xor rax,rax
 	mov ecx,r8d
-	rep movsq
+loop_1_f_d:
+	movq mm0,qword ptr[rbx+8*rax]
+	pavgb mm0,qword ptr[rsi+8*rax]
+	movq qword ptr[rdi+8*rax],mm0
+	inc rax
+	loop loop_1_f_d
 
 	emms
 	
@@ -1600,6 +4659,295 @@ loop_1_f_b:
 JPSDR_IVTC_Deinterlace_Tri_Blend_SSE endp
 
 
+
+;JPSDR_IVTC_Deinterlace_Tri_Blend_SSE proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;	src_pitch:dword,dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Tri_Blend_SSE_a proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	.endprolog
+
+	mov r10,rcx
+	
+	mov rsi,rcx	
+	xor rcx,rcx
+	mov rdi,r8
+	xor rax,rax
+	mov ecx,r9d
+loop_1_f_d_1:
+	movq mm0,qword ptr[rsi+8*rax]
+	pavgb mm0,qword ptr[rdx+8*rax]
+	movq qword ptr[rdi+8*rax],mm0
+	inc rax
+	loop loop_1_f_d_1
+	
+	mov rdi,r8
+	mov rbx,r10	
+	mov rsi,rdx
+	mov r8d,r9d
+	mov r9d,h
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	mov rdx,rbx
+	add rdx,r10
+	add rdi,r11				;rbx=ln-1   rsi=ln    rdx=ln+1
+	xor rcx,rcx
+	
+loop_1_f_1:
+	xor rax,rax
+	mov ecx,r8d
+loop_1_f_a_1:
+	movq mm0,qword ptr[rbx+8*rax]
+	pavgb mm0,qword ptr[rdx+8*rax]
+	pavgb mm0,qword ptr[rsi+8*rax]
+	movq qword ptr[rdi+8*rax],mm0
+	inc rax
+	loop loop_1_f_a_1
+
+	mov rbx,rsi
+	add rbx,r10
+	add rdi,r11				;rsi=ln-1	rdx=ln	rbx=ln+1
+	
+	xor rax,rax
+	mov ecx,r8d
+loop_1_f_b_1:
+	movq mm0,qword ptr[rsi+8*rax]
+	pavgb mm0,qword ptr[rbx+8*rax]
+	pavgb mm0,qword ptr[rdx+8*rax]
+	movq qword ptr[rdi+8*rax],mm0
+	inc rax
+	loop loop_1_f_b_1
+
+	mov rsi,rbx
+	mov rbx,rdx
+	add rdx,r10
+	add rdi,r11
+
+	dec r9d
+	jnz loop_1_f_1
+
+	xor rax,rax
+	mov ecx,r8d	
+loop_1_f_c_1:
+	movq mm0,qword ptr[rbx+8*rax]
+	pavgb mm0,qword ptr[rdx+8*rax]
+	pavgb mm0,qword ptr[rsi+8*rax]
+	movq qword ptr[rdi+8*rax],mm0
+	inc rax
+	loop loop_1_f_c_1	
+
+	emms
+	
+	pop rbx
+	pop rsi	
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Tri_Blend_SSE_a endp
+
+
+
+;JPSDR_IVTC_Deinterlace_Tri_Blend_SSE proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;	src_pitch:dword,dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Tri_Blend_SSE_b proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	.endprolog
+
+	mov rdi,r8
+	mov rbx,rcx
+	mov rsi,rdx
+	mov r8d,r9d
+	mov r9d,h
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	mov rdx,rbx
+	add rdx,r10
+	add rdi,r11				;rbx=ln-1   rsi=ln    rdx=ln+1
+	xor rcx,rcx
+	
+loop_1_f_2:
+	xor rax,rax
+	mov ecx,r8d
+loop_1_f_a_2:
+	movq mm0,qword ptr[rbx+8*rax]
+	pavgb mm0,qword ptr[rdx+8*rax]
+	pavgb mm0,qword ptr[rsi+8*rax]
+	movq qword ptr[rdi+8*rax],mm0
+	inc rax
+	loop loop_1_f_a_2
+
+	mov rbx,rsi
+	add rbx,r10
+	add rdi,r11				;rsi=ln-1	rdx=ln	rbx=ln+1
+	
+	xor rax,rax
+	mov ecx,r8d
+loop_1_f_b_2:
+	movq mm0,qword ptr[rsi+8*rax]
+	pavgb mm0,qword ptr[rbx+8*rax]
+	pavgb mm0,qword ptr[rdx+8*rax]
+	movq qword ptr[rdi+8*rax],mm0
+	inc rax
+	loop loop_1_f_b_2
+
+	mov rsi,rbx
+	mov rbx,rdx
+	add rdx,r10
+	add rdi,r11
+
+	dec r9d
+	jnz loop_1_f_2
+
+	emms
+	
+	pop rbx
+	pop rsi	
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Tri_Blend_SSE_b endp
+
+
+
+;JPSDR_IVTC_Deinterlace_Tri_Blend_SSE proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;	src_pitch:dword,dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Tri_Blend_SSE_c proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	.endprolog
+
+	mov rdi,r8
+	mov rbx,rcx
+	mov rsi,rdx
+	mov r8d,r9d
+	mov r9d,h
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	mov rdx,rbx
+	add rdx,r10
+	add rdi,r11				;rbx=ln-1   rsi=ln    rdx=ln+1
+	xor rcx,rcx
+	
+loop_1_f_3:
+	xor rax,rax
+	mov ecx,r8d
+loop_1_f_a_3:
+	movq mm0,qword ptr[rbx+8*rax]
+	pavgb mm0,qword ptr[rdx+8*rax]
+	pavgb mm0,qword ptr[rsi+8*rax]
+	movq qword ptr[rdi+8*rax],mm0
+	inc rax
+	loop loop_1_f_a_3
+
+	mov rbx,rsi
+	add rbx,r10
+	add rdi,r11				;rsi=ln-1	rdx=ln	rbx=ln+1
+	
+	xor rax,rax
+	mov ecx,r8d
+loop_1_f_b_3:
+	movq mm0,qword ptr[rsi+8*rax]
+	pavgb mm0,qword ptr[rbx+8*rax]
+	pavgb mm0,qword ptr[rdx+8*rax]
+	movq qword ptr[rdi+8*rax],mm0
+	inc rax
+	loop loop_1_f_b_3
+
+	mov rsi,rbx
+	mov rbx,rdx
+	add rdx,r10
+	add rdi,r11
+
+	dec r9d
+	jnz loop_1_f_3
+	
+	xor rax,rax
+	mov ecx,r8d
+loop_1_f_c_3:
+	movq mm0,qword ptr[rbx+8*rax]
+	pavgb mm0,qword ptr[rdx+8*rax]
+	pavgb mm0,qword ptr[rsi+8*rax]
+	movq qword ptr[rdi+8*rax],mm0
+	inc rax
+	loop loop_1_f_c_3
+
+	add rdi,r11
+	
+	xor rax,rax
+	mov ecx,r8d
+loop_1_f_d_3:
+	movq mm0,qword ptr[rsi+8*rax]
+	pavgb mm0,qword ptr[rdx+8*rax]
+	movq qword ptr[rdi+8*rax],mm0
+	inc rax
+	loop loop_1_f_d_3
+	
+	emms
+	
+	pop rbx
+	pop rsi	
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Tri_Blend_SSE_c endp
 
 
 
@@ -1627,19 +4975,30 @@ dst_pitch equ qword ptr[rbp+64]
 	.pushreg rbx
 	.endprolog
 
-	cld
 	mov r10,rcx
+
 	mov rsi,rcx
 	xor rcx,rcx
 	mov rdi,r8
 	mov ecx,r9d
-	rep movsd
-
 
 	mov eax,02020202h
 	pxor mm3,mm3
 	movd mm4,eax
 	punpcklbw mm4,mm3
+	
+	xor rax,rax
+loop_1_g_c:
+	movd mm0,dword ptr[rsi+4*rax]
+	movd mm1,dword ptr[rdx+4*rax]
+	punpcklbw mm0,mm3
+	punpcklbw mm1,mm3
+	paddw mm0,mm1
+	psrlw mm0,1
+	packuswb mm0,mm3
+	movd dword ptr[rdi+4*rax],mm0
+	inc rax
+	loop loop_1_g_c
 
 	mov rdi,r8
 	mov rbx,r10	
@@ -1650,12 +5009,12 @@ dst_pitch equ qword ptr[rbp+64]
 	mov r11,dst_pitch
 	mov rdx,rbx
 	add rdx,r10
-	add rdi,r11				;ebx=ln-1   esi=ln    edx=ln+1
+	add rdi,r11				;rbx=ln-1   rsi=ln    rdx=ln+1
 	xor rcx,rcx
 
 loop_1_g:
-	mov ecx,r8d
 	xor rax,rax
+	mov ecx,r8d
 loop_1_g_a:
 	movd mm0,dword ptr[rbx+4*rax]
 	movd mm2,dword ptr[rdx+4*rax]
@@ -1674,11 +5033,11 @@ loop_1_g_a:
 	loop loop_1_g_a
 
 	mov rbx,rsi
-	add rbx,r10				;esi=ln-1	edx=ln	ebx=ln+1
+	add rbx,r10				;rsi=ln-1	rdx=ln	rbx=ln+1
 	add rdi,r11
 
-	mov ecx,r8d
 	xor rax,rax
+	mov ecx,r8d
 loop_1_g_b:
 	movd mm0,dword ptr[rsi+4*rax]
 	movd mm2,dword ptr[rbx+4*rax]
@@ -1703,10 +5062,21 @@ loop_1_g_b:
 
 	dec r9d
 	jnz loop_1_g
-
+	
+	xor rax,rax
 	mov ecx,r8d
-	rep movsd
-
+loop_1_g_d:
+	movd mm0,dword ptr[rbx+4*rax]
+	movd mm1,dword ptr[rsi+4*rax]
+	punpcklbw mm0,mm3
+	punpcklbw mm1,mm3
+	paddw mm0,mm1
+	psrlw mm0,1
+	packuswb mm0,mm3
+	movd dword ptr[rdi+4*rax],mm0
+	inc rax
+	loop loop_1_g_d
+	
 	emms
 	
 	pop rbx
@@ -1717,6 +5087,394 @@ loop_1_g_b:
 	ret
 
 JPSDR_IVTC_Deinterlace_Tri_Blend_MMX endp
+
+
+
+;JPSDR_IVTC_Deinterlace_Tri_Blend_MMX proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;	src_pitch:dword,dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Tri_Blend_MMX_a proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	.endprolog
+
+	mov r10,rcx
+
+	mov rsi,rcx
+	xor rcx,rcx
+	mov rdi,r8
+	mov ecx,r9d
+	
+	mov eax,02020202h
+	pxor mm3,mm3
+	movd mm4,eax
+	punpcklbw mm4,mm3
+	
+	xor rax,rax
+loop_1_g_d_1:
+	movd mm0,dword ptr[rsi+4*rax]
+	movd mm1,dword ptr[rdx+4*rax]
+	punpcklbw mm0,mm3
+	punpcklbw mm1,mm3
+	paddw mm0,mm1
+	psrlw mm0,1
+	packuswb mm0,mm3
+	movd dword ptr[rdi+4*rax],mm0
+	inc rax
+	loop loop_1_g_d_1
+
+	mov rdi,r8
+	mov rbx,r10	
+	mov rsi,rdx
+	mov r8d,r9d
+	mov r9d,h
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	mov rdx,rbx
+	add rdx,r10
+	add rdi,r11				;rbx=ln-1   rsi=ln    rdx=ln+1
+	xor rcx,rcx
+
+loop_1_g_1:
+	xor rax,rax
+	mov ecx,r8d
+loop_1_g_a_1:
+	movd mm0,dword ptr[rbx+4*rax]
+	movd mm2,dword ptr[rdx+4*rax]
+	punpcklbw mm0,mm3
+	movd mm1,dword ptr[rsi+4*rax]	;mm0=ln-1	mm1=ln	mm2=ln+1
+	punpcklbw mm2,mm3
+	punpcklbw mm1,mm3
+	paddw mm0,mm2
+	psllw mm1,1
+	paddw mm0,mm4
+	paddw mm0,mm1
+	psrlw mm0,2
+	packuswb mm0,mm3
+	movd dword ptr[rdi+4*rax],mm0
+	inc rax
+	loop loop_1_g_a_1
+
+	mov rbx,rsi
+	add rbx,r10				;rsi=ln-1	rdx=ln	rbx=ln+1
+	add rdi,r11
+
+	xor rax,rax
+	mov ecx,r8d
+loop_1_g_b_1:
+	movd mm0,dword ptr[rsi+4*rax]
+	movd mm2,dword ptr[rbx+4*rax]
+	punpcklbw mm0,mm3
+	movd mm1,dword ptr[rdx+4*rax]	;mm0=ln-1	mm1=ln	mm2=ln+1
+	punpcklbw mm2,mm3
+	punpcklbw mm1,mm3
+	paddw mm0,mm2
+	psllw mm1,1
+	paddw mm0,mm4
+	paddw mm0,mm1
+	psrlw mm0,2
+	packuswb mm0,mm3
+	movd dword ptr[rdi+4*rax],mm0
+	inc rax
+	loop loop_1_g_b_1
+
+	mov rsi,rbx
+	mov rbx,rdx
+	add rdx,r10
+	add rdi,r11
+
+	dec r9d
+	jnz loop_1_g_1
+	
+	xor rax,rax
+	mov ecx,r8d
+loop_1_g_c_1:
+	movd mm0,dword ptr[rbx+4*rax]
+	movd mm2,dword ptr[rdx+4*rax]
+	punpcklbw mm0,mm3
+	movd mm1,dword ptr[rsi+4*rax]	;mm0=ln-1	mm1=ln	mm2=ln+1
+	punpcklbw mm2,mm3
+	punpcklbw mm1,mm3
+	paddw mm0,mm2
+	psllw mm1,1
+	paddw mm0,mm4
+	paddw mm0,mm1
+	psrlw mm0,2
+	packuswb mm0,mm3
+	movd dword ptr[rdi+4*rax],mm0
+	inc rax
+	loop loop_1_g_c_1
+	
+	emms
+	
+	pop rbx
+	pop rsi	
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Tri_Blend_MMX_a endp
+
+
+
+;JPSDR_IVTC_Deinterlace_Tri_Blend_MMX proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;	src_pitch:dword,dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Tri_Blend_MMX_b proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	.endprolog
+
+	mov eax,02020202h
+	pxor mm3,mm3
+	movd mm4,eax
+	punpcklbw mm4,mm3
+
+	mov rdi,r8
+	mov rbx,rcx
+	mov rsi,rdx
+	mov r8d,r9d
+	mov r9d,h
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	mov rdx,rbx
+	add rdx,r10
+	add rdi,r11				;rbx=ln-1   rsi=ln    rdx=ln+1
+	xor rcx,rcx
+
+loop_1_g_2:
+	xor rax,rax
+	mov ecx,r8d
+loop_1_g_a_2:
+	movd mm0,dword ptr[rbx+4*rax]
+	movd mm2,dword ptr[rdx+4*rax]
+	punpcklbw mm0,mm3
+	movd mm1,dword ptr[rsi+4*rax]	;mm0=ln-1	mm1=ln	mm2=ln+1
+	punpcklbw mm2,mm3
+	punpcklbw mm1,mm3
+	paddw mm0,mm2
+	psllw mm1,1
+	paddw mm0,mm4
+	paddw mm0,mm1
+	psrlw mm0,2
+	packuswb mm0,mm3
+	movd dword ptr[rdi+4*rax],mm0
+	inc rax
+	loop loop_1_g_a_2
+
+	mov rbx,rsi
+	add rbx,r10				;rsi=ln-1	rdx=ln	rbx=ln+1
+	add rdi,r11
+
+	xor rax,rax
+	mov ecx,r8d
+loop_1_g_b_2:
+	movd mm0,dword ptr[rsi+4*rax]
+	movd mm2,dword ptr[rbx+4*rax]
+	punpcklbw mm0,mm3
+	movd mm1,dword ptr[rdx+4*rax]	;mm0=ln-1	mm1=ln	mm2=ln+1
+	punpcklbw mm2,mm3
+	punpcklbw mm1,mm3
+	paddw mm0,mm2
+	psllw mm1,1
+	paddw mm0,mm4
+	paddw mm0,mm1
+	psrlw mm0,2
+	packuswb mm0,mm3
+	movd dword ptr[rdi+4*rax],mm0
+	inc rax
+	loop loop_1_g_b_2
+
+	mov rsi,rbx
+	mov rbx,rdx
+	add rdx,r10
+	add rdi,r11
+
+	dec r9d
+	jnz loop_1_g_2
+
+	emms
+	
+	pop rbx
+	pop rsi	
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Tri_Blend_MMX_b endp
+
+
+
+;JPSDR_IVTC_Deinterlace_Tri_Blend_MMX proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;	src_pitch:dword,dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Tri_Blend_MMX_c proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	.endprolog
+
+	mov eax,02020202h
+	pxor mm3,mm3
+	movd mm4,eax
+	punpcklbw mm4,mm3
+
+	mov rdi,r8
+	mov rbx,rcx	
+	mov rsi,rdx
+	mov r8d,r9d
+	mov r9d,h
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	mov rdx,rbx
+	add rdx,r10             ;rbx=ln-1   rsi=ln    rdx=ln+1
+	xor rcx,rcx
+
+loop_1_g_3:
+	xor rax,rax
+	mov ecx,r8d
+loop_1_g_a_3:
+	movd mm0,dword ptr[rbx+4*rax]
+	movd mm2,dword ptr[rdx+4*rax]
+	punpcklbw mm0,mm3
+	movd mm1,dword ptr[rsi+4*rax]	;mm0=ln-1	mm1=ln	mm2=ln+1
+	punpcklbw mm2,mm3
+	punpcklbw mm1,mm3
+	paddw mm0,mm2
+	psllw mm1,1
+	paddw mm0,mm4
+	paddw mm0,mm1
+	psrlw mm0,2
+	packuswb mm0,mm3
+	movd dword ptr[rdi+4*rax],mm0
+	inc rax
+	loop loop_1_g_a_3
+
+	mov rbx,rsi
+	add rbx,r10				;rsi=ln-1	rdx=ln	rbx=ln+1
+	add rdi,r11
+
+	xor rax,rax
+	mov ecx,r8d
+loop_1_g_b_3:
+	movd mm0,dword ptr[rsi+4*rax]
+	movd mm2,dword ptr[rbx+4*rax]
+	punpcklbw mm0,mm3
+	movd mm1,dword ptr[rdx+4*rax]	;mm0=ln-1	mm1=ln	mm2=ln+1
+	punpcklbw mm2,mm3
+	punpcklbw mm1,mm3
+	paddw mm0,mm2
+	psllw mm1,1
+	paddw mm0,mm4
+	paddw mm0,mm1
+	psrlw mm0,2
+	packuswb mm0,mm3
+	movd dword ptr[rdi+4*rax],mm0
+	inc rax
+	loop loop_1_g_b_3
+
+	mov rsi,rbx
+	mov rbx,rdx
+	add rdx,r10
+	add rdi,r11
+
+	dec r9d
+	jnz loop_1_g_3
+	
+	xor rax,rax
+	mov ecx,r8d
+loop_1_g_c_3:
+	movd mm0,dword ptr[rbx+4*rax]
+	movd mm2,dword ptr[rdx+4*rax]
+	punpcklbw mm0,mm3
+	movd mm1,dword ptr[rsi+4*rax]	;mm0=ln-1	mm1=ln	mm2=ln+1
+	punpcklbw mm2,mm3
+	punpcklbw mm1,mm3
+	paddw mm0,mm2
+	psllw mm1,1
+	paddw mm0,mm4
+	paddw mm0,mm1
+	psrlw mm0,2
+	packuswb mm0,mm3
+	movd dword ptr[rdi+4*rax],mm0
+	inc rax
+	loop loop_1_g_c_3
+	
+	add rdi,r11
+	
+	xor rax,rax
+	mov ecx,r8d
+loop_1_g_d_3:
+	movd mm0,dword ptr[rsi+4*rax]
+	movd mm1,dword ptr[rdx+4*rax]
+	punpcklbw mm0,mm3
+	punpcklbw mm1,mm3
+	paddw mm0,mm1
+	psrlw mm0,1
+	packuswb mm0,mm3
+	movd dword ptr[rdi+4*rax],mm0
+	inc rax
+	loop loop_1_g_d_3
+	
+	emms
+	
+	pop rbx
+	pop rsi	
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Tri_Blend_MMX_c endp
 
 
 

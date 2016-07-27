@@ -11,26 +11,99 @@
 
 #include "..\asmlib\asmlib.h"
 
+#define MAX_MT_THREADS 128
+
 #define Max_Median_Size 50
 
 extern int g_VFVAPIVersion;
 
 extern "C" int IInstrSet;
 
-extern "C" void JPSDR_Median_Planar_Move_src(const void *src, void *dst, int32_t w,int32_t h,ptrdiff_t src_offset);
-extern "C" void JPSDR_Median_Planar_Move_dst(const void *src, void *dst, int32_t w,int32_t h,ptrdiff_t dst_offset);
 extern "C" void JPSDR_Median_RGB32_Move_src(const void *src, void *planar_R, void *planar_G,void *planar_B,
-	int32_t w,int32_t h,ptrdiff_t src_offset);
+	int32_t w,int32_t h,ptrdiff_t src_offset,ptrdiff_t dst_offset);
+extern "C" void JPSDR_Median_RGB32_Move_src_SSE_1(const void *src, void *planar_R, void *planar_G,void *planar_B,
+	int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Median_RGB32_Move_src_SSE_2(const void *src, void *planar_R, void *planar_G,void *planar_B,
+	int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+
 extern "C" void JPSDR_Median_YUYV_Move_src(const void *src, void *planar_Y, void *planar_U,void *planar_V,
-	int32_t w,int32_t h,ptrdiff_t src_offset);
+	int32_t w,int32_t h,ptrdiff_t src_offset,ptrdiff_t dst_offset_Y,ptrdiff_t dst_offset_UV);
+extern "C" void JPSDR_Median_YUYV_Move_src_SSE_1(const void *src, void *planar_Y, void *planar_U,void *planar_V,
+	int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch_Y,ptrdiff_t dst_pitch_UV);
+extern "C" void JPSDR_Median_YUYV_Move_src_SSE_2(const void *src, void *planar_Y, void *planar_U,void *planar_V,
+	int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch_Y,ptrdiff_t dst_pitch_UV);
+
 extern "C" void JPSDR_Median_UYVY_Move_src(const void *src, void *planar_Y, void *planar_U,void *planar_V,
-	int32_t w,int32_t h,ptrdiff_t src_offset);
+	int32_t w,int32_t h,ptrdiff_t src_offset,ptrdiff_t dst_offset_Y,ptrdiff_t dst_offset_UV);
+extern "C" void JPSDR_Median_UYVY_Move_src_SSE_1(const void *src, void *planar_Y, void *planar_U,void *planar_V,
+	int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch_Y,ptrdiff_t dst_pitch_UV);
+extern "C" void JPSDR_Median_UYVY_Move_src_SSE_2(const void *src, void *planar_Y, void *planar_U,void *planar_V,
+	int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch_Y,ptrdiff_t dst_pitch_UV);
+
 extern "C" void JPSDR_Median_RGB32_Move_dst(const void *planar_R,const void *planar_G,const void *planar_B,void *dst,
-	int32_t w,int32_t h,ptrdiff_t dst_offset);
+	int32_t w,int32_t h,ptrdiff_t src_offset,ptrdiff_t dst_offset);
+extern "C" void JPSDR_Median_RGB32_Move_dst_SSE_1(const void *planar_R,const void *planar_G,const void *planar_B,void *dst,
+	int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Median_RGB32_Move_dst_SSE_2(const void *planar_R,const void *planar_G,const void *planar_B,void *dst,
+	int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+
+
 extern "C" void JPSDR_Median_YUYV_Move_dst(const void *planar_Y,const void *planar_U,const void *planar_V,void *dst,
-	int32_t w,int32_t h,ptrdiff_t dst_offset);
+	int32_t w,int32_t h,ptrdiff_t src_offset_Y,ptrdiff_t src_offset_UV,ptrdiff_t dst_offset);
+extern "C" void JPSDR_Median_YUYV_Move_dst_SSE_1(const void *planar_Y,const void *planar_U,const void *planar_V,void *dst,
+	int32_t w,int32_t h,ptrdiff_t src_pitch_Y,ptrdiff_t src_pitch_UV,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Median_YUYV_Move_dst_SSE_2(const void *planar_Y,const void *planar_U,const void *planar_V,void *dst,
+	int32_t w,int32_t h,ptrdiff_t src_pitch_Y,ptrdiff_t src_pitch_UV,ptrdiff_t dst_pitch);
+
 extern "C" void JPSDR_Median_UYVY_Move_dst(const void *planar_Y,const void *planar_U,const void *planar_V,void *dst,
-	int32_t w,int32_t h,ptrdiff_t dst_offset);
+	int32_t w,int32_t h,ptrdiff_t src_offset_Y,ptrdiff_t src_offset_UV,ptrdiff_t dst_offset);
+extern "C" void JPSDR_Median_UYVY_Move_dst_SSE_1(const void *planar_Y,const void *planar_U,const void *planar_V,void *dst,
+	int32_t w,int32_t h,ptrdiff_t src_pitch_Y,ptrdiff_t src_pitch_UV,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Median_UYVY_Move_dst_SSE_2(const void *planar_Y,const void *planar_U,const void *planar_V,void *dst,
+	int32_t w,int32_t h,ptrdiff_t src_pitch_Y,ptrdiff_t src_pitch_UV,ptrdiff_t dst_pitch);
+
+
+
+typedef struct _MT_Data_Info
+{
+	void *src;
+	void *dst;
+	ptrdiff_t src_pitch,src_modulo,dst_pitch,dst_modulo;
+	int32_t src_h_min,src_h_max,src_w;
+	int32_t src_Y_h_min,src_Y_h_max,src_Y_w,src_Y_w_32;
+	int32_t src_UV_h_min,src_UV_h_max,src_UV_w,src_UV_w_32;
+	int32_t dst_Y_h_min,dst_Y_h_max,dst_Y_w,dst_Y_w_32;
+	int32_t dst_UV_h_min,dst_UV_h_max,dst_UV_w,dst_UV_w_32;
+	int16_t threshold;
+	uint8_t *data;
+	int32_t m_size;
+	uint32_t size_data;
+	bool top,bottom;
+} MT_Data_Info;
+
+
+typedef struct _MT_Data_Thread
+{
+	void *pClass;
+	uint8_t f_process,thread_Id;
+	HANDLE nextJob, jobFinished;
+} MT_Data_Thread;
+
+
+
+static int num_processors()
+{
+#ifdef _DEBUG
+	return 1;
+#else
+	int pcount = 0;
+	ULONG_PTR p_aff=0, s_aff=0;
+	GetProcessAffinityMask(GetCurrentProcess(), &p_aff, &s_aff);
+	for(; p_aff != 0; p_aff>>=1) 
+		pcount += (p_aff&1);
+	return pcount;
+#endif
+}
 
 
 
@@ -42,6 +115,7 @@ public :
 	bool setting_mode,interlace_mode;
 	bool filter_disable[3];
 	uint8_t filter_mode;
+	bool mt_mode;
 
 	JPSDR_MedianData(void);
 };
@@ -61,6 +135,7 @@ JPSDR_MedianData::JPSDR_MedianData(void)
 	filter_mode=1;
 	interlace_mode=false;
 	setting_mode=false;
+	mt_mode=true;
 }
 
 
@@ -115,6 +190,7 @@ bool JPSDR_MedianDialog::OnInit()
 	CheckDlgButton(mhdlg,IDC_DISABLE_0,mData.filter_disable[0]?BST_CHECKED:BST_UNCHECKED);
 	CheckDlgButton(mhdlg,IDC_DISABLE_1,mData.filter_disable[1]?BST_CHECKED:BST_UNCHECKED);
 	CheckDlgButton(mhdlg,IDC_DISABLE_2,mData.filter_disable[2]?BST_CHECKED:BST_UNCHECKED);
+	CheckDlgButton(mhdlg,IDC_ENABLE_MT,mData.mt_mode?BST_CHECKED:BST_UNCHECKED);
 	CheckDlgButton(mhdlg,IDC_MODE,mData.setting_mode?BST_CHECKED:BST_UNCHECKED);
 	CheckDlgButton(mhdlg,IDC_INTERLACE,mData.interlace_mode?BST_CHECKED:BST_UNCHECKED);
 	switch (mData.filter_mode)
@@ -166,6 +242,7 @@ bool JPSDR_MedianDialog::SaveToData()
 	mData.filter_disable[0]=!!IsDlgButtonChecked(mhdlg,IDC_DISABLE_0);
 	mData.filter_disable[1]=!!IsDlgButtonChecked(mhdlg,IDC_DISABLE_1);
 	mData.filter_disable[2]=!!IsDlgButtonChecked(mhdlg,IDC_DISABLE_2);
+	mData.mt_mode=!!IsDlgButtonChecked(mhdlg,IDC_ENABLE_MT);
 
 	mData.setting_mode=!!IsDlgButtonChecked(mhdlg,IDC_MODE);
 	mData.interlace_mode=!!IsDlgButtonChecked(mhdlg,IDC_INTERLACE);
@@ -256,7 +333,6 @@ bool JPSDR_MedianDialog::OnCommand(int cmd)
 		case IDC_1_THRESHOLD :
 		case IDC_2_THRESHOLD :
 		case IDC_MODE :
-		case IDC_INTERLACE :
 			if (mifp && SaveToData()) mifp->RedoFrame();
 			return true;
 		case IDC_SQUARE :
@@ -265,6 +341,8 @@ bool JPSDR_MedianDialog::OnCommand(int cmd)
 		case IDC_0_MEDIAN_SIZE :
 		case IDC_1_MEDIAN_SIZE :
 		case IDC_2_MEDIAN_SIZE :
+		case IDC_INTERLACE :
+		case IDC_ENABLE_MT :
 			if (mifp && SaveToData()) mifp->RedoSystem();
 			return true;
 		case IDC_PREVIEW:
@@ -290,27 +368,36 @@ public:
 	virtual void GetScriptString(char *buf, int maxlen);
 	
 	VDXVF_DECLARE_SCRIPT_METHODS();
+
+private:
+	static DWORD WINAPI StaticThreadpool( LPVOID lpParam );
 	
 protected:
 	Image_Data image_data;
 	uint8_t *buffer_in[3],*buffer_out[3];
-	ptrdiff_t buffer_size[3];
-	int16_t *data[3];
+	ptrdiff_t buffer_pitch[3],buffer_modulo[3];
+	uint32_t buffer_size[3];
+	uint8_t *Tdata[MAX_MT_THREADS];
 	bool SSE2_Enable;
 	size_t CPU_Cache_Size,Cache_Setting;
+	int32_t max_median_size;
 
-	void square_median_filter(const uint8_t *src,uint8_t *dst, const int32_t w, const int32_t h,
-		const int32_t m_size, const int16_t threshold, int16_t *data, const uint32_t size_data);
-	void square_median_filter_2(const uint8_t *src,uint8_t *dst, const int32_t w, const int32_t h,
-		const int32_t m_size, const int16_t threshold, int16_t *data, const uint32_t size_data);
-	void horizontal_median_filter(const uint8_t *src,uint8_t *dst, const int32_t w, const int32_t h,
-		const int32_t m_size, const int16_t threshold, int16_t *data, const uint32_t size_data);
-	void horizontal_median_filter_2(const uint8_t *src,uint8_t *dst, const int32_t w, const int32_t h,
-		const int32_t m_size, const int16_t threshold, int16_t *data, const uint32_t size_data);
-	void vertical_median_filter(const uint8_t *src,uint8_t *dst, const int32_t w, const int32_t h,
-		const int32_t m_size, const int16_t threshold, int16_t *data, const uint32_t size_data);
-	void vertical_median_filter_2(const uint8_t *src,uint8_t *dst, const int32_t w, const int32_t h,
-		const int32_t m_size, const int16_t threshold, int16_t *data, const uint32_t size_data);
+	HANDLE thds[MAX_MT_THREADS];
+	MT_Data_Thread MT_Thread[MAX_MT_THREADS];
+	MT_Data_Info MT_Data[MAX_MT_THREADS];
+	DWORD tids[MAX_MT_THREADS];
+	uint8_t CPUs_number,threads_number;
+
+	uint8_t CreateMTData(uint8_t max_threads,int32_t size_x,int32_t size_y,uint8_t div_x,uint8_t div_y,uint8_t _32bits);
+
+	void square_median_filter(uint8_t thread_num);
+	void square_median_filter_2(uint8_t thread_num);
+
+	void horizontal_median_filter(uint8_t thread_num);
+	void horizontal_median_filter_2(uint8_t thread_num);
+
+	void vertical_median_filter(uint8_t thread_num);
+	void vertical_median_filter_2(uint8_t thread_num);
 
 	void ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptValue *argv, int argc);
 		
@@ -318,19 +405,18 @@ protected:
 };
 
 VDXVF_BEGIN_SCRIPT_METHODS(JPSDR_Median)
-VDXVF_DEFINE_SCRIPT_METHOD(JPSDR_Median,ScriptConfig,"iiiiiiiiiiii")
+VDXVF_DEFINE_SCRIPT_METHOD(JPSDR_Median,ScriptConfig,"iiiiiiiiiiiii")
 VDXVF_END_SCRIPT_METHODS()
 
 
 bool JPSDR_Median::Init()
 {
-	uint8_t i;
+	uint16_t i;
 
 	for (i=0; i<3; i++)
 	{
 		buffer_in[i]=NULL;
 		buffer_out[i]=NULL;
-		data[i]=NULL;
 	}
 
 	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
@@ -338,7 +424,311 @@ bool JPSDR_Median::Init()
 	if (IInstrSet<0) InstructionSet();
 	CPU_Cache_Size=DataCacheSize(0)>>2;
 
+	for (i=0; i<MAX_MT_THREADS; i++)
+	{
+		MT_Thread[i].pClass=NULL;
+		MT_Thread[i].f_process=0;
+		MT_Thread[i].thread_Id=(uint8_t)i;
+		MT_Thread[i].jobFinished=NULL;
+		MT_Thread[i].nextJob=NULL;
+		thds[i]=NULL;
+		Tdata[i]=NULL;
+	}
+
+	CPUs_number=(uint8_t)num_processors();
+	if (CPUs_number>MAX_MT_THREADS) CPUs_number=MAX_MT_THREADS;
+	threads_number=1;
+
 	return(true);
+}
+
+
+
+uint8_t JPSDR_Median::CreateMTData(uint8_t max_threads,int32_t size_x,int32_t size_y,uint8_t div_x,uint8_t div_y,uint8_t _32bits)
+{
+	if ((max_threads<=1) || (max_threads>threads_number))
+	{
+		MT_Data[0].top=true;
+		MT_Data[0].bottom=true;
+		MT_Data[0].src_Y_h_min=0;
+		MT_Data[0].dst_Y_h_min=0;
+		MT_Data[0].src_Y_h_max=size_y;
+		MT_Data[0].dst_Y_h_max=size_y;
+		MT_Data[0].src_UV_h_min=0;
+		MT_Data[0].dst_UV_h_min=0;
+		switch (div_y)
+		{
+			case 0 : 
+				MT_Data[0].src_UV_h_max=size_y;
+				MT_Data[0].dst_UV_h_max=size_y;
+				break;
+			case 1 : 
+				MT_Data[0].src_UV_h_max=size_y >> 1;
+				MT_Data[0].dst_UV_h_max=size_y >> 1;
+				break;
+			case 2 : 
+				MT_Data[0].src_UV_h_max=size_y >> 2;
+				MT_Data[0].dst_UV_h_max=size_y >> 2;
+				break;
+			default :
+				MT_Data[0].src_UV_h_max=size_y;
+				MT_Data[0].dst_UV_h_max=size_y;
+				break;
+		}
+		MT_Data[0].src_Y_w=size_x;
+		MT_Data[0].dst_Y_w=size_x;
+		switch (div_x)
+		{
+			case 0 :
+				MT_Data[0].src_UV_w=size_x;
+				MT_Data[0].dst_UV_w=size_x;
+				break;
+			case 1 :
+				MT_Data[0].src_UV_w=size_x >> 1;
+				MT_Data[0].dst_UV_w=size_x >> 1;
+				break;
+			case 2 :
+				MT_Data[0].src_UV_w=size_x >> 2;
+				MT_Data[0].dst_UV_w=size_x >> 2;
+				break;
+			default :
+				MT_Data[0].src_UV_w=size_x;
+				MT_Data[0].dst_UV_w=size_x;
+				break;
+		}
+		switch (_32bits)
+		{
+			case 0 :
+				MT_Data[0].src_Y_w_32=MT_Data[0].src_Y_w;
+				MT_Data[0].dst_Y_w_32=MT_Data[0].dst_Y_w;
+				MT_Data[0].src_UV_w_32=MT_Data[0].src_UV_w;
+				MT_Data[0].dst_UV_w_32=MT_Data[0].dst_UV_w;
+				break;
+			case 1 :
+				MT_Data[0].src_Y_w_32=(MT_Data[0].src_Y_w+1)>>1;
+				MT_Data[0].dst_Y_w_32=(MT_Data[0].dst_Y_w+1)>>1;
+				MT_Data[0].src_UV_w_32=(MT_Data[0].src_UV_w+1)>>1;
+				MT_Data[0].dst_UV_w_32=(MT_Data[0].dst_UV_w+1)>>1;
+				break;
+			case 2 :
+				MT_Data[0].src_Y_w_32=MT_Data[0].src_Y_w>>2;
+				MT_Data[0].dst_Y_w_32=MT_Data[0].dst_Y_w>>2;
+				MT_Data[0].src_UV_w_32=MT_Data[0].src_UV_w>>2;
+				MT_Data[0].dst_UV_w_32=MT_Data[0].dst_UV_w>>2;
+				break;
+			default :
+				MT_Data[0].src_Y_w_32=MT_Data[0].src_Y_w;
+				MT_Data[0].dst_Y_w_32=MT_Data[0].dst_Y_w;
+				MT_Data[0].src_UV_w_32=MT_Data[0].src_UV_w;
+				MT_Data[0].dst_UV_w_32=MT_Data[0].dst_UV_w;
+				break;
+		}
+		return(1);
+	}
+
+	int32_t dh_Y,dh_UV,h_y;
+	uint8_t i,max=0;
+
+	dh_Y=(size_y+(int32_t)max_threads-1)/(int32_t)max_threads;
+	if (dh_Y<16) dh_Y=16;
+	if (dh_Y<max_median_size) dh_Y=max_median_size;
+	if ((dh_Y & 3)!=0) dh_Y=((dh_Y+3) >> 2) << 2;
+
+	h_y=0;
+	while (h_y<(size_y-16))
+	{
+		max++;
+		h_y+=dh_Y;
+	}
+
+	if (max==1)
+	{
+		MT_Data[0].top=true;
+		MT_Data[0].bottom=true;
+		MT_Data[0].src_Y_h_min=0;
+		MT_Data[0].dst_Y_h_min=0;
+		MT_Data[0].src_Y_h_max=size_y;
+		MT_Data[0].dst_Y_h_max=size_y;
+		MT_Data[0].src_UV_h_min=0;
+		MT_Data[0].dst_UV_h_min=0;
+		switch (div_y)
+		{
+			case 0 : 
+				MT_Data[0].src_UV_h_max=size_y;
+				MT_Data[0].dst_UV_h_max=size_y;
+				break;
+			case 1 : 
+				MT_Data[0].src_UV_h_max=size_y >> 1;
+				MT_Data[0].dst_UV_h_max=size_y >> 1;
+				break;
+			case 2 : 
+				MT_Data[0].src_UV_h_max=size_y >> 2;
+				MT_Data[0].dst_UV_h_max=size_y >> 2;
+				break;
+			default :
+				MT_Data[0].src_UV_h_max=size_y;
+				MT_Data[0].dst_UV_h_max=size_y;
+				break;
+		}
+		MT_Data[0].src_Y_w=size_x;
+		MT_Data[0].dst_Y_w=size_x;
+		switch (div_x)
+		{
+			case 0 :
+				MT_Data[0].src_UV_w=size_x;
+				MT_Data[0].dst_UV_w=size_x;
+				break;
+			case 1 :
+				MT_Data[0].src_UV_w=size_x >> 1;
+				MT_Data[0].dst_UV_w=size_x >> 1;
+				break;
+			case 2 :
+				MT_Data[0].src_UV_w=size_x >> 2;
+				MT_Data[0].dst_UV_w=size_x >> 2;
+				break;
+			default :
+				MT_Data[0].src_UV_w=size_x;
+				MT_Data[0].dst_UV_w=size_x;
+				break;
+		}
+		switch (_32bits)
+		{
+			case 0 :
+				MT_Data[0].src_Y_w_32=MT_Data[0].src_Y_w;
+				MT_Data[0].dst_Y_w_32=MT_Data[0].dst_Y_w;
+				MT_Data[0].src_UV_w_32=MT_Data[0].src_UV_w;
+				MT_Data[0].dst_UV_w_32=MT_Data[0].dst_UV_w;
+				break;
+			case 1 :
+				MT_Data[0].src_Y_w_32=(MT_Data[0].src_Y_w+1)>>1;
+				MT_Data[0].dst_Y_w_32=(MT_Data[0].dst_Y_w+1)>>1;
+				MT_Data[0].src_UV_w_32=(MT_Data[0].src_UV_w+1)>>1;
+				MT_Data[0].dst_UV_w_32=(MT_Data[0].dst_UV_w+1)>>1;
+				break;
+			case 2 :
+				MT_Data[0].src_Y_w_32=MT_Data[0].src_Y_w>>2;
+				MT_Data[0].dst_Y_w_32=MT_Data[0].dst_Y_w>>2;
+				MT_Data[0].src_UV_w_32=MT_Data[0].src_UV_w>>2;
+				MT_Data[0].dst_UV_w_32=MT_Data[0].dst_UV_w>>2;
+				break;
+			default :
+				MT_Data[0].src_Y_w_32=MT_Data[0].src_Y_w;
+				MT_Data[0].dst_Y_w_32=MT_Data[0].dst_Y_w;
+				MT_Data[0].src_UV_w_32=MT_Data[0].src_UV_w;
+				MT_Data[0].dst_UV_w_32=MT_Data[0].dst_UV_w;
+				break;
+		}
+		return(1);
+	}
+
+	switch (div_y)
+	{
+		case 0 : dh_UV=dh_Y; break;
+		case 1 : dh_UV=dh_Y >> 1; break;
+		case 2 : dh_UV=dh_Y >> 2; break;
+		default : dh_UV=dh_Y;
+	}
+
+	MT_Data[0].top=true;
+	MT_Data[0].bottom=false;
+	MT_Data[0].src_Y_h_min=0;
+	MT_Data[0].src_Y_h_max=dh_Y;
+	MT_Data[0].dst_Y_h_min=0;
+	MT_Data[0].dst_Y_h_max=dh_Y;
+	MT_Data[0].src_UV_h_min=0;
+	MT_Data[0].src_UV_h_max=dh_UV;
+	MT_Data[0].dst_UV_h_min=0;
+	MT_Data[0].dst_UV_h_max=dh_UV;
+
+	i=1;
+	while (i<max)
+	{
+		MT_Data[i].top=false;
+		MT_Data[i].bottom=false;
+		MT_Data[i].src_Y_h_min=MT_Data[i-1].src_Y_h_max;
+		MT_Data[i].src_Y_h_max=MT_Data[i].src_Y_h_min+dh_Y;
+		MT_Data[i].dst_Y_h_min=MT_Data[i-1].dst_Y_h_max;
+		MT_Data[i].dst_Y_h_max=MT_Data[i].dst_Y_h_min+dh_Y;
+		MT_Data[i].src_UV_h_min=MT_Data[i-1].src_UV_h_max;
+		MT_Data[i].src_UV_h_max=MT_Data[i].src_UV_h_min+dh_UV;
+		MT_Data[i].dst_UV_h_min=MT_Data[i-1].dst_UV_h_max;
+		MT_Data[i].dst_UV_h_max=MT_Data[i].dst_UV_h_min+dh_UV;
+		i++;
+	}
+	MT_Data[max-1].bottom=true;
+	MT_Data[max-1].src_Y_h_max=size_y;
+	MT_Data[max-1].dst_Y_h_max=size_y;
+	switch (div_y)
+	{
+		case 0 :
+			MT_Data[max-1].src_UV_h_max=size_y;
+			MT_Data[max-1].dst_UV_h_max=size_y;
+			break;
+		case 1 :
+			MT_Data[max-1].src_UV_h_max=size_y >> 1;
+			MT_Data[max-1].dst_UV_h_max=size_y >> 1;
+			break;
+		case 2 :
+			MT_Data[max-1].src_UV_h_max=size_y >> 2;
+			MT_Data[max-1].dst_UV_h_max=size_y >> 2;
+			break;
+		default :
+			MT_Data[max-1].src_UV_h_max=size_y;
+			MT_Data[max-1].dst_UV_h_max=size_y;
+			break;
+	}
+	for (i=0; i<max; i++)
+	{
+		MT_Data[i].src_Y_w=size_x;
+		MT_Data[i].dst_Y_w=size_x;
+		switch (div_x)
+		{
+			case 0 :
+				MT_Data[i].src_UV_w=size_x;
+				MT_Data[i].dst_UV_w=size_x;
+				break;
+			case 1 :
+				MT_Data[i].src_UV_w=size_x >> 1;
+				MT_Data[i].dst_UV_w=size_x >> 1;
+				break;
+			case 2 :
+				MT_Data[i].src_UV_w=size_x >> 2;
+				MT_Data[i].dst_UV_w=size_x >> 2;
+				break;
+			default :
+				MT_Data[i].src_UV_w=size_x;
+				MT_Data[i].dst_UV_w=size_x;
+				break;
+		}
+		switch (_32bits)
+		{
+			case 0 :
+				MT_Data[i].src_Y_w_32=MT_Data[i].src_Y_w;
+				MT_Data[i].dst_Y_w_32=MT_Data[i].dst_Y_w;
+				MT_Data[i].src_UV_w_32=MT_Data[i].src_UV_w;
+				MT_Data[i].dst_UV_w_32=MT_Data[i].dst_UV_w;
+				break;
+			case 1 :
+				MT_Data[i].src_Y_w_32=(MT_Data[i].src_Y_w+1)>>1;
+				MT_Data[i].dst_Y_w_32=(MT_Data[i].dst_Y_w+1)>>1;
+				MT_Data[i].src_UV_w_32=(MT_Data[i].src_UV_w+1)>>1;
+				MT_Data[i].dst_UV_w_32=(MT_Data[i].dst_UV_w+1)>>1;
+				break;
+			case 2 :
+				MT_Data[i].src_Y_w_32=MT_Data[i].src_Y_w>>2;
+				MT_Data[i].dst_Y_w_32=MT_Data[i].dst_Y_w>>2;
+				MT_Data[i].src_UV_w_32=MT_Data[i].src_UV_w>>2;
+				MT_Data[i].dst_UV_w_32=MT_Data[i].dst_UV_w>>2;
+				break;
+			default :
+				MT_Data[i].src_Y_w_32=MT_Data[i].src_Y_w;
+				MT_Data[i].dst_Y_w_32=MT_Data[i].dst_Y_w;
+				MT_Data[i].src_UV_w_32=MT_Data[i].src_UV_w;
+				MT_Data[i].dst_UV_w_32=MT_Data[i].dst_UV_w;
+				break;
+		}
+	}
+	return(max);
 }
 
 
@@ -348,6 +738,8 @@ uint32 JPSDR_Median::GetParams()
 
 	const VDXPixmapLayout& pxsrc = *fa->src.mpPixmapLayout;
 	VDXPixmapLayout& pxdst = *fa->dst.mpPixmapLayout;
+
+	bool swap_buffer;
 	
 	switch(pxsrc.format)
 	{
@@ -357,6 +749,14 @@ uint32 JPSDR_Median::GetParams()
 		case nsVDXPixmap::kPixFormat_XRGB8888 :
 		case nsVDXPixmap::kPixFormat_YUV422_YUYV :
 		case nsVDXPixmap::kPixFormat_YUV422_UYVY :
+		case nsVDXPixmap::kPixFormat_YUV422_YUYV_FR :
+		case nsVDXPixmap::kPixFormat_YUV422_UYVY_FR :
+		case nsVDXPixmap::kPixFormat_YUV422_YUYV_709 :
+		case nsVDXPixmap::kPixFormat_YUV422_UYVY_709 :
+		case nsVDXPixmap::kPixFormat_YUV422_YUYV_709_FR :
+		case nsVDXPixmap::kPixFormat_YUV422_UYVY_709_FR :
+			swap_buffer=false;
+			break;
 		case nsVDXPixmap::kPixFormat_YUV444_Planar :
 		case nsVDXPixmap::kPixFormat_YUV422_Planar :
 		case nsVDXPixmap::kPixFormat_YUV420_Planar :
@@ -366,8 +766,6 @@ uint32 JPSDR_Median::GetParams()
 		case nsVDXPixmap::kPixFormat_YUV420i_Planar :
 		case nsVDXPixmap::kPixFormat_YUV420ib_Planar :
 		case nsVDXPixmap::kPixFormat_YUV420it_Planar :
-		case nsVDXPixmap::kPixFormat_YUV422_YUYV_709 :
-		case nsVDXPixmap::kPixFormat_YUV422_UYVY_709 :
 		case nsVDXPixmap::kPixFormat_YUV444_Planar_709 :
 		case nsVDXPixmap::kPixFormat_YUV422_Planar_709 :
 		case nsVDXPixmap::kPixFormat_YUV420_Planar_709 :
@@ -376,8 +774,6 @@ uint32 JPSDR_Median::GetParams()
 		case nsVDXPixmap::kPixFormat_YUV420i_Planar_709 :
 		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709 :
 		case nsVDXPixmap::kPixFormat_YUV420it_Planar_709 :
-		case nsVDXPixmap::kPixFormat_YUV422_YUYV_FR :
-		case nsVDXPixmap::kPixFormat_YUV422_UYVY_FR :
 		case nsVDXPixmap::kPixFormat_YUV444_Planar_FR :
 		case nsVDXPixmap::kPixFormat_YUV422_Planar_FR :
 		case nsVDXPixmap::kPixFormat_YUV420_Planar_FR :
@@ -387,8 +783,6 @@ uint32 JPSDR_Median::GetParams()
 		case nsVDXPixmap::kPixFormat_YUV420i_Planar_FR :
 		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_FR :
 		case nsVDXPixmap::kPixFormat_YUV420it_Planar_FR :
-		case nsVDXPixmap::kPixFormat_YUV422_YUYV_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV422_UYVY_709_FR :
 		case nsVDXPixmap::kPixFormat_YUV444_Planar_709_FR :
 		case nsVDXPixmap::kPixFormat_YUV422_Planar_709_FR :
 		case nsVDXPixmap::kPixFormat_YUV420_Planar_709_FR :
@@ -398,7 +792,8 @@ uint32 JPSDR_Median::GetParams()
 		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709_FR :
 		case nsVDXPixmap::kPixFormat_YUV420it_Planar_709_FR :
 /*		case nsVDXPixmap::kPixFormat_VDXA_RGB :
-		case nsVDXPixmap::kPixFormat_VDXA_YUV :			*/						
+		case nsVDXPixmap::kPixFormat_VDXA_YUV :			*/	
+			swap_buffer=true;
 			break;
 		default : return FILTERPARAM_NOT_SUPPORTED;
 	}
@@ -410,8 +805,16 @@ uint32 JPSDR_Median::GetParams()
 
 	fa->dst.offset = fa->src.offset;
 	
-	if (g_VFVAPIVersion<14) return(FILTERPARAM_SUPPORTS_ALTFORMATS);
-	else return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_PURE_TRANSFORM);
+	if (swap_buffer)
+	{
+		if (g_VFVAPIVersion<14) return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_SWAP_BUFFERS);
+		else return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_PURE_TRANSFORM|FILTERPARAM_SWAP_BUFFERS);
+	}
+	else
+	{
+		if (g_VFVAPIVersion<14) return(FILTERPARAM_SUPPORTS_ALTFORMATS);
+		else return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_PURE_TRANSFORM);
+	}
 }
 
 
@@ -436,353 +839,546 @@ void JPSDR_Median::GetSettingString(char *buf, int maxlen)
 
 
 
-void JPSDR_Median::square_median_filter(const uint8_t *src,uint8_t *dst, const int32_t w, const int32_t h,
-  const int32_t m_size, const int16_t threshold, int16_t *data, const uint32_t size_data)
+
+void JPSDR_Median::square_median_filter(uint8_t thread_num)
 {
-	const uint32_t _size=m_size*(w+1);	
-	const uint32_t m_2=m_size << 1;
-	const uint32_t m_3=(size_data+1) >> 1;
-	const uint32_t m_4=m_2+1;
-	const uint32_t m_6=w-m_4;
-	const uint32_t h_1=h-m_2;
-	const uint32_t w_1=w-m_2;
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
 
-	A_memmove(dst,src,_size);
-	dst+=_size;
-	src+=_size;
+	const int32_t m_size=mt_data_inf.m_size;
+	const int16_t threshold=mt_data_inf.threshold;
+	uint8_t *data=mt_data_inf.data;
+	const uint32_t size_data=mt_data_inf.size_data;
 
-	for (uint32_t i=0; i<h_1; i++)
-	{
-		for (uint32_t j=0; j<w_1; j++)
-		{
-			int16_t *p=data;
-			int16_t max;
-			const uint8_t *src_2=src-_size;
+	const int32_t w=mt_data_inf.src_w;
+	const int32_t h_max=mt_data_inf.src_h_max;
+	const int32_t h_min=mt_data_inf.src_h_min;
+	const ptrdiff_t src_pitch=mt_data_inf.src_pitch;
+	const ptrdiff_t dst_pitch=mt_data_inf.dst_pitch;
 
-			for (uint32_t k=0; k<m_4; k++)
-			{
-				for (uint32_t l=0; l<m_4; l++)
-					*p++=*src_2++;
-				src_2+=m_6;
-			}
-			for (uint32_t k=0; k<m_3; k++)
-			{
-				uint32_t indice=k;
-
-				max=data[k];
-				for (uint32_t l=k+1; l<size_data; l++)
-					if (max<data[l])
-					{
-						max=data[l];
-						indice=l;
-					}
-				if (indice!=k) data[indice]=data[k];
-			}
-			if (abs(max-(int16_t)*src)<=threshold) *dst++=*src++;
-			else
-			{
-				*dst++=(uint8_t)max;
-				src++;
-			}
-		}
-
-		A_memmove(dst,src,m_2);
-		dst+=m_2;
-		src+=m_2; 
-	}
-	A_memmove(dst,src,_size-m_2);
-}
-
-		
-
-void JPSDR_Median::square_median_filter_2(const uint8_t *src, uint8_t *dst, const int32_t w, const int32_t h,
-  const int32_t m_size, const int16_t threshold, int16_t *data, const uint32_t size_data)
-{
-	const uint32_t size=m_size*(w+1);	
-	const uint32_t m_2=m_size << 1;
-	const uint32_t m_3=(size_data+1) >> 1;
-	const uint32_t m_4=m_2+1;
-	const uint32_t m_6=w-m_4;
-	const uint32_t h_1=h-m_2;
-	const uint32_t w_1=w-m_2;
-
-	A_memmove(dst,src,size);
-	dst+=size;
-	src+=size;
-
-	for (uint32_t i=0; i<h_1; i++)
-	{
-		for (uint32_t j=0; j<w_1; j++)
-		{
-			int16_t *p=data;
-			int16_t max;
-			const uint8_t *src_2=src-size;
-
-			for (uint32_t k=0; k<m_4; k++)
-			{
-				for (uint32_t l=0; l<m_4; l++)
-					*p++=*src_2++;
-				src_2+=m_6;
-			}
-			for (uint32_t k=0; k<m_3; k++)
-			{
-				uint32_t indice=k;
-
-				max=data[k];
-				for (uint32_t l=k+1; l<size_data; l++)
-					if (max<data[l])
-					{
-						max=data[l];
-						indice=l;
-					}
-				if (indice!=k) data[indice]=data[k];
-			}
-			if (abs(max-(int16_t)*src)<=threshold) *dst++=*src++;
-			else
-			{
-				*dst++=255;
-				src++;
-			}
-		}
-		A_memmove(dst,src,m_2);
-		dst+=m_2;
-		src+=m_2;
-	}
-
-	A_memmove(dst,src,size-m_2);
-}
-
-
-
-void JPSDR_Median::horizontal_median_filter(const uint8_t *src,uint8_t *dst, const int32_t w, const int32_t h,
-  const int32_t m_size, const int16_t threshold, int16_t *data, const uint32_t size_data)
-{
-	const int32_t m_2=m_size << 1;
-	const int32_t m_3=(size_data+1) >> 1;
-	const int32_t m_4=m_2+1;
-	const int32_t w_1=w-m_2;
-
-	for (int32_t i=0; i<h; i++)
-	{
-		A_memmove(dst,src,m_size);
-		dst+=m_size;
-		src+=m_size;
-
-		for (int32_t j=0; j<w_1; j++)
-		{
-			int16_t *p=data;
-			int16_t max;
-			const uint8_t *src_2=src-m_size;
-
-			for (int32_t k=0; k<m_4; k++)
-				*p++=*src_2++;
-			for (int32_t k=0; k<m_3; k++)
-			{
-				uint32_t indice=k;
-
-				max=data[k];
-				for (int32_t l=k+1; l<(int32_t)size_data; l++)
-					if (max<data[l])
-					{
-						max=data[l];
-						indice=l;
-					}
-				if (indice!=k) data[indice]=data[k];
-			}
-			if (abs(max-(int16_t)*src)<=threshold) *dst++=*src++;
-			else
-			{
-				*dst++=(uint8_t)max;
-				src++;
-			}
-		}
-
-		A_memmove(dst,src,m_size);
-		dst+=m_size;
-		src+=m_size;		
-	}
-}
-
-		
-
-
-
-void JPSDR_Median::horizontal_median_filter_2(const uint8_t *src, uint8_t *dst, const int32_t w,
-  const int32_t h,const int32_t m_size, const int16_t threshold, int16_t *data,
-  const uint32_t size_data)
-{
-	const int32_t size=m_size*(w+1);	
-	const int32_t m_2=m_size << 1;
-	const int32_t m_3=(size_data+1) >> 1;
-	const int32_t m_4=m_2+1;
-	const int32_t w_1=w-m_2;
-
-	for (int32_t i=0; i<h; i++)
-	{
-		A_memmove(dst,src,m_size);
-		dst+=m_size;
-		src+=m_size;
-
-		for (int32_t j=0; j<w_1; j++)
-		{
-			int16_t *p=data;
-			int16_t max;
-			const uint8_t *src_2=src-m_size;
-
-			for (int32_t k=0; k<m_4; k++)
-				*p++=*src_2++;
-			for (int32_t k=0; k<m_3; k++)
-			{
-				uint32_t indice=k;
-
-				max=data[k];
-				for (int32_t l=k+1; l<(int32_t)size_data; l++)
-					if (max<data[l])
-					{
-						max=data[l];
-						indice=l;
-					}
-				if (indice!=k) data[indice]=data[k];
-			}
-			if (abs(max-(int16_t)*src)<=threshold) *dst++=*src++;
-			else
-			{
-				*dst++=255;
-				src++;
-			}
-		}
-
-		A_memmove(dst,src,m_size);
-		dst+=m_size;
-		src+=m_size;
-	}
-}
-
-
-
-
-
-void JPSDR_Median::vertical_median_filter(const uint8_t *src,uint8_t *dst, const int32_t w, const int32_t h,
-  const int32_t m_size, const int16_t threshold, int16_t *data, const uint32_t size_data)
-{
-	const int32_t _size=m_size*w;	
-	const int32_t m_2=m_size << 1;
-	const int32_t m_3=(size_data+1) >> 1;
-	const int32_t m_4=m_2+1;
-	const int32_t h_1=h-m_2;
-	const int32_t w_1=w-1;
-
-	A_memmove(dst,src,_size);
-	dst+=_size;
-	src+=_size;
+	const uint8_t *src;
+	uint8_t *dst;
 	
-	for (int32_t i=0; i<h_1; i++)
+	src=(uint8_t *)mt_data_inf.src;
+	dst=(uint8_t *)mt_data_inf.dst;
+
+	const ptrdiff_t _size=m_size*src_pitch;	
+	const uint32_t m_3=(size_data+1) >> 1;
+	const int32_t m_4=(m_size << 1)+1;
+	const int32_t w_1=w-m_size;
+	const int32_t h_1 = mt_data_inf.bottom ? h_max-m_size:h_max;
+	const int32_t h_0 = mt_data_inf.top ? m_size:h_min;
+
+	if (mt_data_inf.top)
 	{
-		for (int32_t j=0; j<w; j++)
+		for(int32_t i=0; i<m_size; i++)
 		{
-			int16_t *p=data;
-			int16_t max;
-			const uint8_t *src_2=src-_size;
+			A_memcpy(dst,src,w);
+			src+=src_pitch;
+			dst+=dst_pitch;
+		}
+	}
+
+	for (int32_t i=h_0; i<h_1; i++)
+	{
+		A_memcpy(dst,src,m_size);
+
+		ptrdiff_t d_size=-_size;
+
+		for (int32_t j=m_size; j<w_1; j++)
+		{
+			uint8_t *p=data;
+			const uint8_t *src_2=src+(d_size++);
 
 			for (int32_t k=0; k<m_4; k++)
 			{
-				*p++=*src_2;
-				src_2+=w;
+				A_memcpy(p,src_2,m_4);
+				p+=m_4;
+				src_2+=src_pitch;
 			}
-			for (int32_t k=0; k<m_3; k++)
+
+			int16_t max;
+
+			for (uint32_t k=0; k<m_3; k++)
 			{
 				uint32_t indice=k;
 
 				max=data[k];
-				for (int32_t l=k+1; l<(int32_t)size_data; l++)
-					if (max<data[l])
+				for (uint32_t l=k+1; l<size_data; l++)
+				{
+					if (max<(int16_t)data[l])
 					{
 						max=data[l];
 						indice=l;
 					}
+				}
 				if (indice!=k) data[indice]=data[k];
 			}
-			if (abs(max-(int16_t)*src)<=threshold) *dst++=*src++;
-			else
-			{
-				*dst++=(uint8_t)max;
-				src++;
-			}
+			if (abs(max-(int16_t)src[j])<=threshold) dst[j]=src[j];
+			else dst[j]=(uint8_t)max;
 		}
+
+		A_memcpy(dst+w_1,src+w_1,m_size);
+
+		dst+=dst_pitch;
+		src+=src_pitch; 
 	}
 
-	A_memmove(dst,src,_size);
+	if (mt_data_inf.bottom) 
+	{
+		for(int32_t i=0; i<m_size; i++)
+		{
+			A_memcpy(dst,src,w);
+			src+=src_pitch;
+			dst+=dst_pitch;
+		}
+	}
 }
 
-		
 
 
-
-void JPSDR_Median::vertical_median_filter_2(const uint8_t *src, uint8_t *dst, const int32_t w,
-  const int32_t h,const int32_t m_size, const int16_t threshold, int16_t *data,
-  const uint32_t size_data)
+void JPSDR_Median::square_median_filter_2(uint8_t thread_num)
 {
-	const int32_t size=m_size*w;	
-	const int32_t m_2=m_size << 1;
-	const int32_t m_3=(size_data+1) >> 1;
-	const int32_t m_4=m_2+1;
-	const int32_t h_1=h-m_2;
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
 
-	A_memmove(dst,src,size);
-	dst+=size;
-	src+=size;
+	const int32_t m_size=mt_data_inf.m_size;
+	const int16_t threshold=mt_data_inf.threshold;
+	uint8_t *data=mt_data_inf.data;
+	const uint32_t size_data=mt_data_inf.size_data;
 
-	for (int32_t i=0; i<h_1; i++)
+	const int32_t w=mt_data_inf.src_w;
+	const int32_t h_max=mt_data_inf.src_h_max;
+	const int32_t h_min=mt_data_inf.src_h_min;
+	const ptrdiff_t src_pitch=mt_data_inf.src_pitch;
+	const ptrdiff_t dst_pitch=mt_data_inf.dst_pitch;
+
+	const uint8_t *src;
+	uint8_t *dst;
+	
+	src=(uint8_t *)mt_data_inf.src;
+	dst=(uint8_t *)mt_data_inf.dst;
+
+	const ptrdiff_t _size=m_size*src_pitch;	
+	const uint32_t m_3=(size_data+1) >> 1;
+	const int32_t m_4=(m_size << 1)+1;
+	const int32_t w_1=w-m_size;
+	const int32_t h_1 = mt_data_inf.bottom ? h_max-m_size:h_max;
+	const int32_t h_0 = mt_data_inf.top ? m_size:h_min;
+
+	if (mt_data_inf.top)
 	{
-		for (int32_t j=0; j<w; j++)
+		for(int32_t i=0; i<m_size; i++)
 		{
-			int16_t *p=data;
-			int16_t max;
-			const uint8_t *src_2=src-size;
+			A_memcpy(dst,src,w);
+			src+=src_pitch;
+			dst+=dst_pitch;
+		}
+	}
+
+	for (int32_t i=h_0; i<h_1; i++)
+	{
+
+		A_memcpy(dst,src,m_size);
+
+		ptrdiff_t d_size=-_size;
+
+		for (int32_t j=m_size; j<w_1; j++)
+		{
+			uint8_t *p=data;
+			const uint8_t *src_2=src+(d_size++);
 
 			for (int32_t k=0; k<m_4; k++)
 			{
-				*p++=*src_2;
-				src_2+=w;
+				A_memcpy(p,src_2,m_4);
+				p+=m_4;
+				src_2+=src_pitch;
 			}
-			for (int32_t k=0; k<m_3; k++)
+
+			int16_t max;
+
+			for (uint32_t k=0; k<m_3; k++)
 			{
 				uint32_t indice=k;
 
 				max=data[k];
-				for (int32_t l=k+1; l<(int32_t)size_data; l++)
-					if (max<data[l])
+				for (uint32_t l=k+1; l<size_data; l++)
+				{
+					if (max<(int16_t)data[l])
 					{
 						max=data[l];
 						indice=l;
 					}
+				}
 				if (indice!=k) data[indice]=data[k];
 			}
-			if (abs(max-(int16_t)*src)<=threshold) *dst++=*src++;
-			else
+			if (abs(max-(int16_t)src[j])<=threshold) dst[j]=src[j];
+			else dst[j]=255;
+		}
+
+		A_memcpy(dst+w_1,src+w_1,m_size);
+
+		dst+=dst_pitch;
+		src+=src_pitch; 
+	}
+
+	if (mt_data_inf.bottom) 
+	{
+		for(int32_t i=0; i<m_size; i++)
+		{
+			A_memcpy(dst,src,w);
+			src+=src_pitch;
+			dst+=dst_pitch;
+		}
+	}
+}
+
+
+	
+
+void JPSDR_Median::horizontal_median_filter(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	const int32_t m_size=mt_data_inf.m_size;
+	const int16_t threshold=mt_data_inf.threshold;
+	uint8_t *data=mt_data_inf.data;
+	const uint32_t size_data=mt_data_inf.size_data;
+
+	const int32_t w=mt_data_inf.src_w;
+	const int32_t h_max=mt_data_inf.src_h_max;
+	const int32_t h_min=mt_data_inf.src_h_min;
+	const ptrdiff_t src_pitch=mt_data_inf.src_pitch;
+	const ptrdiff_t dst_pitch=mt_data_inf.dst_pitch;
+
+	const uint8_t *src;
+	uint8_t *dst;
+	
+	src=(uint8_t *)mt_data_inf.src;
+	dst=(uint8_t *)mt_data_inf.dst;
+
+	const uint32_t m_3=(size_data+1) >> 1;
+	const int32_t m_4=(m_size << 1)+1;
+	const int32_t w_1=w-m_size;
+
+	for (int32_t i=h_min; i<h_max; i++)
+	{
+		A_memcpy(dst,src,m_size);
+
+		ptrdiff_t d_size=0;
+
+		for (int32_t j=m_size; j<w_1; j++)
+		{
+			A_memcpy(data,src+(d_size++),m_4);
+
+			int16_t max;
+
+			for (uint32_t k=0; k<m_3; k++)
 			{
-				*dst++=255;
-				src++;
+				uint32_t indice=k;
+
+				max=data[k];
+				for (uint32_t l=k+1; l<size_data; l++)
+				{
+					if (max<(int16_t)data[l])
+					{
+						max=data[l];
+						indice=l;
+					}
+				}
+				if (indice!=k) data[indice]=data[k];
 			}
+			if (abs(max-(int16_t)src[j])<=threshold) dst[j]=src[j];
+			else dst[j]=(uint8_t)max;
+		}
+
+		A_memcpy(dst+w_1,src+w_1,m_size);
+
+		dst+=dst_pitch;
+		src+=src_pitch;		
+	}
+}
+
+
+void JPSDR_Median::horizontal_median_filter_2(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	const int32_t m_size=mt_data_inf.m_size;
+	const int16_t threshold=mt_data_inf.threshold;
+	uint8_t *data=mt_data_inf.data;
+	const uint32_t size_data=mt_data_inf.size_data;
+
+	const int32_t w=mt_data_inf.src_w;
+	const int32_t h_max=mt_data_inf.src_h_max;
+	const int32_t h_min=mt_data_inf.src_h_min;
+	const ptrdiff_t src_pitch=mt_data_inf.src_pitch;
+	const ptrdiff_t dst_pitch=mt_data_inf.dst_pitch;
+
+	const uint8_t *src;
+	uint8_t *dst;
+	
+	src=(uint8_t *)mt_data_inf.src;
+	dst=(uint8_t *)mt_data_inf.dst;
+
+	const uint32_t m_3=(size_data+1) >> 1;
+	const int32_t m_4=(m_size << 1)+1;
+	const int32_t w_1=w-m_size;
+
+	for (int32_t i=h_min; i<h_max; i++)
+	{
+		A_memcpy(dst,src,m_size);
+
+		ptrdiff_t d_size=0;
+
+		for (int32_t j=m_size; j<w_1; j++)
+		{
+			A_memcpy(data,src+(d_size++),m_4);
+
+			int16_t max;
+
+			for (uint32_t k=0; k<m_3; k++)
+			{
+				uint32_t indice=k;
+
+				max=data[k];
+				for (uint32_t l=k+1; l<size_data; l++)
+				{
+					if (max<(int16_t)data[l])
+					{
+						max=data[l];
+						indice=l;
+					}
+				}
+				if (indice!=k) data[indice]=data[k];
+			}
+			if (abs(max-(int16_t)src[j])<=threshold) dst[j]=src[j];
+			else dst[j]=255;
+		}
+
+		A_memcpy(dst+w_1,src+w_1,m_size);
+
+		dst+=dst_pitch;
+		src+=src_pitch;		
+	}
+}
+
+
+
+void JPSDR_Median::vertical_median_filter(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	const int32_t m_size=mt_data_inf.m_size;
+	const int16_t threshold=mt_data_inf.threshold;
+	uint8_t *data=mt_data_inf.data;
+	const uint32_t size_data=mt_data_inf.size_data;
+
+	const int32_t w=mt_data_inf.src_w;
+	const int32_t h_max=mt_data_inf.src_h_max;
+	const int32_t h_min=mt_data_inf.src_h_min;
+	const ptrdiff_t src_pitch=mt_data_inf.src_pitch;
+	const ptrdiff_t dst_pitch=mt_data_inf.dst_pitch;
+
+	const uint8_t *src;
+	uint8_t *dst;
+	
+	src=(uint8_t *)mt_data_inf.src;
+	dst=(uint8_t *)mt_data_inf.dst;
+
+	const ptrdiff_t _size=m_size*src_pitch;	
+	const uint32_t m_3=(size_data+1) >> 1;
+	const int32_t m_4=(m_size << 1)+1;
+	const int32_t h_1 = mt_data_inf.bottom ? h_max-m_size:h_max;
+	const int32_t h_0 = mt_data_inf.top ? m_size:h_min;
+
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<m_size; i++)
+		{
+			A_memcpy(dst,src,w);
+			src+=src_pitch;
+			dst+=dst_pitch;
+		}
+	}
+	
+	for (int32_t i=h_0; i<h_1; i++)
+	{
+		ptrdiff_t d_size=-_size;
+
+		for (int32_t j=0; j<w; j++)
+		{
+			const uint8_t *src_2=src+(d_size++);
+
+			for (int32_t k=0; k<m_4; k++)
+			{
+				data[k]=*src_2;
+				src_2+=src_pitch;
+			}
+
+			int16_t max;
+
+			for (uint32_t k=0; k<m_3; k++)
+			{
+				uint32_t indice=k;
+
+				max=data[k];
+				for (uint32_t l=k+1; l<size_data; l++)
+				{
+					if (max<(int16_t)data[l])
+					{
+						max=data[l];
+						indice=l;
+					}
+				}
+				if (indice!=k) data[indice]=data[k];
+			}
+			if (abs(max-(int16_t)src[j])<=threshold) dst[j]=src[j];
+			else dst[j]=(uint8_t)max;
+		}
+
+		dst+=dst_pitch;
+		src+=src_pitch;		
+	}
+
+	if (mt_data_inf.bottom) 
+	{
+		for(int32_t i=0; i<m_size; i++)
+		{
+			A_memcpy(dst,src,w);
+			src+=src_pitch;
+			dst+=dst_pitch;
 		}
 	}
 
-	A_memmove(dst,src,size);
+}
+
+
+
+void JPSDR_Median::vertical_median_filter_2(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	const int32_t m_size=mt_data_inf.m_size;
+	const int16_t threshold=mt_data_inf.threshold;
+	uint8_t *data=mt_data_inf.data;
+	const uint32_t size_data=mt_data_inf.size_data;
+
+	const int32_t w=mt_data_inf.src_w;
+	const int32_t h_max=mt_data_inf.src_h_max;
+	const int32_t h_min=mt_data_inf.src_h_min;
+	const ptrdiff_t src_pitch=mt_data_inf.src_pitch;
+	const ptrdiff_t dst_pitch=mt_data_inf.dst_pitch;
+
+	const uint8_t *src;
+	uint8_t *dst;
+	
+	src=(uint8_t *)mt_data_inf.src;
+	dst=(uint8_t *)mt_data_inf.dst;
+
+	const ptrdiff_t _size=m_size*src_pitch;	
+	const uint32_t m_3=(size_data+1) >> 1;
+	const int32_t m_4=(m_size << 1)+1;
+	const int32_t h_1 = mt_data_inf.bottom ? h_max-m_size:h_max;
+	const int32_t h_0 = mt_data_inf.top ? m_size:h_min;
+
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<m_size; i++)
+		{
+			A_memcpy(dst,src,w);
+			src+=src_pitch;
+			dst+=dst_pitch;
+		}
+	}
+	
+	for (int32_t i=h_0; i<h_1; i++)
+	{
+		ptrdiff_t d_size=-_size;
+
+		for (int32_t j=0; j<w; j++)
+		{
+			const uint8_t *src_2=src+(d_size++);
+
+			for (int32_t k=0; k<m_4; k++)
+			{
+				data[k]=*src_2;
+				src_2+=src_pitch;
+			}
+
+			int16_t max;
+
+			for (uint32_t k=0; k<m_3; k++)
+			{
+				uint32_t indice=k;
+
+				max=data[k];
+				for (uint32_t l=k+1; l<size_data; l++)
+				{
+					if (max<(int16_t)data[l])
+					{
+						max=data[l];
+						indice=l;
+					}
+				}
+				if (indice!=k) data[indice]=data[k];
+			}
+			if (abs(max-(int16_t)src[j])<=threshold) dst[j]=src[j];
+			else dst[j]=255;
+		}
+
+		dst+=dst_pitch;
+		src+=src_pitch;		
+	}
+
+	if (mt_data_inf.bottom) 
+	{
+		for(int32_t i=0; i<m_size; i++)
+		{
+			A_memcpy(dst,src,w);
+			src+=src_pitch;
+			dst+=dst_pitch;
+		}
+	}
+
 }
 
 
 
 
+DWORD WINAPI JPSDR_Median::StaticThreadpool( LPVOID lpParam )
+{
+	const MT_Data_Thread *data=(const MT_Data_Thread *)lpParam;
+	JPSDR_Median *ptrClass=(JPSDR_Median *)data->pClass;
+	
+	while (true)
+	{
+		WaitForSingleObject(data->nextJob,INFINITE);
+		switch(data->f_process)
+		{
+			case 1 : ptrClass->square_median_filter(data->thread_Id); break;
+			case 2 : ptrClass->horizontal_median_filter(data->thread_Id); break;
+			case 3 : ptrClass->vertical_median_filter(data->thread_Id); break;
+			case 4 : ptrClass->square_median_filter_2(data->thread_Id); break;
+			case 5 : ptrClass->horizontal_median_filter_2(data->thread_Id); break;
+			case 6 : ptrClass->vertical_median_filter_2(data->thread_Id); break;
+			case 255 : return(0); break;
+			default : ;
+		}
+		ResetEvent(data->nextJob);
+		SetEvent(data->jobFinished);
+	}
+}
 
 
 
 void JPSDR_Median::Run()
 {
 	Image_Data idata;
-	int32_t w,h;
-	int16_t i;
+	int16_t i,plan_max;
 	uint32_t size_data[3];
-	uint8_t *p0,*p1,*p2,*p3;
+	uint8_t *ptrSrc[3],*ptrDst[3];
+	ptrdiff_t srcPitch[3],dstPitch[3];
+	bool use_buffer,align_src,align_dst;
+	int32_t h_current,w_current;
 
 	idata=image_data;
 
@@ -798,418 +1394,467 @@ void JPSDR_Median::Run()
 	idata.dst_plane1=pxdst.data2;
 	idata.dst_plane2=pxdst.data3;
 
-	if (mData.interlace_mode)
+	if ( (((size_t)idata.src_plane0 & 0x0F)==0) && ((abs(idata.src_pitch0) & 0x0F)==0) &&
+		(((size_t)idata.src_plane1 & 0x0F)==0) && ((abs(idata.src_pitch1) & 0x0F)==0) &&
+		(((size_t)idata.src_plane2 & 0x0F)==0) && ((abs(idata.src_pitch2) & 0x0F)==0) ) align_src=true;
+	else align_src=false;
+
+	if ( (((size_t)idata.dst_plane0 & 0x0F)==0) && ((abs(idata.dst_pitch0) & 0x0F)==0) &&
+		(((size_t)idata.dst_plane1 & 0x0F)==0) && ((abs(idata.dst_pitch1) & 0x0F)==0) &&
+		(((size_t)idata.dst_plane2 & 0x0F)==0) && ((abs(idata.dst_pitch2) & 0x0F)==0) ) align_dst=true;
+	else align_dst=false;
+
+	switch(idata.video_mode)
 	{
-		switch(idata.video_mode)
-		{
-			case 0 :
-			case 1 :
+		case 0 :
+		case 1 :
+			if (SSE2_Enable)
+			{
+				if (align_src)
+					JPSDR_Median_RGB32_Move_src_SSE_2(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
+						(idata.src_w0+3)>>2,idata.src_h0,idata.src_pitch0,buffer_pitch[0]);
+				else
+					JPSDR_Median_RGB32_Move_src_SSE_1(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
+						idata.src_w0,idata.src_h0,idata.src_pitch0,buffer_pitch[0]);
+			}
+			else
 				JPSDR_Median_RGB32_Move_src(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
-					idata.src_w0,idata.src_h0>>1,idata.src_modulo0+idata.src_pitch0);
-				JPSDR_Median_RGB32_Move_src((void *)((uint8_t *)idata.src_plane0+idata.src_pitch0),buffer_in[0]
-					+(buffer_size[0] >>1),buffer_in[1]+(buffer_size[1] >>1),buffer_in[2]
-					+(buffer_size[2] >>1),idata.src_w0,idata.src_h0>>1,idata.src_modulo0+idata.src_pitch0);
-				break;
-			case 2 :
+					idata.src_w0,idata.src_h0,idata.src_modulo0,buffer_modulo[0]);
+			ptrSrc[0]=buffer_in[0];
+			ptrSrc[1]=buffer_in[1];
+			ptrSrc[2]=buffer_in[2];
+			ptrDst[0]=buffer_out[0];
+			ptrDst[1]=buffer_out[1];
+			ptrDst[2]=buffer_out[2];
+			srcPitch[0]=buffer_pitch[0];
+			srcPitch[1]=buffer_pitch[1];
+			srcPitch[2]=buffer_pitch[2];
+			dstPitch[0]=buffer_pitch[0];
+			dstPitch[1]=buffer_pitch[1];
+			dstPitch[2]=buffer_pitch[2];
+			use_buffer=true;
+			break;
+		case 2 :
+			if (SSE2_Enable)
+			{
+				if (align_src)
+					JPSDR_Median_YUYV_Move_src_SSE_2(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
+						(idata.src_w0+7)>>3,idata.src_h0,idata.src_pitch0,buffer_pitch[0],buffer_pitch[1]);
+				else
+					JPSDR_Median_YUYV_Move_src_SSE_1(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
+						(idata.src_w0+1)>>1,idata.src_h0,idata.src_pitch0,buffer_pitch[0],buffer_pitch[1]);
+			}
+			else
 				JPSDR_Median_YUYV_Move_src(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
-					(idata.src_w0+1)>>1,idata.src_h0>>1,idata.src_modulo0+idata.src_pitch0);
-				JPSDR_Median_YUYV_Move_src((void *)((uint8_t *)idata.src_plane0+idata.src_pitch0),buffer_in[0]
-					+(buffer_size[0] >>1),buffer_in[1]+(buffer_size[1] >>1),buffer_in[2]
-					+(buffer_size[2] >>1),(idata.src_w0+1)>>1,idata.src_h0>>1,idata.src_modulo0+idata.src_pitch0);
-				break;
-			case 3 :
+					(idata.src_w0+1)>>1,idata.src_h0,idata.src_modulo0,buffer_modulo[0],buffer_modulo[1]);
+			ptrSrc[0]=buffer_in[0];
+			ptrSrc[1]=buffer_in[1];
+			ptrSrc[2]=buffer_in[2];
+			ptrDst[0]=buffer_out[0];
+			ptrDst[1]=buffer_out[1];
+			ptrDst[2]=buffer_out[2];
+			srcPitch[0]=buffer_pitch[0];
+			srcPitch[1]=buffer_pitch[1];
+			srcPitch[2]=buffer_pitch[2];
+			dstPitch[0]=buffer_pitch[0];
+			dstPitch[1]=buffer_pitch[1];
+			dstPitch[2]=buffer_pitch[2];
+			use_buffer=true;
+			break;
+		case 3 :
+			if (SSE2_Enable)
+			{
+				if (align_src)
+					JPSDR_Median_UYVY_Move_src_SSE_2(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
+						(idata.src_w0+7)>>3,idata.src_h0,idata.src_pitch0,buffer_pitch[0],buffer_pitch[1]);
+				else
+					JPSDR_Median_UYVY_Move_src_SSE_1(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
+						(idata.src_w0+1)>>1,idata.src_h0,idata.src_pitch0,buffer_pitch[0],buffer_pitch[1]);
+			}
+			else
 				JPSDR_Median_UYVY_Move_src(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
-					(idata.src_w0+1)>>1,idata.src_h0>>1,idata.src_modulo0+idata.src_pitch0);
-				JPSDR_Median_UYVY_Move_src((void *)((uint8_t *)idata.src_plane0+idata.src_pitch0),buffer_in[0]
-					+(buffer_size[0] >>1),buffer_in[1]+(buffer_size[1] >>1),buffer_in[2]
-					+(buffer_size[2] >>1),(idata.src_w0+1)>>1,idata.src_h0>>1,idata.src_modulo0+idata.src_pitch0);
-				break;
-			case 4 :
-			case 5 :
-			case 6 :
-			case 7 :
-			case 8 :
-				JPSDR_Median_Planar_Move_src(idata.src_plane0,buffer_in[0],idata.src_w0,idata.src_h0>>1,
-					idata.src_modulo0+idata.src_pitch0);
-				JPSDR_Median_Planar_Move_src((void *)((uint8_t *)idata.src_plane0+idata.src_pitch0),buffer_in[0]
-					+(buffer_size[0] >>1),idata.src_w0,idata.src_h0>>1,idata.src_modulo0+idata.src_pitch0);
-				JPSDR_Median_Planar_Move_src(idata.src_plane1,buffer_in[1],idata.src_w1,idata.src_h1>>1,
-					idata.src_modulo1+idata.src_pitch1);
-				JPSDR_Median_Planar_Move_src((void *)((uint8_t *)idata.src_plane1+idata.src_pitch1),buffer_in[1]
-					+(buffer_size[1] >>1),idata.src_w1,idata.src_h1>>1,idata.src_modulo1+idata.src_pitch1);
-				JPSDR_Median_Planar_Move_src(idata.src_plane2,buffer_in[2],idata.src_w2,idata.src_h2>>1,
-					idata.src_modulo2+idata.src_pitch2);
-				JPSDR_Median_Planar_Move_src((void *)((uint8_t *)idata.src_plane2+idata.src_pitch2),buffer_in[2]
-					+(buffer_size[2] >>1),idata.src_w2,idata.src_h2>>1,idata.src_modulo2+idata.src_pitch2);
-				break;
-			case 9 :
-				JPSDR_Median_Planar_Move_src(idata.src_plane0,buffer_in[0],idata.src_w0,idata.src_h0>>1,
-					idata.src_modulo0+idata.src_pitch0);
-				JPSDR_Median_Planar_Move_src((void *)((uint8_t *)idata.src_plane0+idata.src_pitch0),buffer_in[0]
-					+(buffer_size[0] >>1),idata.src_w0,idata.src_h0>>1,idata.src_modulo0+idata.src_pitch0);
-				break;
-		}
+					(idata.src_w0+1)>>1,idata.src_h0,idata.src_modulo0,buffer_modulo[0],buffer_modulo[1]);
+			ptrSrc[0]=buffer_in[0];
+			ptrSrc[1]=buffer_in[1];
+			ptrSrc[2]=buffer_in[2];
+			ptrDst[0]=buffer_out[0];
+			ptrDst[1]=buffer_out[1];
+			ptrDst[2]=buffer_out[2];
+			srcPitch[0]=buffer_pitch[0];
+			srcPitch[1]=buffer_pitch[1];
+			srcPitch[2]=buffer_pitch[2];
+			dstPitch[0]=buffer_pitch[0];
+			dstPitch[1]=buffer_pitch[1];
+			dstPitch[2]=buffer_pitch[2];
+			use_buffer=true;
+			break;
+		case 4 :
+		case 5 :
+		case 6 :
+		case 7 :
+		case 8 :
+		case 9 :
+			ptrSrc[0]=(uint8_t *)idata.src_plane0;
+			ptrSrc[1]=(uint8_t *)idata.src_plane1;
+			ptrSrc[2]=(uint8_t *)idata.src_plane2;
+			ptrDst[0]=(uint8_t *)idata.dst_plane0;
+			ptrDst[1]=(uint8_t *)idata.dst_plane1;
+			ptrDst[2]=(uint8_t *)idata.dst_plane2;
+			srcPitch[0]=idata.src_pitch0;
+			srcPitch[1]=idata.src_pitch1;
+			srcPitch[2]=idata.src_pitch2;
+			dstPitch[0]=idata.dst_pitch0;
+			dstPitch[1]=idata.dst_pitch1;
+			dstPitch[2]=idata.dst_pitch2;
+			use_buffer=false;
+			break;
 	}
-	else
-	{
-		switch(idata.video_mode)
-		{
-			case 0 :
-			case 1 :
-				JPSDR_Median_RGB32_Move_src(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
-					idata.src_w0,idata.src_h0,idata.src_modulo0);
-				break;
-			case 2 :
-				JPSDR_Median_YUYV_Move_src(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
-					(idata.src_w0+1)>>1,idata.src_h0,idata.src_modulo0);
-				break;
-			case 3 :
-				JPSDR_Median_UYVY_Move_src(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
-					(idata.src_w0+1)>>1,idata.src_h0,idata.src_modulo0);
-				break;
-			case 4 :
-			case 5 :
-			case 6 :
-			case 7 :
-			case 8 :
-				JPSDR_Median_Planar_Move_src(idata.src_plane0,buffer_in[0],idata.src_w0,idata.src_h0,
-					idata.src_modulo0);
-				JPSDR_Median_Planar_Move_src(idata.src_plane1,buffer_in[1],idata.src_w1,idata.src_h1,
-					idata.src_modulo1);
-				JPSDR_Median_Planar_Move_src(idata.src_plane2,buffer_in[2],idata.src_w2,idata.src_h2,
-					idata.src_modulo2);
-				break;
-			case 9 :
-				JPSDR_Median_Planar_Move_src(idata.src_plane0,buffer_in[0],idata.src_w0,idata.src_h0,
-					idata.src_modulo0);
-				break;
-		}
-	}
+
+	if (idata.video_mode==9) plan_max=1;
+	else plan_max=3;
 
 	switch(mData.filter_mode)
 	{
-	case 1 :	for (i=0; i<3; i++)
+	case 1 :	for (i=0; i<plan_max; i++)
 				{
 					size_data[i]=2*mData.median_size[i]+1;
 					size_data[i]*=size_data[i];
 				}
 				break;
 	case 2 :
-	case 3 :	for (i=0; i<3; i++)
+	case 3 :	for (i=0; i<plan_max; i++)
 					size_data[i]=2*mData.median_size[i]+1;
 				break;
 	}
 
 	if (mData.interlace_mode)
 	{
-		for (i=0; i<3; i++)
+		for (i=0; i<plan_max; i++)
 		{
-			switch(idata.video_mode)
-			{
-				case 0 :
-				case 1 :
-					w=idata.src_w0;
-					h=idata.src_h0;
-					break;
-				case 2 :
-				case 3 :
-					switch(i)
-					{
-						case 0 :
-							w=2*((idata.src_w0+1)>>1);
-							h=idata.src_h0;
-							break;
-						case 1 :
-						case 2 :
-							w=(idata.src_w0+1)>>1;
-							h=idata.src_h0;
-							break;
-					}
-					break;
-				case 4 :
-				case 5 :
-				case 6 :
-				case 7 :
-				case 8 :
-					switch(i)
-					{
-						case 0 :
-							w=idata.src_w0;
-							h=idata.src_h0;
-							break;
-						case 1 :
-							w=idata.src_w1;
-							h=idata.src_h1;
-							break;
-						case 2 :
-							w=idata.src_w2;
-							h=idata.src_h2;
-							break;
-					}
-					break;
-				case 9 :
-					switch(i)
-					{
-						case 0 :
-							w=idata.src_w0;
-							h=idata.src_h0;
-							break;
-						case 1 :
-						case 2 :
-							continue;
-							break;
-					}
-					break;
-			}
-			p0=buffer_in[i];
-			p2=buffer_out[i];
-			p1=p0+(buffer_size[i] >>1);
-			p3=p2+(buffer_size[i] >>1);
 			if (!mData.filter_disable[i])
 			{
-				if (mData.setting_mode)
+				for (uint8_t j=0; j<threads_number; j++)
 				{
-					switch(mData.filter_mode)
+					MT_Data[j].size_data=size_data[i];
+					MT_Data[j].threshold=mData.threshold[i];
+					MT_Data[j].data=Tdata[j];
+					MT_Data[j].m_size=mData.median_size[i];
+					MT_Data[j].src_pitch=srcPitch[i] << 1;
+					MT_Data[j].dst_pitch=dstPitch[i] << 1;
+					switch(i)
 					{
+						case 0 :
+							MT_Data[j].src_w=MT_Data[j].src_Y_w;
+							MT_Data[j].src_h_min=MT_Data[j].src_Y_h_min;
+							MT_Data[j].src_h_max=MT_Data[j].src_Y_h_max;
+							break;
 						case 1 :
-							square_median_filter_2(p0,p2,w,h>>1,mData.median_size[i],mData.threshold[i],
-								data[i],size_data[i]);
-							square_median_filter_2(p1,p3,w,h>>1,mData.median_size[i],mData.threshold[i],
-								data[i],size_data[i]);
-							break;
 						case 2 :
-							horizontal_median_filter_2(p0,p2,w,h>>1,mData.median_size[i],
-								mData.threshold[i],data[i],size_data[i]);
-							horizontal_median_filter_2(p1,p3,w,h>>1,mData.median_size[i],
-								mData.threshold[i],data[i],size_data[i]);
-							break;
-						case 3 :
-							vertical_median_filter_2(p0,p2,w,h>>1,mData.median_size[i],mData.threshold[i],
-								data[i],size_data[i]);
-							vertical_median_filter_2(p1,p3,w,h>>1,mData.median_size[i],mData.threshold[i],
-								data[i],size_data[i]);
+							MT_Data[j].src_w=MT_Data[j].src_UV_w;
+							MT_Data[j].src_h_min=MT_Data[j].src_UV_h_min;
+							MT_Data[j].src_h_max=MT_Data[j].src_UV_h_max;
 							break;
 					}
+					MT_Data[j].src=(void *)(ptrSrc[i]+(MT_Data[j].src_pitch*MT_Data[j].src_h_min));
+					MT_Data[j].dst=(void *)(ptrDst[i]+(MT_Data[j].dst_pitch*MT_Data[j].src_h_min));
+				}
+
+				if (threads_number>1)
+				{
+					uint8_t f_proc=0;
+
+					if (mData.setting_mode)
+					{
+						switch(mData.filter_mode)
+						{
+							case 1 : f_proc=4; break;
+							case 2 : f_proc=5; break;
+							case 3 : f_proc=6; break;
+						}
+					}
+					else
+					{
+						switch(mData.filter_mode)
+						{
+							case 1 : f_proc=1; break;
+							case 2 : f_proc=2; break;
+							case 3 : f_proc=3; break;
+						}
+					}
+
+					for(uint8_t j=0; j<threads_number; j++)
+					{
+						MT_Thread[j].f_process=f_proc;
+						ResetEvent(MT_Thread[j].jobFinished);
+						SetEvent(MT_Thread[j].nextJob);
+					}
+					for(uint8_t j=0; j<threads_number; j++)
+						WaitForSingleObject(MT_Thread[j].jobFinished,INFINITE);
+
+					for (uint8_t j=0; j<threads_number; j++)
+					{
+						MT_Data[j].src=(void *)(ptrSrc[i]+(MT_Data[j].src_pitch*MT_Data[j].src_h_min+(MT_Data[j].src_pitch >> 1)));
+						MT_Data[j].dst=(void *)(ptrDst[i]+(MT_Data[j].dst_pitch*MT_Data[j].src_h_min+(MT_Data[j].dst_pitch >> 1)));
+					}
+
+					for(uint8_t j=0; j<threads_number; j++)
+					{
+						ResetEvent(MT_Thread[j].jobFinished);
+						SetEvent(MT_Thread[j].nextJob);
+					}
+					for(uint8_t j=0; j<threads_number; j++)
+						WaitForSingleObject(MT_Thread[j].jobFinished,INFINITE);
+					for(uint8_t j=0; j<threads_number; j++)
+						MT_Thread[j].f_process=0;
 				}
 				else
 				{
-					switch(mData.filter_mode)
+					if (mData.setting_mode)
 					{
-						case 1 :
-							square_median_filter(p0,p2,w,h>>1,mData.median_size[i],mData.threshold[i],
-								data[i],size_data[i]);
-							square_median_filter(p1,p3,w,h>>1,mData.median_size[i],mData.threshold[i],
-								data[i],size_data[i]);
-							break;
-						case 2 :
-							horizontal_median_filter(p0,p2,w,h>>1,mData.median_size[i],mData.threshold[i],
-								data[i],size_data[i]);
-							horizontal_median_filter(p1,p3,w,h>>1,mData.median_size[i],mData.threshold[i],
-								data[i],size_data[i]);
-							break;
-						case 3 :
-							vertical_median_filter(p0,p2,w,h>>1,mData.median_size[i],mData.threshold[i],
-								data[i],size_data[i]);
-							vertical_median_filter(p1,p3,w,h>>1,mData.median_size[i],mData.threshold[i],
-								data[i],size_data[i]);
-							break;
+						switch(mData.filter_mode)
+						{
+							case 1 :
+								square_median_filter_2(0);
+								MT_Data[0].src=(void *)(ptrSrc[i]+(MT_Data[0].src_pitch*MT_Data[0].src_h_min+(MT_Data[0].src_pitch >> 1)));
+								MT_Data[0].dst=(void *)(ptrDst[i]+(MT_Data[0].dst_pitch*MT_Data[0].src_h_min+(MT_Data[0].dst_pitch >> 1)));
+								square_median_filter_2(0);
+								break;
+							case 2 :
+								horizontal_median_filter_2(0);
+								MT_Data[0].src=(void *)(ptrSrc[i]+(MT_Data[0].src_pitch*MT_Data[0].src_h_min+(MT_Data[0].src_pitch >> 1)));
+								MT_Data[0].dst=(void *)(ptrDst[i]+(MT_Data[0].dst_pitch*MT_Data[0].src_h_min+(MT_Data[0].dst_pitch >> 1)));
+								horizontal_median_filter_2(0);
+								break;
+							case 3 :
+								vertical_median_filter_2(0);
+								MT_Data[0].src=(void *)(ptrSrc[i]+(MT_Data[0].src_pitch*MT_Data[0].src_h_min+(MT_Data[0].src_pitch >> 1)));
+								MT_Data[0].dst=(void *)(ptrDst[i]+(MT_Data[0].dst_pitch*MT_Data[0].src_h_min+(MT_Data[0].dst_pitch >> 1)));
+								vertical_median_filter_2(0);
+								break;
+						}
+					}
+					else
+					{
+						switch(mData.filter_mode)
+						{
+							case 1 :
+								square_median_filter(0);
+								MT_Data[0].src=(void *)(ptrSrc[i]+(MT_Data[0].src_pitch*MT_Data[0].src_h_min+(MT_Data[0].src_pitch >> 1)));
+								MT_Data[0].dst=(void *)(ptrDst[i]+(MT_Data[0].dst_pitch*MT_Data[0].src_h_min+(MT_Data[0].dst_pitch >> 1)));
+								square_median_filter(0);
+								break;
+							case 2 :
+								horizontal_median_filter(0);
+								MT_Data[0].src=(void *)(ptrSrc[i]+(MT_Data[0].src_pitch*MT_Data[0].src_h_min+(MT_Data[0].src_pitch >> 1)));
+								MT_Data[0].dst=(void *)(ptrDst[i]+(MT_Data[0].dst_pitch*MT_Data[0].src_h_min+(MT_Data[0].dst_pitch >> 1)));
+								horizontal_median_filter(0);
+								break;
+							case 3 :
+								vertical_median_filter(0);
+								MT_Data[0].src=(void *)(ptrSrc[i]+(MT_Data[0].src_pitch*MT_Data[0].src_h_min+(MT_Data[0].src_pitch >> 1)));
+								MT_Data[0].dst=(void *)(ptrDst[i]+(MT_Data[0].dst_pitch*MT_Data[0].src_h_min+(MT_Data[0].dst_pitch >> 1)));
+								vertical_median_filter(0);
+								break;
+						}
 					}
 				}
 			}
 			else
 			{
-				memcpy(buffer_out[i],buffer_in[i],buffer_size[i]);
+				switch(i)
+				{
+					case 0 :
+						h_current=idata.src_h0;
+						w_current=idata.src_w0;
+						break;
+					case 1 :
+						h_current=idata.src_h1;
+						w_current=idata.src_w1;
+						break;
+					case 2 :
+						h_current=idata.src_h2;
+						w_current=idata.src_w2;
+						break;
+				}
+				
+				if (use_buffer) A_memcpy(buffer_out[i],buffer_in[i],buffer_size[i]);
+				else
+				{
+					for(int32_t j=0; j<h_current; j++)
+					{
+						A_memcpy(ptrDst[i],ptrSrc[i],w_current);
+						ptrSrc[i]+=srcPitch[i];
+						ptrDst[i]+=dstPitch[i];
+					}
+				}
 			}
 		}
 	}
-	else		// Fin partie interlace
+	else		// End of Interlace part
 	{
-		for (i=0; i<3; i++)
+		for (i=0; i<plan_max; i++)
 		{
-			switch(idata.video_mode)
-			{
-				case 0 :
-				case 1 :
-					w=idata.src_w0;
-					h=idata.src_h0;
-					break;
-				case 2 :
-				case 3 :
-					switch(i)
-					{
-						case 0 :
-							w=2*((idata.src_w0+1)>>1);
-							h=idata.src_h0;
-							break;
-						case 1 :
-						case 2 :
-							w=(idata.src_w0+1)>>1;
-							h=idata.src_h0;
-							break;
-					}
-					break;
-				case 4 :
-				case 5 :
-				case 6 :
-				case 7 :
-				case 8 :
-					switch(i)
-					{
-						case 0 :
-							w=idata.src_w0;
-							h=idata.src_h0;
-							break;
-						case 1 :
-							w=idata.src_w1;
-							h=idata.src_h1;
-							break;
-						case 2 :
-							w=idata.src_w2;
-							h=idata.src_h2;
-							break;
-					}
-					break;
-				case 9 :
-					switch(i)
-					{
-						case 0 :
-							w=idata.src_w0;
-							h=idata.src_h0;
-							break;
-						case 1 :
-						case 2 :
-							continue;
-							break;
-					}
-					break;
-			}
 			if (!mData.filter_disable[i])
 			{
-				if (mData.setting_mode)
+				for (uint8_t j=0; j<threads_number; j++)
 				{
+					MT_Data[j].size_data=size_data[i];
+					MT_Data[j].threshold=mData.threshold[i];
+					MT_Data[j].data=Tdata[j];
+					MT_Data[j].m_size=mData.median_size[i];
+					MT_Data[j].src_pitch=srcPitch[i];
+					MT_Data[j].dst_pitch=dstPitch[i];
+					switch(i)
+					{
+						case 0 :
+							MT_Data[j].src_w=MT_Data[j].src_Y_w;
+							MT_Data[j].src_h_min=MT_Data[j].src_Y_h_min;
+							MT_Data[j].src_h_max=MT_Data[j].src_Y_h_max;
+							break;
+						case 1 :
+						case 2 :
+							MT_Data[j].src_w=MT_Data[j].src_UV_w;
+							MT_Data[j].src_h_min=MT_Data[j].src_UV_h_min;
+							MT_Data[j].src_h_max=MT_Data[j].src_UV_h_max;
+							break;
+					}
+					MT_Data[j].src=(void *)(ptrSrc[i]+(MT_Data[j].src_pitch*MT_Data[j].src_h_min));
+					MT_Data[j].dst=(void *)(ptrDst[i]+(MT_Data[j].dst_pitch*MT_Data[j].src_h_min));
+				}
+
+				if (threads_number>1)
+				{
+					uint8_t f_proc=0;
+
+					if (mData.setting_mode)
+					{
 						switch(mData.filter_mode)
 						{
-							case 1 : square_median_filter_2(buffer_in[i],buffer_out[i],w,h,mData.median_size[i],
-								mData.threshold[i],data[i],size_data[i]); break;
-							case 2 : horizontal_median_filter_2(buffer_in[i],buffer_out[i],w,h,mData.median_size[i],
-								mData.threshold[i],data[i],size_data[i]); break;
-							case 3 : vertical_median_filter_2(buffer_in[i],buffer_out[i],w,h,mData.median_size[i],
-								mData.threshold[i],data[i],size_data[i]); break;
+							case 1 : f_proc=4; break;
+							case 2 : f_proc=5; break;
+							case 3 : f_proc=6; break;
 						}
+					}
+					else
+					{
+						switch(mData.filter_mode)
+						{
+							case 1 : f_proc=1; break;
+							case 2 : f_proc=2; break;
+							case 3 : f_proc=3; break;
+						}
+					}
+
+					for(uint8_t j=0; j<threads_number; j++)
+					{
+						MT_Thread[j].f_process=f_proc;
+						ResetEvent(MT_Thread[j].jobFinished);
+						SetEvent(MT_Thread[j].nextJob);
+					}
+					for(uint8_t j=0; j<threads_number; j++)
+						WaitForSingleObject(MT_Thread[j].jobFinished,INFINITE);
+					for(uint8_t j=0; j<threads_number; j++)
+						MT_Thread[j].f_process=0;
 				}
 				else
 				{
-					switch(mData.filter_mode)
+					if (mData.setting_mode)
 					{
-						case 1 : square_median_filter(buffer_in[i],buffer_out[i],w,h,mData.median_size[i],
-							mData.threshold[i],data[i],size_data[i]); break;
-						case 2 : horizontal_median_filter(buffer_in[i],buffer_out[i],w,h,mData.median_size[i],
-							mData.threshold[i],data[i],size_data[i]); break;
-						case 3 : vertical_median_filter(buffer_in[i],buffer_out[i],w,h,mData.median_size[i],
-							mData.threshold[i],data[i],size_data[i]); break;
+						switch(mData.filter_mode)
+						{
+							case 1 : square_median_filter_2(0); break;
+							case 2 : horizontal_median_filter_2(0); break;
+							case 3 : vertical_median_filter_2(0); break;
+						}
+					}
+					else
+					{
+						switch(mData.filter_mode)
+						{
+							case 1 : square_median_filter(0); break;
+							case 2 : horizontal_median_filter(0); break;
+							case 3 : vertical_median_filter(0); break;
+						}
 					}
 				}
 			}
 			else
 			{
-				memcpy(buffer_out[i],buffer_in[i],buffer_size[i]);
+				switch(i)
+				{
+					case 0 :
+						h_current=idata.src_h0;
+						w_current=idata.src_w0;
+						break;
+					case 1 :
+						h_current=idata.src_h1;
+						w_current=idata.src_w1;
+						break;
+					case 2 :
+						h_current=idata.src_h2;
+						w_current=idata.src_w2;
+						break;
+				}
+
+				if (use_buffer) A_memcpy(buffer_out[i],buffer_in[i],buffer_size[i]);
+				else
+				{
+					for(int32_t j=0; j<h_current; j++)
+					{
+						A_memcpy(ptrDst[i],ptrSrc[i],w_current);
+						ptrSrc[i]+=srcPitch[i];
+						ptrDst[i]+=dstPitch[i];
+					}
+				}
 			}
 		}
 	}
 
-	if (mData.interlace_mode)
+	switch(idata.video_mode)
 	{
-		switch(idata.video_mode)
-		{
-			case 0 :
-			case 1 :
+		case 0 :
+		case 1 :
+			if (SSE2_Enable)
+			{
+				if (align_dst)
+					JPSDR_Median_RGB32_Move_dst_SSE_2(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
+						(idata.src_w0+3)>>2,idata.src_h0,buffer_pitch[0],idata.dst_pitch0);
+				else
+					JPSDR_Median_RGB32_Move_dst_SSE_1(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
+						idata.src_w0,idata.src_h0,buffer_pitch[0],idata.dst_pitch0);
+			}
+			else
 				JPSDR_Median_RGB32_Move_dst(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
-					idata.src_w0,idata.src_h0>>1,idata.dst_modulo0+idata.dst_pitch0);
-				JPSDR_Median_RGB32_Move_dst(buffer_out[0]+(buffer_size[0] >>1),buffer_out[1]
-					+(buffer_size[1] >>1),buffer_out[2]+(buffer_size[2] >>1),
-					(void *)((uint8_t *)idata.dst_plane0+idata.dst_pitch0),idata.src_w0,idata.src_h0>>1,
-					idata.dst_modulo0+idata.dst_pitch0);
-				break;
-			case 2 :
+					idata.src_w0,idata.src_h0,buffer_modulo[0],idata.dst_modulo0);
+			break;
+		case 2 :
+			if (SSE2_Enable)
+			{
+				if (align_dst)
+					JPSDR_Median_YUYV_Move_dst_SSE_2(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
+						(idata.src_w0+7)>>3,idata.src_h0,buffer_pitch[0],buffer_pitch[1],idata.dst_pitch0);
+				else
+					JPSDR_Median_YUYV_Move_dst_SSE_1(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
+						(idata.src_w0+1)>>1,idata.src_h0,buffer_pitch[0],buffer_pitch[1],idata.dst_pitch0);
+			}
+			else
 				JPSDR_Median_YUYV_Move_dst(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
-					(idata.src_w0+1)>>1,idata.src_h0>>1,idata.dst_modulo0+idata.dst_pitch0);
-				JPSDR_Median_YUYV_Move_dst(buffer_out[0]+(buffer_size[0] >>1),buffer_out[1]
-					+(buffer_size[1] >>1),buffer_out[2]+(buffer_size[2] >>1),
-					(void *)((uint8_t *)idata.dst_plane0+idata.dst_pitch0),(idata.src_w0+1)>>1,idata.src_h0>>1,
-					idata.dst_modulo0+idata.dst_pitch0);
-				break;
-			case 3 :
+					(idata.src_w0+1)>>1,idata.src_h0,buffer_modulo[0],buffer_modulo[1],idata.dst_modulo0);
+			break;
+		case 3 :
+			if (SSE2_Enable)
+			{
+				if (align_dst)
+					JPSDR_Median_UYVY_Move_dst_SSE_2(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
+						(idata.src_w0+7)>>3,idata.src_h0,buffer_pitch[0],buffer_pitch[1],idata.dst_pitch0);
+				else
+					JPSDR_Median_UYVY_Move_dst_SSE_1(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
+						(idata.src_w0+1)>>1,idata.src_h0,buffer_pitch[0],buffer_pitch[1],idata.dst_pitch0);
+			}
+			else
 				JPSDR_Median_UYVY_Move_dst(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
-					(idata.src_w0+1)>>1,idata.src_h0>>1,idata.dst_modulo0+idata.dst_pitch0);
-				JPSDR_Median_UYVY_Move_dst(buffer_out[0]+(buffer_size[0] >>1),buffer_out[1]
-					+(buffer_size[1] >>1),buffer_out[2]+(buffer_size[2] >>1),
-					(void *)((uint8_t *)idata.dst_plane0+idata.dst_pitch0),(idata.src_w0+1)>>1,idata.src_h0>>1,
-					idata.dst_modulo0+idata.dst_pitch0);
-				break;
-			case 4 :
-			case 5 :
-			case 6 :
-			case 7 :
-			case 8 :
-				JPSDR_Median_Planar_Move_dst(buffer_out[0],idata.dst_plane0,idata.src_w0,idata.src_h0>>1,
-					idata.dst_modulo0+idata.dst_pitch0);
-				JPSDR_Median_Planar_Move_dst(buffer_out[0]+(buffer_size[0] >>1),
-					(void *)((uint8_t *)idata.dst_plane0+idata.dst_pitch0),idata.src_w0,idata.src_h0>>1,
-					idata.dst_modulo0+idata.dst_pitch0);
-				JPSDR_Median_Planar_Move_dst(buffer_out[1],idata.dst_plane1,idata.src_w1,idata.src_h1>>1,
-					idata.dst_modulo1+idata.dst_pitch1);
-				JPSDR_Median_Planar_Move_dst(buffer_out[1]+(buffer_size[1] >>1),
-					(void *)((uint8_t *)idata.dst_plane1+idata.dst_pitch1),idata.src_w1,idata.src_h1>>1,
-					idata.dst_modulo1+idata.dst_pitch1);
-				JPSDR_Median_Planar_Move_dst(buffer_out[2],idata.dst_plane2,idata.src_w2,idata.src_h2>>1,
-					idata.dst_modulo2+idata.dst_pitch2);
-				JPSDR_Median_Planar_Move_dst(buffer_out[2]+(buffer_size[2] >>1),
-					(void *)((uint8_t *)idata.dst_plane2+idata.dst_pitch2),idata.src_w2,idata.src_h2>>1,
-					idata.dst_modulo2+idata.dst_pitch2);
-				break;
-			case 9 :
-				JPSDR_Median_Planar_Move_dst(buffer_out[0],idata.dst_plane0,idata.src_w0,idata.src_h0>>1,
-					idata.dst_modulo0+idata.dst_pitch0);
-				JPSDR_Median_Planar_Move_dst(buffer_out[0]+(buffer_size[0] >>1),
-					(void *)((uint8_t *)idata.dst_plane0+idata.dst_pitch0),idata.src_w0,idata.src_h0>>1,
-					idata.dst_modulo0+idata.dst_pitch0);
-				break;
-		}
-	}
-	else
-	{
-		switch(idata.video_mode)
-		{
-			case 0 :
-			case 1 :
-				JPSDR_Median_RGB32_Move_dst(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
-					idata.src_w0,idata.src_h0,idata.dst_modulo0);
-				break;
-			case 2 :
-				JPSDR_Median_YUYV_Move_dst(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
-					(idata.src_w0+1)>>1,idata.src_h0,idata.dst_modulo0);
-				break;
-			case 3 :
-				JPSDR_Median_UYVY_Move_dst(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
-					(idata.src_w0+1)>>1,idata.src_h0,idata.dst_modulo0);
-				break;
-			case 4 :
-			case 5 :
-			case 6 :
-			case 7 :
-			case 8 :
-				JPSDR_Median_Planar_Move_dst(buffer_out[0],idata.dst_plane0,idata.src_w0,idata.src_h0>>1,
-					idata.dst_modulo0);
-				JPSDR_Median_Planar_Move_dst(buffer_out[1],idata.dst_plane1,idata.src_w1,idata.src_h1>>1,
-					idata.dst_modulo1);
-				JPSDR_Median_Planar_Move_dst(buffer_out[2],idata.dst_plane2,idata.src_w2,idata.src_h2>>1,
-					idata.dst_modulo2);
-				break;
-			case 9 :
-				JPSDR_Median_Planar_Move_dst(buffer_out[0],idata.dst_plane0,idata.src_w0,idata.src_h0>>1,
-					idata.dst_modulo0);
-				break;
-		}
+					(idata.src_w0+1)>>1,idata.src_h0,buffer_modulo[0],buffer_modulo[1],idata.dst_modulo0);
+			break;
 	}
 
 }
@@ -1222,8 +1867,8 @@ void JPSDR_Median::Start()
 {
 	Image_Data idata;
 	bool ok;
-	int32_t i,j;
-	uint32_t size_data[3];
+	int32_t i;
+	uint32_t size_data_max;
 	int32_t h,w;
 
 	if (g_VFVAPIVersion<12)
@@ -2723,14 +3368,32 @@ void JPSDR_Median::Start()
 	{
 		case 0 :
 		case 1 :
-			buffer_size[0]=idata.src_h0*idata.src_w0;
+			buffer_pitch[0]=idata.src_w0;
+			if ((buffer_pitch[0] & (ALIGN_SIZE-1))!=0)
+				buffer_pitch[0]=((buffer_pitch[0]+ALIGN_SIZE-1) >> ALIGN_SHIFT) << ALIGN_SHIFT;
+			buffer_pitch[1]=buffer_pitch[0];
+			buffer_pitch[2]=buffer_pitch[0];
+			buffer_modulo[0]=buffer_pitch[0]-idata.src_w0;
+			buffer_modulo[1]=buffer_modulo[0];
+			buffer_modulo[2]=buffer_modulo[0];
+			buffer_size[0]=idata.src_h0*(uint32_t)buffer_pitch[0];
 			buffer_size[1]=buffer_size[0];
 			buffer_size[2]=buffer_size[0];
 			break;
 		case 2 :
 		case 3 :
-			buffer_size[0]=idata.src_h0*2*((idata.src_w0+1)>>1);
-			buffer_size[1]=idata.src_h0*((idata.src_w0+1)>>1);
+			buffer_pitch[0]=idata.src_w0;			
+			if ((buffer_pitch[0] & (ALIGN_SIZE-1))!=0)
+				buffer_pitch[0]=((buffer_pitch[0]+ALIGN_SIZE-1) >> ALIGN_SHIFT) << ALIGN_SHIFT;
+			buffer_pitch[1]=(idata.src_w0+1)>>1;
+			if ((buffer_pitch[1] & (ALIGN_SIZE-1))!=0)
+				buffer_pitch[1]=((buffer_pitch[1]+ALIGN_SIZE-1) >> ALIGN_SHIFT) << ALIGN_SHIFT;
+			buffer_pitch[2]=buffer_pitch[1];
+			buffer_modulo[0]=buffer_pitch[0]-idata.src_w0;
+			buffer_modulo[1]=buffer_pitch[1]-((idata.src_w0+1)>>1);
+			buffer_modulo[2]=buffer_modulo[1];
+			buffer_size[0]=idata.src_h0*(uint32_t)buffer_pitch[0];
+			buffer_size[1]=idata.src_h0*(uint32_t)buffer_pitch[1];
 			buffer_size[2]=buffer_size[1];
 			break;
 		case 4 :
@@ -2739,11 +3402,19 @@ void JPSDR_Median::Start()
 		case 7 :
 		case 8 :
 		case 9 :
-			buffer_size[0]=idata.src_size0;
-			buffer_size[1]=idata.src_size1;
-			buffer_size[2]=idata.src_size2;
+			buffer_pitch[0]=0;
+			buffer_pitch[1]=0;
+			buffer_pitch[2]=0;
+			buffer_modulo[0]=0;
+			buffer_modulo[1]=0;
+			buffer_modulo[2]=0;
+			buffer_size[0]=0;
+			buffer_size[1]=0;
+			buffer_size[2]=0;
 			break;
 	}
+
+	max_median_size=0;
 
 	for (i=0; i<3; i++)
 	{
@@ -2759,7 +3430,7 @@ void JPSDR_Median::Start()
 				switch(i)
 				{
 					case 0 :
-						w=2*((idata.src_w0+1)>>1);
+						w=idata.src_w0;
 						h=idata.src_h0;
 						break;
 					case 1 :
@@ -2805,62 +3476,165 @@ void JPSDR_Median::Start()
 		}
 		if (mData.median_size[i]>=(h >> 1)) mData.median_size[i]=(h >> 1)-1;
 		if (mData.median_size[i]>=(w >> 1)) mData.median_size[i]=(w >> 1)-1;
-		size_data[i]=2*mData.median_size[i]+1;
-		size_data[i]*=size_data[i];
+		if (max_median_size<mData.median_size[i]) max_median_size=mData.median_size[i];
+	}
+
+	size_data_max=((uint32_t)max_median_size << 1)+1;
+	size_data_max*=size_data_max;
+	if ((size_data_max & (ALIGN_SIZE-1))!=0)
+		size_data_max=((size_data_max + ALIGN_SIZE-1) >> ALIGN_SHIFT) << ALIGN_SHIFT;
+
+	for (i=0; i<3; i++)
+	{
+		if (buffer_size[i]>0)
+			buffer_in[i]=(uint8_t *)_aligned_malloc(buffer_size[i]*sizeof(uint8_t),ALIGN_SIZE);
+		else buffer_in[i]=NULL;
 	}
 	for (i=0; i<3; i++)
 	{
-		if ((idata.video_mode!=9) || (i==0)) buffer_in[i]=(uint8_t *)malloc(buffer_size[i]);
-		else buffer_in[i]=buffer_in[0];
+		if (buffer_size[i]>0)
+			buffer_out[i]=(uint8_t *)_aligned_malloc(buffer_size[i]*sizeof(uint8_t),ALIGN_SIZE);
+		else buffer_out[i]=NULL;
 	}
-	for (i=0; i<3; i++)
+
+	if  (mData.mt_mode && (idata.src_h0>=32) && (idata.dst_h0>=32) ) threads_number=CPUs_number;
+	else threads_number=1;
+
+	if (mData.interlace_mode)
 	{
-		if ((idata.video_mode!=9) || (i==0)) buffer_out[i]=(uint8_t *)malloc(buffer_size[i]);
-		else buffer_out[i]=buffer_out[0];
+		switch (idata.src_video_mode)
+		{
+			case 0 :
+			case 1 :
+				threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0>>1,0,0,0);
+				break;
+			case 4 :
+			case 9 :
+				threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0>>1,0,0,2);
+				break;
+			case 2 :
+			case 3 :
+				threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0>>1,1,0,1);
+				break;
+			case 5 :
+				threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0>>1,1,0,2);
+				break;
+			case 6 :
+				threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0>>1,1,1,2);
+				break;
+			case 7 :
+				threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0>>1,2,0,2);
+				break;
+			case 8 :
+				threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0>>1,2,2,2);
+				break;
+			default :
+				threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0>>1,0,0,0);
+				break;
+		}
 	}
-	for (i=0; i<3; i++)
+	else
 	{
-		if ((idata.video_mode!=9) || (i==0)) data[i]=(int16_t *)malloc(size_data[i]*sizeof(int16_t));
-		else data[i]=data[0];
+		switch (idata.src_video_mode)
+		{
+			case 0 :
+			case 1 :
+				threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,0,0,0);
+				break;
+			case 4 :
+			case 9 :
+				threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,0,0,2);
+				break;
+			case 2 :
+			case 3 :
+				threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,1,0,1);
+				break;
+			case 5 :
+				threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,1,0,2);
+				break;
+			case 6 :
+				threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,1,1,2);
+				break;
+			case 7 :
+				threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,2,0,2);
+				break;
+			case 8 :
+				threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,2,2,2);
+				break;
+			default :
+				threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,0,0,0);
+				break;
+		}
 	}
+
+	for (i=0; i<threads_number; i++)
+		Tdata[i]=(uint8_t *)_aligned_malloc(size_data_max*sizeof(uint8_t),ALIGN_SIZE);
 
 	ok=true;
 	for (i=0; i<3; i++)
-		ok=ok && (buffer_in[i]!=NULL);
+		if (buffer_size[i]>0) ok=ok && (buffer_in[i]!=NULL);
 	for (i=0; i<3; i++)
-		ok=ok && (buffer_out[i]!=NULL);
-	for (i=0; i<3; i++)
-		ok=ok && (data[i]!=NULL);
-	if (idata.video_mode==9)
-	{
-		buffer_in[1]=NULL;
-		buffer_in[2]=NULL;
-		buffer_out[1]=NULL;
-		buffer_out[2]=NULL;
-		data[1]=NULL;
-		data[2]=NULL;
-	}
+		if (buffer_size[i]>0) ok=ok && (buffer_out[i]!=NULL);
+	for (i=0; i<threads_number; i++)
+		ok=ok && (Tdata[i]!=NULL);
+
 	if (!ok)
 	{
-		for (i=2; i>=0; i--)
-			myfree(data[i]);
-		for (i=2; i>=0; i--)
-			myfree(buffer_out[i]);
-		for (i=2; i>=0; i--)
-			myfree(buffer_in[i]);
 		ff->ExceptOutOfMemory();
 		return;
 	}
 
-	for (i=0; i<3; i++)
+	if (threads_number>1)
 	{
-		if ((idata.video_mode!=9) || (i==0))
+		ok=true;
+		i=0;
+		while ((i<threads_number) && ok)
 		{
-			for (j=0; j<(int32_t)size_data[i]; j++)
-				data[i][j]=0;
+			MT_Thread[i].pClass=this;
+			MT_Thread[i].f_process=0;
+			MT_Thread[i].jobFinished=CreateEvent(NULL,TRUE,TRUE,NULL);
+			MT_Thread[i].nextJob=CreateEvent(NULL,TRUE,FALSE,NULL);
+			ok=ok && ((MT_Thread[i].jobFinished!=NULL) && (MT_Thread[i].nextJob!=NULL));
+			i++;
 		}
-		else continue;
+		if (!ok)
+		{
+			ff->Except("Unable to create events !");
+			return;
+		}
+
+		DWORD_PTR dwpProcessAffinityMask;
+		DWORD_PTR dwpSystemAffinityMask;
+		DWORD_PTR dwpThreadAffinityMask=1;
+
+		GetProcessAffinityMask(GetCurrentProcess(), &dwpProcessAffinityMask, &dwpSystemAffinityMask);
+
+		ok=true;
+		i=0;
+		while ((i<threads_number) && ok)
+		{
+			if ((dwpProcessAffinityMask & dwpThreadAffinityMask)!=0)
+			{
+				thds[i]=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)StaticThreadpool,&MT_Thread[i],CREATE_SUSPENDED,&tids[i]);
+				ok=ok && (thds[i]!=NULL);
+				if (ok)
+				{
+					SetThreadAffinityMask(thds[i],dwpThreadAffinityMask);
+					ResumeThread(thds[i]);
+				}
+				i++;
+			}
+			dwpThreadAffinityMask<<=1;
+		}
+		if (!ok)
+		{
+			ff->Except("Unable to create threads pool !");
+			return;
+		}
 	}
+
+	for (i=0; i<threads_number; i++)
+		A_memset(Tdata[i],0,size_data_max);
 
 	const size_t img_size=idata.dst_size0+idata.dst_size1+idata.dst_size2;
 
@@ -2879,12 +3653,31 @@ void JPSDR_Median::End()
 {
 	int16_t i;
 
+	if (threads_number>1)
+	{
+		for (i=threads_number-1; i>=0; i--)
+		{
+			if (thds[i]!=NULL)
+			{
+				MT_Thread[i].f_process=255;
+				SetEvent(MT_Thread[i].nextJob);
+				WaitForSingleObject(thds[i],INFINITE);
+				myCloseHandle(thds[i]);
+			}
+		}
+		for (i=threads_number-1; i>=0; i--)
+		{
+			myCloseHandle(MT_Thread[i].nextJob);
+			myCloseHandle(MT_Thread[i].jobFinished);
+		}
+	}
+
+	for (i=threads_number-1; i>=0; i--)
+		my_aligned_free(Tdata[i]);
 	for (i=2; i>=0; i--)
-		myfree(data[i]);
+		my_aligned_free(buffer_out[i]);
 	for (i=2; i>=0; i--)
-		myfree(buffer_out[i]);
-	for (i=2; i>=0; i--)
-		myfree(buffer_in[i]);
+		my_aligned_free(buffer_in[i]);
 }
 
 
@@ -2913,17 +3706,19 @@ void JPSDR_Median::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptValue
 	mData.filter_disable[0]=!!argv[9].asInt();
 	mData.filter_disable[1]=!!argv[10].asInt();
 	mData.filter_disable[2]=!!argv[11].asInt();
+	mData.mt_mode=!!argv[12].asInt();
 }
 
 
 
 void JPSDR_Median::GetScriptString(char *buf, int maxlen)
 {
-    SafePrintf(buf, maxlen,"Config(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)",
+    SafePrintf(buf, maxlen,"Config(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)",
         mData.median_size[0],mData.median_size[1],mData.median_size[2],
         mData.threshold[0],mData.threshold[1],mData.threshold[2],mData.setting_mode,mData.filter_mode,
-		mData.interlace_mode,mData.filter_disable[0],mData.filter_disable[1],mData.filter_disable[2]);
+		mData.interlace_mode,mData.filter_disable[0],mData.filter_disable[1],mData.filter_disable[2],
+		mData.mt_mode);
 }
 
 extern VDXFilterDefinition filterDef_JPSDR_Median=
-VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v2.5.0","Median filter with threshold.");
+VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v3.0.0","Median filter with threshold.");

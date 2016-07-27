@@ -1429,6 +1429,963 @@ JPSDR_RGBConvert_RGB32toYV12_SSE endp
 
 
 
+
+JPSDR_RGBConvert_RGB32toYV12_SSE_1 proc src:dword,dst_y:dword,dst_u:dword,dst_v:dword,w:dword,h:dword,offset_Y:word,
+	offset_U:word,offset_V:word,lookup:dword,src_pitch:dword,src_modulo:dword,dst_pitch_y:dword,dst_modulo_y:dword,
+	dst_modulo_u:dword,dst_modulo_v:dword,Min_Y:word,Max_Y:word,Min_U:word,Max_U:word,Min_V:word,Max_V:word
+
+	public JPSDR_RGBConvert_RGB32toYV12_SSE_1
+
+	local i,w0,h0:dword
+
+	push esi
+	push edi
+	push ebx
+	
+	pxor xmm4,xmm4
+	pxor xmm3,xmm3
+	pxor xmm2,xmm2
+	pxor xmm1,xmm1
+	pxor xmm0,xmm0
+	movzx eax,offset_Y
+	pinsrw xmm1,eax,0
+	pinsrw xmm1,eax,1
+	pinsrw xmm1,eax,2
+	pinsrw xmm1,eax,3
+	movzx eax,offset_U
+	pinsrw xmm1,eax,4
+	movzx eax,offset_V
+	pinsrw xmm1,eax,6
+	movzx eax,Min_Y
+	pinsrw xmm2,eax,0
+	pinsrw xmm2,eax,1
+	pinsrw xmm2,eax,2
+	pinsrw xmm2,eax,3
+	movzx eax,Max_Y
+	pinsrw xmm3,eax,0
+	pinsrw xmm3,eax,1
+	pinsrw xmm3,eax,2
+	pinsrw xmm3,eax,3
+	movzx eax,Min_U
+	pinsrw xmm2,eax,4
+	movzx eax,Max_U
+	pinsrw xmm3,eax,4
+	movzx eax,Min_V
+	pinsrw xmm2,eax,6
+	movzx eax,Max_V
+	pinsrw xmm3,eax,6
+	
+	mov esi,src
+	
+	mov eax,w
+	inc eax
+	shr eax,1
+	dec eax
+	mov w0,eax
+
+	mov eax,h
+	inc eax
+	shr eax,1
+	jz Suite4_9_1
+	mov h0,eax
+
+Boucle0_9_1:
+	mov eax,w0
+	or eax,eax
+	jz Suite0_9_1
+	mov i,eax
+Boucle1_9_1:
+	movzx edx,byte ptr[esi]
+	movzx ecx,byte ptr[esi+1]
+	push edx
+	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
+	push ecx
+	mov esi,lookup
+	push ebx
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	mov esi,src
+	add esi,src_pitch
+	pinsrw xmm0,eax,0
+	movzx edx,byte ptr[esi]
+	movzx ecx,byte ptr[esi+1]
+	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	pinsrw xmm0,eax,2
+	
+	pop eax
+	add ebx,eax
+	shr ebx,1
+	pop eax
+	add ecx,eax
+	shr ecx,1
+	pop eax
+	add edx,eax
+	shr edx,1
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	pinsrw xmm0,eax,4
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	mov esi,src
+	pinsrw xmm0,eax,6
+	
+	movzx edx,byte ptr[esi+4]
+	movzx ecx,byte ptr[esi+5]
+	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B	
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	mov esi,src
+	add esi,src_pitch	
+	pinsrw xmm0,eax,1
+	movzx edx,byte ptr[esi+4]
+	movzx ecx,byte ptr[esi+5]
+	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B	
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	add src,8
+	pinsrw xmm0,eax,3
+		
+	paddsw xmm0,xmm1
+	psraw xmm0,6
+	pmaxsw xmm0,xmm2
+	pminsw xmm0,xmm3
+	packuswb xmm0,xmm4
+	
+	mov edi,dst_y
+	pextrw eax,xmm0,0
+	mov word ptr[edi],ax
+	add edi,dst_pitch_y
+	pextrw eax,xmm0,1
+	mov word ptr[edi],ax
+	
+	mov edi,dst_u
+	pextrw eax,xmm0,2
+	add dst_y,2
+	mov byte ptr[edi],al
+	
+	mov edi,dst_v
+	pextrw eax,xmm0,3
+	inc dst_u
+	mov byte ptr[edi],al
+	inc dst_v
+	
+	mov esi,src
+	
+	dec i	
+	jnz Boucle1_9_1
+	
+Suite0_9_1:
+	movzx edx,byte ptr[esi]
+	movzx ecx,byte ptr[esi+1]
+	push edx
+	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
+	push ecx
+	mov esi,lookup
+	push ebx
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	mov esi,src
+	add esi,src_pitch
+	pinsrw xmm0,eax,0
+	movzx edx,byte ptr[esi]
+	movzx ecx,byte ptr[esi+1]
+	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	pinsrw xmm0,eax,2
+	
+	pop eax
+	add ebx,eax
+	shr ebx,1
+	pop eax
+	add ecx,eax
+	shr ecx,1
+	pop eax
+	add edx,eax
+	shr edx,1
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	pinsrw xmm0,eax,4
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	pinsrw xmm0,eax,6
+
+	mov eax,w
+	and eax,1
+	jnz Suite1_9a_1
+
+	mov esi,src
+	movzx edx,byte ptr[esi+4]
+	movzx ecx,byte ptr[esi+5]
+	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B	
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	mov esi,src
+	add esi,src_pitch
+	pinsrw xmm0,eax,1
+	movzx edx,byte ptr[esi+4]
+	movzx ecx,byte ptr[esi+5]
+	movzx ebx,byte ptr[esi+6] ;
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	add src,8
+	pinsrw xmm0,eax,3
+	
+	paddsw xmm0,xmm1
+	psraw xmm0,6
+	pmaxsw xmm0,xmm2
+	pminsw xmm0,xmm3
+	packuswb xmm0,xmm4
+	
+	mov edi,dst_y
+	pextrw eax,xmm0,0
+	mov word ptr[edi],ax
+	add edi,dst_pitch_y
+	pextrw eax,xmm0,1
+	mov word ptr[edi],ax
+	
+	mov edi,dst_u
+	pextrw eax,xmm0,2
+	add dst_y,2
+	mov byte ptr[edi],al
+	
+	mov edi,dst_v
+	pextrw eax,xmm0,3
+	inc dst_u
+	mov byte ptr[edi],al
+	inc dst_v
+	
+	jmp Suite1_9b_1
+	
+Suite1_9a_1:	
+	paddsw xmm0,xmm1
+	psraw xmm0,6
+	pmaxsw xmm0,xmm2
+	pminsw xmm0,xmm3
+	
+	mov edi,dst_y
+	pextrw eax,xmm0,0
+	add src,4
+	mov byte ptr[edi],al
+	add edi,dst_pitch_y
+	pextrw eax,xmm0,2
+	inc dst_y
+	mov byte ptr[edi],al
+	
+	mov edi,dst_u
+	pextrw eax,xmm0,4
+	inc dst_u
+	mov byte ptr[edi],al
+	
+	mov edi,dst_v
+	pextrw eax,xmm0,6
+	inc dst_v
+	mov byte ptr[edi],al
+	
+Suite1_9b_1:	
+	mov esi,src
+	add esi,src_modulo
+	add esi,src_pitch
+	
+	mov eax,dst_y
+	add eax,dst_modulo_y
+	add eax,dst_pitch_y
+	mov dst_y,eax
+	
+	mov eax,dst_u
+	add eax,dst_modulo_u
+	mov dst_u,eax
+	
+	mov eax,dst_v
+	add eax,dst_modulo_v
+	mov dst_v,eax
+	
+	mov src,esi
+	
+	dec h0
+	jnz Boucle0_9_1
+	
+Suite4_9_1:
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_RGBConvert_RGB32toYV12_SSE_1 endp
+
+
+
+JPSDR_RGBConvert_RGB32toYV12_SSE_2 proc src:dword,dst_y:dword,dst_u:dword,dst_v:dword,w:dword,h:dword,offset_Y:word,
+	offset_U:word,offset_V:word,lookup:dword,src_pitch:dword,src_modulo:dword,dst_pitch_y:dword,dst_modulo_y:dword,
+	dst_modulo_u:dword,dst_modulo_v:dword,Min_Y:word,Max_Y:word,Min_U:word,Max_U:word,Min_V:word,Max_V:word
+
+	public JPSDR_RGBConvert_RGB32toYV12_SSE_2
+
+	local i,w0,h0:dword
+
+	push esi
+	push edi
+	push ebx
+	
+	pxor xmm4,xmm4
+	pxor xmm3,xmm3
+	pxor xmm2,xmm2
+	pxor xmm1,xmm1
+	pxor xmm0,xmm0
+	movzx eax,offset_Y
+	pinsrw xmm1,eax,0
+	pinsrw xmm1,eax,1
+	pinsrw xmm1,eax,2
+	pinsrw xmm1,eax,3
+	movzx eax,offset_U
+	pinsrw xmm1,eax,4
+	movzx eax,offset_V
+	pinsrw xmm1,eax,6
+	movzx eax,Min_Y
+	pinsrw xmm2,eax,0
+	pinsrw xmm2,eax,1
+	pinsrw xmm2,eax,2
+	pinsrw xmm2,eax,3
+	movzx eax,Max_Y
+	pinsrw xmm3,eax,0
+	pinsrw xmm3,eax,1
+	pinsrw xmm3,eax,2
+	pinsrw xmm3,eax,3
+	movzx eax,Min_U
+	pinsrw xmm2,eax,4
+	movzx eax,Max_U
+	pinsrw xmm3,eax,4
+	movzx eax,Min_V
+	pinsrw xmm2,eax,6
+	movzx eax,Max_V
+	pinsrw xmm3,eax,6
+	
+	mov esi,src
+	
+	mov eax,w
+	inc eax
+	shr eax,1
+	dec eax
+	mov w0,eax
+
+	mov eax,h
+	inc eax
+	shr eax,1
+	dec eax
+	jz Suite4_9_2
+	mov h0,eax
+
+Boucle0_9_2:
+	mov eax,w0
+	or eax,eax
+	jz Suite0_9_2
+	mov i,eax
+Boucle1_9_2:
+	movzx edx,byte ptr[esi]
+	movzx ecx,byte ptr[esi+1]
+	push edx
+	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
+	push ecx
+	mov esi,lookup
+	push ebx
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	mov esi,src
+	add esi,src_pitch
+	pinsrw xmm0,eax,0
+	movzx edx,byte ptr[esi]
+	movzx ecx,byte ptr[esi+1]
+	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	pinsrw xmm0,eax,2
+	
+	pop eax
+	add ebx,eax
+	shr ebx,1
+	pop eax
+	add ecx,eax
+	shr ecx,1
+	pop eax
+	add edx,eax
+	shr edx,1
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	pinsrw xmm0,eax,4
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	mov esi,src
+	pinsrw xmm0,eax,6
+	
+	movzx edx,byte ptr[esi+4]
+	movzx ecx,byte ptr[esi+5]
+	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B	
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	mov esi,src
+	add esi,src_pitch	
+	pinsrw xmm0,eax,1
+	movzx edx,byte ptr[esi+4]
+	movzx ecx,byte ptr[esi+5]
+	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B	
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	add src,8
+	pinsrw xmm0,eax,3
+		
+	paddsw xmm0,xmm1
+	psraw xmm0,6
+	pmaxsw xmm0,xmm2
+	pminsw xmm0,xmm3
+	packuswb xmm0,xmm4
+	
+	mov edi,dst_y
+	pextrw eax,xmm0,0
+	mov word ptr[edi],ax
+	add edi,dst_pitch_y
+	pextrw eax,xmm0,1
+	mov word ptr[edi],ax
+	
+	mov edi,dst_u
+	pextrw eax,xmm0,2
+	add dst_y,2
+	mov byte ptr[edi],al
+	
+	mov edi,dst_v
+	pextrw eax,xmm0,3
+	inc dst_u
+	mov byte ptr[edi],al
+	inc dst_v
+	
+	mov esi,src
+	
+	dec i	
+	jnz Boucle1_9_2
+	
+Suite0_9_2:
+	movzx edx,byte ptr[esi]
+	movzx ecx,byte ptr[esi+1]
+	push edx
+	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
+	push ecx
+	mov esi,lookup
+	push ebx
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	mov esi,src
+	add esi,src_pitch
+	pinsrw xmm0,eax,0
+	movzx edx,byte ptr[esi]
+	movzx ecx,byte ptr[esi+1]
+	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	pinsrw xmm0,eax,2
+	
+	pop eax
+	add ebx,eax
+	shr ebx,1
+	pop eax
+	add ecx,eax
+	shr ecx,1
+	pop eax
+	add edx,eax
+	shr edx,1
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	pinsrw xmm0,eax,4
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	pinsrw xmm0,eax,6
+
+	mov eax,w
+	and eax,1
+	jnz Suite1_9a_2
+
+	mov esi,src
+	movzx edx,byte ptr[esi+4]
+	movzx ecx,byte ptr[esi+5]
+	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B	
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	mov esi,src
+	add esi,src_pitch
+	pinsrw xmm0,eax,1
+	movzx edx,byte ptr[esi+4]
+	movzx ecx,byte ptr[esi+5]
+	movzx ebx,byte ptr[esi+6] ;
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	add src,8
+	pinsrw xmm0,eax,3
+	
+	paddsw xmm0,xmm1
+	psraw xmm0,6
+	pmaxsw xmm0,xmm2
+	pminsw xmm0,xmm3
+	packuswb xmm0,xmm4
+	
+	mov edi,dst_y
+	pextrw eax,xmm0,0
+	mov word ptr[edi],ax
+	add edi,dst_pitch_y
+	pextrw eax,xmm0,1
+	mov word ptr[edi],ax
+	
+	mov edi,dst_u
+	pextrw eax,xmm0,2
+	add dst_y,2
+	mov byte ptr[edi],al
+	
+	mov edi,dst_v
+	pextrw eax,xmm0,3
+	inc dst_u
+	mov byte ptr[edi],al
+	inc dst_v
+	
+	jmp Suite1_9b_2
+	
+Suite1_9a_2:	
+	paddsw xmm0,xmm1
+	psraw xmm0,6
+	pmaxsw xmm0,xmm2
+	pminsw xmm0,xmm3
+	
+	mov edi,dst_y
+	pextrw eax,xmm0,0
+	add src,4
+	mov byte ptr[edi],al
+	add edi,dst_pitch_y
+	pextrw eax,xmm0,2
+	inc dst_y
+	mov byte ptr[edi],al
+	
+	mov edi,dst_u
+	pextrw eax,xmm0,4
+	inc dst_u
+	mov byte ptr[edi],al
+	
+	mov edi,dst_v
+	pextrw eax,xmm0,6
+	inc dst_v
+	mov byte ptr[edi],al
+	
+Suite1_9b_2:	
+	mov esi,src
+	add esi,src_modulo
+	add esi,src_pitch
+	
+	mov eax,dst_y
+	add eax,dst_modulo_y
+	add eax,dst_pitch_y
+	mov dst_y,eax
+	
+	mov eax,dst_u
+	add eax,dst_modulo_u
+	mov dst_u,eax
+	
+	mov eax,dst_v
+	add eax,dst_modulo_v
+	mov dst_v,eax
+	
+	mov src,esi
+	
+	dec h0
+	jnz Boucle0_9_2
+	
+Suite4_9_2:
+	mov eax,h
+	and eax,1
+	jnz Suite2_9_2
+
+	mov eax,w0
+	or eax,eax
+	jz Suite5_9_2
+	mov i,eax
+Boucle2_9_2:
+	movzx edx,byte ptr[esi]
+	movzx ecx,byte ptr[esi+1]
+	push edx
+	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
+	push ecx
+	mov esi,lookup
+	push ebx
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	mov esi,src
+	add esi,src_pitch
+	pinsrw xmm0,eax,0
+	movzx edx,byte ptr[esi]
+	movzx ecx,byte ptr[esi+1]
+	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	pinsrw xmm0,eax,2
+	
+	pop eax
+	add ebx,eax
+	shr ebx,1
+	pop eax
+	add ecx,eax
+	shr ecx,1
+	pop eax
+	add edx,eax
+	shr edx,1
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	pinsrw xmm0,eax,4
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	mov esi,src	
+	pinsrw xmm0,eax,6
+	
+	movzx edx,byte ptr[esi+4]
+	movzx ecx,byte ptr[esi+5]
+	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B	
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	mov esi,src	
+	add esi,src_pitch	
+	pinsrw xmm0,eax,1
+	movzx edx,byte ptr[esi+4]
+	movzx ecx,byte ptr[esi+5]
+	movzx ebx,byte ptr[esi+6] ;	ebx=R ecx=G edx=B	
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	pinsrw xmm0,eax,3
+			
+	paddsw xmm0,xmm1
+	psraw xmm0,6
+	pmaxsw xmm0,xmm2
+	pminsw xmm0,xmm3
+	packuswb xmm0,xmm4
+	
+	mov edi,dst_y
+	pextrw eax,xmm0,0
+	add src,8
+	mov word ptr[edi],ax
+	add edi,dst_pitch_y
+	pextrw eax,xmm0,1
+	add dst_y,2
+	mov word ptr[edi],ax
+	
+	mov edi,dst_u
+	pextrw eax,xmm0,2
+	inc dst_u
+	mov byte ptr[edi],al
+	
+	mov edi,dst_v
+	pextrw eax,xmm0,3
+	inc dst_v
+	mov byte ptr[edi],al
+		
+	mov esi,src
+	
+	dec i	
+	jnz Boucle2_9_2
+	
+Suite5_9_2:	
+	movzx edx,byte ptr[esi]
+	movzx ecx,byte ptr[esi+1]
+	push edx
+	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
+	push ecx
+	mov esi,lookup
+	push ebx
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	mov esi,src
+	add esi,src_pitch
+	pinsrw xmm0,eax,0
+	movzx edx,byte ptr[esi]
+	movzx ecx,byte ptr[esi+1]
+	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	pinsrw xmm0,eax,2
+	
+	pop eax
+	add ebx,eax
+	shr ebx,1
+	pop eax
+	add ecx,eax
+	shr ecx,1
+	pop eax
+	add edx,eax
+	shr edx,1
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	pinsrw xmm0,eax,4
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	pinsrw xmm0,eax,6
+	
+	mov eax,w
+	and eax,1
+	jnz Suite3_9a_2
+	
+	mov esi,src
+	movzx edx,byte ptr[esi+4]
+	movzx ecx,byte ptr[esi+5]
+	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B	
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	mov esi,src
+	add esi,src_pitch
+	pinsrw xmm0,eax,1
+	movzx edx,byte ptr[esi+4]
+	movzx ecx,byte ptr[esi+5]
+	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B	
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	pinsrw xmm0,eax,3
+	
+	paddsw xmm0,xmm1
+	psraw xmm0,6
+	pmaxsw xmm0,xmm2
+	pminsw xmm0,xmm3
+	packuswb xmm0,xmm4
+	
+	mov edi,dst_y
+	pextrw eax,xmm0,0
+	mov word ptr[edi],ax
+	add edi,dst_pitch_y
+	pextrw eax,xmm0,1
+	mov word ptr[edi],ax
+	
+	mov edi,dst_u
+	pextrw eax,xmm0,2
+	mov byte ptr[edi],al
+	
+	mov edi,dst_v
+	pextrw eax,xmm0,3
+	mov byte ptr[edi],al
+	
+	jmp Suite3_9b_2
+	
+Suite3_9a_2:		
+	paddsw xmm0,xmm1
+	psraw xmm0,6
+	pmaxsw xmm0,xmm2
+	pminsw xmm0,xmm3
+	
+	mov edi,dst_y
+	pextrw eax,xmm0,0
+	mov byte ptr[edi],al
+	add edi,dst_pitch_y
+	pextrw eax,xmm0,2
+	mov byte ptr[edi],al
+	
+	mov edi,dst_u
+	pextrw eax,xmm0,4
+	mov byte ptr[edi],al
+	
+	mov edi,dst_v
+	pextrw eax,xmm0,6
+	mov byte ptr[edi],al
+	
+	jmp Suite3_9b_2
+		
+Suite2_9_2:	
+	mov eax,w0
+	or eax,eax
+	jz Suite6_9_2
+	mov i,eax
+Boucle3_9_2:
+	movzx edx,byte ptr[esi]
+	movzx ecx,byte ptr[esi+1]
+	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	pinsrw xmm0,eax,0
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	pinsrw xmm0,eax,4
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	mov esi,src
+	pinsrw xmm0,eax,6
+	
+	movzx edx,byte ptr[esi+4]
+	movzx ecx,byte ptr[esi+5]
+	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B	
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	add src,8
+	pinsrw xmm0,eax,1
+		
+	paddsw xmm0,xmm1
+	psraw xmm0,6
+	pmaxsw xmm0,xmm2
+	pminsw xmm0,xmm3
+	packuswb xmm0,xmm4
+	
+	mov edi,dst_y
+	pextrw eax,xmm0,0
+	add dst_y,2
+	mov word ptr[edi],ax
+	
+	mov edi,dst_u
+	pextrw eax,xmm0,2
+	inc dst_u
+	mov byte ptr[edi],al
+	
+	mov edi,dst_v
+	pextrw eax,xmm0,3
+	inc dst_v
+	mov byte ptr[edi],al
+		
+	mov esi,src
+	
+	dec i	
+	jnz Boucle3_9_2
+	
+Suite6_9_2:	
+	movzx edx,byte ptr[esi]
+	movzx ecx,byte ptr[esi+1]
+	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	pinsrw xmm0,eax,0
+	
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	pinsrw xmm0,eax,4
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	pinsrw xmm0,eax,6
+	
+	mov eax,w
+	and eax,1
+	jnz short Suite3_9c_2
+	
+	mov esi,src
+	movzx edx,byte ptr[esi+4]
+	movzx ecx,byte ptr[esi+5]
+	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B	
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	pinsrw xmm0,eax,1
+	
+	paddsw xmm0,xmm1
+	psraw xmm0,6
+	pmaxsw xmm0,xmm2
+	pminsw xmm0,xmm3
+	packuswb xmm0,xmm4
+	
+	mov edi,dst_y
+	pextrw eax,xmm0,0
+	mov word ptr[edi],ax
+	
+	mov edi,dst_u
+	pextrw eax,xmm0,2
+	mov byte ptr[edi],al
+	
+	mov edi,dst_v
+	pextrw eax,xmm0,3
+	mov byte ptr[edi],al
+	
+	jmp Suite3_9b_2
+		
+Suite3_9c_2:			
+	paddsw xmm0,xmm1
+	psraw xmm0,6
+	pmaxsw xmm0,xmm2
+	pminsw xmm0,xmm3
+	
+	mov edi,dst_y
+	pextrw eax,xmm0,0
+	mov byte ptr[edi],al
+	
+	mov edi,dst_u
+	pextrw eax,xmm0,4
+	mov byte ptr[edi],al
+	
+	mov edi,dst_v
+	pextrw eax,xmm0,6
+	mov byte ptr[edi],al
+
+	
+Suite3_9b_2:
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_RGBConvert_RGB32toYV12_SSE_2 endp
+
+
+
 JPSDR_RGBConvert_YV24toRGB32_SSE proc src_y:dword,src_u:dword,src_v:dword,dst:dword,w:dword,h:dword,offset_R:word,
 	offset_G:word,offset_B:word,lookup:dword,src_modulo_y:dword,src_modulo_u:dword,src_modulo_v:dword,dst_modulo:dword
 

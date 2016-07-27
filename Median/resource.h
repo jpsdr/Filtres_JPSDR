@@ -21,6 +21,7 @@
 #define IDC_TEXT_1                      6015
 #define IDC_TEXT_2                      6016
 #define IDC_PREVIEW                     6017
+#define IDC_ENABLE_MT                   6018
 
 // Next default values for new objects
 // 
@@ -28,7 +29,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        602
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         6018
+#define _APS_NEXT_CONTROL_VALUE         6019
 #define _APS_NEXT_SYMED_VALUE           601
 #endif
 #endif

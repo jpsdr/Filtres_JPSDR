@@ -15,6 +15,7 @@
 #define IDC_CONVERT_GROUP               3060
 #define IDC_MODE_GROUP                  3061
 #define IDC_PREVIEW                     3062
+#define IDC_ENABLE_MT                   3063
 
 // Next default values for new objects
 // 
@@ -22,7 +23,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        352
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         3063
+#define _APS_NEXT_CONTROL_VALUE         3064
 #define _APS_NEXT_SYMED_VALUE           351
 #endif
 #endif

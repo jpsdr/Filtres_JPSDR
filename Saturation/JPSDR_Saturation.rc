@@ -40,6 +40,7 @@ BEGIN
     LTEXT           "Brightness (+/-)",IDC_JPSDR_BRGT_EXT,13,45,49,8
     EDITTEXT        IDC_CONTRAST,73,59,31,14,ES_AUTOHSCROLL
     LTEXT           "Contrast (+/-)%",IDC_JPSDR_CTR_EXT,13,61,48,8
+	CONTROL         "Enable MT",IDC_ENABLE_MT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,110,52,56,12
     CONTROL         "Black && White Mode",IDC_BW,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,110,64,78,11
     CONTROL         "Allow 0 to 255 on Y channel",IDC_FULL_YCbCr_Y,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,79,113,10
     CONTROL         "Allow 0 to 255 on Cb channel",IDC_FULL_YCbCr_Cb,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,13,93,113,10

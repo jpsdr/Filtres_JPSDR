@@ -728,6 +728,307 @@ JPSDR_Deinterlace_Blend_Tri_SSE_3 endp
 
 
 
+;JPSDR_Deinterlace_Blend_Tri_SSE_3 proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
+;	dst_pitch:dword
+; src = rcx
+; dst = rdx
+; w = r8d
+; h = r9d
+
+JPSDR_Deinterlace_Blend_Tri_SSE_3a proc public frame
+
+src_pitch equ qword ptr[rbp+48]
+dst_pitch equ qword ptr[rbp+56]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi	
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	.endprolog
+
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	mov r12d,1
+	mov rbx,rcx	
+	mov rsi,rcx
+	mov rdi,rdx
+	add rsi,r10
+	mov rdx,rsi
+	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
+	
+	xor rcx,rcx
+		
+	xor rax,rax
+	mov ecx,r8d	
+	shr ecx,1
+	jz short Suite_1_f_1
+loop_0_f_2_1:
+	movq xmm0,qword ptr[rbx+8*rax]
+	movq xmm1,qword ptr[rsi+8*rax]
+	pavgb xmm0,xmm1
+	movq qword ptr[rdi+8*rax],xmm0
+	inc rax
+	loop loop_0_f_2_1
+	
+Suite_1_f_1:	
+	mov ecx,r8d
+	and ecx,r12d
+	jz short Suite_2_f_1
+	
+	movd xmm0,dword ptr[rbx+8*rax]
+	movd xmm1,dword ptr[rsi+8*rax]
+	pavgb xmm0,xmm1
+	movd dword ptr[rdi+8*rax],xmm0
+	
+Suite_2_f_1:	
+	add rdi,r11
+
+loop_1_f_2_1:
+	xor rax,rax
+	mov ecx,r8d
+	shr ecx,1
+	jz short Suite_4_f_1
+loop_2_f_2_1:
+	movq xmm0,qword ptr[rbx+8*rax]
+	movq xmm1,qword ptr[rdx+8*rax]
+	movq xmm2,qword ptr[rsi+8*rax]
+	pavgb xmm0,xmm1
+	pavgb xmm0,xmm2
+	movq qword ptr[rdi+8*rax],xmm0
+	inc rax
+	loop loop_2_f_2_1
+	
+Suite_4_f_1:
+	mov ecx,r8d
+	and ecx,r12d
+	jz short Suite_5_f_1
+	
+	movd xmm0,dword ptr[rbx+8*rax]
+	movd xmm1,dword ptr[rdx+8*rax]
+	movd xmm2,dword ptr[rsi+8*rax]
+	pavgb xmm0,xmm1
+	pavgb xmm0,xmm2
+	movd dword ptr[rdi+8*rax],xmm0
+	
+Suite_5_f_1:	
+	add rsi,r10
+	add rbx,r10
+	add rdx,r10
+	add rdi,r11
+	dec r9d
+	jnz short loop_1_f_2_1
+
+fin_f_2_1:
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+
+	ret
+
+JPSDR_Deinterlace_Blend_Tri_SSE_3a endp
+
+
+;JPSDR_Deinterlace_Blend_Tri_SSE_3 proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
+;	dst_pitch:dword
+; src = rcx
+; dst = rdx
+; w = r8d
+; h = r9d
+
+JPSDR_Deinterlace_Blend_Tri_SSE_3b proc public frame
+
+src_pitch equ qword ptr[rbp+48]
+dst_pitch equ qword ptr[rbp+56]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi	
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	.endprolog
+
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	mov r12d,1
+	mov rbx,rcx	
+	mov rsi,rcx
+	mov rdi,rdx
+	add rsi,r10
+	mov rdx,rsi
+	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
+	
+	xor rcx,rcx
+
+loop_1_f_2_2:
+	xor rax,rax
+	mov ecx,r8d
+	shr ecx,1
+	jz short Suite_4_f_2
+loop_2_f_2_2:
+	movq xmm0,qword ptr[rbx+8*rax]
+	movq xmm1,qword ptr[rdx+8*rax]
+	movq xmm2,qword ptr[rsi+8*rax]
+	pavgb xmm0,xmm1
+	pavgb xmm0,xmm2
+	movq qword ptr[rdi+8*rax],xmm0
+	inc rax
+	loop loop_2_f_2_2
+	
+Suite_4_f_2:
+	mov ecx,r8d
+	and ecx,r12d
+	jz short Suite_5_f_2
+	
+	movd xmm0,dword ptr[rbx+8*rax]
+	movd xmm1,dword ptr[rdx+8*rax]
+	movd xmm2,dword ptr[rsi+8*rax]
+	pavgb xmm0,xmm1
+	pavgb xmm0,xmm2
+	movd dword ptr[rdi+8*rax],xmm0
+	
+Suite_5_f_2:	
+	add rsi,r10
+	add rbx,r10
+	add rdx,r10
+	add rdi,r11
+	dec r9d
+	jnz short loop_1_f_2_2
+	
+fin_f_2_2:
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+
+	ret
+
+JPSDR_Deinterlace_Blend_Tri_SSE_3b endp
+
+
+
+
+;JPSDR_Deinterlace_Blend_Tri_SSE_3 proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
+;	dst_pitch:dword
+; src = rcx
+; dst = rdx
+; w = r8d
+; h = r9d
+
+JPSDR_Deinterlace_Blend_Tri_SSE_3c proc public frame
+
+src_pitch equ qword ptr[rbp+48]
+dst_pitch equ qword ptr[rbp+56]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi	
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	.endprolog
+
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	mov r12d,1
+	mov rbx,rcx	
+	mov rsi,rcx
+	mov rdi,rdx
+	add rsi,r10
+	mov rdx,rsi
+	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
+	
+	xor rcx,rcx
+		
+loop_1_f_2_3:
+	xor rax,rax
+	mov ecx,r8d
+	shr ecx,1
+	jz short Suite_4_f_3
+loop_2_f_2_3:
+	movq xmm0,qword ptr[rbx+8*rax]
+	movq xmm1,qword ptr[rdx+8*rax]
+	movq xmm2,qword ptr[rsi+8*rax]
+	pavgb xmm0,xmm1
+	pavgb xmm0,xmm2
+	movq qword ptr[rdi+8*rax],xmm0
+	inc rax
+	loop loop_2_f_2_3
+	
+Suite_4_f_3:
+	mov ecx,r8d
+	and ecx,r12d
+	jz short Suite_5_f_3
+	
+	movd xmm0,dword ptr[rbx+8*rax]
+	movd xmm1,dword ptr[rdx+8*rax]
+	movd xmm2,dword ptr[rsi+8*rax]
+	pavgb xmm0,xmm1
+	pavgb xmm0,xmm2
+	movd dword ptr[rdi+8*rax],xmm0
+	
+Suite_5_f_3:	
+	add rsi,r10
+	add rbx,r10
+	add rdx,r10
+	add rdi,r11
+	dec r9d
+	jnz short loop_1_f_2_3
+
+	xor rax,rax
+	mov ecx,r8d
+	shr ecx,1
+	jz short Suite_7_f_3
+loop_3_f_2_3:
+	movq xmm0,qword ptr[rbx+8*rax]
+	movq xmm1,qword ptr[rsi+8*rax]
+	pavgb xmm0,xmm1
+	movq qword ptr[rdi+8*rax],xmm0
+	inc rax
+	loop loop_3_f_2_3
+	
+Suite_7_f_3:
+	mov ecx,r8d
+	and ecx,r12d
+	jz short fin_f_2_3
+	
+	movd xmm0,dword ptr[rbx+8*rax]
+	movd xmm1,dword ptr[rsi+8*rax]
+	pavgb xmm0,xmm1
+	movd dword ptr[rdi+8*rax],xmm0
+	
+fin_f_2_3:
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+
+	ret
+
+JPSDR_Deinterlace_Blend_Tri_SSE_3c endp
+
+
 ;JPSDR_Deinterlace_Blend_Tri_SSE_3_A proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
 ;	dst_pitch:dword
 ; src = rcx
@@ -908,6 +1209,407 @@ fin_g_2:
 JPSDR_Deinterlace_Blend_Tri_SSE_3_A endp
 
 
+
+
+;JPSDR_Deinterlace_Blend_Tri_SSE_3_A proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
+;	dst_pitch:dword
+; src = rcx
+; dst = rdx
+; w = r8d
+; h = r9d
+
+JPSDR_Deinterlace_Blend_Tri_SSE_3_A_a proc public frame
+
+src_pitch equ qword ptr[rbp+48]
+dst_pitch equ qword ptr[rbp+56]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi	
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	push r15
+	.pushreg r15
+	.endprolog
+
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	mov r12,16
+	mov r13d,3
+	mov r14d,2
+	mov r15d,1
+	mov rbx,rcx	
+	mov rsi,rcx
+	mov rdi,rdx
+	add rsi,r10
+	mov rdx,rsi
+	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
+	
+	xor rcx,rcx
+		
+	xor rax,rax
+	mov ecx,r8d	
+	shr ecx,2
+	jz short Suite_1_g_1
+loop_0_g_2_1:
+	movdqa xmm0,oword ptr[rbx+rax]
+	pavgb xmm0,oword ptr[rsi+rax]
+	movdqa oword ptr[rdi+rax],xmm0
+	add rax,r12
+	loop loop_0_g_2_1
+	
+Suite_1_g_1:	
+	mov ecx,r8d
+	and ecx,r13d
+	jz short Suite_3_g_1
+	and ecx,r14d
+	jz short Suite_2_g_1
+
+	movq xmm0,qword ptr[rbx+rax]
+	movq xmm1,qword ptr[rsi+rax]
+	pavgb xmm0,xmm1
+	movq qword ptr[rdi+rax],xmm0
+	
+	mov ecx,r8d
+	and ecx,r15d
+	jz short Suite_3_g_1
+	add rax,8
+	
+Suite_2_g_1:	
+	movd xmm0,dword ptr[rbx+rax]
+	movd xmm1,dword ptr[rsi+rax]
+	pavgb xmm0,xmm1
+	movd dword ptr[rdi+rax],xmm0
+	
+Suite_3_g_1:	
+	add rdi,r11
+
+loop_1_g_2_1:
+	xor rax,rax
+	mov ecx,r8d
+	shr ecx,2
+	jz short Suite_4_g_1
+loop_2_g_2_1:
+	movdqa xmm0,oword ptr[rbx+rax]
+	pavgb xmm0,oword ptr[rdx+rax]
+	pavgb xmm0,oword ptr[rsi+rax]
+	movdqa oword ptr[rdi+rax],xmm0
+	add rax,r12
+	loop loop_2_g_2_1
+	
+Suite_4_g_1:
+	mov ecx,r8d
+	and ecx,r13d
+	jz short Suite_6_g_1
+	and ecx,r14d
+	jz short Suite_5_g_1
+	
+	movq xmm0,qword ptr[rbx+rax]
+	movq xmm1,qword ptr[rdx+rax]
+	movq xmm2,qword ptr[rsi+rax]
+	pavgb xmm0,xmm1
+	pavgb xmm0,xmm2
+	movq qword ptr[rdi+rax],xmm0
+	
+	mov ecx,r8d
+	and ecx,r15d
+	jz short Suite_6_g_1
+	add rax,8
+
+Suite_5_g_1:		
+	movd xmm0,dword ptr[rbx+rax]
+	movd xmm1,dword ptr[rdx+rax]
+	movd xmm2,dword ptr[rsi+rax]
+	pavgb xmm0,xmm1
+	pavgb xmm0,xmm2
+	movd dword ptr[rdi+rax],xmm0
+	
+Suite_6_g_1:	
+	add rsi,r10
+	add rbx,r10
+	add rdx,r10
+	add rdi,r11
+	dec r9d
+	jnz loop_1_g_2_1
+
+fin_g_2_1:
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+
+	ret
+
+JPSDR_Deinterlace_Blend_Tri_SSE_3_A_a endp
+
+
+
+
+;JPSDR_Deinterlace_Blend_Tri_SSE_3_A proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
+;	dst_pitch:dword
+; src = rcx
+; dst = rdx
+; w = r8d
+; h = r9d
+
+JPSDR_Deinterlace_Blend_Tri_SSE_3_A_b proc public frame
+
+src_pitch equ qword ptr[rbp+48]
+dst_pitch equ qword ptr[rbp+56]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi	
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	push r15
+	.pushreg r15
+	.endprolog
+
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	mov r12,16
+	mov r13d,3
+	mov r14d,2
+	mov r15d,1
+	mov rbx,rcx	
+	mov rsi,rcx
+	mov rdi,rdx
+	add rsi,r10
+	mov rdx,rsi
+	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
+	
+	xor rcx,rcx
+		
+loop_1_g_2_2:
+	xor rax,rax
+	mov ecx,r8d
+	shr ecx,2
+	jz short Suite_4_g_2
+loop_2_g_2_2:
+	movdqa xmm0,oword ptr[rbx+rax]
+	pavgb xmm0,oword ptr[rdx+rax]
+	pavgb xmm0,oword ptr[rsi+rax]
+	movdqa oword ptr[rdi+rax],xmm0
+	add rax,r12
+	loop loop_2_g_2_2
+	
+Suite_4_g_2:
+	mov ecx,r8d
+	and ecx,r13d
+	jz short Suite_6_g_2
+	and ecx,r14d
+	jz short Suite_5_g_2
+	
+	movq xmm0,qword ptr[rbx+rax]
+	movq xmm1,qword ptr[rdx+rax]
+	movq xmm2,qword ptr[rsi+rax]
+	pavgb xmm0,xmm1
+	pavgb xmm0,xmm2
+	movq qword ptr[rdi+rax],xmm0
+	
+	mov ecx,r8d
+	and ecx,r15d
+	jz short Suite_6_g_2
+	add rax,8
+
+Suite_5_g_2:		
+	movd xmm0,dword ptr[rbx+rax]
+	movd xmm1,dword ptr[rdx+rax]
+	movd xmm2,dword ptr[rsi+rax]
+	pavgb xmm0,xmm1
+	pavgb xmm0,xmm2
+	movd dword ptr[rdi+rax],xmm0
+	
+Suite_6_g_2:	
+	add rsi,r10
+	add rbx,r10
+	add rdx,r10
+	add rdi,r11
+	dec r9d
+	jnz loop_1_g_2_2
+	
+fin_g_2_2:
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+
+	ret
+
+JPSDR_Deinterlace_Blend_Tri_SSE_3_A_b endp
+
+
+
+;JPSDR_Deinterlace_Blend_Tri_SSE_3_A proc src:dword,dst:dword,w:dword,h:dword,src_pitch:dword,
+;	dst_pitch:dword
+; src = rcx
+; dst = rdx
+; w = r8d
+; h = r9d
+
+JPSDR_Deinterlace_Blend_Tri_SSE_3_A_c proc public frame
+
+src_pitch equ qword ptr[rbp+48]
+dst_pitch equ qword ptr[rbp+56]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi	
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	push r15
+	.pushreg r15
+	.endprolog
+
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	mov r12,16
+	mov r13d,3
+	mov r14d,2
+	mov r15d,1
+	mov rbx,rcx	
+	mov rsi,rcx
+	mov rdi,rdx
+	add rsi,r10
+	mov rdx,rsi
+	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
+	
+	xor rcx,rcx
+		
+loop_1_g_2_3:
+	xor rax,rax
+	mov ecx,r8d
+	shr ecx,2
+	jz short Suite_4_g_3
+loop_2_g_2_3:
+	movdqa xmm0,oword ptr[rbx+rax]
+	pavgb xmm0,oword ptr[rdx+rax]
+	pavgb xmm0,oword ptr[rsi+rax]
+	movdqa oword ptr[rdi+rax],xmm0
+	add rax,r12
+	loop loop_2_g_2_3
+	
+Suite_4_g_3:
+	mov ecx,r8d
+	and ecx,r13d
+	jz short Suite_6_g_3
+	and ecx,r14d
+	jz short Suite_5_g_3
+	
+	movq xmm0,qword ptr[rbx+rax]
+	movq xmm1,qword ptr[rdx+rax]
+	movq xmm2,qword ptr[rsi+rax]
+	pavgb xmm0,xmm1
+	pavgb xmm0,xmm2
+	movq qword ptr[rdi+rax],xmm0
+	
+	mov ecx,r8d
+	and ecx,r15d
+	jz short Suite_6_g_3
+	add rax,8
+
+Suite_5_g_3:		
+	movd xmm0,dword ptr[rbx+rax]
+	movd xmm1,dword ptr[rdx+rax]
+	movd xmm2,dword ptr[rsi+rax]
+	pavgb xmm0,xmm1
+	pavgb xmm0,xmm2
+	movd dword ptr[rdi+rax],xmm0
+	
+Suite_6_g_3:	
+	add rsi,r10
+	add rbx,r10
+	add rdx,r10
+	add rdi,r11
+	dec r9d
+	jnz loop_1_g_2_3
+
+	xor rax,rax
+	mov ecx,r8d
+	shr ecx,2
+	jz short Suite_7_g_3
+loop_3_g_2_3:
+	movdqa xmm0,oword ptr[rbx+rax]
+	pavgb xmm0,oword ptr[rsi+rax]
+	movdqa oword ptr[rdi+rax],xmm0
+	add rax,r12
+	loop loop_3_g_2_3
+	
+Suite_7_g_3:
+	mov ecx,r8d
+	and ecx,r13d
+	jz short fin_g_2_3
+	and ecx,r14d
+	jz short Suite_8_g_3
+	
+	movq xmm0,qword ptr[rbx+rax]
+	movq xmm1,qword ptr[rsi+rax]
+	pavgb xmm0,xmm1
+	movq qword ptr[rdi+rax],xmm0
+
+	mov ecx,r8d
+	and ecx,r15d
+	jz short fin_g_2_3
+	add rax,8
+	
+Suite_8_g_3:
+	movd xmm0,dword ptr[rbx+rax]
+	movd xmm1,dword ptr[rsi+rax]
+	pavgb xmm0,xmm1
+	movd dword ptr[rdi+rax],xmm0
+	
+fin_g_2_3:
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+
+	ret
+
+JPSDR_Deinterlace_Blend_Tri_SSE_3_A_c endp
 
 
 

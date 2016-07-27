@@ -16,6 +16,7 @@
 #define IDC_FCC_OUT                      9061
 #define IDC_FULL_RANGE_OUT               9062
 #define IDC_MATRIX_GROUP_OUT             9063
+#define IDC_ENABLE_MT                    9064
 
 // Next default values for new objects
 // 
@@ -23,7 +24,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        952
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         9064
+#define _APS_NEXT_CONTROL_VALUE         9065
 #define _APS_NEXT_SYMED_VALUE           951
 #endif
 #endif

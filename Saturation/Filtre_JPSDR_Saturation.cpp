@@ -13,6 +13,8 @@
 #include "..\Filtres_JPSDR\JPSDR_Filter.h"
 #include "..\Filtres_JPSDR\Pascal.h"
 
+#define MAX_MT_THREADS 128
+
 #include "..\asmlib\asmlib.h"
 
 extern int g_VFVAPIVersion;
@@ -49,6 +51,46 @@ extern "C" void JPSDR_Saturation_Y_Non_SSE_RGB24(const void *src,void *dst,int32
 	int16_t offset_Y,int16_t *lookup,ptrdiff_t src_modulo,ptrdiff_t dst_modulo);
 
 
+typedef struct _MT_Data_Info
+{
+	void *src1,*src2,*src3;
+	void *dst1,*dst2,*dst3;
+	ptrdiff_t src_pitch1,src_pitch2,src_pitch3;
+	ptrdiff_t dst_pitch1,dst_pitch2,dst_pitch3;
+	ptrdiff_t src_modulo1,src_modulo2,src_modulo3;
+	ptrdiff_t dst_modulo1,dst_modulo2,dst_modulo3;
+	int32_t src_Y_h_min,src_Y_h_max,src_Y_w,src_Y_w_32;
+	int32_t src_UV_h_min,src_UV_h_max,src_UV_w,src_UV_w_32;
+	int32_t dst_Y_h_min,dst_Y_h_max,dst_Y_w,dst_Y_w_32;
+	int32_t dst_UV_h_min,dst_UV_h_max,dst_UV_w,dst_UV_w_32;
+	bool top,bottom;
+} MT_Data_Info;
+
+
+typedef struct _MT_Data_Thread
+{
+	void *pClass;
+	uint8_t f_process,thread_Id;
+	HANDLE nextJob, jobFinished;
+} MT_Data_Thread;
+
+
+
+static int num_processors()
+{
+#ifdef _DEBUG
+	return 1;
+#else
+	int pcount = 0;
+	ULONG_PTR p_aff=0, s_aff=0;
+	GetProcessAffinityMask(GetCurrentProcess(), &p_aff, &s_aff);
+	for(; p_aff != 0; p_aff>>=1) 
+		pcount += (p_aff&1);
+	return pcount;
+#endif
+}
+
+
 #define Min_Y 16
 #define Max_Y 235
 #define Min_U 16
@@ -63,6 +105,7 @@ public:
 	int16_t saturation,brightness,contrast,hue;
 	bool BW_mode,full_YCbCr_Y,full_YCbCr_Cb,full_YCbCr_Cr;
 	uint8_t full_mode,color_space;
+	bool mt_mode;
 
 	JPSDR_SaturationData(void);
 };
@@ -79,6 +122,7 @@ JPSDR_SaturationData::JPSDR_SaturationData(void)
 	full_YCbCr_Cr=false;
 	full_mode=1;
 	color_space=1;
+	mt_mode=true;
 }
 
 class JPSDR_Saturation;
@@ -117,6 +161,7 @@ public:
 	virtual bool Init();
 	virtual uint32 GetParams();
 	virtual void Start();
+	virtual void End();
 	virtual void Run();
 	virtual bool Configure(VDXHWND hwnd);
 	virtual void GetSettingString(char *buf, int maxlen);
@@ -124,6 +169,9 @@ public:
 	void Compute_Lookup(void);
 
 	VDXVF_DECLARE_SCRIPT_METHODS();
+
+private:
+	static DWORD WINAPI StaticThreadpool( LPVOID lpParam );
 	
 protected:
 	Image_Data image_data;
@@ -131,6 +179,26 @@ protected:
 	bool SSE_Integer_Enable,SSE2_Enable;
 	uint16_t lookup_hue_CbCr[65536];
 	size_t CPU_Cache_Size,Cache_Setting;
+
+	HANDLE thds[MAX_MT_THREADS];
+	MT_Data_Thread MT_Thread[MAX_MT_THREADS];
+	MT_Data_Info MT_Data[MAX_MT_THREADS];
+	DWORD tids[MAX_MT_THREADS];
+	uint8_t CPUs_number,threads_number;
+
+	uint8_t CreateMTData(uint8_t max_threads,int32_t size_x,int32_t size_y,uint8_t div_x,uint8_t div_y,uint8_t _32bits);
+
+	void Saturation_YUYV(uint8_t thread_num);
+	void Saturation_UYVY(uint8_t thread_num);
+	void Saturation_Planar_Y(uint8_t thread_num);
+	void Saturation_Planar_U(uint8_t thread_num);
+	void Saturation_Planar_V(uint8_t thread_num);
+	void Saturation_Hue_Planar_YUV(uint8_t thread_num);
+	void Saturation_RGB24(uint8_t thread_num);
+
+	void Saturation_Y_YUYV(uint8_t thread_num);
+	void Saturation_Y_UYVY(uint8_t thread_num);
+	void Saturation_Y_RGB24(uint8_t thread_num);
 
 	inline void Planar_Fill(void *dst_, const int32_t w,const int32_t h,const uint8_t offset,
 		ptrdiff_t dst_pitch);
@@ -142,7 +210,7 @@ protected:
 
 
 VDXVF_BEGIN_SCRIPT_METHODS(JPSDR_Saturation)
-VDXVF_DEFINE_SCRIPT_METHOD(JPSDR_Saturation,ScriptConfig,"iiiiiiiiii")
+VDXVF_DEFINE_SCRIPT_METHOD(JPSDR_Saturation,ScriptConfig,"iiiiiiiiiii")
 VDXVF_END_SCRIPT_METHODS()
 
 
@@ -175,6 +243,7 @@ bool JPSDR_SaturationDialog::OnInit()
 		case 3 : CheckDlgButton(mhdlg,IDC_FCC,1); break;
 	}
 
+	CheckDlgButton(mhdlg,IDC_ENABLE_MT,mData.mt_mode?BST_CHECKED:BST_UNCHECKED);
 	CheckDlgButton(mhdlg,IDC_BW,mData.BW_mode?BST_CHECKED:BST_UNCHECKED);
 	CheckDlgButton(mhdlg,IDC_FULL_YCbCr_Y,mData.full_YCbCr_Y?BST_CHECKED:BST_UNCHECKED);
 	CheckDlgButton(mhdlg,IDC_FULL_YCbCr_Cb,mData.full_YCbCr_Cb?BST_CHECKED:BST_UNCHECKED);
@@ -229,6 +298,7 @@ bool JPSDR_SaturationDialog::SaveToData()
 	if (!!IsDlgButtonChecked(mhdlg,IDC_FULL_OUT)) mData.full_mode=1;
 	if (!!IsDlgButtonChecked(mhdlg,IDC_FULL_IN_OUT)) mData.full_mode=2;
 
+	mData.mt_mode=!!IsDlgButtonChecked(mhdlg,IDC_ENABLE_MT);
 	mData.BW_mode=!!IsDlgButtonChecked(mhdlg,IDC_BW);
 	mData.full_YCbCr_Y=!!IsDlgButtonChecked(mhdlg,IDC_FULL_YCbCr_Y);
 	mData.full_YCbCr_Cb=!!IsDlgButtonChecked(mhdlg,IDC_FULL_YCbCr_Cb);
@@ -314,6 +384,9 @@ bool JPSDR_SaturationDialog::OnCommand(int cmd)
 				mifp->RedoFrame();
 			}
 			return true;
+		case IDC_ENABLE_MT :
+			if (mifp && SaveToData()) mifp->RedoSystem();
+			return true;
 		case IDOK :
 			SaveToData();
 			EndDialog(mhdlg,true);
@@ -338,7 +411,308 @@ bool JPSDR_Saturation::Init()
 	if (IInstrSet<0) InstructionSet();
 	CPU_Cache_Size=DataCacheSize(0)>>2;
 
+	for (uint16_t i=0; i<MAX_MT_THREADS; i++)
+	{
+		MT_Thread[i].pClass=NULL;
+		MT_Thread[i].f_process=0;
+		MT_Thread[i].thread_Id=(uint8_t)i;
+		MT_Thread[i].jobFinished=NULL;
+		MT_Thread[i].nextJob=NULL;
+		thds[i]=NULL;
+	}
+
+	CPUs_number=(uint8_t)num_processors();
+	if (CPUs_number>MAX_MT_THREADS) CPUs_number=MAX_MT_THREADS;
+	threads_number=1;
+
 	return(true);
+}
+
+
+uint8_t JPSDR_Saturation::CreateMTData(uint8_t max_threads,int32_t size_x,int32_t size_y,uint8_t div_x,uint8_t div_y,uint8_t _32bits)
+{
+	if ((max_threads<=1) || (max_threads>threads_number))
+	{
+		MT_Data[0].top=true;
+		MT_Data[0].bottom=true;
+		MT_Data[0].src_Y_h_min=0;
+		MT_Data[0].dst_Y_h_min=0;
+		MT_Data[0].src_Y_h_max=size_y;
+		MT_Data[0].dst_Y_h_max=size_y;
+		MT_Data[0].src_UV_h_min=0;
+		MT_Data[0].dst_UV_h_min=0;
+		switch (div_y)
+		{
+			case 0 : 
+				MT_Data[0].src_UV_h_max=size_y;
+				MT_Data[0].dst_UV_h_max=size_y;
+				break;
+			case 1 : 
+				MT_Data[0].src_UV_h_max=size_y >> 1;
+				MT_Data[0].dst_UV_h_max=size_y >> 1;
+				break;
+			case 2 : 
+				MT_Data[0].src_UV_h_max=size_y >> 2;
+				MT_Data[0].dst_UV_h_max=size_y >> 2;
+				break;
+			default :
+				MT_Data[0].src_UV_h_max=size_y;
+				MT_Data[0].dst_UV_h_max=size_y;
+				break;
+		}
+		MT_Data[0].src_Y_w=size_x;
+		MT_Data[0].dst_Y_w=size_x;
+		switch (div_x)
+		{
+			case 0 :
+				MT_Data[0].src_UV_w=size_x;
+				MT_Data[0].dst_UV_w=size_x;
+				break;
+			case 1 :
+				MT_Data[0].src_UV_w=size_x >> 1;
+				MT_Data[0].dst_UV_w=size_x >> 1;
+				break;
+			case 2 :
+				MT_Data[0].src_UV_w=size_x >> 2;
+				MT_Data[0].dst_UV_w=size_x >> 2;
+				break;
+			default :
+				MT_Data[0].src_UV_w=size_x;
+				MT_Data[0].dst_UV_w=size_x;
+				break;
+		}
+		switch (_32bits)
+		{
+			case 0 :
+				MT_Data[0].src_Y_w_32=MT_Data[0].src_Y_w;
+				MT_Data[0].dst_Y_w_32=MT_Data[0].dst_Y_w;
+				MT_Data[0].src_UV_w_32=MT_Data[0].src_UV_w;
+				MT_Data[0].dst_UV_w_32=MT_Data[0].dst_UV_w;
+				break;
+			case 1 :
+				MT_Data[0].src_Y_w_32=(MT_Data[0].src_Y_w+1)>>1;
+				MT_Data[0].dst_Y_w_32=(MT_Data[0].dst_Y_w+1)>>1;
+				MT_Data[0].src_UV_w_32=(MT_Data[0].src_UV_w+1)>>1;
+				MT_Data[0].dst_UV_w_32=(MT_Data[0].dst_UV_w+1)>>1;
+				break;
+			case 2 :
+				MT_Data[0].src_Y_w_32=MT_Data[0].src_Y_w>>2;
+				MT_Data[0].dst_Y_w_32=MT_Data[0].dst_Y_w>>2;
+				MT_Data[0].src_UV_w_32=MT_Data[0].src_UV_w>>2;
+				MT_Data[0].dst_UV_w_32=MT_Data[0].dst_UV_w>>2;
+				break;
+			default :
+				MT_Data[0].src_Y_w_32=MT_Data[0].src_Y_w;
+				MT_Data[0].dst_Y_w_32=MT_Data[0].dst_Y_w;
+				MT_Data[0].src_UV_w_32=MT_Data[0].src_UV_w;
+				MT_Data[0].dst_UV_w_32=MT_Data[0].dst_UV_w;
+				break;
+		}
+		return(1);
+	}
+
+	int32_t dh_Y,dh_UV,h_y;
+	uint8_t i,max=0;
+
+	dh_Y=(size_y+(int32_t)max_threads-1)/(int32_t)max_threads;
+	if (dh_Y<16) dh_Y=16;
+	if ((dh_Y & 3)!=0) dh_Y=((dh_Y+3) >> 2) << 2;
+
+	h_y=0;
+	while (h_y<(size_y-16))
+	{
+		max++;
+		h_y+=dh_Y;
+	}
+
+	if (max==1)
+	{
+		MT_Data[0].top=true;
+		MT_Data[0].bottom=true;
+		MT_Data[0].src_Y_h_min=0;
+		MT_Data[0].dst_Y_h_min=0;
+		MT_Data[0].src_Y_h_max=size_y;
+		MT_Data[0].dst_Y_h_max=size_y;
+		MT_Data[0].src_UV_h_min=0;
+		MT_Data[0].dst_UV_h_min=0;
+		switch (div_y)
+		{
+			case 0 : 
+				MT_Data[0].src_UV_h_max=size_y;
+				MT_Data[0].dst_UV_h_max=size_y;
+				break;
+			case 1 : 
+				MT_Data[0].src_UV_h_max=size_y >> 1;
+				MT_Data[0].dst_UV_h_max=size_y >> 1;
+				break;
+			case 2 : 
+				MT_Data[0].src_UV_h_max=size_y >> 2;
+				MT_Data[0].dst_UV_h_max=size_y >> 2;
+				break;
+			default :
+				MT_Data[0].src_UV_h_max=size_y;
+				MT_Data[0].dst_UV_h_max=size_y;
+				break;
+		}
+		MT_Data[0].src_Y_w=size_x;
+		MT_Data[0].dst_Y_w=size_x;
+		switch (div_x)
+		{
+			case 0 :
+				MT_Data[0].src_UV_w=size_x;
+				MT_Data[0].dst_UV_w=size_x;
+				break;
+			case 1 :
+				MT_Data[0].src_UV_w=size_x >> 1;
+				MT_Data[0].dst_UV_w=size_x >> 1;
+				break;
+			case 2 :
+				MT_Data[0].src_UV_w=size_x >> 2;
+				MT_Data[0].dst_UV_w=size_x >> 2;
+				break;
+			default :
+				MT_Data[0].src_UV_w=size_x;
+				MT_Data[0].dst_UV_w=size_x;
+				break;
+		}
+		switch (_32bits)
+		{
+			case 0 :
+				MT_Data[0].src_Y_w_32=MT_Data[0].src_Y_w;
+				MT_Data[0].dst_Y_w_32=MT_Data[0].dst_Y_w;
+				MT_Data[0].src_UV_w_32=MT_Data[0].src_UV_w;
+				MT_Data[0].dst_UV_w_32=MT_Data[0].dst_UV_w;
+				break;
+			case 1 :
+				MT_Data[0].src_Y_w_32=(MT_Data[0].src_Y_w+1)>>1;
+				MT_Data[0].dst_Y_w_32=(MT_Data[0].dst_Y_w+1)>>1;
+				MT_Data[0].src_UV_w_32=(MT_Data[0].src_UV_w+1)>>1;
+				MT_Data[0].dst_UV_w_32=(MT_Data[0].dst_UV_w+1)>>1;
+				break;
+			case 2 :
+				MT_Data[0].src_Y_w_32=MT_Data[0].src_Y_w>>2;
+				MT_Data[0].dst_Y_w_32=MT_Data[0].dst_Y_w>>2;
+				MT_Data[0].src_UV_w_32=MT_Data[0].src_UV_w>>2;
+				MT_Data[0].dst_UV_w_32=MT_Data[0].dst_UV_w>>2;
+				break;
+			default :
+				MT_Data[0].src_Y_w_32=MT_Data[0].src_Y_w;
+				MT_Data[0].dst_Y_w_32=MT_Data[0].dst_Y_w;
+				MT_Data[0].src_UV_w_32=MT_Data[0].src_UV_w;
+				MT_Data[0].dst_UV_w_32=MT_Data[0].dst_UV_w;
+				break;
+		}
+		return(1);
+	}
+
+	switch (div_y)
+	{
+		case 0 : dh_UV=dh_Y; break;
+		case 1 : dh_UV=dh_Y >> 1; break;
+		case 2 : dh_UV=dh_Y >> 2; break;
+		default : dh_UV=dh_Y;
+	}
+
+	MT_Data[0].top=true;
+	MT_Data[0].bottom=false;
+	MT_Data[0].src_Y_h_min=0;
+	MT_Data[0].src_Y_h_max=dh_Y;
+	MT_Data[0].dst_Y_h_min=0;
+	MT_Data[0].dst_Y_h_max=dh_Y;
+	MT_Data[0].src_UV_h_min=0;
+	MT_Data[0].src_UV_h_max=dh_UV;
+	MT_Data[0].dst_UV_h_min=0;
+	MT_Data[0].dst_UV_h_max=dh_UV;
+
+	i=1;
+	while (i<max)
+	{
+		MT_Data[i].top=false;
+		MT_Data[i].bottom=false;
+		MT_Data[i].src_Y_h_min=MT_Data[i-1].src_Y_h_max;
+		MT_Data[i].src_Y_h_max=MT_Data[i].src_Y_h_min+dh_Y;
+		MT_Data[i].dst_Y_h_min=MT_Data[i-1].dst_Y_h_max;
+		MT_Data[i].dst_Y_h_max=MT_Data[i].dst_Y_h_min+dh_Y;
+		MT_Data[i].src_UV_h_min=MT_Data[i-1].src_UV_h_max;
+		MT_Data[i].src_UV_h_max=MT_Data[i].src_UV_h_min+dh_UV;
+		MT_Data[i].dst_UV_h_min=MT_Data[i-1].dst_UV_h_max;
+		MT_Data[i].dst_UV_h_max=MT_Data[i].dst_UV_h_min+dh_UV;
+		i++;
+	}
+	MT_Data[max-1].bottom=true;
+	MT_Data[max-1].src_Y_h_max=size_y;
+	MT_Data[max-1].dst_Y_h_max=size_y;
+	switch (div_y)
+	{
+		case 0 :
+			MT_Data[max-1].src_UV_h_max=size_y;
+			MT_Data[max-1].dst_UV_h_max=size_y;
+			break;
+		case 1 :
+			MT_Data[max-1].src_UV_h_max=size_y >> 1;
+			MT_Data[max-1].dst_UV_h_max=size_y >> 1;
+			break;
+		case 2 :
+			MT_Data[max-1].src_UV_h_max=size_y >> 2;
+			MT_Data[max-1].dst_UV_h_max=size_y >> 2;
+			break;
+		default :
+			MT_Data[max-1].src_UV_h_max=size_y;
+			MT_Data[max-1].dst_UV_h_max=size_y;
+			break;
+	}
+	for (i=0; i<max; i++)
+	{
+		MT_Data[i].src_Y_w=size_x;
+		MT_Data[i].dst_Y_w=size_x;
+		switch (div_x)
+		{
+			case 0 :
+				MT_Data[i].src_UV_w=size_x;
+				MT_Data[i].dst_UV_w=size_x;
+				break;
+			case 1 :
+				MT_Data[i].src_UV_w=size_x >> 1;
+				MT_Data[i].dst_UV_w=size_x >> 1;
+				break;
+			case 2 :
+				MT_Data[i].src_UV_w=size_x >> 2;
+				MT_Data[i].dst_UV_w=size_x >> 2;
+				break;
+			default :
+				MT_Data[i].src_UV_w=size_x;
+				MT_Data[i].dst_UV_w=size_x;
+				break;
+		}
+		switch (_32bits)
+		{
+			case 0 :
+				MT_Data[i].src_Y_w_32=MT_Data[i].src_Y_w;
+				MT_Data[i].dst_Y_w_32=MT_Data[i].dst_Y_w;
+				MT_Data[i].src_UV_w_32=MT_Data[i].src_UV_w;
+				MT_Data[i].dst_UV_w_32=MT_Data[i].dst_UV_w;
+				break;
+			case 1 :
+				MT_Data[i].src_Y_w_32=(MT_Data[i].src_Y_w+1)>>1;
+				MT_Data[i].dst_Y_w_32=(MT_Data[i].dst_Y_w+1)>>1;
+				MT_Data[i].src_UV_w_32=(MT_Data[i].src_UV_w+1)>>1;
+				MT_Data[i].dst_UV_w_32=(MT_Data[i].dst_UV_w+1)>>1;
+				break;
+			case 2 :
+				MT_Data[i].src_Y_w_32=MT_Data[i].src_Y_w>>2;
+				MT_Data[i].dst_Y_w_32=MT_Data[i].dst_Y_w>>2;
+				MT_Data[i].src_UV_w_32=MT_Data[i].src_UV_w>>2;
+				MT_Data[i].dst_UV_w_32=MT_Data[i].dst_UV_w>>2;
+				break;
+			default :
+				MT_Data[i].src_Y_w_32=MT_Data[i].src_Y_w;
+				MT_Data[i].dst_Y_w_32=MT_Data[i].dst_Y_w;
+				MT_Data[i].src_UV_w_32=MT_Data[i].src_UV_w;
+				MT_Data[i].dst_UV_w_32=MT_Data[i].dst_UV_w;
+				break;
+		}
+	}
+	return(max);
 }
 
 
@@ -546,6 +920,148 @@ uint32 JPSDR_Saturation::GetParams()
 }
 
 
+
+void JPSDR_Saturation::Saturation_YUYV(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	JPSDR_Saturation_YUYV(mt_data_inf.src1,mt_data_inf.dst1,(mt_data_inf.src_Y_w+1)>>1,
+		mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,lookup,mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1);
+}
+
+
+void JPSDR_Saturation::Saturation_UYVY(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	JPSDR_Saturation_UYVY(mt_data_inf.src1,mt_data_inf.dst1,(mt_data_inf.src_Y_w+1)>>1,
+		mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,lookup,mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1);
+}
+
+
+
+void JPSDR_Saturation::Saturation_Planar_Y(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	JPSDR_Saturation_Planar_YUV(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.src_Y_w,
+		mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,lookup,mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1);
+}
+
+
+
+void JPSDR_Saturation::Saturation_Planar_U(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	JPSDR_Saturation_Planar_YUV(mt_data_inf.src2,mt_data_inf.dst2,mt_data_inf.src_UV_w,
+		mt_data_inf.src_UV_h_max-mt_data_inf.src_UV_h_min,lookup+256,mt_data_inf.src_modulo2,
+		mt_data_inf.dst_modulo2);
+}
+
+
+void JPSDR_Saturation::Saturation_Planar_V(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	JPSDR_Saturation_Planar_YUV(mt_data_inf.src3,mt_data_inf.dst3,mt_data_inf.src_UV_w,
+		mt_data_inf.src_UV_h_max-mt_data_inf.src_UV_h_min,lookup+512,mt_data_inf.src_modulo3,
+		mt_data_inf.dst_modulo3);
+}
+
+
+void JPSDR_Saturation::Saturation_Hue_Planar_YUV(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	JPSDR_Saturation_Hue_Planar_YUV(mt_data_inf.src2,mt_data_inf.src3,mt_data_inf.dst2,mt_data_inf.dst3,
+		mt_data_inf.src_UV_w,mt_data_inf.src_UV_h_max-mt_data_inf.src_UV_h_min,lookup_hue_CbCr,mt_data_inf.src_modulo2,
+		mt_data_inf.src_modulo3,mt_data_inf.dst_modulo2,mt_data_inf.dst_modulo3);
+}
+
+
+void JPSDR_Saturation::Saturation_RGB24(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	if (SSE2_Enable)
+		JPSDR_Saturation_SSE2_RGB24(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.src_Y_w,
+			mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,offset_R,offset_G,offset_B,lookup,
+			mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1);
+	else
+		JPSDR_Saturation_Non_SSE_RGB24(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.src_Y_w,
+			mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,offset_R,offset_G,offset_B,lookup,
+			mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1);
+}
+
+
+void JPSDR_Saturation::Saturation_Y_YUYV(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	JPSDR_Saturation_Y_YUYV(mt_data_inf.src1,mt_data_inf.dst1,(mt_data_inf.src_Y_w+1)>>1,
+		mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,(uint8_t)(offset_U>>4),(uint8_t)(offset_V>>4),
+		lookup,mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1);
+
+}
+
+
+void JPSDR_Saturation::Saturation_Y_UYVY(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	JPSDR_Saturation_Y_UYVY(mt_data_inf.src1,mt_data_inf.dst1,(mt_data_inf.src_Y_w+1)>>1,
+		mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,(uint8_t)(offset_U>>4),(uint8_t)(offset_V>>4),
+		lookup,mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1);
+
+}
+
+
+void JPSDR_Saturation::Saturation_Y_RGB24(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	if (SSE2_Enable)
+		JPSDR_Saturation_Y_SSE2_RGB24(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.src_Y_w,
+			mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,offset_Y,lookup,mt_data_inf.src_modulo1,
+			mt_data_inf.dst_modulo1);
+	else
+		JPSDR_Saturation_Y_Non_SSE_RGB24(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.src_Y_w,
+			mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,offset_Y,lookup,mt_data_inf.src_modulo1,
+			mt_data_inf.dst_modulo1);
+}
+
+
+
+DWORD WINAPI JPSDR_Saturation::StaticThreadpool( LPVOID lpParam )
+{
+	const MT_Data_Thread *data=(const MT_Data_Thread *)lpParam;
+	JPSDR_Saturation *ptrClass=(JPSDR_Saturation *)data->pClass;
+	
+	while (true)
+	{
+		WaitForSingleObject(data->nextJob,INFINITE);
+		switch(data->f_process)
+		{
+			case 1 : ptrClass->Saturation_YUYV(data->thread_Id); break;
+			case 2 : ptrClass->Saturation_UYVY(data->thread_Id); break;
+			case 3 : ptrClass->Saturation_RGB24(data->thread_Id); break;
+			case 4 : ptrClass->Saturation_Y_YUYV(data->thread_Id); break;
+			case 5 : ptrClass->Saturation_Y_UYVY(data->thread_Id); break;
+			case 6 : ptrClass->Saturation_Y_RGB24(data->thread_Id); break;
+			case 7 : ptrClass->Saturation_Planar_Y(data->thread_Id); break;
+			case 8 : ptrClass->Saturation_Planar_U(data->thread_Id); break;
+			case 9 : ptrClass->Saturation_Planar_V(data->thread_Id); break;
+			case 10 : ptrClass->Saturation_Hue_Planar_YUV(data->thread_Id); break;
+			case 255 : return(0); break;
+			default : ;
+		}
+		ResetEvent(data->nextJob);
+		SetEvent(data->jobFinished);
+	}
+}
+
+
 void JPSDR_Saturation::Run()
 {
 	Image_Data idata;
@@ -575,48 +1091,53 @@ void JPSDR_Saturation::Run()
 	SetMemcpyCacheLimit(Cache_Setting);
 	SetMemsetCacheLimit(Cache_Setting);
 
-	if (SSE2_Enable)
+	for (uint8_t i=0; i<threads_number; i++)
 	{
+		MT_Data[i].src1=(void *)((uint8_t *)idata.src_plane0+(idata.src_pitch0*MT_Data[i].src_Y_h_min));
+		MT_Data[i].src2=(void *)((uint8_t *)idata.src_plane1+(idata.src_pitch1*MT_Data[i].src_UV_h_min));
+		MT_Data[i].src3=(void *)((uint8_t *)idata.src_plane2+(idata.src_pitch2*MT_Data[i].src_UV_h_min));
+		MT_Data[i].dst1=(void *)((uint8_t *)idata.dst_plane0+(idata.dst_pitch0*MT_Data[i].dst_Y_h_min));
+		MT_Data[i].dst2=(void *)((uint8_t *)idata.dst_plane1+(idata.dst_pitch1*MT_Data[i].dst_UV_h_min));
+		MT_Data[i].dst3=(void *)((uint8_t *)idata.dst_plane2+(idata.dst_pitch2*MT_Data[i].dst_UV_h_min));
+		MT_Data[i].src_pitch1=idata.src_pitch0;
+		MT_Data[i].src_pitch2=idata.src_pitch1;
+		MT_Data[i].src_pitch3=idata.src_pitch2;
+		MT_Data[i].dst_pitch1=idata.dst_pitch0;
+		MT_Data[i].dst_pitch2=idata.dst_pitch1;
+		MT_Data[i].dst_pitch3=idata.dst_pitch2;
+		MT_Data[i].src_modulo1=idata.src_modulo0;
+		MT_Data[i].src_modulo2=idata.src_modulo1;
+		MT_Data[i].src_modulo3=idata.src_modulo2;
+		MT_Data[i].dst_modulo1=idata.dst_modulo0;
+		MT_Data[i].dst_modulo2=idata.dst_modulo1;
+		MT_Data[i].dst_modulo3=idata.dst_modulo2;
+	}
+
+	if (threads_number>1)
+	{
+		uint8_t f_proc=0,f_proc2=0;
+
 		if (mData.BW_mode)
 		{
 			switch (idata.video_mode)
 			{
 				case 0 :
-				case 1 :
-					JPSDR_Saturation_Y_SSE2_RGB24(idata.src_plane0,idata.dst_plane0,idata.src_w0,
-						idata.src_h0,offset_Y,lookup,idata.src_modulo0,idata.dst_modulo0);
-					break;
-				case 2 :
-					JPSDR_Saturation_Y_YUYV(idata.src_plane0,idata.dst_plane0,(idata.src_w0+1)>>1,
-						idata.src_h0,(uint8_t)(offset_U>>4),(uint8_t)(offset_V>>4),
-						lookup,idata.src_modulo0,idata.dst_modulo0);
-					break;
-				case 3 :
-					JPSDR_Saturation_Y_UYVY(idata.src_plane0,idata.dst_plane0,(idata.src_w0+1)>>1,
-						idata.src_h0,(uint8_t)(offset_U>>4),(uint8_t)(offset_V>>4),
-						lookup,idata.src_modulo0,idata.dst_modulo0);
-					break;
+				case 1 : f_proc=6; break;
+				case 2 : f_proc=4; break;
+				case 3 : f_proc=5; break;
 				case 4 :
 				case 5 :
 				case 6 :
 				case 7 :
 				case 8 :
-					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale_Y)
-					{
-						JPSDR_Saturation_Planar_YUV(idata.src_plane0,idata.dst_plane0,idata.src_w0,
-							idata.src_h0,lookup,idata.src_modulo0,idata.dst_modulo0);
-					}
+					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale_Y) f_proc=7;
 					Planar_Fill(idata.dst_plane1,idata.src_w1,idata.src_h1,(uint8_t)(offset_U>>4),
 						idata.dst_pitch1);
 					Planar_Fill(idata.dst_plane2,idata.src_w2,idata.src_h2,(uint8_t)(offset_V>>4),
 						idata.dst_pitch2);
 					break;
 				case 9 :
-					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale_Y)
-					{
-						JPSDR_Saturation_Planar_YUV(idata.src_plane0,idata.dst_plane0,idata.src_w0,
-							idata.src_h0,lookup,idata.src_modulo0,idata.dst_modulo0);
-					}
+					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale_Y) f_proc=7;
 					break;
 			}
 		}
@@ -625,51 +1146,63 @@ void JPSDR_Saturation::Run()
 			switch (idata.video_mode)
 			{
 				case 0 :
-				case 1 :
-					JPSDR_Saturation_SSE2_RGB24(idata.src_plane0,idata.dst_plane0,idata.src_w0,
-						idata.src_h0,offset_R,offset_G,offset_B,lookup,idata.src_modulo0,idata.dst_modulo0);
-					break;
-				case 2 :
-					JPSDR_Saturation_YUYV(idata.src_plane0,idata.dst_plane0,(idata.src_w0+1)>>1,
-						idata.src_h0,lookup,idata.src_modulo0,idata.dst_modulo0);
-					break;
-				case 3 :
-					JPSDR_Saturation_UYVY(idata.src_plane0,idata.dst_plane0,(idata.src_w0+1)>>1,
-						idata.src_h0,lookup,idata.src_modulo0,idata.dst_modulo0);
-					break;
+				case 1 : f_proc=3; break;
+				case 2 : f_proc=1; break;
+				case 3 : f_proc=2; break;
 				case 4 :
 				case 5 :
 				case 6 :
 				case 7 :
 				case 8 :
-					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale_Y)
-					{
-						JPSDR_Saturation_Planar_YUV(idata.src_plane0,idata.dst_plane0,idata.src_w0,
-							idata.src_h0,lookup,idata.src_modulo0,idata.dst_modulo0);
-					}
+					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale_Y) f_proc=7;
 					if (mData.hue==0)
 					{
-						if ((mData.saturation!=0) || chg_scale_UV)
-						{
-							JPSDR_Saturation_Planar_YUV(idata.src_plane1,idata.dst_plane1,idata.src_w1,
-								idata.src_h1,lookup+256,idata.src_modulo1,idata.dst_modulo1);
-							JPSDR_Saturation_Planar_YUV(idata.src_plane2,idata.dst_plane2,idata.src_w2,
-								idata.src_h2,lookup+512,idata.src_modulo2,idata.dst_modulo2);
-						}
+						if ((mData.saturation!=0) || chg_scale_UV) f_proc2=8;
 					}
-					else
-						JPSDR_Saturation_Hue_Planar_YUV(idata.src_plane1,idata.src_plane2,
-							idata.dst_plane1,idata.dst_plane2,idata.src_w1,idata.src_h1,
-							lookup_hue_CbCr,idata.src_modulo1,idata.src_modulo2,
-							idata.dst_modulo1,idata.dst_modulo2);
+					else f_proc2=10;
 					break;
 				case 9 :
-					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale_Y)
-					{
-						JPSDR_Saturation_Planar_YUV(idata.src_plane0,idata.dst_plane0,idata.src_w0,
-							idata.src_h0,lookup,idata.src_modulo0,idata.dst_modulo0);
-					}
+					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale_Y) f_proc=7;
 					break;
+			}
+		}
+
+		for(uint8_t i=0; i<threads_number; i++)
+		{
+			MT_Thread[i].f_process=f_proc;
+			ResetEvent(MT_Thread[i].jobFinished);
+			SetEvent(MT_Thread[i].nextJob);
+		}
+		for(uint8_t i=0; i<threads_number; i++)
+			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
+		for(uint8_t i=0; i<threads_number; i++)
+			MT_Thread[i].f_process=0;
+
+		if (f_proc2!=0)
+		{
+			for(uint8_t i=0; i<threads_number; i++)
+			{
+				MT_Thread[i].f_process=f_proc2;
+				ResetEvent(MT_Thread[i].jobFinished);
+				SetEvent(MT_Thread[i].nextJob);
+			}
+			for(uint8_t i=0; i<threads_number; i++)
+				WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
+			for(uint8_t i=0; i<threads_number; i++)
+				MT_Thread[i].f_process=0;
+
+			if (f_proc2==8)
+			{
+				for(uint8_t i=0; i<threads_number; i++)
+				{
+					MT_Thread[i].f_process=9;
+					ResetEvent(MT_Thread[i].jobFinished);
+					SetEvent(MT_Thread[i].nextJob);
+				}
+				for(uint8_t i=0; i<threads_number; i++)
+					WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
+				for(uint8_t i=0; i<threads_number; i++)
+					MT_Thread[i].f_process=0;
 			}
 		}
 	}
@@ -677,96 +1210,54 @@ void JPSDR_Saturation::Run()
 	{
 		if (mData.BW_mode)
 		{
-			switch(idata.video_mode)
+			switch (idata.video_mode)
 			{
 				case 0 :
-				case 1 :
-					JPSDR_Saturation_Y_Non_SSE_RGB24(idata.src_plane0,idata.dst_plane0,idata.src_w0,
-						idata.src_h0,offset_Y,lookup,idata.src_modulo0,idata.dst_modulo0);
-					break;
-				case 2 :
-					JPSDR_Saturation_Y_YUYV(idata.src_plane0,idata.dst_plane0,(idata.src_w0+1)>>1,
-						idata.src_h0,(uint8_t)(offset_U>>4),(uint8_t)(offset_V>>4),
-						lookup,idata.src_modulo0,idata.dst_modulo0);
-					break;
-				case 3 :
-					JPSDR_Saturation_Y_UYVY(idata.src_plane0,idata.dst_plane0,(idata.src_w0+1)>>1,
-						idata.src_h0,(uint8_t)(offset_U>>4),(uint8_t)(offset_V>>4),
-						lookup,idata.src_modulo0,idata.dst_modulo0);
-					break;
+				case 1 : Saturation_Y_RGB24(0); break;
+				case 2 : Saturation_Y_YUYV(0); break;
+				case 3 : Saturation_Y_UYVY(0); break;
 				case 4 :
 				case 5 :
 				case 6 :
 				case 7 :
 				case 8 :
-					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale_Y)
-					{
-						JPSDR_Saturation_Planar_YUV(idata.src_plane0,idata.dst_plane0,idata.src_w0,
-							idata.src_h0,lookup,idata.src_modulo0,idata.dst_modulo0);
-					}
+					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale_Y) Saturation_Planar_Y(0);
 					Planar_Fill(idata.dst_plane1,idata.src_w1,idata.src_h1,(uint8_t)(offset_U>>4),
 						idata.dst_pitch1);
 					Planar_Fill(idata.dst_plane2,idata.src_w2,idata.src_h2,(uint8_t)(offset_V>>4),
 						idata.dst_pitch2);
 					break;
 				case 9 :
-					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale_Y)
-					{
-						JPSDR_Saturation_Planar_YUV(idata.src_plane0,idata.dst_plane0,idata.src_w0,
-							idata.src_h0,lookup,idata.src_modulo0,idata.dst_modulo0);
-					}
+					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale_Y) Saturation_Planar_Y(0);
 					break;
 			}
 		}
 		else
 		{
-			switch(idata.video_mode)
+			switch (idata.video_mode)
 			{
 				case 0 :
-				case 1 :
-					JPSDR_Saturation_Non_SSE_RGB24(idata.src_plane0,idata.dst_plane0,idata.src_w0,
-						idata.src_h0,offset_R,offset_G,offset_B,lookup,idata.src_modulo0,idata.dst_modulo0);
-					break;
-				case 2 :
-					JPSDR_Saturation_YUYV(idata.src_plane0,idata.dst_plane0,(idata.src_w0+1)>>1,
-						idata.src_h0,lookup,idata.src_modulo0,idata.dst_modulo0);
-					break;
-				case 3 :
-					JPSDR_Saturation_UYVY(idata.src_plane0,idata.dst_plane0,(idata.src_w0+1)>>1,
-						idata.src_h0,lookup,idata.src_modulo0,idata.dst_modulo0);
-					break;
+				case 1 : Saturation_RGB24(0); break;
+				case 2 : Saturation_YUYV(0); break;
+				case 3 : Saturation_UYVY(0); break;
 				case 4 :
 				case 5 :
 				case 6 :
 				case 7 :
 				case 8 :
-					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale_Y)
-					{
-						JPSDR_Saturation_Planar_YUV(idata.src_plane0,idata.dst_plane0,idata.src_w0,
-							idata.src_h0,lookup,idata.src_modulo0,idata.dst_modulo0);
-					}
+					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale_Y) Saturation_Planar_Y(0);
 					if (mData.hue==0)
 					{
 						if ((mData.saturation!=0) || chg_scale_UV)
 						{
-							JPSDR_Saturation_Planar_YUV(idata.src_plane1,idata.dst_plane1,idata.src_w1,
-								idata.src_h1,lookup+256,idata.src_modulo1,idata.dst_modulo1);
-							JPSDR_Saturation_Planar_YUV(idata.src_plane2,idata.dst_plane2,idata.src_w2,
-								idata.src_h2,lookup+512,idata.src_modulo2,idata.dst_modulo2);
+							Saturation_Planar_U(0);
+							Saturation_Planar_V(0);
 						}
 					}
-					else
-						JPSDR_Saturation_Hue_Planar_YUV(idata.src_plane1,idata.src_plane2,
-							idata.dst_plane1,idata.dst_plane2,idata.src_w1,idata.src_h1,
-							lookup_hue_CbCr,idata.src_modulo1,idata.src_modulo2,
-							idata.dst_modulo1,idata.dst_modulo2);
+					else Saturation_Hue_Planar_YUV(0);
 					break;
 				case 9 :
-					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale_Y)
-					{
-						JPSDR_Saturation_Planar_YUV(idata.src_plane0,idata.dst_plane0,idata.src_w0,
-							idata.src_h0,lookup,idata.src_modulo0,idata.dst_modulo0);
-					}
+					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale_Y) Saturation_Planar_Y(0);
 					break;
 			}
 		}
@@ -2496,6 +2987,92 @@ void JPSDR_Saturation::Start()
 		
 	image_data=idata;
 
+	if  (mData.mt_mode && (idata.src_h0>=32) && (idata.dst_h0>=32) ) threads_number=CPUs_number;
+	else threads_number=1;
+
+	switch (idata.src_video_mode)
+	{
+		case 0 :
+		case 1 :
+			threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,0,0,0);
+			break;
+		case 4 :
+		case 9 :
+			threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,0,0,2);
+			break;
+		case 2 :
+		case 3 :
+			threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,1,0,1);
+			break;
+		case 5 :
+			threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,1,0,2);
+			break;
+		case 6 :
+			threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,1,1,2);
+			break;
+		case 7 :
+			threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,2,0,2);
+			break;
+		case 8 :
+			threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,2,2,2);
+			break;
+		default :
+			threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,0,0,0);
+			break;
+	}
+
+	int16_t i;
+	bool test_ok;
+
+	if (threads_number>1)
+	{
+		test_ok=true;
+		i=0;
+		while ((i<threads_number) && test_ok)
+		{
+			MT_Thread[i].pClass=this;
+			MT_Thread[i].f_process=0;
+			MT_Thread[i].jobFinished=CreateEvent(NULL,TRUE,TRUE,NULL);
+			MT_Thread[i].nextJob=CreateEvent(NULL,TRUE,FALSE,NULL);
+			test_ok=test_ok && ((MT_Thread[i].jobFinished!=NULL) && (MT_Thread[i].nextJob!=NULL));
+			i++;
+		}
+		if (!test_ok)
+		{
+			ff->Except("Unable to create events !");
+			return;
+		}
+
+		DWORD_PTR dwpProcessAffinityMask;
+		DWORD_PTR dwpSystemAffinityMask;
+		DWORD_PTR dwpThreadAffinityMask=1;
+
+		GetProcessAffinityMask(GetCurrentProcess(), &dwpProcessAffinityMask, &dwpSystemAffinityMask);
+
+		test_ok=true;
+		i=0;
+		while ((i<threads_number) && test_ok)
+		{
+			if ((dwpProcessAffinityMask & dwpThreadAffinityMask)!=0)
+			{
+				thds[i]=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)StaticThreadpool,&MT_Thread[i],CREATE_SUSPENDED,&tids[i]);
+				test_ok=test_ok && (thds[i]!=NULL);
+				if (test_ok)
+				{
+					SetThreadAffinityMask(thds[i],dwpThreadAffinityMask);
+					ResumeThread(thds[i]);
+				}
+				i++;
+			}
+			dwpThreadAffinityMask<<=1;
+		}
+		if (!test_ok)
+		{
+			ff->Except("Unable to create threads pool !");
+			return;
+		}
+	}
+
 	const size_t img_size=idata.dst_size0+idata.dst_size1+idata.dst_size2;
 
 	if (img_size<=MAX_CACHE_SIZE)
@@ -2509,12 +3086,36 @@ void JPSDR_Saturation::Start()
 }
 
 
+void JPSDR_Saturation::End()
+{
+	int16_t i;
+
+	if (threads_number>1)
+	{
+		for (i=threads_number-1; i>=0; i--)
+		{
+			if (thds[i]!=NULL)
+			{
+				MT_Thread[i].f_process=255;
+				SetEvent(MT_Thread[i].nextJob);
+				WaitForSingleObject(thds[i],INFINITE);
+				myCloseHandle(thds[i]);
+			}
+		}
+		for (i=threads_number-1; i>=0; i--)
+		{
+			myCloseHandle(MT_Thread[i].nextJob);
+			myCloseHandle(MT_Thread[i].jobFinished);
+		}
+	}
+}
+
 
 void JPSDR_Saturation::GetScriptString(char *buf, int maxlen)
 {
-    SafePrintf(buf,maxlen, "Config(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d)",mData.saturation,mData.hue,mData.brightness,
+    SafePrintf(buf,maxlen, "Config(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)",mData.saturation,mData.hue,mData.brightness,
 		mData.contrast,mData.BW_mode,mData.full_YCbCr_Y,mData.full_YCbCr_Cb,mData.full_YCbCr_Cr,mData.full_mode,
-		mData.color_space);
+		mData.color_space,mData.mt_mode);
 }
 
 
@@ -2583,9 +3184,10 @@ void JPSDR_Saturation::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptV
 	mData.full_YCbCr_Cr=!!argv[7].asInt();
 	mData.full_mode=argv[8].asInt();
 	mData.color_space=argv[9].asInt();
+	mData.mt_mode=!!argv[10].asInt();
 }
 
 
 		
 extern VDXFilterDefinition filterDef_JPSDR_Saturation=
-VDXVideoFilterDefinition<JPSDR_Saturation>("JPSDR","Sat/Hue/Bright/Contr v3.0.0","[ASM][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Saturation>("JPSDR","Sat/Hue/Bright/Contr v4.0.0","[ASM][SSE2] Optimised.");
