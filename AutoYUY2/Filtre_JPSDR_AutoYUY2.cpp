@@ -2287,7 +2287,11 @@ void JPSDR_AutoYUY2::Start()
 		{
 			thds[i]=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)StaticThreadpool,&MT_Thread[i],CREATE_SUSPENDED,&tids[i]);
 			ok=ok && (thds[i]!=NULL);
-			if (ok) SetThreadAffinityMask(thds[i],ThreadMask[i]);
+			if (ok)
+			{
+				SetThreadAffinityMask(thds[i],ThreadMask[i]);
+				ResumeThread(thds[i]);
+			}
 			i++;
 		}
 		if (!ok)
@@ -7222,9 +7226,6 @@ void JPSDR_AutoYUY2::Run()
 	if (threads_number>1)
 	{
 		for(uint8_t i=0; i<threads_number; i++)
-			ResumeThread(thds[i]);
-
-		for(uint8_t i=0; i<threads_number; i++)
 		{
 			MT_Thread[i].f_process=f_proc;
 			ResetEvent(MT_Thread[i].jobFinished);
@@ -7234,9 +7235,6 @@ void JPSDR_AutoYUY2::Run()
 			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
 		for(uint8_t i=0; i<threads_number; i++)
 			MT_Thread[i].f_process=0;
-
-		for(uint8_t i=0; i<threads_number; i++)
-			SuspendThread(thds[i]);
 	}
 }
 
@@ -7262,7 +7260,6 @@ void JPSDR_AutoYUY2::End()
 		{
 			if (thds[i]!=NULL)
 			{
-				ResumeThread(thds[i]);
 				MT_Thread[i].f_process=255;
 				SetEvent(MT_Thread[i].nextJob);
 				WaitForSingleObject(thds[i],INFINITE);

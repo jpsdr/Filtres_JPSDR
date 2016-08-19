@@ -3066,7 +3066,11 @@ void JPSDR_IVTC::Start()
 		{
 			thds[i]=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)StaticThreadpool,&MT_Thread[i],CREATE_SUSPENDED,&tids[i]);
 			test=test && (thds[i]!=NULL);
-			if (test) SetThreadAffinityMask(thds[i],ThreadMask[i]);
+			if (test)
+			{
+				SetThreadAffinityMask(thds[i],ThreadMask[i]);
+				ResumeThread(thds[i]);
+			}
 			i++;
 		}
 		if (!test)
@@ -9940,12 +9944,6 @@ void JPSDR_IVTC::Run()
 
 	SetMemcpyCacheLimit(Cache_Setting);
 
-	if (threads_number>1)
-	{
-		for(uint8_t i=0; i<threads_number; i++)
-			ResumeThread(thds[i]);
-	}
-
 	w=idata.src_w0;
 	h=idata.src_h0;
 	w_Y=w;
@@ -15700,12 +15698,6 @@ void JPSDR_IVTC::Run()
 		if (index_out==4) out=true;
 		else index_out++;	
 
-		if (threads_number>1)
-		{
-			for(uint8_t i=0; i<threads_number; i++)
-				SuspendThread(thds[i]);
-		}
-
 //		mFrameNumber++;
 }
 
@@ -15726,7 +15718,6 @@ void JPSDR_IVTC::End()
 		{
 			if (thds[i]!=NULL)
 			{
-				ResumeThread(thds[i]);
 				MT_Thread[i].f_process=255;
 				SetEvent(MT_Thread[i].nextJob);
 				WaitForSingleObject(thds[i],INFINITE);

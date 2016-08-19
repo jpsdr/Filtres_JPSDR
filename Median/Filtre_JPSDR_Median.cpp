@@ -1640,12 +1640,6 @@ void JPSDR_Median::Run()
 				break;
 	}
 
-	if (threads_number>1)
-	{
-		for(uint8_t i=0; i<threads_number; i++)
-			ResumeThread(thds[i]);
-	}
-
 	if (mData.interlace_mode)
 	{
 		for (i=0; i<plan_max; i++)
@@ -1927,12 +1921,6 @@ void JPSDR_Median::Run()
 				}
 			}
 		}
-	}
-
-	if (threads_number>1)
-	{
-		for(uint8_t i=0; i<threads_number; i++)
-			SuspendThread(thds[i]);
 	}
 
 	switch(idata.video_mode)
@@ -3743,7 +3731,11 @@ void JPSDR_Median::Start()
 		{
 			thds[i]=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)StaticThreadpool,&MT_Thread[i],CREATE_SUSPENDED,&tids[i]);
 			ok=ok && (thds[i]!=NULL);
-			if (ok) SetThreadAffinityMask(thds[i],ThreadMask[i]);
+			if (ok)
+			{
+				SetThreadAffinityMask(thds[i],ThreadMask[i]);
+				ResumeThread(thds[i]);
+			}
 			i++;
 		}
 		if (!ok)
@@ -3779,7 +3771,6 @@ void JPSDR_Median::End()
 		{
 			if (thds[i]!=NULL)
 			{
-				ResumeThread(thds[i]);
 				MT_Thread[i].f_process=255;
 				SetEvent(MT_Thread[i].nextJob);
 				WaitForSingleObject(thds[i],INFINITE);

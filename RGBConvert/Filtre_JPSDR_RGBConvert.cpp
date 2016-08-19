@@ -2519,7 +2519,11 @@ void JPSDR_RGBConvert::Start()
 		{
 			thds[i]=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)StaticThreadpool,&MT_Thread[i],CREATE_SUSPENDED,&tids[i]);
 			test_ok=test_ok && (thds[i]!=NULL);
-			if (test_ok) SetThreadAffinityMask(thds[i],ThreadMask[i]);
+			if (test_ok)
+			{
+				SetThreadAffinityMask(thds[i],ThreadMask[i]);
+				ResumeThread(thds[i]);
+			}
 			i++;
 		}
 		if (!test_ok)
@@ -2545,7 +2549,6 @@ void JPSDR_RGBConvert::End()
 		{
 			if (thds[i]!=NULL)
 			{
-				ResumeThread(thds[i]);
 				MT_Thread[i].f_process=255;
 				SetEvent(MT_Thread[i].nextJob);
 				WaitForSingleObject(thds[i],INFINITE);
@@ -3644,9 +3647,6 @@ void JPSDR_RGBConvert::Run()
 
 	if (threads_number>1)
 	{
-		for(uint8_t i=0; i<threads_number; i++)
-			ResumeThread(thds[i]);
-
 		uint8_t f_proc=0;
 
 		switch(convertion_mode)
@@ -3676,9 +3676,6 @@ void JPSDR_RGBConvert::Run()
 			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
 		for(uint8_t i=0; i<threads_number; i++)
 			MT_Thread[i].f_process=0;
-
-		for(uint8_t i=0; i<threads_number; i++)
-			SuspendThread(thds[i]);
 	}
 	else
 	{

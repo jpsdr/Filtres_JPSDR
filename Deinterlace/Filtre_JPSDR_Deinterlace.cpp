@@ -2917,7 +2917,11 @@ void JPSDR_Deinterlace::Start()
 		{
 			thds[i]=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)StaticThreadpool,&MT_Thread[i],CREATE_SUSPENDED,&tids[i]);
 			buff_ok=buff_ok && (thds[i]!=NULL);
-			if (buff_ok) SetThreadAffinityMask(thds[i],ThreadMask[i]);
+			if (buff_ok)
+			{
+				SetThreadAffinityMask(thds[i],ThreadMask[i]);
+				ResumeThread(thds[i]);
+			}
 			i++;
 		}
 		if (!buff_ok)
@@ -3166,7 +3170,6 @@ void JPSDR_Deinterlace::End()
 		{
 			if (thds[i]!=NULL)
 			{
-				ResumeThread(thds[i]);
 				MT_Thread[i].f_process=255;
 				SetEvent(MT_Thread[i].nextJob);
 				WaitForSingleObject(thds[i],INFINITE);
@@ -5865,8 +5868,6 @@ void JPSDR_Deinterlace::Run()
 	{
 		for (uint8_t i=0; i<threads_number; i++)
 		{
-			ResumeThread(thds[i]);
-
 			switch(current_mode)
 			{
 				case 1 :
@@ -6193,9 +6194,6 @@ void JPSDR_Deinterlace::Run()
 				}
 			}
 		}
-
-		for(uint8_t i=0; i<threads_number; i++)
-			SuspendThread(thds[i]);
 	}
 	else
 	{
