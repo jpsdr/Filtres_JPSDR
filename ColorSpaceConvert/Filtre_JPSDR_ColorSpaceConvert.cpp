@@ -58,6 +58,14 @@ public:
 };
 
 
+typedef struct _Arch_CPU
+{
+	uint8_t NbPhysCore,NbLogicCPU;
+	uint8_t NbHT[64];
+	ULONG_PTR ProcMask[64];
+} Arch_CPU;
+
+
 typedef struct _MT_Data_Info
 {
 	void *src1,*src2,*src3;
@@ -82,20 +90,124 @@ typedef struct _MT_Data_Thread
 } MT_Data_Thread;
 
 
-
-static int num_processors()
+// Helper function to count set bits in the processor mask.
+static uint8_t CountSetBits(ULONG_PTR bitMask)
 {
-#ifdef _DEBUG
-	return 1;
-#else
-	int pcount = 0;
-	ULONG_PTR p_aff=0, s_aff=0;
-	GetProcessAffinityMask(GetCurrentProcess(), &p_aff, &s_aff);
-	for(; p_aff != 0; p_aff>>=1) 
-		pcount += (p_aff&1);
-	return pcount;
-#endif
+    DWORD LSHIFT = sizeof(ULONG_PTR)*8 - 1;
+    uint8_t bitSetCount = 0;
+    ULONG_PTR bitTest = (ULONG_PTR)1 << LSHIFT;    
+    DWORD i;
+    
+    for (i = 0; i <= LSHIFT; ++i)
+    {
+        bitSetCount += ((bitMask & bitTest)?1:0);
+        bitTest/=2;
+    }
+
+    return bitSetCount;
 }
+
+
+static void Get_CPU_Info(Arch_CPU& cpu)
+{
+    bool done = false;
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buffer=NULL;
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION ptr=NULL;
+    DWORD returnLength=0;
+    uint8_t logicalProcessorCount=0;
+    uint8_t processorCoreCount=0;
+    DWORD byteOffset=0;
+
+	cpu.NbLogicCPU=0;
+	cpu.NbPhysCore=0;
+
+    while (!done)
+    {
+        BOOL rc=GetLogicalProcessorInformation(buffer, &returnLength);
+
+        if (rc==FALSE) 
+        {
+            if (GetLastError()==ERROR_INSUFFICIENT_BUFFER) 
+            {
+                myfree(buffer);
+                buffer=(PSYSTEM_LOGICAL_PROCESSOR_INFORMATION)malloc(returnLength);
+
+                if (buffer==NULL) return;
+            } 
+            else
+			{
+				myfree(buffer);
+				return;
+			}
+        } 
+        else done=true;
+    }
+
+    ptr=buffer;
+
+    while ((byteOffset+sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION))<=returnLength) 
+    {
+        switch (ptr->Relationship) 
+        {
+			case RelationProcessorCore :
+	            // A hyperthreaded core supplies more than one logical processor.
+				cpu.NbHT[processorCoreCount]=CountSetBits(ptr->ProcessorMask);
+		        logicalProcessorCount+=cpu.NbHT[processorCoreCount];
+				cpu.ProcMask[processorCoreCount++]=ptr->ProcessorMask;
+			    break;
+			default : break;
+        }
+        byteOffset+=sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
+        ptr++;
+    }
+	free(buffer);
+
+	cpu.NbPhysCore=processorCoreCount;
+	cpu.NbLogicCPU=logicalProcessorCount;
+}
+
+
+static ULONG_PTR GetCPUMask(ULONG_PTR bitMask, uint8_t CPU_Nb)
+{
+    uint8_t LSHIFT=sizeof(ULONG_PTR)*8-1;
+    uint8_t i=0,bitSetCount=0;
+    ULONG_PTR bitTest=1;    
+
+	CPU_Nb++;
+	while (i<=LSHIFT)
+	{
+		if ((bitMask & bitTest)!=0) bitSetCount++;
+		if (bitSetCount==CPU_Nb) return(bitTest);
+		else
+		{
+			i++;
+			bitTest<<=1;
+		}
+	}
+	return(0);
+}
+
+
+static void CreateThreadsMasks(Arch_CPU cpu, ULONG_PTR *TabMask,uint8_t NbThread)
+{
+	memset(TabMask,0,NbThread*sizeof(ULONG_PTR));
+
+	if ((cpu.NbLogicCPU==0) || (cpu.NbPhysCore==0)) return;
+
+	uint8_t current_thread=0;
+
+	for(uint8_t i=0; i<cpu.NbPhysCore; i++)
+	{
+		uint8_t Nb_Core_Th=NbThread/cpu.NbPhysCore+( ((NbThread%cpu.NbPhysCore)>i) ? 1:0 );
+
+		if (Nb_Core_Th>0)
+		{
+			for(uint8_t j=0; j<Nb_Core_Th; j++)
+				TabMask[current_thread++]=GetCPUMask(cpu.ProcMask[i],j%cpu.NbHT[i]);
+		}
+	}
+}
+
 
 
 JPSDR_ColorSpaceConvertData::JPSDR_ColorSpaceConvertData(void)
@@ -171,7 +283,9 @@ protected:
 	MT_Data_Thread MT_Thread[MAX_MT_THREADS];
 	MT_Data_Info MT_Data[MAX_MT_THREADS];
 	DWORD tids[MAX_MT_THREADS];
-	uint8_t CPUs_number,threads_number;
+	Arch_CPU CPU;
+	ULONG_PTR ThreadMask[MAX_MT_THREADS];
+	uint8_t threads_number;
 
 	uint8_t CreateMTData(uint8_t max_threads,int32_t size_x,int32_t size_y,uint8_t div_x,uint8_t div_y,uint8_t _32bits);
 
@@ -347,8 +461,7 @@ bool JPSDR_ColorSpaceConvert::Init()
 		thds[i]=NULL;
 	}
 
-	CPUs_number=(uint8_t)num_processors();
-	if (CPUs_number>MAX_MT_THREADS) CPUs_number=MAX_MT_THREADS;
+	Get_CPU_Info(CPU);
 	threads_number=1;
 
 	return(true);
@@ -958,6 +1071,12 @@ void JPSDR_ColorSpaceConvert::Start()
 	if (g_VFVAPIVersion<12)
 	{
 		ff->Except("This virtualdub version doesn't support this filter !");
+		return;
+	}
+
+	if ((CPU.NbLogicCPU==0) || (CPU.NbPhysCore==0))
+	{
+		ff->Except("Error getting system CPU information !");
 		return;
 	}
 
@@ -2462,7 +2581,8 @@ void JPSDR_ColorSpaceConvert::Start()
 
 	if  ( mData.mt_mode && (idata.src_h0>=32) && (idata.dst_h0>=32) &&
 		((mData.color_matrix_in!=mData.color_matrix_out) ||
-		(mData.full_range_in!=mData.full_range_out)) ) threads_number=CPUs_number;
+		(mData.full_range_in!=mData.full_range_out)) )
+		threads_number=((CPU.NbLogicCPU>MAX_MT_THREADS) ? MAX_MT_THREADS:CPU.NbLogicCPU);
 	else threads_number=1;
 
 	switch (idata.src_video_mode)
@@ -2496,6 +2616,8 @@ void JPSDR_ColorSpaceConvert::Start()
 			break;
 	}
 
+	CreateThreadsMasks(CPU,ThreadMask,threads_number);
+
 	int16_t i;
 	bool test_ok;
 
@@ -2518,28 +2640,14 @@ void JPSDR_ColorSpaceConvert::Start()
 			return;
 		}
 
-		DWORD_PTR dwpProcessAffinityMask;
-		DWORD_PTR dwpSystemAffinityMask;
-		DWORD_PTR dwpThreadAffinityMask=1;
-
-		GetProcessAffinityMask(GetCurrentProcess(), &dwpProcessAffinityMask, &dwpSystemAffinityMask);
-
 		test_ok=true;
 		i=0;
 		while ((i<threads_number) && test_ok)
 		{
-			if ((dwpProcessAffinityMask & dwpThreadAffinityMask)!=0)
-			{
-				thds[i]=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)StaticThreadpool,&MT_Thread[i],CREATE_SUSPENDED,&tids[i]);
-				test_ok=test_ok && (thds[i]!=NULL);
-				if (test_ok)
-				{
-					SetThreadAffinityMask(thds[i],dwpThreadAffinityMask);
-					ResumeThread(thds[i]);
-				}
-				i++;
-			}
-			dwpThreadAffinityMask<<=1;
+			thds[i]=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)StaticThreadpool,&MT_Thread[i],CREATE_SUSPENDED,&tids[i]);
+			test_ok=test_ok && (thds[i]!=NULL);
+			if (test_ok) SetThreadAffinityMask(thds[i],ThreadMask[i]);
+			i++;
 		}
 		if (!test_ok)
 		{
@@ -2561,6 +2669,7 @@ void JPSDR_ColorSpaceConvert::End()
 		{
 			if (thds[i]!=NULL)
 			{
+				ResumeThread(thds[i]);
 				MT_Thread[i].f_process=255;
 				SetEvent(MT_Thread[i].nextJob);
 				WaitForSingleObject(thds[i],INFINITE);
@@ -3696,6 +3805,9 @@ void JPSDR_ColorSpaceConvert::Run()
 
 	if (threads_number>1)
 	{
+		for(uint8_t i=0; i<threads_number; i++)
+			ResumeThread(thds[i]);
+
 		uint8_t f_proc=0,f_proc2=0;
 
 		switch (convertion_mode)
@@ -3755,6 +3867,9 @@ void JPSDR_ColorSpaceConvert::Run()
 				WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
 			for(uint8_t i=0; i<threads_number; i++)
 				MT_Thread[i].f_process=0;
+
+			for(uint8_t i=0; i<threads_number; i++)
+				SuspendThread(thds[i]);
 		}
 	}
 	else
@@ -3812,4 +3927,4 @@ void JPSDR_ColorSpaceConvert::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_ColorSpaceConvert=
-VDXVideoFilterDefinition<JPSDR_ColorSpaceConvert>("JPSDR","Color Space Convert v2.0.0","YCbCr color space convertion.\n[ASM][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_ColorSpaceConvert>("JPSDR","Color Space Convert v2.0.1","YCbCr color space convertion.\n[ASM][SSE2] Optimised.");

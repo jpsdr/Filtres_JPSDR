@@ -225,6 +225,15 @@ typedef struct _IVTC_Flags
 	bool ivtc,ivtc_rev,chg_sequence,chg_sequence_p1,inv_polar;
 } IVTC_Flags;
 
+
+typedef struct _Arch_CPU
+{
+	uint8_t NbPhysCore,NbLogicCPU;
+	uint8_t NbHT[64];
+	ULONG_PTR ProcMask[64];
+} Arch_CPU;
+
+
 typedef struct _MT_Data_Info
 {
 	void *src1,*src2,*src3,*src4;
@@ -253,20 +262,124 @@ typedef struct _MT_Data_Thread
 } MT_Data_Thread;
 
 
-
-static int num_processors()
+// Helper function to count set bits in the processor mask.
+static uint8_t CountSetBits(ULONG_PTR bitMask)
 {
-#ifdef _DEBUG
-	return 1;
-#else
-	int pcount = 0;
-	ULONG_PTR p_aff=0, s_aff=0;
-	GetProcessAffinityMask(GetCurrentProcess(), &p_aff, &s_aff);
-	for(; p_aff != 0; p_aff>>=1) 
-		pcount += (p_aff&1);
-	return pcount;
-#endif
+    DWORD LSHIFT = sizeof(ULONG_PTR)*8 - 1;
+    uint8_t bitSetCount = 0;
+    ULONG_PTR bitTest = (ULONG_PTR)1 << LSHIFT;    
+    DWORD i;
+    
+    for (i = 0; i <= LSHIFT; ++i)
+    {
+        bitSetCount += ((bitMask & bitTest)?1:0);
+        bitTest/=2;
+    }
+
+    return bitSetCount;
 }
+
+
+static void Get_CPU_Info(Arch_CPU& cpu)
+{
+    bool done = false;
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buffer=NULL;
+    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION ptr=NULL;
+    DWORD returnLength=0;
+    uint8_t logicalProcessorCount=0;
+    uint8_t processorCoreCount=0;
+    DWORD byteOffset=0;
+
+	cpu.NbLogicCPU=0;
+	cpu.NbPhysCore=0;
+
+    while (!done)
+    {
+        BOOL rc=GetLogicalProcessorInformation(buffer, &returnLength);
+
+        if (rc==FALSE) 
+        {
+            if (GetLastError()==ERROR_INSUFFICIENT_BUFFER) 
+            {
+                myfree(buffer);
+                buffer=(PSYSTEM_LOGICAL_PROCESSOR_INFORMATION)malloc(returnLength);
+
+                if (buffer==NULL) return;
+            } 
+            else
+			{
+				myfree(buffer);
+				return;
+			}
+        } 
+        else done=true;
+    }
+
+    ptr=buffer;
+
+    while ((byteOffset+sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION))<=returnLength) 
+    {
+        switch (ptr->Relationship) 
+        {
+			case RelationProcessorCore :
+	            // A hyperthreaded core supplies more than one logical processor.
+				cpu.NbHT[processorCoreCount]=CountSetBits(ptr->ProcessorMask);
+		        logicalProcessorCount+=cpu.NbHT[processorCoreCount];
+				cpu.ProcMask[processorCoreCount++]=ptr->ProcessorMask;
+			    break;
+			default : break;
+        }
+        byteOffset+=sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
+        ptr++;
+    }
+	free(buffer);
+
+	cpu.NbPhysCore=processorCoreCount;
+	cpu.NbLogicCPU=logicalProcessorCount;
+}
+
+
+static ULONG_PTR GetCPUMask(ULONG_PTR bitMask, uint8_t CPU_Nb)
+{
+    uint8_t LSHIFT=sizeof(ULONG_PTR)*8-1;
+    uint8_t i=0,bitSetCount=0;
+    ULONG_PTR bitTest=1;    
+
+	CPU_Nb++;
+	while (i<=LSHIFT)
+	{
+		if ((bitMask & bitTest)!=0) bitSetCount++;
+		if (bitSetCount==CPU_Nb) return(bitTest);
+		else
+		{
+			i++;
+			bitTest<<=1;
+		}
+	}
+	return(0);
+}
+
+
+static void CreateThreadsMasks(Arch_CPU cpu, ULONG_PTR *TabMask,uint8_t NbThread)
+{
+	memset(TabMask,0,NbThread*sizeof(ULONG_PTR));
+
+	if ((cpu.NbLogicCPU==0) || (cpu.NbPhysCore==0)) return;
+
+	uint8_t current_thread=0;
+
+	for(uint8_t i=0; i<cpu.NbPhysCore; i++)
+	{
+		uint8_t Nb_Core_Th=NbThread/cpu.NbPhysCore+( ((NbThread%cpu.NbPhysCore)>i) ? 1:0 );
+
+		if (Nb_Core_Th>0)
+		{
+			for(uint8_t j=0; j<Nb_Core_Th; j++)
+				TabMask[current_thread++]=GetCPUMask(cpu.ProcMask[i],j%cpu.NbHT[i]);
+		}
+	}
+}
+
 
 class JPSDR_IVTCData
 {
@@ -552,7 +665,9 @@ protected:
 	MT_Data_Thread MT_Thread[MAX_MT_THREADS];
 	MT_Data_Info MT_Data[MAX_MT_THREADS];
 	DWORD tids[MAX_MT_THREADS];
-	uint8_t CPUs_number,threads_number;
+	Arch_CPU CPU;
+	ULONG_PTR ThreadMask[MAX_MT_THREADS];
+	uint8_t threads_number;
 	uint32_t histogramme_MT[MAX_MT_THREADS][256];
 	uint32_t repartition_MT[MAX_MT_THREADS][256];
 
@@ -807,8 +922,7 @@ bool JPSDR_IVTC::Init()
 		thds[i]=NULL;
 	}
 
-	CPUs_number=(uint8_t)num_processors();
-	if (CPUs_number>MAX_MT_THREADS) CPUs_number=MAX_MT_THREADS;
+	Get_CPU_Info(CPU);
 	threads_number=1;
 
 	return(true);
@@ -1146,6 +1260,12 @@ void JPSDR_IVTC::Start()
 	if (g_VFVAPIVersion<14)
 	{
 		ff->Except("This virtualdub version doesn't support this filter !");
+	}
+
+	if ((CPU.NbLogicCPU==0) || (CPU.NbPhysCore==0))
+	{
+		ff->Except("Error getting system CPU information !");
+		return;
 	}
 	
 	const VDXPixmapLayout& pxdst=*fa->dst.mpPixmapLayout;
@@ -2774,7 +2894,8 @@ void JPSDR_IVTC::Start()
 		}
 	}
 
-	if (mData.mt_mode && ((idata.src_h0>=32) && (idata.dst_h0>=32))) threads_number=CPUs_number;
+	if (mData.mt_mode && ((idata.src_h0>=32) && (idata.dst_h0>=32)))
+		threads_number=((CPU.NbLogicCPU>MAX_MT_THREADS) ? MAX_MT_THREADS:CPU.NbLogicCPU);
 	else threads_number=1;
 
 	buffer_delta=(void *)_aligned_malloc(idata.src_h0*idata.src_w0*4,ALIGN_SIZE); // Taille RGB32
@@ -2918,6 +3039,8 @@ void JPSDR_IVTC::Start()
 		return;
 	}
 
+	CreateThreadsMasks(CPU,ThreadMask,threads_number);
+
 	if (threads_number>1)
 	{
 		test=true;
@@ -2937,28 +3060,14 @@ void JPSDR_IVTC::Start()
 			return;
 		}
 
-		DWORD_PTR dwpProcessAffinityMask;
-		DWORD_PTR dwpSystemAffinityMask;
-		DWORD_PTR dwpThreadAffinityMask=1;
-
-		GetProcessAffinityMask(GetCurrentProcess(), &dwpProcessAffinityMask, &dwpSystemAffinityMask);
-
 		test=true;
 		i=0;
 		while ((i<threads_number) && test)
 		{
-			if ((dwpProcessAffinityMask & dwpThreadAffinityMask)!=0)
-			{
-				thds[i]=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)StaticThreadpool,&MT_Thread[i],CREATE_SUSPENDED,&tids[i]);
-				test=test && (thds[i]!=NULL);
-				if (test)
-				{
-					SetThreadAffinityMask(thds[i],dwpThreadAffinityMask);
-					ResumeThread(thds[i]);
-				}
-				i++;
-			}
-			dwpThreadAffinityMask<<=1;
+			thds[i]=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)StaticThreadpool,&MT_Thread[i],CREATE_SUSPENDED,&tids[i]);
+			test=test && (thds[i]!=NULL);
+			if (test) SetThreadAffinityMask(thds[i],ThreadMask[i]);
+			i++;
 		}
 		if (!test)
 		{
@@ -9831,6 +9940,12 @@ void JPSDR_IVTC::Run()
 
 	SetMemcpyCacheLimit(Cache_Setting);
 
+	if (threads_number>1)
+	{
+		for(uint8_t i=0; i<threads_number; i++)
+			ResumeThread(thds[i]);
+	}
+
 	w=idata.src_w0;
 	h=idata.src_h0;
 	w_Y=w;
@@ -15585,6 +15700,12 @@ void JPSDR_IVTC::Run()
 		if (index_out==4) out=true;
 		else index_out++;	
 
+		if (threads_number>1)
+		{
+			for(uint8_t i=0; i<threads_number; i++)
+				SuspendThread(thds[i]);
+		}
+
 //		mFrameNumber++;
 }
 
@@ -15605,6 +15726,7 @@ void JPSDR_IVTC::End()
 		{
 			if (thds[i]!=NULL)
 			{
+				ResumeThread(thds[i]);
 				MT_Thread[i].f_process=255;
 				SetEvent(MT_Thread[i].nextJob);
 				WaitForSingleObject(thds[i],INFINITE);
@@ -15721,5 +15843,5 @@ void JPSDR_IVTC::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_IVTC=
-VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.0.0","IVTC Filter. [MMX][SSE] Optimised.");
+VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.0.1","IVTC Filter. [MMX][SSE] Optimised.");
 
