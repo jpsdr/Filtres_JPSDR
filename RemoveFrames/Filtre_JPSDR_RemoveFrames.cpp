@@ -327,5 +327,5 @@ void JPSDR_RemoveFrames::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_RemoveFrames=
-VDXVideoFilterDefinition<JPSDR_RemoveFrames>("JPSDR","Remove Frames v1.2.4","Filter to remove frames.");
+VDXVideoFilterDefinition<JPSDR_RemoveFrames>("JPSDR","RemoveFrames v1.2.4","Filter to remove frames.");
 

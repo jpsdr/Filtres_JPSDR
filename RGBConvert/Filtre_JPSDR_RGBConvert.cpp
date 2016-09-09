@@ -10,10 +10,11 @@
 #include "..\Filtres_JPSDR\JPSDR_Filter.h"
 #include "..\Filtres_JPSDR\Pascal.h"
 
-#define MAX_MT_THREADS 128
+#include "..\Filtres_JPSDR\ThreadPoolInterface.h"
 
 extern int g_VFVAPIVersion;
 
+extern ThreadPoolInterface *poolInterface;
 
 extern "C" void JPSDR_RGBConvert_RGB32toYV24_SSE(const void *src,void *dst_y,void *dst_u,void *dst_v,int32_t w,int32_t h,
 	int16_t offset_Y,int16_t offset_U,int16_t offset_V,int16_t *lookup, ptrdiff_t src_modulo,
@@ -63,141 +64,6 @@ typedef struct _MT_Data_Info
 	bool top,bottom;
 	bool src_w,src_h;
 } MT_Data_Info;
-
-
-typedef struct _Arch_CPU
-{
-	uint8_t NbPhysCore,NbLogicCPU;
-	uint8_t NbHT[64];
-	ULONG_PTR ProcMask[64];
-} Arch_CPU;
-
-
-typedef struct _MT_Data_Thread
-{
-	void *pClass;
-	uint8_t f_process,thread_Id;
-	HANDLE nextJob, jobFinished;
-} MT_Data_Thread;
-
-
-// Helper function to count set bits in the processor mask.
-static uint8_t CountSetBits(ULONG_PTR bitMask)
-{
-    DWORD LSHIFT = sizeof(ULONG_PTR)*8 - 1;
-    uint8_t bitSetCount = 0;
-    ULONG_PTR bitTest = (ULONG_PTR)1 << LSHIFT;    
-    DWORD i;
-    
-    for (i = 0; i <= LSHIFT; ++i)
-    {
-        bitSetCount += ((bitMask & bitTest)?1:0);
-        bitTest/=2;
-    }
-
-    return bitSetCount;
-}
-
-
-static void Get_CPU_Info(Arch_CPU& cpu)
-{
-    bool done = false;
-    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buffer=NULL;
-    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION ptr=NULL;
-    DWORD returnLength=0;
-    uint8_t logicalProcessorCount=0;
-    uint8_t processorCoreCount=0;
-    DWORD byteOffset=0;
-
-	cpu.NbLogicCPU=0;
-	cpu.NbPhysCore=0;
-
-    while (!done)
-    {
-        BOOL rc=GetLogicalProcessorInformation(buffer, &returnLength);
-
-        if (rc==FALSE) 
-        {
-            if (GetLastError()==ERROR_INSUFFICIENT_BUFFER) 
-            {
-                myfree(buffer);
-                buffer=(PSYSTEM_LOGICAL_PROCESSOR_INFORMATION)malloc(returnLength);
-
-                if (buffer==NULL) return;
-            } 
-            else
-			{
-				myfree(buffer);
-				return;
-			}
-        } 
-        else done=true;
-    }
-
-    ptr=buffer;
-
-    while ((byteOffset+sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION))<=returnLength) 
-    {
-        switch (ptr->Relationship) 
-        {
-			case RelationProcessorCore :
-	            // A hyperthreaded core supplies more than one logical processor.
-				cpu.NbHT[processorCoreCount]=CountSetBits(ptr->ProcessorMask);
-		        logicalProcessorCount+=cpu.NbHT[processorCoreCount];
-				cpu.ProcMask[processorCoreCount++]=ptr->ProcessorMask;
-			    break;
-			default : break;
-        }
-        byteOffset+=sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
-        ptr++;
-    }
-	free(buffer);
-
-	cpu.NbPhysCore=processorCoreCount;
-	cpu.NbLogicCPU=logicalProcessorCount;
-}
-
-
-static ULONG_PTR GetCPUMask(ULONG_PTR bitMask, uint8_t CPU_Nb)
-{
-    uint8_t LSHIFT=sizeof(ULONG_PTR)*8-1;
-    uint8_t i=0,bitSetCount=0;
-    ULONG_PTR bitTest=1;    
-
-	CPU_Nb++;
-	while (i<=LSHIFT)
-	{
-		if ((bitMask & bitTest)!=0) bitSetCount++;
-		if (bitSetCount==CPU_Nb) return(bitTest);
-		else
-		{
-			i++;
-			bitTest<<=1;
-		}
-	}
-	return(0);
-}
-
-
-static void CreateThreadsMasks(Arch_CPU cpu, ULONG_PTR *TabMask,uint8_t NbThread)
-{
-	memset(TabMask,0,NbThread*sizeof(ULONG_PTR));
-
-	if ((cpu.NbLogicCPU==0) || (cpu.NbPhysCore==0)) return;
-
-	uint8_t current_thread=0;
-
-	for(uint8_t i=0; i<cpu.NbPhysCore; i++)
-	{
-		uint8_t Nb_Core_Th=NbThread/cpu.NbPhysCore+( ((NbThread%cpu.NbPhysCore)>i) ? 1:0 );
-
-		if (Nb_Core_Th>0)
-		{
-			for(uint8_t j=0; j<Nb_Core_Th; j++)
-				TabMask[current_thread++]=GetCPUMask(cpu.ProcMask[i],j%cpu.NbHT[i]);
-		}
-	}
-}
 
 
 
@@ -266,9 +132,6 @@ public:
 	
 	VDXVF_DECLARE_SCRIPT_METHODS();
 
-private:
-	static DWORD WINAPI StaticThreadpool( LPVOID lpParam );
-	
 protected:
 	Image_Data image_data;
 	int16_t Tlookup[2304];
@@ -279,13 +142,15 @@ protected:
 	bool autodetect_range;
 	bool SSE2_Enable;
 
-	HANDLE thds[MAX_MT_THREADS];
-	MT_Data_Thread MT_Thread[MAX_MT_THREADS];
+	Public_MT_Data_Thread MT_Thread[MAX_MT_THREADS];
 	MT_Data_Info MT_Data[MAX_MT_THREADS];
-	DWORD tids[MAX_MT_THREADS];
-	Arch_CPU CPU;
-	ULONG_PTR ThreadMask[MAX_MT_THREADS];
 	uint8_t threads_number;
+	bool threadpoolAllocated;
+	uint16_t UserId;
+
+	ThreadPoolFunction StaticThreadpoolF;
+
+	static void StaticThreadpool(void *ptr);
 
 	uint8_t CreateMTData(uint8_t max_threads,int32_t src_size_x,int32_t src_size_y,int32_t dst_size_x,int32_t dst_size_y,bool src_UV_w,bool src_UV_h,bool dst_UV_w,bool dst_UV_h);
 
@@ -445,13 +310,12 @@ bool JPSDR_RGBConvert::Init()
 		MT_Thread[i].pClass=NULL;
 		MT_Thread[i].f_process=0;
 		MT_Thread[i].thread_Id=(uint8_t)i;
-		MT_Thread[i].jobFinished=NULL;
-		MT_Thread[i].nextJob=NULL;
-		thds[i]=NULL;
+		MT_Thread[i].pFunc=NULL;
 	}
 
-	Get_CPU_Info(CPU);
 	threads_number=1;
+	threadpoolAllocated=false;
+	UserId=0;
 
 	return(true);
 }
@@ -942,9 +806,9 @@ void JPSDR_RGBConvert::Start()
 		return;
 	}
 
-	if ((CPU.NbLogicCPU==0) || (CPU.NbPhysCore==0))
+	if (!poolInterface->GetThreadPoolInterfaceStatus())
 	{
-		ff->Except("Error getting system CPU information !");
+		ff->Except("Error with the TheadPool status !");
 		return;
 	}
 
@@ -2436,7 +2300,14 @@ void JPSDR_RGBConvert::Start()
 	image_data=idata;
 
 	if  (mData.mt_mode && (idata.src_h0>=32) && (idata.dst_h0>=32))
-		threads_number=((CPU.NbLogicCPU>MAX_MT_THREADS) ? MAX_MT_THREADS:CPU.NbLogicCPU);
+	{
+		threads_number=poolInterface->GetThreadNumber(0,true);
+		if (threads_number==0)
+		{
+			ff->Except("Error with the TheadPool while getting CPU info !");
+			return;
+		}
+	}
 	else threads_number=1;
 
 	bool div_src_w,div_dst_w,div_src_h,div_dst_h;
@@ -2489,46 +2360,23 @@ void JPSDR_RGBConvert::Start()
 
 	threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,idata.dst_w0,idata.dst_h0,
 		div_src_w,div_src_h,div_dst_w,div_dst_h);
-	CreateThreadsMasks(CPU,ThreadMask,threads_number);
-
-	int16_t i;
-	bool test_ok;
 
 	if (threads_number>1)
 	{
-		test_ok=true;
-		i=0;
-		while ((i<threads_number) && test_ok)
+		StaticThreadpoolF=StaticThreadpool;
+
+		for (uint8_t i=0; i<threads_number; i++)
 		{
 			MT_Thread[i].pClass=this;
 			MT_Thread[i].f_process=0;
-			MT_Thread[i].jobFinished=CreateEvent(NULL,TRUE,TRUE,NULL);
-			MT_Thread[i].nextJob=CreateEvent(NULL,TRUE,FALSE,NULL);
-			test_ok=test_ok && ((MT_Thread[i].jobFinished!=NULL) && (MT_Thread[i].nextJob!=NULL));
-			i++;
+			MT_Thread[i].thread_Id=(uint8_t)i;
+			MT_Thread[i].pFunc=StaticThreadpoolF;
 		}
-		if (!test_ok)
-		{
-			ff->Except("Unable to create events !");
-			return;
-		}
-
-		test_ok=true;
-		i=0;
-		while ((i<threads_number) && test_ok)
-		{
-			thds[i]=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)StaticThreadpool,&MT_Thread[i],CREATE_SUSPENDED,&tids[i]);
-			test_ok=test_ok && (thds[i]!=NULL);
-			if (test_ok)
-			{
-				SetThreadAffinityMask(thds[i],ThreadMask[i]);
-				ResumeThread(thds[i]);
-			}
-			i++;
-		}
-		if (!test_ok)
-		{
-			ff->Except("Unable to create threads pool !");
+		if (!threadpoolAllocated)
+			threadpoolAllocated=poolInterface->AllocateThreads(UserId,threads_number,0,0,true,false,0);
+		if (!threadpoolAllocated)
+		{			
+			ff->Except("Error with the TheadPool while allocating threadpool !");
 			return;
 		}
 	}
@@ -2541,25 +2389,11 @@ void JPSDR_RGBConvert::Start()
 
 void JPSDR_RGBConvert::End()
 {
-	int16_t i;
-
-	if (threads_number>1)
+	if (threadpoolAllocated)
 	{
-		for (i=threads_number-1; i>=0; i--)
-		{
-			if (thds[i]!=NULL)
-			{
-				MT_Thread[i].f_process=255;
-				SetEvent(MT_Thread[i].nextJob);
-				WaitForSingleObject(thds[i],INFINITE);
-				myCloseHandle(thds[i]);
-			}
-		}
-		for (i=threads_number-1; i>=0; i--)
-		{
-			myCloseHandle(MT_Thread[i].nextJob);
-			myCloseHandle(MT_Thread[i].jobFinished);
-		}
+		poolInterface->DeAllocateThreads(UserId);
+		UserId=0;
+		threadpoolAllocated=false;
 	}
 }
 
@@ -3441,27 +3275,20 @@ void JPSDR_RGBConvert::YV24toRGB32_MT(uint8_t thread_num)
 
 
 
-DWORD WINAPI JPSDR_RGBConvert::StaticThreadpool( LPVOID lpParam )
+void JPSDR_RGBConvert::StaticThreadpool(void *ptr)
 {
-	const MT_Data_Thread *data=(const MT_Data_Thread *)lpParam;
+	const Public_MT_Data_Thread *data=(const Public_MT_Data_Thread *)ptr;
 	JPSDR_RGBConvert *ptrClass=(JPSDR_RGBConvert *)data->pClass;
 	
-	while (true)
+	switch(data->f_process)
 	{
-		WaitForSingleObject(data->nextJob,INFINITE);
-		switch(data->f_process)
-		{
-			case 1 : ptrClass->RGB32toYV24_MT(data->thread_Id); break;
-			case 2 : ptrClass->RGB32toYV16_MT(data->thread_Id); break;
-			case 3 : ptrClass->RGB32toYUY2_MT(data->thread_Id); break;
-			case 4 : ptrClass->YV24toRGB32_MT(data->thread_Id); break;
-			case 5 : ptrClass->RGB32toYV12_MT(data->thread_Id); break;
-			case 6 : ptrClass->RGB32toYV12_SSE_MT(data->thread_Id); break;
-			case 255 : return(0); break;
-			default : ;
-		}
-		ResetEvent(data->nextJob);
-		SetEvent(data->jobFinished);
+		case 1 : ptrClass->RGB32toYV24_MT(data->thread_Id); break;
+		case 2 : ptrClass->RGB32toYV16_MT(data->thread_Id); break;
+		case 3 : ptrClass->RGB32toYUY2_MT(data->thread_Id); break;
+		case 4 : ptrClass->YV24toRGB32_MT(data->thread_Id); break;
+		case 5 : ptrClass->RGB32toYV12_MT(data->thread_Id); break;
+		case 6 : ptrClass->RGB32toYV12_SSE_MT(data->thread_Id); break;
+		default : ;
 	}
 }
 
@@ -3647,35 +3474,37 @@ void JPSDR_RGBConvert::Run()
 
 	if (threads_number>1)
 	{
-		uint8_t f_proc=0;
-
-		switch(convertion_mode)
+		if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,0,false))
 		{
-			case 0 :
-				switch(mData.output_mode)
-				{
-					case 0 : f_proc=1; break;
-					case 1 : f_proc=2; break;
-					case 2 : f_proc=3; break;
-					case 3 : 
-						if (SSE2_Enable) f_proc=6;
-						else f_proc=5;
-						break;
-				}
-				break;
-			case 3 : f_proc=4; break;
-		}
+			uint8_t f_proc=0;
 
-		for(uint8_t i=0; i<threads_number; i++)
-		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			switch(convertion_mode)
+			{
+				case 0 :
+					switch(mData.output_mode)
+					{
+						case 0 : f_proc=1; break;
+						case 1 : f_proc=2; break;
+						case 2 : f_proc=3; break;
+						case 3 : 
+							if (SSE2_Enable) f_proc=6;
+							else f_proc=5;
+							break;
+					}
+					break;
+				case 3 : f_proc=4; break;
+			}
+
+			for(uint8_t i=0; i<threads_number; i++)
+				MT_Thread[i].f_process=f_proc;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<threads_number; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<threads_number; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<threads_number; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else
 	{
@@ -3728,4 +3557,4 @@ void JPSDR_RGBConvert::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_RGBConvert=
-VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGB Convert v2.0.1","RGB <-> YCbCr convertion with color matrix option.\n[ASM][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v2.1.0","RGB <-> YCbCr convertion with color matrix option.\n[ASM][SSE2] Optimised.");

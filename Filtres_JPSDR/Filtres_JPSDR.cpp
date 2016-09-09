@@ -3,8 +3,12 @@
 
 
 #include "VideoFilterEntry.h"
+#include "ThreadPoolInterface.h"
+
+ThreadPoolInterface *poolInterface;
 
 VDX_DECLARE_VIDEOFILTERS_BEGIN()
+	poolInterface=ThreadPoolInterface::Init(2);
 	VDX_DECLARE_VIDEOFILTER(filterDef_JPSDR_Deinterlace)
 	VDX_DECLARE_VIDEOFILTER(filterDef_JPSDR_Saturation)
 	VDX_DECLARE_VIDEOFILTER(filterDef_JPSDR_IVTC)

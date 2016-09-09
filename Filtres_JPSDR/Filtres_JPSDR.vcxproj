@@ -2243,6 +2243,8 @@
     <ClCompile Include="int128.cpp" />
     <ClCompile Include="math.cpp" />
     <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="ThreadPool.cpp" />
+    <ClCompile Include="ThreadPoolInterface.cpp" />
     <ClCompile Include="VideoFilter.cpp" />
     <ClCompile Include="VideoFilterDialog.cpp" />
     <ClCompile Include="VideoFilterEntry.cpp" />
@@ -3637,6 +3639,9 @@
     <ClInclude Include="math.h" />
     <ClInclude Include="Pascal.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="ThreadPool.h" />
+    <ClInclude Include="ThreadPoolDef.h" />
+    <ClInclude Include="ThreadPoolInterface.h" />
     <ClInclude Include="Unknown.h" />
     <ClInclude Include="vdplugin.h" />
     <ClInclude Include="vdtypes.h" />

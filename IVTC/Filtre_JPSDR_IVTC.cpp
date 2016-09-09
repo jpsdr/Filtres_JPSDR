@@ -12,7 +12,11 @@
 
 #include "..\asmlib\asmlib.h"
 
+#include "..\Filtres_JPSDR\ThreadPoolInterface.h"
+
 extern int g_VFVAPIVersion;
+
+extern ThreadPoolInterface *poolInterface;
 
 extern "C" int IInstrSet;
 
@@ -184,8 +188,6 @@ extern "C" void JPSDR_IVTC_Convert_UYVY_to_RGB32_SSE2_2(const void *src,void *ds
 #define Interlaced_Tab_Size 3
 #define Threshold_Convert 4
 
-#define MAX_MT_THREADS 128
-
 typedef struct _IVTC_Data_Flags
 {
 	bool ivtc,ivtc_map,pic,error,interlace,rev,first,last,chg_sc,chg_sc_p1;
@@ -226,14 +228,6 @@ typedef struct _IVTC_Flags
 } IVTC_Flags;
 
 
-typedef struct _Arch_CPU
-{
-	uint8_t NbPhysCore,NbLogicCPU;
-	uint8_t NbHT[64];
-	ULONG_PTR ProcMask[64];
-} Arch_CPU;
-
-
 typedef struct _MT_Data_Info
 {
 	void *src1,*src2,*src3,*src4;
@@ -253,132 +247,6 @@ typedef struct _MT_Data_Info
 	int32_t data_i32;
 } MT_Data_Info;
 
-
-typedef struct _MT_Data_Thread
-{
-	void *pClass;
-	uint8_t f_process,thread_Id;
-	HANDLE nextJob, jobFinished;
-} MT_Data_Thread;
-
-
-// Helper function to count set bits in the processor mask.
-static uint8_t CountSetBits(ULONG_PTR bitMask)
-{
-    DWORD LSHIFT = sizeof(ULONG_PTR)*8 - 1;
-    uint8_t bitSetCount = 0;
-    ULONG_PTR bitTest = (ULONG_PTR)1 << LSHIFT;    
-    DWORD i;
-    
-    for (i = 0; i <= LSHIFT; ++i)
-    {
-        bitSetCount += ((bitMask & bitTest)?1:0);
-        bitTest/=2;
-    }
-
-    return bitSetCount;
-}
-
-
-static void Get_CPU_Info(Arch_CPU& cpu)
-{
-    bool done = false;
-    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buffer=NULL;
-    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION ptr=NULL;
-    DWORD returnLength=0;
-    uint8_t logicalProcessorCount=0;
-    uint8_t processorCoreCount=0;
-    DWORD byteOffset=0;
-
-	cpu.NbLogicCPU=0;
-	cpu.NbPhysCore=0;
-
-    while (!done)
-    {
-        BOOL rc=GetLogicalProcessorInformation(buffer, &returnLength);
-
-        if (rc==FALSE) 
-        {
-            if (GetLastError()==ERROR_INSUFFICIENT_BUFFER) 
-            {
-                myfree(buffer);
-                buffer=(PSYSTEM_LOGICAL_PROCESSOR_INFORMATION)malloc(returnLength);
-
-                if (buffer==NULL) return;
-            } 
-            else
-			{
-				myfree(buffer);
-				return;
-			}
-        } 
-        else done=true;
-    }
-
-    ptr=buffer;
-
-    while ((byteOffset+sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION))<=returnLength) 
-    {
-        switch (ptr->Relationship) 
-        {
-			case RelationProcessorCore :
-	            // A hyperthreaded core supplies more than one logical processor.
-				cpu.NbHT[processorCoreCount]=CountSetBits(ptr->ProcessorMask);
-		        logicalProcessorCount+=cpu.NbHT[processorCoreCount];
-				cpu.ProcMask[processorCoreCount++]=ptr->ProcessorMask;
-			    break;
-			default : break;
-        }
-        byteOffset+=sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
-        ptr++;
-    }
-	free(buffer);
-
-	cpu.NbPhysCore=processorCoreCount;
-	cpu.NbLogicCPU=logicalProcessorCount;
-}
-
-
-static ULONG_PTR GetCPUMask(ULONG_PTR bitMask, uint8_t CPU_Nb)
-{
-    uint8_t LSHIFT=sizeof(ULONG_PTR)*8-1;
-    uint8_t i=0,bitSetCount=0;
-    ULONG_PTR bitTest=1;    
-
-	CPU_Nb++;
-	while (i<=LSHIFT)
-	{
-		if ((bitMask & bitTest)!=0) bitSetCount++;
-		if (bitSetCount==CPU_Nb) return(bitTest);
-		else
-		{
-			i++;
-			bitTest<<=1;
-		}
-	}
-	return(0);
-}
-
-
-static void CreateThreadsMasks(Arch_CPU cpu, ULONG_PTR *TabMask,uint8_t NbThread)
-{
-	memset(TabMask,0,NbThread*sizeof(ULONG_PTR));
-
-	if ((cpu.NbLogicCPU==0) || (cpu.NbPhysCore==0)) return;
-
-	uint8_t current_thread=0;
-
-	for(uint8_t i=0; i<cpu.NbPhysCore; i++)
-	{
-		uint8_t Nb_Core_Th=NbThread/cpu.NbPhysCore+( ((NbThread%cpu.NbPhysCore)>i) ? 1:0 );
-
-		if (Nb_Core_Th>0)
-		{
-			for(uint8_t j=0; j<Nb_Core_Th; j++)
-				TabMask[current_thread++]=GetCPUMask(cpu.ProcMask[i],j%cpu.NbHT[i]);
-		}
-	}
-}
 
 
 class JPSDR_IVTCData
@@ -629,9 +497,6 @@ public:
 	
 	VDXVF_DECLARE_SCRIPT_METHODS();
 
-private:
-	static DWORD WINAPI StaticThreadpool( LPVOID lpParam );
-	
 protected:
 	Image_Data image_data;	
 	void *error_Fields[Error_Fields_Size];
@@ -661,15 +526,18 @@ protected:
 
 	size_t CPU_Cache_Size,Cache_Setting;
 
-	HANDLE thds[MAX_MT_THREADS];
-	MT_Data_Thread MT_Thread[MAX_MT_THREADS];
+	Public_MT_Data_Thread MT_Thread[MAX_MT_THREADS];
 	MT_Data_Info MT_Data[MAX_MT_THREADS];
-	DWORD tids[MAX_MT_THREADS];
-	Arch_CPU CPU;
-	ULONG_PTR ThreadMask[MAX_MT_THREADS];
 	uint8_t threads_number;
+	bool threadpoolAllocated;
+	uint16_t UserId;
+
 	uint32_t histogramme_MT[MAX_MT_THREADS][256];
 	uint32_t repartition_MT[MAX_MT_THREADS][256];
+
+	ThreadPoolFunction StaticThreadpoolF;
+
+	static void StaticThreadpool(void *ptr);
 
 	uint8_t CreateMTData(uint8_t max_threads,int32_t src_size_x,int32_t src_size_y,int32_t dst_size_x,int32_t dst_size_y,bool src_UV_w,bool src_UV_h,bool dst_UV_w,bool dst_UV_h);
 	uint8_t CreateMTData(uint8_t max_threads,uint32_t size);
@@ -917,13 +785,12 @@ bool JPSDR_IVTC::Init()
 		MT_Thread[i].pClass=NULL;
 		MT_Thread[i].f_process=0;
 		MT_Thread[i].thread_Id=(uint8_t)i;
-		MT_Thread[i].jobFinished=NULL;
-		MT_Thread[i].nextJob=NULL;
-		thds[i]=NULL;
+		MT_Thread[i].pFunc=NULL;
 	}
 
-	Get_CPU_Info(CPU);
 	threads_number=1;
+	threadpoolAllocated=false;
+	UserId=0;
 
 	return(true);
 }
@@ -1262,12 +1129,12 @@ void JPSDR_IVTC::Start()
 		ff->Except("This virtualdub version doesn't support this filter !");
 	}
 
-	if ((CPU.NbLogicCPU==0) || (CPU.NbPhysCore==0))
+	if (!poolInterface->GetThreadPoolInterfaceStatus())
 	{
-		ff->Except("Error getting system CPU information !");
+		ff->Except("Error with the TheadPool status !");
 		return;
 	}
-	
+
 	const VDXPixmapLayout& pxdst=*fa->dst.mpPixmapLayout;
 	const VDXPixmapLayout& pxsrc=*fa->src.mpPixmapLayout;
 
@@ -2895,7 +2762,14 @@ void JPSDR_IVTC::Start()
 	}
 
 	if (mData.mt_mode && ((idata.src_h0>=32) && (idata.dst_h0>=32)))
-		threads_number=((CPU.NbLogicCPU>MAX_MT_THREADS) ? MAX_MT_THREADS:CPU.NbLogicCPU);
+	{
+		threads_number=poolInterface->GetThreadNumber(0,true);
+		if (threads_number==0)
+		{
+			ff->Except("Error with the TheadPool while getting CPU info !");
+			return;
+		}
+	}
 	else threads_number=1;
 
 	buffer_delta=(void *)_aligned_malloc(idata.src_h0*idata.src_w0*4,ALIGN_SIZE); // Taille RGB32
@@ -3039,47 +2913,6 @@ void JPSDR_IVTC::Start()
 		return;
 	}
 
-	CreateThreadsMasks(CPU,ThreadMask,threads_number);
-
-	if (threads_number>1)
-	{
-		test=true;
-		i=0;
-		while ((i<threads_number) && test)
-		{
-			MT_Thread[i].pClass=this;
-			MT_Thread[i].f_process=0;
-			MT_Thread[i].jobFinished=CreateEvent(NULL,TRUE,TRUE,NULL);
-			MT_Thread[i].nextJob=CreateEvent(NULL,TRUE,FALSE,NULL);
-			test=test && ((MT_Thread[i].jobFinished!=NULL) && (MT_Thread[i].nextJob!=NULL));
-			i++;
-		}
-		if (!test)
-		{
-			ff->Except("Unable to create handles !");
-			return;
-		}
-
-		test=true;
-		i=0;
-		while ((i<threads_number) && test)
-		{
-			thds[i]=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)StaticThreadpool,&MT_Thread[i],CREATE_SUSPENDED,&tids[i]);
-			test=test && (thds[i]!=NULL);
-			if (test)
-			{
-				SetThreadAffinityMask(thds[i],ThreadMask[i]);
-				ResumeThread(thds[i]);
-			}
-			i++;
-		}
-		if (!test)
-		{
-			ff->Except("Unable to create threads pool !");
-			return;
-		}
-	}
-
 	for (i=0; i<Error_Index_Size; i++)
 		error_index[i]=(uint8_t)i;
 	for (i=0; i<Write_Index_Size; i++)
@@ -3157,6 +2990,26 @@ void JPSDR_IVTC::Start()
 					manual.bufferRGB32[i]=buffer[i].frameRGB32;
 					break;
 			}
+		}
+	}
+
+	if (threads_number>1)
+	{
+		StaticThreadpoolF=StaticThreadpool;
+
+		for (i=0; i<threads_number; i++)
+		{
+			MT_Thread[i].pClass=this;
+			MT_Thread[i].f_process=0;
+			MT_Thread[i].thread_Id=(uint8_t)i;
+			MT_Thread[i].pFunc=StaticThreadpoolF;
+		}
+		if (!threadpoolAllocated)
+			threadpoolAllocated=poolInterface->AllocateThreads(UserId,threads_number,0,0,true,false,1);
+		if (!threadpoolAllocated)
+		{			
+			ff->Except("Error with the TheadPool while allocating threadpool !");
+			return;
 		}
 	}
 
@@ -3328,16 +3181,18 @@ void JPSDR_IVTC::Resize_Planar420(const void *_src_y, const void *_src_u, const 
 
 	if (Nb_Threads>1)
 	{
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=10;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=10;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else Resize_Planar420_MT(0);
 }
@@ -3445,19 +3300,21 @@ void JPSDR_IVTC::Convert_YUYV_to_RGB32(const void *src_0, void *dst_0, const int
 
 	if (Nb_Threads>1)
 	{
-		if (SSE2_Enable) f_proc=4;
-		else f_proc=5;
-
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			if (SSE2_Enable) f_proc=4;
+			else f_proc=5;
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else
 	{
@@ -3564,19 +3421,21 @@ void JPSDR_IVTC::Convert_YUYV_to_RGB32(const void *src_0, void *dst_0, const uin
 			MT_Data[i].dst1=(void *)((uint8_t *)MT_Data[i-1].dst1+(MT_Data[i-1].offset << 3));
 		}
 
-		if (SSE2_Enable) f_proc=2;
-		else f_proc=3;
-
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			if (SSE2_Enable) f_proc=2;
+			else f_proc=3;
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else
 	{
@@ -3687,19 +3546,21 @@ void JPSDR_IVTC::Convert_UYVY_to_RGB32(const void *src_0, void *dst_0, const int
 
 	if (Nb_Threads>1)
 	{
-		if (SSE2_Enable) f_proc=8;
-		else f_proc=9;
-
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			if (SSE2_Enable) f_proc=8;
+			else f_proc=9;
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else
 	{
@@ -3808,19 +3669,21 @@ void JPSDR_IVTC::Convert_UYVY_to_RGB32(const void *src_0, void *dst_0, const uin
 
 	if (Nb_Threads>1)
 	{
-		if (SSE2_Enable) f_proc=6;
-		else f_proc=7;
-
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			if (SSE2_Enable) f_proc=6;
+			else f_proc=7;
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else
 	{
@@ -3852,16 +3715,18 @@ void JPSDR_IVTC::Convert_Planar420_to_RGB32(const uint8_t *src_Y,const uint8_t *
 
 	if (Nb_Threads>1)
 	{
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=1;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=1;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else Convert_Automatic_Planar420_to_YUY2(0);
 	Convert_YUYV_to_RGB32(buffer,dst,((w+1)>>1)*h);
@@ -6015,16 +5880,18 @@ void JPSDR_IVTC::Deinterlace_RGB32(const void *src1,const void *src2,void *dst,i
 			}
 		}
 
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else
 	{
@@ -6122,17 +5989,18 @@ void JPSDR_IVTC::Deinterlace_YUYV(const void *src1,const void *src2,void *dst,in
 			}
 		}
 
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
-		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
 
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
+		}
 	}
 	else
 	{
@@ -6236,17 +6104,18 @@ void JPSDR_IVTC::Deinterlace_UYVY(const void *src1,const void *src2,void *dst,in
 			}
 		}
 
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
-		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
 
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
+		}
 	}
 	else
 	{
@@ -6341,16 +6210,19 @@ void JPSDR_IVTC::Deinterlace_Planar(const uint8_t *src1,const uint8_t *src2,uint
 			}
 		}
 
-		for(uint8_t i=0; i<Nb_Threads; i++)
+
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else
 	{
@@ -8244,16 +8116,18 @@ uint32_t JPSDR_IVTC::Norme1_Histogramme_DeltaPicture_RGB32(const void *src1,cons
 		if (Integer_SSE_Enable) f_proc=28;
 		else f_proc=29;
 
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else
 	{
@@ -8281,31 +8155,27 @@ uint32_t JPSDR_IVTC::Norme1_Histogramme_DeltaPicture_RGB32(const void *src1,cons
 
 		f_proc=30;
 
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			A_memset(map,0,(h<<1)*w_map);
+
+			f_proc=31;
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
-
-		A_memset(map,0,(h<<1)*w_map);
-
-		f_proc=31;
-
-		for(uint8_t i=0; i<Nb_Threads; i++)
-		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
-		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else
 		Motion_Map_Filter(map,buffer_map,w,h<<1,w_map);
@@ -8328,19 +8198,21 @@ uint32_t JPSDR_IVTC::Norme1_Histogramme_DeltaPicture_RGB32(const void *src1,cons
 			MT_Data[i].data_i32=w_map;
 		}
 
-		if (Integer_SSE_Enable) f_proc=37;
-		else f_proc=38;
-
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			if (Integer_SSE_Enable) f_proc=37;
+			else f_proc=38;
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 
 		s=0;
 		s_motion_map=0;
@@ -8503,27 +8375,30 @@ void JPSDR_IVTC::Smart_Deinterlace_RGB32(const void *src1_0,const void *src2_0,v
 			MT_Data[i].data_u8=thrs;
 			MT_Data[i].data_i32=w_map;
 		}
-		if (Integer_SSE_Enable)
-		{
-			if (tri_linear) f_proc=44;
-			else f_proc=43;
-		}
-		else
-		{
-			if (tri_linear) f_proc=46;
-			else f_proc=45;
-		}
 
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			if (Integer_SSE_Enable)
+			{
+				if (tri_linear) f_proc=44;
+				else f_proc=43;
+			}
+			else
+			{
+				if (tri_linear) f_proc=46;
+				else f_proc=45;
+			}
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else
 	{
@@ -8562,33 +8437,29 @@ void JPSDR_IVTC::Smart_Deinterlace_RGB32(const void *src1_0,const void *src2_0,v
 				MT_Data[i].data_i32=w_map;
 			}
 
-			f_proc=30;
-
-			for(uint8_t i=0; i<Nb_Threads; i++)
+			if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 			{
-				MT_Thread[i].f_process=f_proc;
-				ResetEvent(MT_Thread[i].jobFinished);
-				SetEvent(MT_Thread[i].nextJob);
+				f_proc=30;
+
+				for(uint8_t i=0; i<Nb_Threads; i++)
+					MT_Thread[i].f_process=f_proc;
+
+				if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+				A_memset(map,0,(h<<1)*w_map);
+
+				f_proc=31;
+
+				for(uint8_t i=0; i<Nb_Threads; i++)
+					MT_Thread[i].f_process=f_proc;
+
+				if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+				for(uint8_t i=0; i<Nb_Threads; i++)
+					MT_Thread[i].f_process=0;
+
+				poolInterface->ReleaseThreadPool(UserId);
 			}
-			for(uint8_t i=0; i<Nb_Threads; i++)
-				WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-			for(uint8_t i=0; i<Nb_Threads; i++)
-				MT_Thread[i].f_process=0;
-
-			A_memset(map,0,(h<<1)*w_map);
-
-			f_proc=31;
-
-			for(uint8_t i=0; i<Nb_Threads; i++)
-			{
-				MT_Thread[i].f_process=f_proc;
-				ResetEvent(MT_Thread[i].jobFinished);
-				SetEvent(MT_Thread[i].nextJob);
-			}
-			for(uint8_t i=0; i<Nb_Threads; i++)
-				WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-			for(uint8_t i=0; i<Nb_Threads; i++)
-				MT_Thread[i].f_process=0;
 		}
 		else
 			Motion_Map_Filter(map,buffer_map,w,h<<1,w_map);
@@ -8610,16 +8481,18 @@ void JPSDR_IVTC::Smart_Deinterlace_RGB32(const void *src1_0,const void *src2_0,v
 
 	if (Nb_Threads>1)
 	{
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=47;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=47;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else Smart_Deinterlace_RGB32_MT(0);
 
@@ -8716,16 +8589,18 @@ void JPSDR_IVTC::Smart_Deinterlace_YUYV(const void *src1_0,const void *src2_0,vo
 			f_proc=39;
 		}
 
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else
 	{
@@ -8754,33 +8629,29 @@ void JPSDR_IVTC::Smart_Deinterlace_YUYV(const void *src1_0,const void *src2_0,vo
 				MT_Data[i].data_i32=w_map;
 			}
 
-			f_proc=30;
-
-			for(uint8_t i=0; i<Nb_Threads; i++)
+			if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 			{
-				MT_Thread[i].f_process=f_proc;
-				ResetEvent(MT_Thread[i].jobFinished);
-				SetEvent(MT_Thread[i].nextJob);
+				f_proc=30;
+
+				for(uint8_t i=0; i<Nb_Threads; i++)
+					MT_Thread[i].f_process=f_proc;
+
+				if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+				A_memset(map,0,(h<<1)*w_map);
+
+				f_proc=31;
+
+				for(uint8_t i=0; i<Nb_Threads; i++)
+					MT_Thread[i].f_process=f_proc;
+
+				if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+				for(uint8_t i=0; i<Nb_Threads; i++)
+					MT_Thread[i].f_process=0;
+
+				poolInterface->ReleaseThreadPool(UserId);
 			}
-			for(uint8_t i=0; i<Nb_Threads; i++)
-				WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-			for(uint8_t i=0; i<Nb_Threads; i++)
-				MT_Thread[i].f_process=0;
-
-			A_memset(map,0,(h<<1)*w_map);
-
-			f_proc=31;
-
-			for(uint8_t i=0; i<Nb_Threads; i++)
-			{
-				MT_Thread[i].f_process=f_proc;
-				ResetEvent(MT_Thread[i].jobFinished);
-				SetEvent(MT_Thread[i].nextJob);
-			}
-			for(uint8_t i=0; i<Nb_Threads; i++)
-				WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-			for(uint8_t i=0; i<Nb_Threads; i++)
-				MT_Thread[i].f_process=0;
 		}
 		else
 			Motion_Map_Filter(map,buffer_map,w,h<<1,w_map);
@@ -8802,16 +8673,18 @@ void JPSDR_IVTC::Smart_Deinterlace_YUYV(const void *src1_0,const void *src2_0,vo
 
 	if (Nb_Threads>1)
 	{
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=48;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=48;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else Smart_Deinterlace_YUYV_MT(0);
 
@@ -8910,16 +8783,18 @@ void JPSDR_IVTC::Smart_Deinterlace_UYVY(const void *src1_0,const void *src2_0,vo
 			f_proc=39;
 		}
 
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else
 	{
@@ -8948,33 +8823,29 @@ void JPSDR_IVTC::Smart_Deinterlace_UYVY(const void *src1_0,const void *src2_0,vo
 				MT_Data[i].data_i32=w_map;
 			}
 
-			f_proc=30;
-
-			for(uint8_t i=0; i<Nb_Threads; i++)
+			if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 			{
-				MT_Thread[i].f_process=f_proc;
-				ResetEvent(MT_Thread[i].jobFinished);
-				SetEvent(MT_Thread[i].nextJob);
+				f_proc=30;
+
+				for(uint8_t i=0; i<Nb_Threads; i++)
+					MT_Thread[i].f_process=f_proc;
+
+				if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+				A_memset(map,0,(h<<1)*w_map);
+
+				f_proc=31;
+
+				for(uint8_t i=0; i<Nb_Threads; i++)
+					MT_Thread[i].f_process=f_proc;
+
+				if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+				for(uint8_t i=0; i<Nb_Threads; i++)
+					MT_Thread[i].f_process=0;
+
+				poolInterface->ReleaseThreadPool(UserId);
 			}
-			for(uint8_t i=0; i<Nb_Threads; i++)
-				WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-			for(uint8_t i=0; i<Nb_Threads; i++)
-				MT_Thread[i].f_process=0;
-
-			A_memset(map,0,(h<<1)*w_map);
-
-			f_proc=31;
-
-			for(uint8_t i=0; i<Nb_Threads; i++)
-			{
-				MT_Thread[i].f_process=f_proc;
-				ResetEvent(MT_Thread[i].jobFinished);
-				SetEvent(MT_Thread[i].nextJob);
-			}
-			for(uint8_t i=0; i<Nb_Threads; i++)
-				WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-			for(uint8_t i=0; i<Nb_Threads; i++)
-				MT_Thread[i].f_process=0;
 		}
 		else
 			Motion_Map_Filter(map,buffer_map,w,h<<1,w_map);
@@ -8996,16 +8867,18 @@ void JPSDR_IVTC::Smart_Deinterlace_UYVY(const void *src1_0,const void *src2_0,vo
 
 	if (Nb_Threads>1)
 	{
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=49;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=49;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else Smart_Deinterlace_UYVY_MT(0);
 
@@ -9163,16 +9036,18 @@ void JPSDR_IVTC::Smart_Deinterlace_Planar420(const uint8_t *src1_Y,const uint8_t
 			f_proc=39;
 		}
 
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else
 	{
@@ -9201,33 +9076,29 @@ void JPSDR_IVTC::Smart_Deinterlace_Planar420(const uint8_t *src1_Y,const uint8_t
 				MT_Data[i].data_i32=w_map;
 			}
 
-			f_proc=30;
-
-			for(uint8_t i=0; i<Nb_Threads; i++)
+			if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 			{
-				MT_Thread[i].f_process=f_proc;
-				ResetEvent(MT_Thread[i].jobFinished);
-				SetEvent(MT_Thread[i].nextJob);
+				f_proc=30;
+
+				for(uint8_t i=0; i<Nb_Threads; i++)
+					MT_Thread[i].f_process=f_proc;
+
+				if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+				A_memset(map,0,(h_Y<<1)*w_map);
+
+				f_proc=31;
+
+				for(uint8_t i=0; i<Nb_Threads; i++)
+					MT_Thread[i].f_process=f_proc;
+
+				if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+				for(uint8_t i=0; i<Nb_Threads; i++)
+					MT_Thread[i].f_process=0;
+
+				poolInterface->ReleaseThreadPool(UserId);
 			}
-			for(uint8_t i=0; i<Nb_Threads; i++)
-				WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-			for(uint8_t i=0; i<Nb_Threads; i++)
-				MT_Thread[i].f_process=0;
-
-			A_memset(map,0,(h_Y<<1)*w_map);
-
-			f_proc=31;
-
-			for(uint8_t i=0; i<Nb_Threads; i++)
-			{
-				MT_Thread[i].f_process=f_proc;
-				ResetEvent(MT_Thread[i].jobFinished);
-				SetEvent(MT_Thread[i].nextJob);
-			}
-			for(uint8_t i=0; i<Nb_Threads; i++)
-				WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-			for(uint8_t i=0; i<Nb_Threads; i++)
-				MT_Thread[i].f_process=0;
 		}
 		else
 			Motion_Map_Filter(map,buffer_map,w_Y,h_Y<<1,w_map);
@@ -9249,16 +9120,18 @@ void JPSDR_IVTC::Smart_Deinterlace_Planar420(const uint8_t *src1_Y,const uint8_t
 
 	if (Nb_Threads>1)
 	{
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=50;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=50;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else Smart_Deinterlace_Planar420_MT_Y(0);
 
@@ -9280,17 +9153,18 @@ void JPSDR_IVTC::Smart_Deinterlace_Planar420(const uint8_t *src1_Y,const uint8_t
 
 		if (Nb_Threads>1)
 		{
-
-			for(uint8_t i=0; i<Nb_Threads; i++)
+			if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 			{
-				MT_Thread[i].f_process=51;
-				ResetEvent(MT_Thread[i].jobFinished);
-				SetEvent(MT_Thread[i].nextJob);
+				for(uint8_t i=0; i<Nb_Threads; i++)
+					MT_Thread[i].f_process=51;
+
+				if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+				for(uint8_t i=0; i<Nb_Threads; i++)
+					MT_Thread[i].f_process=0;
+
+				poolInterface->ReleaseThreadPool(UserId);
 			}
-			for(uint8_t i=0; i<Nb_Threads; i++)
-				WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-			for(uint8_t i=0; i<Nb_Threads; i++)
-				MT_Thread[i].f_process=0;
 		}
 		else Smart_Deinterlace_Planar420_MT_UV(0);
 
@@ -9310,17 +9184,18 @@ void JPSDR_IVTC::Smart_Deinterlace_Planar420(const uint8_t *src1_Y,const uint8_t
 
 		if (Nb_Threads>1)
 		{
-
-			for(uint8_t i=0; i<Nb_Threads; i++)
+			if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 			{
-				MT_Thread[i].f_process=51;
-				ResetEvent(MT_Thread[i].jobFinished);
-				SetEvent(MT_Thread[i].nextJob);
+				for(uint8_t i=0; i<Nb_Threads; i++)
+					MT_Thread[i].f_process=51;
+
+				if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+				for(uint8_t i=0; i<Nb_Threads; i++)
+					MT_Thread[i].f_process=0;
+
+				poolInterface->ReleaseThreadPool(UserId);
 			}
-			for(uint8_t i=0; i<Nb_Threads; i++)
-				WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-			for(uint8_t i=0; i<Nb_Threads; i++)
-				MT_Thread[i].f_process=0;
 		}
 		else Smart_Deinterlace_Planar420_MT_UV(0);
 	}
@@ -9403,19 +9278,21 @@ uint32_t JPSDR_IVTC::Norme1_Motion_Map_RGB32(const void *src1,const void *src2,v
 			MT_Data[i].data_i32=w_map;
 		}
 
-		if (Integer_SSE_Enable) f_proc=28;
-		else f_proc=29;
-
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			if (Integer_SSE_Enable) f_proc=28;
+			else f_proc=29;
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else
 	{
@@ -9441,33 +9318,29 @@ uint32_t JPSDR_IVTC::Norme1_Motion_Map_RGB32(const void *src1,const void *src2,v
 			MT_Data[i].data_i32=w_map;
 		}
 
-		f_proc=30;
-
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			f_proc=30;
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			A_memset(map,0,(h<<1)*w_map);
+
+			f_proc=31;
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
-
-		A_memset(map,0,(h<<1)*w_map);
-
-		f_proc=31;
-
-		for(uint8_t i=0; i<Nb_Threads; i++)
-		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
-		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 	}
 	else
 		Motion_Map_Filter(map,buffer_map,w,h<<1,w_map);
@@ -9485,19 +9358,21 @@ uint32_t JPSDR_IVTC::Norme1_Motion_Map_RGB32(const void *src1,const void *src2,v
 			MT_Data[i].data_i32=w_map;
 		}
 
-		if (Integer_SSE_Enable) f_proc=32;
-		else f_proc=33;
-
-		for(uint8_t i=0; i<Nb_Threads; i++)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			if (Integer_SSE_Enable) f_proc=32;
+			else f_proc=33;
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 
 		s=0;
 		s_motion_map=0;
@@ -9677,23 +9552,25 @@ uint32_t JPSDR_IVTC::Norme1_RGB32(const void *src1_0,const void *src2_0,const in
 			MT_Data[i].src_modulo1=modulo;
 		}
 
-		if (Integer_SSE_Enable)
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
 		{
-			if ((w&0x01)!=0) f_proc=35;
-			else f_proc=34;
-		}
-		else f_proc=36;
+			if (Integer_SSE_Enable)
+			{
+				if ((w&0x01)!=0) f_proc=35;
+				else f_proc=34;
+			}
+			else f_proc=36;
 
-		for(uint8_t i=0; i<Nb_Threads; i++)
-		{
-			MT_Thread[i].f_process=f_proc;
-			ResetEvent(MT_Thread[i].jobFinished);
-			SetEvent(MT_Thread[i].nextJob);
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=f_proc;
+
+			if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+			for(uint8_t i=0; i<Nb_Threads; i++)
+				MT_Thread[i].f_process=0;
+
+			poolInterface->ReleaseThreadPool(UserId);
 		}
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-		for(uint8_t i=0; i<Nb_Threads; i++)
-			MT_Thread[i].f_process=0;
 
 		s=0;
 		for(uint8_t i=0; i<Nb_Threads; i++)
@@ -9741,123 +9618,116 @@ uint32_t JPSDR_IVTC::Norme1_RGB32(const void *src1_0,const void *src2_0,const in
 }
 
 
-DWORD WINAPI JPSDR_IVTC::StaticThreadpool( LPVOID lpParam )
+void JPSDR_IVTC::StaticThreadpool(void *ptr)
 {
-	MT_Data_Thread *data=(MT_Data_Thread *)lpParam;
+	const Public_MT_Data_Thread *data=(const Public_MT_Data_Thread *)ptr;
 	JPSDR_IVTC *ptrClass=(JPSDR_IVTC *)data->pClass;
 
-	while (true)
+	switch(data->f_process)
 	{
-		WaitForSingleObject(data->nextJob,INFINITE);
-		switch(data->f_process)
-		{
-			case 1 : ptrClass->Convert_Automatic_Planar420_to_YUY2(data->thread_Id);
-				break;
-			case 2 : ptrClass->JPSDR_IVTC_Convert_YUYV_to_RGB32_SSE2_MT(data->thread_Id);
-				break;
-			case 3 : ptrClass->JPSDR_IVTC_Convert_YUYV_to_RGB32_1_MT(data->thread_Id);
-				break;
-			case 4 : ptrClass->JPSDR_IVTC_Convert_YUYV_to_RGB32_SSE2_2_MT(data->thread_Id);
-				break;
-			case 5 : ptrClass->JPSDR_IVTC_Convert_YUYV_to_RGB32_2_MT(data->thread_Id);
-				break;
-			case 6 : ptrClass->JPSDR_IVTC_Convert_UYVY_to_RGB32_SSE2_MT(data->thread_Id);
-				break;
-			case 7 : ptrClass->JPSDR_IVTC_Convert_UYVY_to_RGB32_1_MT(data->thread_Id);
-				break;
-			case 8 : ptrClass->JPSDR_IVTC_Convert_UYVY_to_RGB32_SSE2_2_MT(data->thread_Id);
-				break;
-			case 9 : ptrClass->JPSDR_IVTC_Convert_UYVY_to_RGB32_2_MT(data->thread_Id);
-				break;
-			case 10 : ptrClass->Resize_Planar420_MT(data->thread_Id);
-				break;
-			case 11 : ptrClass->Deinterlace_Tri_Blend_RGB32_MT(data->thread_Id);
-				break;
-			case 12 : ptrClass->Deinterlace_Tri_Blend_SSE_MT(data->thread_Id);
-				break;
-			case 13 : ptrClass->Deinterlace_Tri_Blend_MMX_MT(data->thread_Id);
-				break;
-			case 14 : ptrClass->Deinterlace_Tri_Blend_YUYV_MT(data->thread_Id);
-				break;
-			case 15 : ptrClass->Deinterlace_Tri_Blend_YUYV_Y_MT(data->thread_Id);
-				break;
-			case 16 : ptrClass->Deinterlace_Tri_Blend_UYVY_MT(data->thread_Id);
-				break;
-			case 17 : ptrClass->Deinterlace_Tri_Blend_UYVY_Y_MT(data->thread_Id);
-				break;
-			case 18 : ptrClass->Deinterlace_Tri_Blend_Planar_MT(data->thread_Id);
-				break;
-			case 19 : ptrClass->Deinterlace_Blend_Non_MMX_RGB32_MT(data->thread_Id);
-				break;
-			case 20 : ptrClass->Deinterlace_Blend_SSE_MT(data->thread_Id);
-				break;
-			case 21 : ptrClass->Deinterlace_Blend_SSE_2_MT(data->thread_Id);
-				break;
-			case 22 : ptrClass->Deinterlace_Blend_SSE_3_MT(data->thread_Id);
-				break;
-			case 23 : ptrClass->Deinterlace_Blend_YUYV_MT(data->thread_Id);
-				break;
-			case 24 : ptrClass->Deinterlace_Blend_YUYV_Y_MT(data->thread_Id);
-				break;
-			case 25 : ptrClass->Deinterlace_Blend_UYVY_MT(data->thread_Id);
-				break;
-			case 26 : ptrClass->Deinterlace_Blend_UYVY_Y_MT(data->thread_Id);
-				break;
-			case 27 : ptrClass->Deinterlace_Blend_Planar_MT(data->thread_Id);
-				break;
-			case 28 : ptrClass->Motion_Map_SSE_RGB32_MT(data->thread_Id);
-				break;
-			case 29 : ptrClass->Motion_Map_RGB32_MT(data->thread_Id);
-				break;
-			case 30 : ptrClass->Motion_Map_Filter_MT_1(data->thread_Id);
-				break;
-			case 31 : ptrClass->Motion_Map_Filter_MT_2(data->thread_Id);
-				break;
-			case 32 : ptrClass->DeltaPicture_Motion_Map_SSE_RGB32_MT(data->thread_Id);
-				break;
-			case 33 : ptrClass->Norme1_Motion_Map_RGB32_MT(data->thread_Id);
-				break;
-			case 34 : ptrClass->Norme1_SSE_RGB32_MT_2(data->thread_Id);
-				break;
-			case 35 : ptrClass->Norme1_SSE_RGB32_MT_1(data->thread_Id);
-				break;
-			case 36 : ptrClass->Norme1_RGB32_MT(data->thread_Id);
-				break;
-			case 37 : ptrClass->Histogramme_DeltaPicture_Motion_Map_SSE_RGB32_MT(data->thread_Id);
-				break;
-			case 38 : ptrClass->Histogramme_DeltaPicture_RGB32_MT(data->thread_Id);
-				break;
-			case 39 : ptrClass->Motion_Map_RGB32_2_MT(data->thread_Id);
-				break;
-			case 40 : ptrClass->Motion_Map_YUYV_Y_MT(data->thread_Id);
-				break;
-			case 41 : ptrClass->Motion_Map_UYVY_Y_MT(data->thread_Id);
-				break;
-			case 42 : ptrClass->Motion_Map_Planar420_Y_MT(data->thread_Id);
-				break;
-			case 43 : ptrClass->Smart_Deinterlace_Motion_Map_SSE_RGB32_MT(data->thread_Id);
-				break;
-			case 44 : ptrClass->Smart_Deinterlace_Tri_Motion_Map_SSE_RGB32_MT(data->thread_Id);
-				break;
-			case 45 : ptrClass->Smart_Deinterlace_Motion_Map_RGB32_MT(data->thread_Id);
-				break;
-			case 46 : ptrClass->Smart_Deinterlace_Tri_Motion_Map_RGB32_MT(data->thread_Id);
-				break;
-			case 47 : ptrClass->Smart_Deinterlace_RGB32_MT(data->thread_Id);
-				break;
-			case 48 : ptrClass->Smart_Deinterlace_YUYV_MT(data->thread_Id);
-				break;
-			case 49 : ptrClass->Smart_Deinterlace_UYVY_MT(data->thread_Id);
-				break;
-			case 50 : ptrClass->Smart_Deinterlace_Planar420_MT_Y(data->thread_Id);
-				break;
-			case 51 : ptrClass->Smart_Deinterlace_Planar420_MT_UV(data->thread_Id);
-				break;
-			case 255 : return(0); break;
-			default : break;
-		}
-		ResetEvent(data->nextJob);
-		SetEvent(data->jobFinished);
+		case 1 : ptrClass->Convert_Automatic_Planar420_to_YUY2(data->thread_Id);
+			break;
+		case 2 : ptrClass->JPSDR_IVTC_Convert_YUYV_to_RGB32_SSE2_MT(data->thread_Id);
+			break;
+		case 3 : ptrClass->JPSDR_IVTC_Convert_YUYV_to_RGB32_1_MT(data->thread_Id);
+			break;
+		case 4 : ptrClass->JPSDR_IVTC_Convert_YUYV_to_RGB32_SSE2_2_MT(data->thread_Id);
+			break;
+		case 5 : ptrClass->JPSDR_IVTC_Convert_YUYV_to_RGB32_2_MT(data->thread_Id);
+			break;
+		case 6 : ptrClass->JPSDR_IVTC_Convert_UYVY_to_RGB32_SSE2_MT(data->thread_Id);
+			break;
+		case 7 : ptrClass->JPSDR_IVTC_Convert_UYVY_to_RGB32_1_MT(data->thread_Id);
+			break;
+		case 8 : ptrClass->JPSDR_IVTC_Convert_UYVY_to_RGB32_SSE2_2_MT(data->thread_Id);
+			break;
+		case 9 : ptrClass->JPSDR_IVTC_Convert_UYVY_to_RGB32_2_MT(data->thread_Id);
+			break;
+		case 10 : ptrClass->Resize_Planar420_MT(data->thread_Id);
+			break;
+		case 11 : ptrClass->Deinterlace_Tri_Blend_RGB32_MT(data->thread_Id);
+			break;
+		case 12 : ptrClass->Deinterlace_Tri_Blend_SSE_MT(data->thread_Id);
+			break;
+		case 13 : ptrClass->Deinterlace_Tri_Blend_MMX_MT(data->thread_Id);
+			break;
+		case 14 : ptrClass->Deinterlace_Tri_Blend_YUYV_MT(data->thread_Id);
+			break;
+		case 15 : ptrClass->Deinterlace_Tri_Blend_YUYV_Y_MT(data->thread_Id);
+			break;
+		case 16 : ptrClass->Deinterlace_Tri_Blend_UYVY_MT(data->thread_Id);
+			break;
+		case 17 : ptrClass->Deinterlace_Tri_Blend_UYVY_Y_MT(data->thread_Id);
+			break;
+		case 18 : ptrClass->Deinterlace_Tri_Blend_Planar_MT(data->thread_Id);
+			break;
+		case 19 : ptrClass->Deinterlace_Blend_Non_MMX_RGB32_MT(data->thread_Id);
+			break;
+		case 20 : ptrClass->Deinterlace_Blend_SSE_MT(data->thread_Id);
+			break;
+		case 21 : ptrClass->Deinterlace_Blend_SSE_2_MT(data->thread_Id);
+			break;
+		case 22 : ptrClass->Deinterlace_Blend_SSE_3_MT(data->thread_Id);
+			break;
+		case 23 : ptrClass->Deinterlace_Blend_YUYV_MT(data->thread_Id);
+			break;
+		case 24 : ptrClass->Deinterlace_Blend_YUYV_Y_MT(data->thread_Id);
+			break;
+		case 25 : ptrClass->Deinterlace_Blend_UYVY_MT(data->thread_Id);
+			break;
+		case 26 : ptrClass->Deinterlace_Blend_UYVY_Y_MT(data->thread_Id);
+			break;
+		case 27 : ptrClass->Deinterlace_Blend_Planar_MT(data->thread_Id);
+			break;
+		case 28 : ptrClass->Motion_Map_SSE_RGB32_MT(data->thread_Id);
+			break;
+		case 29 : ptrClass->Motion_Map_RGB32_MT(data->thread_Id);
+			break;
+		case 30 : ptrClass->Motion_Map_Filter_MT_1(data->thread_Id);
+			break;
+		case 31 : ptrClass->Motion_Map_Filter_MT_2(data->thread_Id);
+			break;
+		case 32 : ptrClass->DeltaPicture_Motion_Map_SSE_RGB32_MT(data->thread_Id);
+			break;
+		case 33 : ptrClass->Norme1_Motion_Map_RGB32_MT(data->thread_Id);
+			break;
+		case 34 : ptrClass->Norme1_SSE_RGB32_MT_2(data->thread_Id);
+			break;
+		case 35 : ptrClass->Norme1_SSE_RGB32_MT_1(data->thread_Id);
+			break;
+		case 36 : ptrClass->Norme1_RGB32_MT(data->thread_Id);
+			break;
+		case 37 : ptrClass->Histogramme_DeltaPicture_Motion_Map_SSE_RGB32_MT(data->thread_Id);
+			break;
+		case 38 : ptrClass->Histogramme_DeltaPicture_RGB32_MT(data->thread_Id);
+			break;
+		case 39 : ptrClass->Motion_Map_RGB32_2_MT(data->thread_Id);
+			break;
+		case 40 : ptrClass->Motion_Map_YUYV_Y_MT(data->thread_Id);
+			break;
+		case 41 : ptrClass->Motion_Map_UYVY_Y_MT(data->thread_Id);
+			break;
+		case 42 : ptrClass->Motion_Map_Planar420_Y_MT(data->thread_Id);
+			break;
+		case 43 : ptrClass->Smart_Deinterlace_Motion_Map_SSE_RGB32_MT(data->thread_Id);
+			break;
+		case 44 : ptrClass->Smart_Deinterlace_Tri_Motion_Map_SSE_RGB32_MT(data->thread_Id);
+			break;
+		case 45 : ptrClass->Smart_Deinterlace_Motion_Map_RGB32_MT(data->thread_Id);
+			break;
+		case 46 : ptrClass->Smart_Deinterlace_Tri_Motion_Map_RGB32_MT(data->thread_Id);
+			break;
+		case 47 : ptrClass->Smart_Deinterlace_RGB32_MT(data->thread_Id);
+			break;
+		case 48 : ptrClass->Smart_Deinterlace_YUYV_MT(data->thread_Id);
+			break;
+		case 49 : ptrClass->Smart_Deinterlace_UYVY_MT(data->thread_Id);
+			break;
+		case 50 : ptrClass->Smart_Deinterlace_Planar420_MT_Y(data->thread_Id);
+			break;
+		case 51 : ptrClass->Smart_Deinterlace_Planar420_MT_UV(data->thread_Id);
+			break;
+		default : break;
 	}
 }
 
@@ -15712,25 +15582,6 @@ void JPSDR_IVTC::End()
 	if (fic2) fclose(fic2);
 	if (fic3) fclose(fic3);*/
 
-	if (threads_number>1)
-	{
-		for (i=threads_number-1; i>=0; i--)
-		{
-			if (thds[i]!=NULL)
-			{
-				MT_Thread[i].f_process=255;
-				SetEvent(MT_Thread[i].nextJob);
-				WaitForSingleObject(thds[i],INFINITE);
-				myCloseHandle(thds[i]);
-			}
-		}
-		for (i=threads_number-1; i>=0; i--)
-		{
-			myCloseHandle(MT_Thread[i].nextJob);
-			myCloseHandle(MT_Thread[i].jobFinished);
-		}
-	}
-
 	for (i=Data_Buffer_Size-1; i>=0; i--)
 	{
 		my_aligned_free(buffer[i].frameRGB32Resize);
@@ -15760,6 +15611,13 @@ void JPSDR_IVTC::End()
 	myfree(buffer_2);
 	myfree(buffer_map);
 	my_aligned_free(buffer_delta);
+
+	if (threadpoolAllocated)
+	{
+		poolInterface->DeAllocateThreads(UserId);
+		UserId=0;
+		threadpoolAllocated=false;
+	}
 }
 
 
@@ -15834,5 +15692,5 @@ void JPSDR_IVTC::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_IVTC=
-VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.0.1","IVTC Filter. [MMX][SSE] Optimised.");
+VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.1.0","IVTC Filter. [MMX][SSE] Optimised.");
 

@@ -11,9 +11,11 @@
 
 #include "..\asmlib\asmlib.h"
 
+#include "..\Filtres_JPSDR\ThreadPoolInterface.h"
+
 #define Number_Max_Lines 2048
 
-#define MAX_MT_THREADS 128
+extern ThreadPoolInterface *poolInterface;
 
 extern int g_VFVAPIVersion;
 
@@ -89,14 +91,6 @@ JPSDR_DeinterlaceData::JPSDR_DeinterlaceData(void)
 }
 
 
-typedef struct _Arch_CPU
-{
-	uint8_t NbPhysCore,NbLogicCPU;
-	uint8_t NbHT[64];
-	ULONG_PTR ProcMask[64];
-} Arch_CPU;
-
-
 typedef struct _MT_Data_Info
 {
 	void *src1_0,*src1_1,*src2_0,*src2_1,*src3_0,*src3_1;
@@ -113,133 +107,6 @@ typedef struct _MT_Data_Info
 	bool align1,align2,align3;
 	bool div_h,dec_h;
 } MT_Data_Info;
-
-
-typedef struct _MT_Data_Thread
-{
-	void *pClass;
-	uint8_t f_process,thread_Id;
-	HANDLE nextJob, jobFinished;
-} MT_Data_Thread;
-
-
-// Helper function to count set bits in the processor mask.
-static uint8_t CountSetBits(ULONG_PTR bitMask)
-{
-    DWORD LSHIFT = sizeof(ULONG_PTR)*8 - 1;
-    uint8_t bitSetCount = 0;
-    ULONG_PTR bitTest = (ULONG_PTR)1 << LSHIFT;    
-    DWORD i;
-    
-    for (i = 0; i <= LSHIFT; ++i)
-    {
-        bitSetCount += ((bitMask & bitTest)?1:0);
-        bitTest/=2;
-    }
-
-    return bitSetCount;
-}
-
-
-static void Get_CPU_Info(Arch_CPU& cpu)
-{
-    bool done = false;
-    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buffer=NULL;
-    PSYSTEM_LOGICAL_PROCESSOR_INFORMATION ptr=NULL;
-    DWORD returnLength=0;
-    uint8_t logicalProcessorCount=0;
-    uint8_t processorCoreCount=0;
-    DWORD byteOffset=0;
-
-	cpu.NbLogicCPU=0;
-	cpu.NbPhysCore=0;
-
-    while (!done)
-    {
-        BOOL rc=GetLogicalProcessorInformation(buffer, &returnLength);
-
-        if (rc==FALSE) 
-        {
-            if (GetLastError()==ERROR_INSUFFICIENT_BUFFER) 
-            {
-                myfree(buffer);
-                buffer=(PSYSTEM_LOGICAL_PROCESSOR_INFORMATION)malloc(returnLength);
-
-                if (buffer==NULL) return;
-            } 
-            else
-			{
-				myfree(buffer);
-				return;
-			}
-        } 
-        else done=true;
-    }
-
-    ptr=buffer;
-
-    while ((byteOffset+sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION))<=returnLength) 
-    {
-        switch (ptr->Relationship) 
-        {
-			case RelationProcessorCore :
-	            // A hyperthreaded core supplies more than one logical processor.
-				cpu.NbHT[processorCoreCount]=CountSetBits(ptr->ProcessorMask);
-		        logicalProcessorCount+=cpu.NbHT[processorCoreCount];
-				cpu.ProcMask[processorCoreCount++]=ptr->ProcessorMask;
-			    break;
-			default : break;
-        }
-        byteOffset+=sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
-        ptr++;
-    }
-	free(buffer);
-
-	cpu.NbPhysCore=processorCoreCount;
-	cpu.NbLogicCPU=logicalProcessorCount;
-}
-
-
-static ULONG_PTR GetCPUMask(ULONG_PTR bitMask, uint8_t CPU_Nb)
-{
-    uint8_t LSHIFT=sizeof(ULONG_PTR)*8-1;
-    uint8_t i=0,bitSetCount=0;
-    ULONG_PTR bitTest=1;    
-
-	CPU_Nb++;
-	while (i<=LSHIFT)
-	{
-		if ((bitMask & bitTest)!=0) bitSetCount++;
-		if (bitSetCount==CPU_Nb) return(bitTest);
-		else
-		{
-			i++;
-			bitTest<<=1;
-		}
-	}
-	return(0);
-}
-
-
-static void CreateThreadsMasks(Arch_CPU cpu, ULONG_PTR *TabMask,uint8_t NbThread)
-{
-	memset(TabMask,0,NbThread*sizeof(ULONG_PTR));
-
-	if ((cpu.NbLogicCPU==0) || (cpu.NbPhysCore==0)) return;
-
-	uint8_t current_thread=0;
-
-	for(uint8_t i=0; i<cpu.NbPhysCore; i++)
-	{
-		uint8_t Nb_Core_Th=NbThread/cpu.NbPhysCore+( ((NbThread%cpu.NbPhysCore)>i) ? 1:0 );
-
-		if (Nb_Core_Th>0)
-		{
-			for(uint8_t j=0; j<Nb_Core_Th; j++)
-				TabMask[current_thread++]=GetCPUMask(cpu.ProcMask[i],j%cpu.NbHT[i]);
-		}
-	}
-}
 
 
 class JPSDR_DeinterlaceDialog : public VDXVideoFilterDialog
@@ -528,9 +395,6 @@ public:
 	
 	VDXVF_DECLARE_SCRIPT_METHODS();
 
-private:
-	static DWORD WINAPI StaticThreadpool( LPVOID lpParam );
-	
 protected:
 	Image_Data image_data;
 	Yadif_Buffer tab_Yadif[3];
@@ -546,13 +410,15 @@ protected:
 	bool SSE2_Enable;
 	size_t CPU_Cache_Size,Cache_Setting;
 
-	HANDLE thds[MAX_MT_THREADS];
-	MT_Data_Thread MT_Thread[MAX_MT_THREADS];
+	Public_MT_Data_Thread MT_Thread[MAX_MT_THREADS];
 	MT_Data_Info MT_Data[MAX_MT_THREADS];
-	DWORD tids[MAX_MT_THREADS];
-	Arch_CPU CPU;
-	ULONG_PTR ThreadMask[MAX_MT_THREADS];
 	uint8_t threads_number;
+	bool threadpoolAllocated;
+	uint16_t UserId;
+
+	ThreadPoolFunction StaticThreadpoolF;
+
+	static void StaticThreadpool(void *ptr);
 
 	uint8_t CreateMTData(uint8_t max_threads,int32_t size_x,int32_t size_y,uint8_t div_x,uint8_t div_y,uint8_t _32bits);
 
@@ -689,13 +555,12 @@ bool JPSDR_Deinterlace::Init()
 		MT_Thread[i].pClass=NULL;
 		MT_Thread[i].f_process=0;
 		MT_Thread[i].thread_Id=(uint8_t)i;
-		MT_Thread[i].jobFinished=NULL;
-		MT_Thread[i].nextJob=NULL;
-		thds[i]=NULL;
+		MT_Thread[i].pFunc=NULL;
 	}
 
-	Get_CPU_Info(CPU);
 	threads_number=1;
+	threadpoolAllocated=false;
+	UserId=0;
 
 	return(true);
 }
@@ -1240,9 +1105,9 @@ void JPSDR_Deinterlace::Start()
 		ff->Except("This virtualdub version doesn't support this configuration filter !");
 	}
 
-	if ((CPU.NbLogicCPU==0) || (CPU.NbPhysCore==0))
+	if (!poolInterface->GetThreadPoolInterfaceStatus())
 	{
-		ff->Except("Error getting system CPU information !");
+		ff->Except("Error with the TheadPool status !");
 		return;
 	}
 
@@ -2856,7 +2721,14 @@ void JPSDR_Deinterlace::Start()
 
 	if ((!mData.file_mode) && mData.mt_mode && (mData.mode<5) &&
 		((idata.src_h0>=32) && (idata.dst_h0>=32)))
-		threads_number=((CPU.NbLogicCPU>MAX_MT_THREADS) ? MAX_MT_THREADS:CPU.NbLogicCPU);
+	{
+		threads_number=poolInterface->GetThreadNumber(0,true);
+		if (threads_number==0)
+		{
+			ff->Except("Error with the TheadPool while getting CPU info !");
+			return;
+		}
+	}
 	else threads_number=1;
 
 	switch (idata.src_video_mode)
@@ -2888,47 +2760,6 @@ void JPSDR_Deinterlace::Start()
 		default :
 			threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,0,0,0);
 			break;
-	}
-
-	CreateThreadsMasks(CPU,ThreadMask,threads_number);
-
-	if (threads_number>1)
-	{
-		buff_ok=true;
-		i=0;
-		while ((i<threads_number) && buff_ok)
-		{
-			MT_Thread[i].pClass=this;
-			MT_Thread[i].f_process=0;
-			MT_Thread[i].jobFinished=CreateEvent(NULL,TRUE,TRUE,NULL);
-			MT_Thread[i].nextJob=CreateEvent(NULL,TRUE,FALSE,NULL);
-			buff_ok=buff_ok && ((MT_Thread[i].jobFinished!=NULL) && (MT_Thread[i].nextJob!=NULL));
-			i++;
-		}
-		if (!buff_ok)
-		{
-			ff->Except("Unable to create events !");
-			return;
-		}
-
-		buff_ok=true;
-		i=0;
-		while ((i<threads_number) && buff_ok)
-		{
-			thds[i]=CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)StaticThreadpool,&MT_Thread[i],CREATE_SUSPENDED,&tids[i]);
-			buff_ok=buff_ok && (thds[i]!=NULL);
-			if (buff_ok)
-			{
-				SetThreadAffinityMask(thds[i],ThreadMask[i]);
-				ResumeThread(thds[i]);
-			}
-			i++;
-		}
-		if (!buff_ok)
-		{
-			ff->Except("Unable to create threads pool !");
-			return;
-		}
 	}
 
 	buff_ok=true;
@@ -3122,6 +2953,26 @@ void JPSDR_Deinterlace::Start()
 
 	}
 
+	if (threads_number>1)
+	{
+		StaticThreadpoolF=StaticThreadpool;
+
+		for (i=0; i<threads_number; i++)
+		{
+			MT_Thread[i].pClass=this;
+			MT_Thread[i].f_process=0;
+			MT_Thread[i].thread_Id=(uint8_t)i;
+			MT_Thread[i].pFunc=StaticThreadpoolF;
+		}
+		if (!threadpoolAllocated)
+			threadpoolAllocated=poolInterface->AllocateThreads(UserId,threads_number,0,0,true,false,0);
+		if (!threadpoolAllocated)
+		{			
+			ff->Except("Error with the TheadPool while allocating threadpool !");
+			return;
+		}
+	}
+
 	write_index_Yadif=0;
 	current_frame_Yadif=1;
 	previous_frame_Yadif=0;
@@ -3164,23 +3015,11 @@ void JPSDR_Deinterlace::End()
 		}
 	}
 
-	if (threads_number>1)
+	if (threadpoolAllocated)
 	{
-		for (i=threads_number-1; i>=0; i--)
-		{
-			if (thds[i]!=NULL)
-			{
-				MT_Thread[i].f_process=255;
-				SetEvent(MT_Thread[i].nextJob);
-				WaitForSingleObject(thds[i],INFINITE);
-				myCloseHandle(thds[i]);
-			}
-		}
-		for (i=threads_number-1; i>=0; i--)
-		{
-			myCloseHandle(MT_Thread[i].nextJob);
-			myCloseHandle(MT_Thread[i].jobFinished);
-		}
+		poolInterface->DeAllocateThreads(UserId);
+		UserId=0;
+		threadpoolAllocated=false;
 	}
 }
 
@@ -4960,31 +4799,24 @@ void JPSDR_Deinterlace::Deinterlace_Tri_MT_5(uint8_t thread_num)
 
 
 
-DWORD WINAPI JPSDR_Deinterlace::StaticThreadpool( LPVOID lpParam )
+void JPSDR_Deinterlace::StaticThreadpool(void *ptr)
 {
-	const MT_Data_Thread *data=(const MT_Data_Thread *)lpParam;
+	const Public_MT_Data_Thread *data=(const Public_MT_Data_Thread *)ptr;
 	JPSDR_Deinterlace *ptrClass=(JPSDR_Deinterlace *)data->pClass;
 	
-	while (true)
+	switch(data->f_process)
 	{
-		WaitForSingleObject(data->nextJob,INFINITE);
-		switch(data->f_process)
-		{
-			case 1 : ptrClass->Deinterlace_Blend_MT_1(data->thread_Id); break;
-			case 2 : ptrClass->Deinterlace_Blend_MT_2(data->thread_Id); break;
-			case 3 : ptrClass->Deinterlace_Blend_MT_3(data->thread_Id); break;
-			case 7 : ptrClass->Deinterlace_Blend_MT_4(data->thread_Id); break;
-			case 8 : ptrClass->Deinterlace_Blend_MT_5(data->thread_Id); break;
-			case 4 : ptrClass->Deinterlace_Tri_MT_1(data->thread_Id); break;
-			case 5 : ptrClass->Deinterlace_Tri_MT_2(data->thread_Id); break;
-			case 6 : ptrClass->Deinterlace_Tri_MT_3(data->thread_Id); break;
-			case 9 : ptrClass->Deinterlace_Tri_MT_4(data->thread_Id); break;
-			case 10 : ptrClass->Deinterlace_Tri_MT_5(data->thread_Id); break;
-			case 255 : return(0); break;
-			default : ;
-		}
-		ResetEvent(data->nextJob);
-		SetEvent(data->jobFinished);
+		case 1 : ptrClass->Deinterlace_Blend_MT_1(data->thread_Id); break;
+		case 2 : ptrClass->Deinterlace_Blend_MT_2(data->thread_Id); break;
+		case 3 : ptrClass->Deinterlace_Blend_MT_3(data->thread_Id); break;
+		case 7 : ptrClass->Deinterlace_Blend_MT_4(data->thread_Id); break;
+		case 8 : ptrClass->Deinterlace_Blend_MT_5(data->thread_Id); break;
+		case 4 : ptrClass->Deinterlace_Tri_MT_1(data->thread_Id); break;
+		case 5 : ptrClass->Deinterlace_Tri_MT_2(data->thread_Id); break;
+		case 6 : ptrClass->Deinterlace_Tri_MT_3(data->thread_Id); break;
+		case 9 : ptrClass->Deinterlace_Tri_MT_4(data->thread_Id); break;
+		case 10 : ptrClass->Deinterlace_Tri_MT_5(data->thread_Id); break;
+		default : ;
 	}
 }
 
@@ -6105,93 +5937,64 @@ void JPSDR_Deinterlace::Run()
 
 		if (f_proc!=0)
 		{
-			if (f_proc<7)
+			if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,0,false))
 			{
-				for(uint8_t i=0; i<threads_number; i++)
+				if (f_proc<7)
 				{
-					MT_Thread[i].f_process=f_proc;
-					ResetEvent(MT_Thread[i].jobFinished);
-					SetEvent(MT_Thread[i].nextJob);
+					for(uint8_t i=0; i<threads_number; i++)
+						MT_Thread[i].f_process=f_proc;
+
+					if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+					for(uint8_t i=0; i<threads_number; i++)
+						MT_Thread[i].f_process=0;
 				}
-				for(uint8_t i=0; i<threads_number; i++)
-					WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-				for(uint8_t i=0; i<threads_number; i++)
-					MT_Thread[i].f_process=0;
-			}
-			else
-			{
-				switch (f_proc)
+				else
 				{
-					case 7 :
-						for(uint8_t i=0; i<threads_number; i++)
-						{
-							MT_Thread[i].f_process=3;
-							ResetEvent(MT_Thread[i].jobFinished);
-							SetEvent(MT_Thread[i].nextJob);
-						}
-						for(uint8_t i=0; i<threads_number; i++)
-							WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-						for(uint8_t i=0; i<threads_number; i++)
-							MT_Thread[i].f_process=0;
+					switch (f_proc)
+					{
+						case 7 :
+							for(uint8_t i=0; i<threads_number; i++)
+								MT_Thread[i].f_process=3;
 
-						for(uint8_t i=0; i<threads_number; i++)
-						{
-							MT_Thread[i].f_process=7;
-							ResetEvent(MT_Thread[i].jobFinished);
-							SetEvent(MT_Thread[i].nextJob);
-						}
-						for(uint8_t i=0; i<threads_number; i++)
-							WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-						for(uint8_t i=0; i<threads_number; i++)
-							MT_Thread[i].f_process=0;
+							if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
 
-						for(uint8_t i=0; i<threads_number; i++)
-						{
-							MT_Thread[i].f_process=8;
-							ResetEvent(MT_Thread[i].jobFinished);
-							SetEvent(MT_Thread[i].nextJob);
-						}
-						for(uint8_t i=0; i<threads_number; i++)
-							WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-						for(uint8_t i=0; i<threads_number; i++)
-							MT_Thread[i].f_process=0;
-						break;
-					case 8 :
-						for(uint8_t i=0; i<threads_number; i++)
-						{
-							MT_Thread[i].f_process=6;
-							ResetEvent(MT_Thread[i].jobFinished);
-							SetEvent(MT_Thread[i].nextJob);
-						}
-						for(uint8_t i=0; i<threads_number; i++)
-							WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-						for(uint8_t i=0; i<threads_number; i++)
-							MT_Thread[i].f_process=0;
+							for(uint8_t i=0; i<threads_number; i++)
+								MT_Thread[i].f_process=7;
 
-						for(uint8_t i=0; i<threads_number; i++)
-						{
-							MT_Thread[i].f_process=9;
-							ResetEvent(MT_Thread[i].jobFinished);
-							SetEvent(MT_Thread[i].nextJob);
-						}
-						for(uint8_t i=0; i<threads_number; i++)
-							WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-						for(uint8_t i=0; i<threads_number; i++)
-							MT_Thread[i].f_process=0;
+							if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
 
-						for(uint8_t i=0; i<threads_number; i++)
-						{
-							MT_Thread[i].f_process=10;
-							ResetEvent(MT_Thread[i].jobFinished);
-							SetEvent(MT_Thread[i].nextJob);
-						}
-						for(uint8_t i=0; i<threads_number; i++)
-							WaitForSingleObject(MT_Thread[i].jobFinished,INFINITE);
-						for(uint8_t i=0; i<threads_number; i++)
-							MT_Thread[i].f_process=0;
-						break;
-					default : break;
+							for(uint8_t i=0; i<threads_number; i++)
+								MT_Thread[i].f_process=8;
+
+							if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+							for(uint8_t i=0; i<threads_number; i++)
+								MT_Thread[i].f_process=0;
+							break;
+						case 8 :
+							for(uint8_t i=0; i<threads_number; i++)
+								MT_Thread[i].f_process=6;
+
+							if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+							for(uint8_t i=0; i<threads_number; i++)
+								MT_Thread[i].f_process=9;
+
+							if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+							for(uint8_t i=0; i<threads_number; i++)
+								MT_Thread[i].f_process=10;
+
+							if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+
+							for(uint8_t i=0; i<threads_number; i++)
+								MT_Thread[i].f_process=0;
+							break;
+						default : break;
+					}
 				}
+				poolInterface->ReleaseThreadPool(UserId);
 			}
 		}
 	}
@@ -6732,7 +6535,7 @@ void JPSDR_Deinterlace::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScript
 
 		
 extern VDXFilterDefinition filterDef_JPSDR_Deinterlace=
-VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v5.0.1","Deinterlace blending frames. [ASM][MMX][SSE][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v5.1.0","Deinterlace blending frames. [ASM][MMX][SSE][SSE2] Optimised.");
 
 
 

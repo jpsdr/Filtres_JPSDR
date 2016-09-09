@@ -1790,6 +1790,6 @@ void JPSDR_WideScreen::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_WideScreen=
-VDXVideoFilterDefinition<JPSDR_WideScreen>("JPSDR","Wide Sreen v2.3.3","Black WideScreen and left subtitles.[ASM] Optimised.");
+VDXVideoFilterDefinition<JPSDR_WideScreen>("JPSDR","WideSreen v2.3.3","Black WideScreen and left subtitles.[ASM] Optimised.");
 
 
