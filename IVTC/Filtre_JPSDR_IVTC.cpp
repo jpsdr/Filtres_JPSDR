@@ -3005,7 +3005,7 @@ void JPSDR_IVTC::Start()
 			MT_Thread[i].pFunc=StaticThreadpoolF;
 		}
 		if (!threadpoolAllocated)
-			threadpoolAllocated=poolInterface->AllocateThreads(UserId,threads_number,0,0,true,false,1);
+			threadpoolAllocated=poolInterface->AllocateThreads(UserId,threads_number,0,0,true,false,0);
 		if (!threadpoolAllocated)
 		{			
 			ff->Except("Error with the TheadPool while allocating threadpool !");
@@ -3181,7 +3181,7 @@ void JPSDR_IVTC::Resize_Planar420(const void *_src_y, const void *_src_u, const 
 
 	if (Nb_Threads>1)
 	{
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			for(uint8_t i=0; i<Nb_Threads; i++)
 				MT_Thread[i].f_process=10;
@@ -3300,7 +3300,7 @@ void JPSDR_IVTC::Convert_YUYV_to_RGB32(const void *src_0, void *dst_0, const int
 
 	if (Nb_Threads>1)
 	{
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			if (SSE2_Enable) f_proc=4;
 			else f_proc=5;
@@ -3421,7 +3421,7 @@ void JPSDR_IVTC::Convert_YUYV_to_RGB32(const void *src_0, void *dst_0, const uin
 			MT_Data[i].dst1=(void *)((uint8_t *)MT_Data[i-1].dst1+(MT_Data[i-1].offset << 3));
 		}
 
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			if (SSE2_Enable) f_proc=2;
 			else f_proc=3;
@@ -3546,7 +3546,7 @@ void JPSDR_IVTC::Convert_UYVY_to_RGB32(const void *src_0, void *dst_0, const int
 
 	if (Nb_Threads>1)
 	{
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			if (SSE2_Enable) f_proc=8;
 			else f_proc=9;
@@ -3669,7 +3669,7 @@ void JPSDR_IVTC::Convert_UYVY_to_RGB32(const void *src_0, void *dst_0, const uin
 
 	if (Nb_Threads>1)
 	{
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			if (SSE2_Enable) f_proc=6;
 			else f_proc=7;
@@ -3715,7 +3715,7 @@ void JPSDR_IVTC::Convert_Planar420_to_RGB32(const uint8_t *src_Y,const uint8_t *
 
 	if (Nb_Threads>1)
 	{
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			for(uint8_t i=0; i<Nb_Threads; i++)
 				MT_Thread[i].f_process=1;
@@ -5880,7 +5880,7 @@ void JPSDR_IVTC::Deinterlace_RGB32(const void *src1,const void *src2,void *dst,i
 			}
 		}
 
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			for(uint8_t i=0; i<Nb_Threads; i++)
 				MT_Thread[i].f_process=f_proc;
@@ -5989,7 +5989,7 @@ void JPSDR_IVTC::Deinterlace_YUYV(const void *src1,const void *src2,void *dst,in
 			}
 		}
 
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			for(uint8_t i=0; i<Nb_Threads; i++)
 				MT_Thread[i].f_process=f_proc;
@@ -6104,7 +6104,7 @@ void JPSDR_IVTC::Deinterlace_UYVY(const void *src1,const void *src2,void *dst,in
 			}
 		}
 
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			for(uint8_t i=0; i<Nb_Threads; i++)
 				MT_Thread[i].f_process=f_proc;
@@ -6211,7 +6211,7 @@ void JPSDR_IVTC::Deinterlace_Planar(const uint8_t *src1,const uint8_t *src2,uint
 		}
 
 
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			for(uint8_t i=0; i<Nb_Threads; i++)
 				MT_Thread[i].f_process=f_proc;
@@ -8116,7 +8116,7 @@ uint32_t JPSDR_IVTC::Norme1_Histogramme_DeltaPicture_RGB32(const void *src1,cons
 		if (Integer_SSE_Enable) f_proc=28;
 		else f_proc=29;
 
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			for(uint8_t i=0; i<Nb_Threads; i++)
 				MT_Thread[i].f_process=f_proc;
@@ -8155,7 +8155,7 @@ uint32_t JPSDR_IVTC::Norme1_Histogramme_DeltaPicture_RGB32(const void *src1,cons
 
 		f_proc=30;
 
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			for(uint8_t i=0; i<Nb_Threads; i++)
 				MT_Thread[i].f_process=f_proc;
@@ -8198,7 +8198,7 @@ uint32_t JPSDR_IVTC::Norme1_Histogramme_DeltaPicture_RGB32(const void *src1,cons
 			MT_Data[i].data_i32=w_map;
 		}
 
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			if (Integer_SSE_Enable) f_proc=37;
 			else f_proc=38;
@@ -8376,7 +8376,7 @@ void JPSDR_IVTC::Smart_Deinterlace_RGB32(const void *src1_0,const void *src2_0,v
 			MT_Data[i].data_i32=w_map;
 		}
 
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			if (Integer_SSE_Enable)
 			{
@@ -8437,7 +8437,7 @@ void JPSDR_IVTC::Smart_Deinterlace_RGB32(const void *src1_0,const void *src2_0,v
 				MT_Data[i].data_i32=w_map;
 			}
 
-			if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+			if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 			{
 				f_proc=30;
 
@@ -8481,7 +8481,7 @@ void JPSDR_IVTC::Smart_Deinterlace_RGB32(const void *src1_0,const void *src2_0,v
 
 	if (Nb_Threads>1)
 	{
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			for(uint8_t i=0; i<Nb_Threads; i++)
 				MT_Thread[i].f_process=47;
@@ -8589,7 +8589,7 @@ void JPSDR_IVTC::Smart_Deinterlace_YUYV(const void *src1_0,const void *src2_0,vo
 			f_proc=39;
 		}
 
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			for(uint8_t i=0; i<Nb_Threads; i++)
 				MT_Thread[i].f_process=f_proc;
@@ -8629,7 +8629,7 @@ void JPSDR_IVTC::Smart_Deinterlace_YUYV(const void *src1_0,const void *src2_0,vo
 				MT_Data[i].data_i32=w_map;
 			}
 
-			if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+			if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 			{
 				f_proc=30;
 
@@ -8673,7 +8673,7 @@ void JPSDR_IVTC::Smart_Deinterlace_YUYV(const void *src1_0,const void *src2_0,vo
 
 	if (Nb_Threads>1)
 	{
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			for(uint8_t i=0; i<Nb_Threads; i++)
 				MT_Thread[i].f_process=48;
@@ -8783,7 +8783,7 @@ void JPSDR_IVTC::Smart_Deinterlace_UYVY(const void *src1_0,const void *src2_0,vo
 			f_proc=39;
 		}
 
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			for(uint8_t i=0; i<Nb_Threads; i++)
 				MT_Thread[i].f_process=f_proc;
@@ -8823,7 +8823,7 @@ void JPSDR_IVTC::Smart_Deinterlace_UYVY(const void *src1_0,const void *src2_0,vo
 				MT_Data[i].data_i32=w_map;
 			}
 
-			if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+			if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 			{
 				f_proc=30;
 
@@ -8867,7 +8867,7 @@ void JPSDR_IVTC::Smart_Deinterlace_UYVY(const void *src1_0,const void *src2_0,vo
 
 	if (Nb_Threads>1)
 	{
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			for(uint8_t i=0; i<Nb_Threads; i++)
 				MT_Thread[i].f_process=49;
@@ -9036,7 +9036,7 @@ void JPSDR_IVTC::Smart_Deinterlace_Planar420(const uint8_t *src1_Y,const uint8_t
 			f_proc=39;
 		}
 
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			for(uint8_t i=0; i<Nb_Threads; i++)
 				MT_Thread[i].f_process=f_proc;
@@ -9076,7 +9076,7 @@ void JPSDR_IVTC::Smart_Deinterlace_Planar420(const uint8_t *src1_Y,const uint8_t
 				MT_Data[i].data_i32=w_map;
 			}
 
-			if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+			if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 			{
 				f_proc=30;
 
@@ -9120,7 +9120,7 @@ void JPSDR_IVTC::Smart_Deinterlace_Planar420(const uint8_t *src1_Y,const uint8_t
 
 	if (Nb_Threads>1)
 	{
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			for(uint8_t i=0; i<Nb_Threads; i++)
 				MT_Thread[i].f_process=50;
@@ -9153,7 +9153,7 @@ void JPSDR_IVTC::Smart_Deinterlace_Planar420(const uint8_t *src1_Y,const uint8_t
 
 		if (Nb_Threads>1)
 		{
-			if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+			if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 			{
 				for(uint8_t i=0; i<Nb_Threads; i++)
 					MT_Thread[i].f_process=51;
@@ -9184,7 +9184,7 @@ void JPSDR_IVTC::Smart_Deinterlace_Planar420(const uint8_t *src1_Y,const uint8_t
 
 		if (Nb_Threads>1)
 		{
-			if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+			if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 			{
 				for(uint8_t i=0; i<Nb_Threads; i++)
 					MT_Thread[i].f_process=51;
@@ -9278,7 +9278,7 @@ uint32_t JPSDR_IVTC::Norme1_Motion_Map_RGB32(const void *src1,const void *src2,v
 			MT_Data[i].data_i32=w_map;
 		}
 
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			if (Integer_SSE_Enable) f_proc=28;
 			else f_proc=29;
@@ -9318,7 +9318,7 @@ uint32_t JPSDR_IVTC::Norme1_Motion_Map_RGB32(const void *src1,const void *src2,v
 			MT_Data[i].data_i32=w_map;
 		}
 
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			f_proc=30;
 
@@ -9358,7 +9358,7 @@ uint32_t JPSDR_IVTC::Norme1_Motion_Map_RGB32(const void *src1,const void *src2,v
 			MT_Data[i].data_i32=w_map;
 		}
 
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			if (Integer_SSE_Enable) f_proc=32;
 			else f_proc=33;
@@ -9552,7 +9552,7 @@ uint32_t JPSDR_IVTC::Norme1_RGB32(const void *src1_0,const void *src2_0,const in
 			MT_Data[i].src_modulo1=modulo;
 		}
 
-		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,1,false))
+		if (poolInterface->RequestThreadPool(UserId,Nb_Threads,MT_Thread,0,false))
 		{
 			if (Integer_SSE_Enable)
 			{
@@ -15692,5 +15692,5 @@ void JPSDR_IVTC::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_IVTC=
-VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.1.0","IVTC Filter. [MMX][SSE] Optimised.");
+VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.1.1","IVTC Filter. [MMX][SSE] Optimised.");
 
