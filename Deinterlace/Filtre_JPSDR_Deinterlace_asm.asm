@@ -311,7 +311,7 @@ JPSDR_Deinterlace_Blend_SSE_3 proc src1:dword,src2:dword,dst:dword,w:dword,h:dwo
 loop_1_d:
 	xor eax,eax
 	mov ecx,ebx
-	shr ecx,2
+	shr ecx,1
 	jz short Suite_d_1
 loop_2_d:
 	movq xmm0,qword ptr[esi+8*eax]

@@ -470,7 +470,7 @@ Suite_d_1:
 	jz short Suite_d_2
 	
 	movd xmm0,dword ptr[rsi+8*rax]
-	movd xmm0,dword ptr[rdi+8*rax]
+	movd xmm1,dword ptr[rdi+8*rax]
 	pavgb xmm0,xmm1
 	movd dword ptr[r8+8*rax],xmm0
 	
@@ -557,7 +557,7 @@ Suite_e_1:
 	jz short Suite_e_2
 	
 	movq xmm0,qword ptr[rsi+rax]
-	movq xmm0,qword ptr[rdi+rax]
+	movq xmm1,qword ptr[rdi+rax]
 	pavgb xmm0,xmm1
 	movq qword ptr[r8+rax],xmm0
 	
@@ -568,7 +568,7 @@ Suite_e_1:
 	
 Suite_e_2:	
 	movd xmm0,dword ptr[rsi+rax]
-	movd xmm0,dword ptr[rdi+rax]
+	movd xmm1,dword ptr[rdi+rax]
 	pavgb xmm0,xmm1
 	movd dword ptr[r8+rax],xmm0
 	
