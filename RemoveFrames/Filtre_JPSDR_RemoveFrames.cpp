@@ -291,13 +291,13 @@ void JPSDR_RemoveFrames::Start()
 {
 	if (g_VFVAPIVersion<14)
 	{
-		ff->Except("This virtualdub version doesn't support this filter !");
+		ff->Except("This virtualdub version doesn't support this filter!");
 	}
 
 	if ((mData.frame_period<=1) || ((mData.offset_frame+mData.frames_removed)>mData.frame_period) || 
 		(mData.frames_removed>=mData.frame_period))
 	{
-		ff->Except("Incorrect parameters !");
+		ff->Except("Incorrect parameters!");
 	}
 }
 

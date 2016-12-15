@@ -331,7 +331,7 @@ void JPSDR_BlurMotion::Start()
 
 	if (g_VFVAPIVersion<14)
 	{
-		ff->Except("This virtualdub version doesn't support this filter !");
+		ff->Except("This virtualdub version doesn't support this filter!");
 	}
 
 	const VDXPixmapLayout& pxdst=*fa->dst.mpPixmapLayout;

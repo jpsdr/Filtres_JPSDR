@@ -614,13 +614,13 @@ void JPSDR_AutoYUY2::Start()
 
 	if (g_VFVAPIVersion<12)
 	{
-		ff->Except("This virtualdub version doesn't support this filter !");
+		ff->Except("This virtualdub version doesn't support this filter!");
 		return;
 	}
 
 	if (!poolInterface->GetThreadPoolInterfaceStatus())
 	{
-		ff->Except("Error with the TheadPool status !");
+		ff->Except("Error with the TheadPool status!");
 		return;
 	}
 
@@ -2113,13 +2113,13 @@ void JPSDR_AutoYUY2::Start()
 
 	if ((idata.src_h0 & 3)!=0)
 	{
-		ff->Except("Vertical size must be multiple of 4 for 4:2:0 !");
+		ff->Except("Vertical size must be multiple of 4 for 4:2:0!");
 		return;
 	}
 
 	if ((idata.src_h0<8) || (idata.src_w0<4))
 	{
-		ff->Except("Size must be at least 4x8 !");
+		ff->Except("Size must be at least 4x8!");
 		return;
 	}
 
@@ -2128,7 +2128,7 @@ void JPSDR_AutoYUY2::Start()
 		threads_number=poolInterface->GetThreadNumber(0,true);
 		if (threads_number==0)
 		{
-			ff->Except("Error with the TheadPool while getting CPU info !");
+			ff->Except("Error with the TheadPool while getting CPU info!");
 			return;
 		}
 	}
@@ -2176,10 +2176,10 @@ void JPSDR_AutoYUY2::Start()
 			MT_Thread[i].pFunc=StaticThreadpoolF;
 		}
 		if (!threadpoolAllocated)
-			threadpoolAllocated=poolInterface->AllocateThreads(UserId,threads_number,0,0,true,false,0);
+			threadpoolAllocated=poolInterface->AllocateThreads(UserId,threads_number,0,0,true,false,true,-1);
 		if (!threadpoolAllocated)
 		{			
-			ff->Except("Error with the TheadPool while allocating threadpool !");
+			ff->Except("Error with the TheadPool while allocating threadpool!");
 			return;
 		}
 	}
@@ -6974,7 +6974,7 @@ void JPSDR_AutoYUY2::Run()
 
 	const VDXPixmap& pxdst=*fa->dst.mpPixmap;
 	const VDXPixmap& pxsrc=*fa->src.mpPixmap;
-	uint8_t f_proc;
+	uint8_t f_proc=0;
 
 	idata.src_plane0=pxsrc.data;
 	idata.src_plane1=pxsrc.data2;
@@ -7007,72 +7007,39 @@ void JPSDR_AutoYUY2::Run()
 		case 2 :
 			switch(mData.convert_mode)
 			{
-				case 0 :
-					if (threads_number>1) f_proc=9;
-					else Convert_Progressive_to_YUY2(0);
-					break;
-				case 1 :
-					if (threads_number>1) f_proc=10;
-					else Convert_Interlaced_to_YUY2(0);
-					break;
-				case 2 :
-					if (threads_number>1) f_proc=1;
-					else Convert_Automatic_to_YUY2(0);
-					break;
-				case 3 :
-					if (threads_number>1) f_proc=2;
-					else Convert_Test_to_YUY2(0);
-					break;
+				case 0 : f_proc=9; break;
+				case 1 : f_proc=10; break;
+				case 2 : f_proc=1; break;
+				case 3 : f_proc=2; break;
+				default : ;
 			}
 			break;
 		case 3 :
 			switch(mData.convert_mode)
 			{
-				case 0 :
-					if (threads_number>1) f_proc=11;
-					else Convert_Progressive_to_UYVY(0);
-					break;
-				case 1 :
-					if (threads_number>1) f_proc=12;
-					else Convert_Interlaced_to_UYVY(0);
-					break;
-				case 2 :
-					if (threads_number>1) f_proc=3;
-					else Convert_Automatic_to_UYVY(0);
-					break;
-				case 3 :
-					if (threads_number>1) f_proc=4;
-					else Convert_Test_to_UYVY(0);
-					break;
+				case 0 : f_proc=11; break;
+				case 1 : f_proc=12; break;
+				case 2 : f_proc=3; break;
+				case 3 : f_proc=4; break;
+				default : ;
 			}
 			break;
 		case 5 :
 			switch(mData.convert_mode)
 			{
-				case 0 :
-					if (threads_number>1) f_proc=7;
-					else Convert_Progressive_to_Planar422(0);
-					break;
-				case 1 :
-					if (threads_number>1) f_proc=8;
-					else Convert_Interlaced_to_Planar422(0);
-					break;
-				case 2 :
-					if (threads_number>1) f_proc=5;
-					else Convert_Automatic_to_Planar422(0);
-					break;
-				case 3 :
-					if (threads_number>1) f_proc=6;
-					else Convert_Test_to_Planar422(0);
-					break;
+				case 0 : f_proc=7; break;
+				case 1 : f_proc=8; break;
+				case 2 : f_proc=5; break;
+				case 3 : f_proc=6; break;
+				default : ;
 			}
 			break;
-		default : f_proc=0; break;
+		default : ;
 	}
 
 	if (threads_number>1)
 	{
-		if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,0,false))
+		if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,-1,false))
 		{
 			for(uint8_t i=0; i<threads_number; i++)
 				MT_Thread[i].f_process=f_proc;
@@ -7082,7 +7049,26 @@ void JPSDR_AutoYUY2::Run()
 			for(uint8_t i=0; i<threads_number; i++)
 				MT_Thread[i].f_process=0;
 
-			poolInterface->ReleaseThreadPool(UserId);
+			poolInterface->ReleaseThreadPool(UserId,true);
+		}
+	}
+	else
+	{
+		switch(f_proc)
+		{
+			case 1 : Convert_Automatic_to_YUY2(0); break;
+			case 2 : Convert_Test_to_YUY2(0); break;
+			case 3 : Convert_Automatic_to_UYVY(0); break;
+			case 4 : Convert_Test_to_UYVY(0); break;
+			case 5 : Convert_Automatic_to_Planar422(0); break;
+			case 6 : Convert_Test_to_Planar422(0); break;
+			case 7 : Convert_Progressive_to_Planar422(0); break;
+			case 8 : Convert_Interlaced_to_Planar422(0); break;
+			case 9 : Convert_Progressive_to_YUY2(0); break;
+			case 10 : Convert_Interlaced_to_YUY2(0); break;
+			case 11 : Convert_Progressive_to_UYVY(0); break;
+			case 12 : Convert_Interlaced_to_UYVY(0); break;
+			default : ;
 		}
 	}
 }
@@ -7140,5 +7126,5 @@ void JPSDR_AutoYUY2::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_AutoYUY2=
-VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","AutoYUY2 v3.1.0","Convert Planar4:2:0 to severals 4:2:2 modes. [SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","AutoYUY2 v3.2.0","Convert Planar4:2:0 to severals 4:2:2 modes. [SSE2] Optimised.");
 

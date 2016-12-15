@@ -957,7 +957,7 @@ void JPSDR_Field_Shift::Start()
 
 	if (g_VFVAPIVersion<14)
 	{
-		ff->Except("This virtualdub version doesn't support this filter !");
+		ff->Except("This virtualdub version doesn't support this filter!");
 	}
 
 	const VDXPixmapLayout& pxdst=*fa->dst.mpPixmapLayout;
@@ -2451,15 +2451,15 @@ void JPSDR_Field_Shift::Start()
 	{
 		case 6 :
 			if ((idata.src_h1%2)!=0)
-				ff->Except("Vertical size must be multiple of 4 for 4:2:0 !");
+				ff->Except("Vertical size must be multiple of 4 for 4:2:0!");
 			break;
 		case 8 :
 			if ((idata.src_h1%2)!=0)
-				ff->Except("Vertical size must be multiple of 8 for 4:1:0 !");
+				ff->Except("Vertical size must be multiple of 8 for 4:1:0!");
 			break;
 		default :
 			if ((idata.src_h0%2)!=0)
-				ff->Except("Vertical size must be multiple of 2 !");
+				ff->Except("Vertical size must be multiple of 2!");
 			break;
 	}
 
@@ -2467,7 +2467,7 @@ void JPSDR_Field_Shift::Start()
 	{
 		if (strlen(mData.filename)==0)
 		{
-			ff->Except("No file selected !");
+			ff->Except("No file selected!");
 			return;
 		}
 

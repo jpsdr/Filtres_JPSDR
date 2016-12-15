@@ -1102,12 +1102,12 @@ void JPSDR_Deinterlace::Start()
 
 	if ((g_VFVAPIVersion<12) || ((g_VFVAPIVersion<14) && ((mData.mode==5) || (mData.mode==6))))
 	{
-		ff->Except("This virtualdub version doesn't support this configuration filter !");
+		ff->Except("This virtualdub version doesn't support this configuration filter!");
 	}
 
 	if (!poolInterface->GetThreadPoolInterfaceStatus())
 	{
-		ff->Except("Error with the TheadPool status !");
+		ff->Except("Error with the TheadPool status!");
 		return;
 	}
 
@@ -2600,7 +2600,7 @@ void JPSDR_Deinterlace::Start()
 
 	if ((idata.src_h0<8) || (idata.src_w0<8))
 	{
-		ff->Except("Size must be at least 8x8 !");
+		ff->Except("Size must be at least 8x8!");
 		return;
 	}
 
@@ -2609,21 +2609,21 @@ void JPSDR_Deinterlace::Start()
 		case 6 :
 			if ((idata.src_h0%4)!=0)
 			{
-				ff->Except("Vertical size must be multiple of 4 for 4:2:0 !");
+				ff->Except("Vertical size must be multiple of 4 for 4:2:0!");
 				return;
 			}
 			break;
 		case 8 :
 			if ((idata.src_h0%8)!=0)
 			{
-				ff->Except("Vertical size must be multiple of 8 for 4:1:0 !");
+				ff->Except("Vertical size must be multiple of 8 for 4:1:0!");
 				return;
 			}
 			break;
 		default :
 			if ((idata.src_h0%2)!=0)
 			{
-				ff->Except("Vertical size must be multiple of 2 !");
+				ff->Except("Vertical size must be multiple of 2!");
 				return;
 			}
 			break;
@@ -2633,7 +2633,7 @@ void JPSDR_Deinterlace::Start()
 	{
 		if (strlen(mData.filename)==0)
 		{
-			ff->Except("No file selected !");
+			ff->Except("No file selected!");
 			return;
 		}
 
@@ -2725,7 +2725,7 @@ void JPSDR_Deinterlace::Start()
 		threads_number=poolInterface->GetThreadNumber(0,true);
 		if (threads_number==0)
 		{
-			ff->Except("Error with the TheadPool while getting CPU info !");
+			ff->Except("Error with the TheadPool while getting CPU info!");
 			return;
 		}
 	}
@@ -2965,10 +2965,10 @@ void JPSDR_Deinterlace::Start()
 			MT_Thread[i].pFunc=StaticThreadpoolF;
 		}
 		if (!threadpoolAllocated)
-			threadpoolAllocated=poolInterface->AllocateThreads(UserId,threads_number,0,0,true,false,0);
+			threadpoolAllocated=poolInterface->AllocateThreads(UserId,threads_number,0,0,true,false,true,-1);
 		if (!threadpoolAllocated)
 		{			
-			ff->Except("Error with the TheadPool while allocating threadpool !");
+			ff->Except("Error with the TheadPool while allocating threadpool!");
 			return;
 		}
 	}
@@ -5908,6 +5908,7 @@ void JPSDR_Deinterlace::Run()
 					case 8 :
 						f_proc=7;
 						break;
+					default : ;
 				}
 				break;
 			case 2 :
@@ -5931,13 +5932,15 @@ void JPSDR_Deinterlace::Run()
 					case 8 :
 						f_proc=8;
 						break;
+					default : ;
 				}
 				break;
+			default : ;
 		}
 
 		if (f_proc!=0)
 		{
-			if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,0,false))
+			if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,-1,false))
 			{
 				if (f_proc<7)
 				{
@@ -5994,7 +5997,7 @@ void JPSDR_Deinterlace::Run()
 						default : break;
 					}
 				}
-				poolInterface->ReleaseThreadPool(UserId);
+				poolInterface->ReleaseThreadPool(UserId,true);
 			}
 		}
 	}
@@ -6535,7 +6538,7 @@ void JPSDR_Deinterlace::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScript
 
 		
 extern VDXFilterDefinition filterDef_JPSDR_Deinterlace=
-VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v5.1.1","Deinterlace blending frames. [ASM][MMX][SSE][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v5.2.0","Deinterlace blending frames. [ASM][MMX][SSE][SSE2] Optimised.");
 
 
 

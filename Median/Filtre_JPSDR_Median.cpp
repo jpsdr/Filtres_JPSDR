@@ -807,7 +807,7 @@ void JPSDR_Median::GetSettingString(char *buf, int maxlen)
 		if (mData.filter_disable[i]) size[i]=0;
 		else size[i]=mData.median_size[i];
 	}
-	strcpy_s(output_string,255," Sz:(%d,%d,%d) Thrs:(%d,%d,%d) Mode:%d");
+	strcpy_s(output_string,255," Size:(%d,%d,%d) Thrs:(%d,%d,%d) Mode:%d");
 	if (mData.setting_mode) strcat_s(output_string,255," Test");
 	if (mData.interlace_mode) strcat_s(output_string,255," Intrl");
 	SafePrintf(buf,maxlen,output_string,size[0],size[1],size[2],mData.threshold[0],mData.threshold[1],
@@ -1531,7 +1531,7 @@ void JPSDR_Median::Run()
 
 				if (threads_number>1)
 				{
-					if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,0,false))
+					if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,-1,false))
 					{
 						uint8_t f_proc=0;
 
@@ -1570,7 +1570,7 @@ void JPSDR_Median::Run()
 						for(uint8_t j=0; j<threads_number; j++)
 							MT_Thread[j].f_process=0;
 
-						poolInterface->ReleaseThreadPool(UserId);
+						poolInterface->ReleaseThreadPool(UserId,true);
 					}
 				}
 				else
@@ -1690,7 +1690,7 @@ void JPSDR_Median::Run()
 
 				if (threads_number>1)
 				{
-					if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,0,false))
+					if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,-1,false))
 					{
 						uint8_t f_proc=0;
 
@@ -1721,7 +1721,7 @@ void JPSDR_Median::Run()
 						for(uint8_t j=0; j<threads_number; j++)
 							MT_Thread[j].f_process=0;
 
-						poolInterface->ReleaseThreadPool(UserId);
+						poolInterface->ReleaseThreadPool(UserId,true);
 					}
 				}
 				else
@@ -1841,13 +1841,13 @@ void JPSDR_Median::Start()
 
 	if (g_VFVAPIVersion<12)
 	{
-		ff->Except("This virtualdub version doesn't support this filter !");
+		ff->Except("This virtualdub version doesn't support this filter!");
 		return;
 	}
 
 	if (!poolInterface->GetThreadPoolInterfaceStatus())
 	{
-		ff->Except("Error with the TheadPool status !");
+		ff->Except("Error with the TheadPool status!");
 		return;
 	}
 
@@ -3476,7 +3476,7 @@ void JPSDR_Median::Start()
 		threads_number=poolInterface->GetThreadNumber(0,true);
 		if (threads_number==0)
 		{
-			ff->Except("Error with the TheadPool while getting CPU info !");
+			ff->Except("Error with the TheadPool while getting CPU info!");
 			return;
 		}
 	}
@@ -3581,10 +3581,10 @@ void JPSDR_Median::Start()
 			MT_Thread[i].pFunc=StaticThreadpoolF;
 		}
 		if (!threadpoolAllocated)
-			threadpoolAllocated=poolInterface->AllocateThreads(UserId,threads_number,0,0,true,false,0);
+			threadpoolAllocated=poolInterface->AllocateThreads(UserId,threads_number,0,0,true,false,true,-1);
 		if (!threadpoolAllocated)
 		{			
-			ff->Except("Error with the TheadPool while allocating threadpool !");
+			ff->Except("Error with the TheadPool while allocating threadpool!");
 			return;
 		}
 	}
@@ -3662,4 +3662,4 @@ void JPSDR_Median::GetScriptString(char *buf, int maxlen)
 }
 
 extern VDXFilterDefinition filterDef_JPSDR_Median=
-VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v3.1.0","Median filter with threshold.");
+VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v3.2.0","Median filter with threshold.");

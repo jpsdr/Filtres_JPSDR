@@ -8,7 +8,7 @@
 ThreadPoolInterface *poolInterface;
 
 VDX_DECLARE_VIDEOFILTERS_BEGIN()
-	poolInterface=ThreadPoolInterface::Init(1);
+	poolInterface=ThreadPoolInterface::Init(8);
 	VDX_DECLARE_VIDEOFILTER(filterDef_JPSDR_Deinterlace)
 	VDX_DECLARE_VIDEOFILTER(filterDef_JPSDR_Saturation)
 	VDX_DECLARE_VIDEOFILTER(filterDef_JPSDR_IVTC)

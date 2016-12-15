@@ -401,7 +401,7 @@ void JPSDR_AddBorder::Start()
 	
 	if (g_VFVAPIVersion<12)
 	{
-		ff->Except("This virtualdub version doesn't support this filter !");
+		ff->Except("This virtualdub version doesn't support this filter!");
 		return;
 	}
 

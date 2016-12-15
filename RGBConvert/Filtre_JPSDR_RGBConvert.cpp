@@ -802,13 +802,13 @@ void JPSDR_RGBConvert::Start()
 
 	if (g_VFVAPIVersion<12)
 	{
-		ff->Except("This virtualdub version doesn't support this filter !");
+		ff->Except("This virtualdub version doesn't support this filter!");
 		return;
 	}
 
 	if (!poolInterface->GetThreadPoolInterfaceStatus())
 	{
-		ff->Except("Error with the TheadPool status !");
+		ff->Except("Error with the TheadPool status!");
 		return;
 	}
 
@@ -2304,7 +2304,7 @@ void JPSDR_RGBConvert::Start()
 		threads_number=poolInterface->GetThreadNumber(0,true);
 		if (threads_number==0)
 		{
-			ff->Except("Error with the TheadPool while getting CPU info !");
+			ff->Except("Error with the TheadPool while getting CPU info!");
 			return;
 		}
 	}
@@ -2373,10 +2373,10 @@ void JPSDR_RGBConvert::Start()
 			MT_Thread[i].pFunc=StaticThreadpoolF;
 		}
 		if (!threadpoolAllocated)
-			threadpoolAllocated=poolInterface->AllocateThreads(UserId,threads_number,0,0,true,false,0);
+			threadpoolAllocated=poolInterface->AllocateThreads(UserId,threads_number,0,0,true,false,true,-1);
 		if (!threadpoolAllocated)
 		{			
-			ff->Except("Error with the TheadPool while allocating threadpool !");
+			ff->Except("Error with the TheadPool while allocating threadpool!");
 			return;
 		}
 	}
@@ -3474,7 +3474,7 @@ void JPSDR_RGBConvert::Run()
 
 	if (threads_number>1)
 	{
-		if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,0,false))
+		if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,-1,false))
 		{
 			uint8_t f_proc=0;
 
@@ -3503,7 +3503,7 @@ void JPSDR_RGBConvert::Run()
 			for(uint8_t i=0; i<threads_number; i++)
 				MT_Thread[i].f_process=0;
 
-			poolInterface->ReleaseThreadPool(UserId);
+			poolInterface->ReleaseThreadPool(UserId,true);
 		}
 	}
 	else
@@ -3557,4 +3557,4 @@ void JPSDR_RGBConvert::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_RGBConvert=
-VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v2.1.0","RGB <-> YCbCr convertion with color matrix option.\n[ASM][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v2.2.0","RGB <-> YCbCr convertion with color matrix option.\n[ASM][SSE2] Optimised.");
