@@ -2,12 +2,6 @@
 .xmm
 .model flat,c
 
-.data
-
-align 16
-
-Ymask qword 2 dup(00FF00FF00FF00FFh)
-
 .code
 
 
@@ -53,104 +47,6 @@ fin_g:
 JPSDR_Median_RGB32_Move_src endp
 
 
-JPSDR_Median_RGB32_Move_src_SSE_1 proc src:dword,planar_R:dword,planar_G:dword,planar_B:dword,w:dword,h:dword,src_pitch:dword,dst_pitch:dword
-
-	public JPSDR_Median_RGB32_Move_src_SSE_1
-	
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src
-	mov edi,planar_B
-	mov ebx,planar_G
-	mov edx,planar_R
-	movdqa xmm3,oword ptr Ymask
-	pxor xmm0,xmm0
-	
-loop_1_g_1:
-	mov ecx,w
-	xor eax,eax
-	shr ecx,2
-	jz short suite_g_1
-loop_2_g_1:
-	movq xmm0,qword ptr[esi+8*eax]   ;00000000xRGBxRGB
-	movq xmm2,qword ptr[esi+8*eax+8] ;00000000xRGBxRGB
-	pslldq xmm2,8                    ;xRGBxRGB00000000
-	por xmm0,xmm2                    ;xRGBxRGBxRGBxRGB
-	movdqa xmm1,xmm0                 ;xRGBxRGBxRGBxRGB
-	pand xmm0,xmm3                   ;0R0B0R0B0R0B0R0B
-	psrlw xmm1,8                     ;0x0G0x0G0x0G0x0G
-	packuswb xmm0,xmm0               ;00000000RBRBRBRB
-	packuswb xmm1,xmm1               ;00000000xGxGxGxG
-	movdqa xmm2,xmm0                 ;00000000RBRBRBRB
-	pand xmm1,xmm3                   ;000000000G0G0G0G
-	pand xmm0,xmm3                   ;000000000B0B0B0B
-	packuswb xmm1,xmm1               ;000000000000GGGG
-	psrlw xmm2,8                     ;000000000R0R0R0R
-	packuswb xmm0,xmm0               ;000000000000BBBB
-	packuswb xmm2,xmm2               ;000000000000RRRR
-	movd dword ptr[edi+2*eax],xmm0
-	movd dword ptr[ebx+2*eax],xmm1
-	movd dword ptr[edx+2*eax],xmm2
-	pxor xmm0,xmm0
-	add eax,2
-	loop loop_2_g_1
-
-suite_g_1:
-    mov ecx,w
-	and ecx,3
-	jz short suite_g_2
-    push edx
-	mov dx,word ptr[esi+8*eax]
-	mov byte ptr[edi+2*eax],dl
-	mov byte ptr[ebx+2*eax],dh
-	pop edx
-	push ebx
-	mov bl,byte ptr[esi+8*eax+2]
-	mov byte ptr[edx+2*eax],bl
-	pop ebx
-	dec ecx
-	jz short suite_g_2
-    push edx
-	mov dx,word ptr[esi+8*eax+4]
-	mov byte ptr[edi+2*eax+1],dl
-	mov byte ptr[ebx+2*eax+1],dh
-	pop edx
-	push ebx
-	mov bl,byte ptr[esi+8*eax+6]
-	mov byte ptr[edx+2*eax+1],bl
-	pop ebx
-	dec ecx
-	jz short suite_g_2
-    push edx
-	mov dx,word ptr[esi+8*eax+8]
-	mov byte ptr[edi+2*eax+2],dl
-	mov byte ptr[ebx+2*eax+2],dh
-	pop edx
-	push ebx
-	mov bl,byte ptr[esi+8*eax+10]
-	mov byte ptr[edx+2*eax+2],bl
-	pop ebx
-	
-suite_g_2:	
-	add esi,src_pitch
-	add edi,dst_pitch
-	add ebx,dst_pitch
-	add edx,dst_pitch
-	dec h
-	jnz loop_1_g_1
-	
-fin_g_1:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Median_RGB32_Move_src_SSE_1 endp
-
-
 JPSDR_Median_RGB32_Move_src_SSE_2 proc src:dword,planar_R:dword,planar_G:dword,planar_B:dword,w:dword,h:dword,src_pitch:dword,dst_pitch:dword
 
 	public JPSDR_Median_RGB32_Move_src_SSE_2
@@ -163,37 +59,55 @@ JPSDR_Median_RGB32_Move_src_SSE_2 proc src:dword,planar_R:dword,planar_G:dword,p
 	mov edi,planar_B
 	mov ebx,planar_G
 	mov edx,planar_R
-	movdqa xmm3,oword ptr Ymask
 	
 loop_1_g_2:
     xor eax,eax
 	mov ecx,w
+	shr ecx,1
+	jz short suite1_g_2
+
 loop_2_g_2:
-	movdqa xmm0,oword ptr[esi+8*eax] ;xRGBxRGBxRGBxRGB
-	movdqa xmm1,xmm0                 ;xRGBxRGBxRGBxRGB
-	pand xmm0,xmm3                   ;0R0B0R0B0R0B0R0B
-	psrlw xmm1,8                     ;0x0G0x0G0x0G0x0G
-	packuswb xmm0,xmm0               ;00000000RBRBRBRB
-	packuswb xmm1,xmm1               ;00000000xGxGxGxG
-	movdqa xmm2,xmm0                 ;00000000RBRBRBRB
-	pand xmm1,xmm3                   ;000000000G0G0G0G
-	pand xmm0,xmm3                   ;000000000B0B0B0B
-	packuswb xmm1,xmm1               ;000000000000GGGG
-	psrlw xmm2,8                     ;000000000R0R0R0R
-	packuswb xmm0,xmm0               ;000000000000BBBB
-	packuswb xmm2,xmm2               ;000000000000RRRR
-	movd dword ptr[edi+2*eax],xmm0
-	movd dword ptr[ebx+2*eax],xmm1
-	movd dword ptr[edx+2*eax],xmm2
-	add eax,2
-	loop loop_2_g_2
+	movdqa xmm0,XMMWORD ptr[esi+4*eax] ;xR4G4B4xR3G3B3xR2G2B2xR1G1B1
+	movdqa xmm1,XMMWORD ptr[esi+4*eax+16] ;xR8G8B8xR7G7B7xR6G6B6xR5G5B5	
+	movdqa xmm2,xmm0                 ;xR4G4B4xR3G3B3xR2G2B2xR1G1B1
+	punpcklbw xmm0,xmm1              ;xxR6R2G6G2B6B2xxR5R1G5G1B5B1
+	punpckhbw xmm2,xmm1              ;xxR8R4G8G4B8B4xxR7R3G7G3B7B3
+	movdqa xmm1,xmm0                 ;xxR6R2G6G2B6B2xxR5R1G5G1B5B1
+	punpcklbw xmm0,xmm2              ;xxxxR7R5R3R1G7G5G3G1B7B5B3B1
+	punpckhbw xmm1,xmm2              ;xxxxR8R6R4R2G8G6G4G2B8B6B4B2
+	movdqa xmm2,xmm0                 ;xxxxR7R5R3R1G7G5G3G1B7B5B3B1
+	punpcklbw xmm0,xmm1              ;G8G7G6G5G4G3G2G1B8B7B6B5B4B3B2B1
+	punpckhbw xmm2,xmm1              ;xxxxxxxxR8R7R6R5R4R3R2R1
 	
+	movq qword ptr[edi+eax],xmm0
+	movhps qword ptr[ebx+eax],xmm0
+	movq qword ptr[edx+eax],xmm2
+	add eax,8
+	loop loop_2_g_2
+
+suite1_g_2:
+	mov ecx,w
+	and ecx,1
+	jz short suite2_g_2
+	
+	movdqa xmm0,XMMWORD ptr[esi+4*eax] ;xR4G4B4xR3G3B3xR2G2B2xR1G1B1
+	movhlps xmm1,xmm0                  ;xR4G4B4xR3G3B3xR4G4B4xR3G3B3
+	punpcklbw xmm0,xmm1                ;xxR4R2G4G2B4B2xxR3R1G3G1B3B1
+	movhlps xmm1,xmm0                  ;xxR4R2G4G2B4B2xxR4R2G4G2B4B2
+	punpcklbw xmm0,xmm1                ;xxxxR4R3R2R1G4G3G2G1B4B3B2B1
+	movhlps xmm1,xmm0                  ;xxxxR4R3R2R1xxxxR4R3R2R1
+	movd dword ptr[edi+eax],xmm0
+	psrlq xmm0,32
+	movd dword ptr[edx+eax],xmm1
+	movd dword ptr[ebx+eax],xmm0
+	
+suite2_g_2:	
 	add esi,src_pitch
 	add edi,dst_pitch
 	add ebx,dst_pitch
 	add edx,dst_pitch
 	dec h
-	jnz short loop_1_g_2
+	jnz loop_1_g_2
 	
 fin_g_2:
 	pop ebx
@@ -248,108 +162,6 @@ fin_h:
 JPSDR_Median_YUYV_Move_src endp
 
 
-JPSDR_Median_YUYV_Move_src_SSE_1 proc src:dword,planar_Y:dword,planar_U:dword,planar_V:dword,w:dword,h:dword,src_pitch:dword,dst_pitch_Y:dword,dst_pitch_UV:dword
-
-	public JPSDR_Median_YUYV_Move_src_SSE_1
-	
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src
-	mov edi,planar_Y
-	mov ebx,planar_U
-	mov edx,planar_V
-	movdqa xmm3,oword ptr Ymask
-	pxor xmm0,xmm0
-	
-loop_1_h_1:
-	mov ecx,w
-	xor eax,eax
-	shr ecx,2
-	jz short suite_h_1	
-loop_2_h_1:
-	movq xmm0,qword ptr[esi+8*eax]   ;00000000VYUYVYUY
-	movq xmm2,qword ptr[esi+8*eax+8] ;00000000VYUYVYUY
-	pslldq xmm2,8                    ;VYUYVYUY00000000
-	por xmm0,xmm2                    ;VYUYVYUYVYUYVYUY
-	movdqa xmm1,xmm0                 ;VYUYVYUYVYUYVYUY
-	pand xmm0,xmm3                   ;0Y0Y0Y0Y0Y0Y0Y0Y
-	psrlw xmm1,8                     ;0V0U0V0U0V0U0V0U
-	packuswb xmm0,xmm0               ;00000000YYYYYYYY
-	packuswb xmm1,xmm1               ;00000000VUVUVUVU
-	movdqa xmm2,xmm1                 ;00000000VUVUVUVU
-	pand xmm1,xmm3                   ;000000000U0U0U0U
-	psrlw xmm2,8                     ;000000000V0V0V0V
-	packuswb xmm1,xmm1               ;000000000000UUUU
-	packuswb xmm2,xmm2               ;000000000000VVVV
-	movq qword ptr[edi+4*eax],xmm0
-	movd dword ptr[ebx+2*eax],xmm1
-	movd dword ptr[edx+2*eax],xmm2
-	pxor xmm0,xmm0
-	add eax,2
-	loop loop_2_h_1
-	
-suite_h_1:
-    mov ecx,w
-	and ecx,3
-	jz short suite_h_2
-    push edx
-	mov dx,word ptr[esi+8*eax]
-	mov byte ptr[edi+4*eax],dl
-	mov byte ptr[ebx+2*eax],dh
-	mov dl,byte ptr[esi+8*eax+2]
-	mov byte ptr[edi+4*eax+1],dl
-	pop edx
-	push ebx
-	mov bl,byte ptr[esi+8*eax+3]
-	mov byte ptr[edx+2*eax],bl
-	pop ebx
-	dec ecx
-	jz short suite_h_2
-    push edx
-	mov dx,word ptr[esi+8*eax+4]
-	mov byte ptr[edi+4*eax+2],dl
-	mov byte ptr[ebx+2*eax+1],dh
-	mov dl,byte ptr[esi+8*eax+6]
-	mov byte ptr[edi+4*eax+3],dl
-	pop edx
-	push ebx
-	mov bl,byte ptr[esi+8*eax+7]
-	mov byte ptr[edx+2*eax+1],bl
-	pop ebx
-	dec ecx	
-	jz short suite_h_2
-    push edx
-	mov dx,word ptr[esi+8*eax+8]
-	mov byte ptr[edi+4*eax+4],dl
-	mov byte ptr[ebx+2*eax+2],dl
-	mov dl,byte ptr[esi+8*eax+10]
-	mov byte ptr[edi+4*eax+5],dl
-	pop edx
-	push ebx
-	mov bl,byte ptr[esi+8*eax+11]
-	mov byte ptr[edx+2*eax+2],bl
-	pop ebx
-	
-suite_h_2:			
-	add esi,src_pitch
-	add edi,dst_pitch_Y
-	add ebx,dst_pitch_UV
-	add edx,dst_pitch_UV
-	dec h
-	jnz loop_1_h_1
-	
-fin_h_1:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Median_YUYV_Move_src_SSE_1 endp
-
-
 JPSDR_Median_YUYV_Move_src_SSE_2 proc src:dword,planar_Y:dword,planar_U:dword,planar_V:dword,w:dword,h:dword,src_pitch:dword,dst_pitch_Y:dword,dst_pitch_UV:dword
 
 	public JPSDR_Median_YUYV_Move_src_SSE_2
@@ -362,35 +174,58 @@ JPSDR_Median_YUYV_Move_src_SSE_2 proc src:dword,planar_Y:dword,planar_U:dword,pl
 	mov edi,planar_Y
 	mov ebx,planar_U
 	mov edx,planar_V
-	movdqa xmm3,oword ptr Ymask
 	
 loop_1_h_2:
     xor eax,eax    
 	mov ecx,w
-loop_2_h_2:
-	movdqa xmm0,oword ptr[esi+8*eax]   ;VYUYVYUYVYUYVYUY
-	movdqa xmm1,xmm0                   ;VYUYVYUYVYUYVYUY
-	pand xmm0,xmm3                     ;0Y0Y0Y0Y0Y0Y0Y0Y
-	psrlw xmm1,8                       ;0V0U0V0U0V0U0V0U
-	packuswb xmm0,xmm0                 ;00000000YYYYYYYY
-	packuswb xmm1,xmm1                 ;00000000VUVUVUVU
-	movdqa xmm2,xmm1                   ;00000000VUVUVUVU
-	pand xmm1,xmm3                     ;000000000U0U0U0U
-	psrlw xmm2,8                       ;000000000V0V0V0V
-	packuswb xmm1,xmm1                 ;000000000000UUUU
-	packuswb xmm2,xmm2                 ;000000000000VVVV
-	movq qword ptr[edi+4*eax],xmm0
-	movd dword ptr[ebx+2*eax],xmm1
-	movd dword ptr[edx+2*eax],xmm2
-	add eax,2
-	loop loop_2_h_2
+	shr ecx,1
+	jz short suite1_h_2
 	
+loop_2_h_2:
+	movdqa xmm0,XMMWORD ptr[esi+4*eax]   ;V4Y8U4Y7V3Y6U3Y5 V2Y4U2Y3V1Y2U1Y1
+	movdqa xmm1,XMMWORD ptr[esi+4*eax+16]   ;V8Y16U8Y15V7Y14U7Y13 V6Y12U6Y11V5Y10U5Y9
+	movdqa xmm2,xmm0                      ;V4Y8U4Y7V3Y6U3Y5 V2Y4U2Y3V1Y2U1Y1
+	punpcklbw xmm0,xmm1                  ;V6V2Y12Y4U6U2Y11Y3 V5V1Y10Y2U5U1Y9Y1
+	punpckhbw xmm2,xmm1                  ;V8V4Y16Y8U8U4Y15Y7 V7V3Y14Y6U7U3Y13Y5
+	movdqa xmm1,xmm0
+	punpcklbw xmm0,xmm2                  ;V7V5V3V1Y14Y10Y6Y2 U7U5U3U1Y13Y9Y5Y1
+	punpckhbw xmm1,xmm2                  ;V8V6V4V2Y16Y12Y8Y4 U8U6U4U2Y15Y11Y7Y3
+	movdqa xmm2,xmm0
+	punpcklbw xmm0,xmm1                  ;U8U7U6U5U4U3U2U1 Y15Y13Y11Y9Y5Y3Y1
+	punpckhbw xmm2,xmm1                  ;V8V7V6V5V4V3V2V1 Y16Y14Y12Y10Y8Y6Y4Y2
+	movhps qword ptr [ebx+eax],xmm0
+	punpcklbw xmm0,xmm2                  ;Y16Y15Y14Y13Y12Y11Y10Y9Y8Y7Y6Y5Y4Y3Y2Y1
+	movhps qword ptr [edx+eax],xmm2
+	movdqa XMMWORD ptr[edi+2*eax],xmm0
+	add eax,8
+	loop loop_2_h_2
+
+suite1_h_2:
+	mov ecx,w
+	and ecx,1
+	jz short suite2_h_2
+    
+	movdqa xmm0,XMMWORD ptr[esi+4*eax]   ;V4Y8U4Y7V3Y6U3Y5 V2Y4U2Y3V1Y2U1Y1
+	movhlps xmm1,xmm0                    ;V4Y8U4Y7V3Y6U3Y5 V4Y8U4Y7V3Y6U3Y5
+	punpcklbw xmm0,xmm1                  ;V4V2Y8Y4U4U2Y7Y3 V3V1Y6Y2U3U1Y5Y1
+	movhlps xmm1,xmm0                    ;V4V2Y8Y4U4U2Y7Y3 V4V2Y8Y4U4U2Y7Y3
+	punpcklbw xmm0,xmm1                  ;V4V3V2V1Y8Y6Y4Y2 U4U3U2U1Y7Y5Y3Y1
+	movhlps xmm2,xmm0                    ;xxxxxxxx V4V3V2V1Y8Y6Y4Y2
+	movdqa xmm1,xmm0
+	psrlq xmm0,32                        ;0000V4V3V2V1 0000U4U3U2U1
+	punpcklbw xmm1,xmm2                  ; xxxxxxxx Y8Y7Y6Y5Y4Y3Y2Y1
+	movd dword ptr[ebx+eax],xmm0
+	movhlps xmm2,xmm0
+	movq qword ptr[edi+2*eax],xmm1
+	movd dword ptr[edx+eax],xmm2
+
+suite2_h_2:	
 	add esi,src_pitch
 	add edi,dst_pitch_Y
 	add ebx,dst_pitch_UV
 	add edx,dst_pitch_UV
 	dec h
-	jnz short loop_1_h_2
+	jnz loop_1_h_2
 	
 fin_h_2:
 	pop ebx
@@ -446,111 +281,6 @@ fin_i:
 JPSDR_Median_UYVY_Move_src endp
 
 
-
-
-JPSDR_Median_UYVY_Move_src_SSE_1 proc src:dword,planar_Y:dword,planar_U:dword,planar_V:dword,w:dword,h:dword,src_pitch:dword,dst_pitch_Y:dword,dst_pitch_UV:dword
-
-	public JPSDR_Median_UYVY_Move_src_SSE_1
-	
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,src
-	mov edi,planar_Y
-	mov ebx,planar_U
-	mov edx,planar_V
-	movdqa xmm3,oword ptr Ymask
-	pxor xmm0,xmm0
-	
-loop_1_i_1:
-	mov ecx,w
-	xor eax,eax
-	shr ecx,2
-	jz short suite_i_1		
-loop_2_i_1:
-	movq xmm0,qword ptr[esi+8*eax]   ;00000000YVYUYVYU
-	movq xmm2,qword ptr[esi+8*eax+8] ;00000000YVYUYVYU
-	pslldq xmm2,8                    ;YVYUYVYU00000000
-	por xmm0,xmm2                    ;YVYUYVYUYVYUYVYU
-	movdqa xmm1,xmm0                 ;YVYUYVYUYVYUYVYU
-	pand xmm0,xmm3                   ;0V0U0V0U0V0U0V0U
-	psrlw xmm1,8                     ;0Y0Y0Y0Y0Y0Y0Y0Y
-	packuswb xmm0,xmm0               ;00000000VUVUVUVU
-	packuswb xmm1,xmm1               ;00000000YYYYYYYY
-	movdqa xmm2,xmm0                 ;00000000VUVUVUVU
-	pand xmm0,xmm3                   ;000000000U0U0U0U
-	psrlw xmm2,8                     ;000000000V0V0V0V
-	packuswb xmm0,xmm0               ;000000000000UUUU
-	packuswb xmm2,xmm2               ;000000000000VVVV
-	movq qword ptr[edi+4*eax],xmm1
-	movd dword ptr[ebx+2*eax],xmm0
-	movd dword ptr[edx+2*eax],xmm2
-	pxor xmm0,xmm0
-	add eax,2
-	loop loop_2_i_1
-	
-suite_i_1:
-    mov ecx,w
-	and ecx,3
-	jz short suite_i_2
-    push edx
-	mov dx,word ptr[esi+8*eax]
-	mov byte ptr[ebx+2*eax],dl
-	mov byte ptr[edi+4*eax],dh
-	mov dl,byte ptr[esi+8*eax+3]
-	mov byte ptr[edi+4*eax+1],dl
-	pop edx
-	push ebx
-	mov bl,byte ptr[esi+8*eax+2]
-	mov byte ptr[edx+2*eax],bl
-	pop ebx
-	dec ecx
-	jz short suite_i_2
-    push edx
-	mov dx,word ptr[esi+8*eax+4]
-	mov byte ptr[ebx+2*eax+1],dl
-	mov byte ptr[edi+4*eax+2],dh
-	mov dl,byte ptr[esi+8*eax+7]
-	mov byte ptr[edi+4*eax+3],dl
-	pop edx
-	push ebx
-	mov bl,byte ptr[esi+8*eax+6]
-	mov byte ptr[edx+2*eax+1],bl
-	pop ebx
-	dec ecx	
-	jz short suite_i_2
-    push edx
-	mov dx,word ptr[esi+8*eax+8]
-	mov byte ptr[ebx+2*eax+2],dl
-	mov byte ptr[edi+4*eax+4],dl
-	mov dl,byte ptr[esi+8*eax+11]
-	mov byte ptr[edi+4*eax+5],dl
-	pop edx
-	push ebx
-	mov bl,byte ptr[esi+8*eax+10]
-	mov byte ptr[edx+2*eax+2],bl
-	pop ebx
-	
-suite_i_2:				
-	add esi,src_pitch
-	add edi,dst_pitch_Y
-	add ebx,dst_pitch_UV
-	add edx,dst_pitch_UV	
-	dec h
-	jnz loop_1_i_1
-	
-fin_i_1:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Median_UYVY_Move_src_SSE_1 endp
-
-
-
 JPSDR_Median_UYVY_Move_src_SSE_2 proc src:dword,planar_Y:dword,planar_U:dword,planar_V:dword,w:dword,h:dword,src_pitch:dword,dst_pitch_Y:dword,dst_pitch_UV:dword
 
 	public JPSDR_Median_UYVY_Move_src_SSE_2
@@ -563,35 +293,55 @@ JPSDR_Median_UYVY_Move_src_SSE_2 proc src:dword,planar_Y:dword,planar_U:dword,pl
 	mov edi,planar_Y
 	mov ebx,planar_U
 	mov edx,planar_V
-	movdqa xmm3,oword ptr Ymask
 	
 loop_1_i_2:
     xor eax,eax
 	mov ecx,w
+	shr ecx,1
+	jz short suite1_i_2
+	
 loop_2_i_2:
-	movdqa xmm0,oword ptr[esi+8*eax]   ;YVYUYVYUYVYUYVYU
-	movdqa xmm1,xmm0                   ;YVYUYVYUYVYUYVYU
-	pand xmm0,xmm3                     ;0V0U0V0U0V0U0V0U
-	psrlw xmm1,8                       ;0Y0Y0Y0Y0Y0Y0Y0Y
-	packuswb xmm0,xmm0                 ;00000000VUVUVUVU
-	packuswb xmm1,xmm1                 ;00000000YYYYYYYY
-	movdqa xmm2,xmm0                   ;00000000VUVUVUVU
-	pand xmm0,xmm3                     ;000000000U0U0U0U
-	psrlw xmm2,8                       ;000000000V0V0V0V
-	packuswb xmm0,xmm0                 ;000000000000UUUU
-	packuswb xmm2,xmm2                 ;000000000000VVVV
-	movq qword ptr[edi+4*eax],xmm1
-	movd dword ptr[ebx+2*eax],xmm0
-	movd dword ptr[edx+2*eax],xmm2
-	add eax,2
+	movdqa xmm0,XMMWORD ptr[esi+4*eax]   ;Y8V4Y7U4Y6V3Y5U3 Y4V2Y3U2Y2V1Y1U1
+	movdqa xmm1,XMMWORD ptr[esi+4*eax+16]   ;Y16V8Y15U8Y14V7Y13U7 Y12V6Y11U6Y10V5Y9U5
+	movdqa xmm2,xmm0                      ;Y8V4Y7U4Y6V3Y5U3 Y4V2Y3U2Y2V1Y1U1
+	punpcklbw xmm0,xmm1                  ;Y12Y4V6V2Y11Y3U6U2 Y10Y2V5V1Y9Y1U5U1
+	punpckhbw xmm2,xmm1                  ;Y16Y8V8V4Y15Y7U8U4 Y14Y6V7V3Y13Y5U7U3
+	movdqa xmm1,xmm0
+	punpcklbw xmm0,xmm2                  ;Y14Y10Y6Y2V7V5V3V1 Y13Y9Y5Y1U7U5U3U1
+	punpckhbw xmm1,xmm2                  ;Y16Y12Y8Y4V8V6V4V2 Y15Y11Y7Y3U8U6U4U2
+	movdqa xmm2,xmm0
+	punpcklbw xmm0,xmm1                  ;Y15Y13Y11Y9Y7Y5Y3Y1 U8U7U6U5U4U3U2U1
+	punpckhbw xmm2,xmm1                  ;Y16Y14Y12Y10Y8Y6Y4Y2 V8V7V6V5V4v3V2V1
+	movq qword ptr [ebx+eax],xmm0
+	punpckhbw xmm0,xmm2                  ;Y16Y15Y14Y13Y12Y11Y10Y9Y8Y7Y6Y5Y4Y3Y2Y1
+	movq qword ptr [edx+eax],xmm2
+	movdqa XMMWORD ptr[edi+2*eax],xmm0
+	add eax,8
 	loop loop_2_i_2
 	
+suite1_i_2:
+	mov ecx,w
+	and ecx,1
+	jz short suite2_i_2
+	
+	movdqa xmm0,XMMWORD ptr[esi+4*eax]   ;Y8V4Y7U4Y6V3Y5U3 Y4V2Y3U2Y2V1Y1U1
+	movhlps xmm1,xmm0                    ;Y8V4Y7U4Y6V3Y5U3 Y8V4Y7U4Y6V3Y5U3
+	punpcklbw xmm0,xmm1                  ;Y8Y4V4V2Y7Y3U4U2 Y6Y2V3V1Y5Y1U3U1
+	movhlps xmm1,xmm0                    ;Y8Y4V4V2Y7Y3U4U2 Y8Y4V4V2Y7Y3U4U2
+	punpcklbw xmm0,xmm1                  ;Y8Y6Y4Y2V4V3V2V1 Y7Y5Y3Y1U4U3U2U1
+	movhlps xmm2,xmm0                    ;xxxxxxxx Y8Y6Y4Y2V4V3V2V1	
+	movd dword ptr [ebx+eax],xmm0
+	punpcklbw xmm0,xmm2                  ;Y8Y7Y6Y5Y4Y3Y2Y1 xxxxxxxx
+	movd dword ptr [edx+eax],xmm2
+	movhps qword ptr[edi+2*eax],xmm0
+	
+suite2_i_2:
 	add esi,src_pitch
 	add edi,dst_pitch_Y
 	add ebx,dst_pitch_UV
 	add edx,dst_pitch_UV	
 	dec h
-	jnz short loop_1_i_2
+	jnz loop_1_i_2
 	
 fin_i_2:
 	pop ebx
@@ -601,7 +351,6 @@ fin_i_2:
 	ret
 
 JPSDR_Median_UYVY_Move_src_SSE_2 endp
-
 
 
 JPSDR_Median_RGB32_Move_dst proc planar_R:dword,planar_G:dword,planar_B:dword,dst:dword,w:dword,h:dword,src_offset:dword,dst_offset:dword
@@ -646,98 +395,6 @@ fin_j:
 JPSDR_Median_RGB32_Move_dst endp
 
 
-
-JPSDR_Median_RGB32_Move_dst_SSE_1 proc planar_R:dword,planar_G:dword,planar_B:dword,dst:dword,w:dword,h:dword,src_pitch:dword,dst_pitch:dword
-
-	public JPSDR_Median_RGB32_Move_dst_SSE_1
-	
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,planar_B
-	mov ebx,planar_G
-	mov edx,planar_R
-	mov edi,dst
-	pxor xmm3,xmm3
-	
-loop_1_j_1:
-	mov ecx,w
-	xor eax,eax
-	shr ecx,2
-	jz short suite_j_1	
-loop_2_j_1:
-    movd xmm0,dword ptr[esi+2*eax]  ;000000000000BBBB
-	movd xmm1,dword ptr[ebx+2*eax]  ;000000000000GGGG
-	movd xmm2,dword ptr[edx+2*eax]  ;000000000000RRRR
-	punpcklbw xmm1,xmm3             ;000000000G0G0G0G
-	punpcklbw xmm0,xmm2             ;00000000RBRBRBRB
-	punpcklbw xmm0,xmm1             ;0RGB0RGB0RGB0RGB
-	movq qword ptr[edi+8*eax],xmm0
-	psrldq xmm0,8
-	movq qword ptr[edi+8*eax+8],xmm0
-	add eax,2
-	loop loop_2_j_1
-	
-suite_j_1:
-    mov ecx,w
-	and ecx,3
-	jz short suite_j_2
-
-    push edx
-    mov dl,byte ptr[esi+2*eax]
-	mov dh,byte ptr[ebx+2*eax]
-	mov word ptr[edi+8*eax],dx
-	pop edx
-	push ebx
-	mov bl,byte ptr[edx+2*eax]
-	xor bh,bh
-	mov word ptr[edi+8*eax+2],bx
-	pop ebx
-	dec ecx
-	jz short suite_j_2
-    push edx
-    mov dl,byte ptr[esi+2*eax+1]
-	mov dh,byte ptr[ebx+2*eax+1]
-	mov word ptr[edi+8*eax+4],dx
-	pop edx
-	push ebx
-	mov bl,byte ptr[edx+2*eax+1]
-	xor bh,bh
-	mov word ptr[edi+8*eax+6],bx
-	pop ebx
-	dec ecx
-	jz short suite_j_2
-    push edx
-    mov dl,byte ptr[esi+2*eax+2]
-	mov dh,byte ptr[ebx+2*eax+2]
-	mov word ptr[edi+8*eax+8],dx
-	pop edx
-	push ebx
-	mov bl,byte ptr[edx+2*eax+2]
-	xor bh,bh
-	mov word ptr[edi+8*eax+10],bx
-	pop ebx
-	
-suite_j_2:	
-	add esi,src_pitch
-	add ebx,src_pitch
-	add edx,src_pitch
-	add edi,dst_pitch
-	dec h
-	jnz loop_1_j_1
-		
-fin_j_1:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Median_RGB32_Move_dst_SSE_1 endp
-
-
-
 JPSDR_Median_RGB32_Move_dst_SSE_2 proc planar_R:dword,planar_G:dword,planar_B:dword,dst:dword,w:dword,h:dword,src_pitch:dword,dst_pitch:dword
 
 	public JPSDR_Median_RGB32_Move_dst_SSE_2
@@ -755,16 +412,37 @@ JPSDR_Median_RGB32_Move_dst_SSE_2 proc planar_R:dword,planar_G:dword,planar_B:dw
 loop_1_j_2:
     xor eax,eax
 	mov ecx,w
+	shr ecx,1
+	jz short suite1_j_2
+	
 loop_2_j_2:
-    movd xmm0,dword ptr[esi+2*eax]  ;000000000000BBBB
-	movd xmm1,dword ptr[ebx+2*eax]  ;000000000000GGGG
-	movd xmm2,dword ptr[edx+2*eax]  ;000000000000RRRR
+    movq xmm0,qword ptr[esi+eax]  ;00000000B8B7B6B5B4B3B2B1
+	movq xmm2,qword ptr[edx+eax]  ;00000000R8R7R6R5R4R3R2R1
+	movq xmm1,qword ptr[ebx+eax]  ;00000000G8G7G6G5G4G3G2G1
+	punpcklbw xmm0,xmm2             ;R8B8R7B7R6B6R5B5R4B4R3B3R2B2R1B1
+	punpcklbw xmm1,xmm3             ;0G80G70G60G50G40G30G20G1
+	movdqa xmm2,xmm0                ;R8B8R7B7R6B6R5B5R4B4R3B3R2B2R1B1
+	punpcklbw xmm0,xmm1             ;0R4G4B40R3G3B30R2G2B20R1G1B1
+	punpckhbw xmm2,xmm1             ;0R8G8B80R7G7B70R6G6B60R5G5B5
+	movdqa XMMWORD ptr[edi+4*eax],xmm0
+	movdqa XMMWORD ptr[edi+4*eax+16],xmm2
+	add eax,8
+	loop loop_2_j_2
+	
+suite1_j_2:	
+	mov ecx,w
+	and ecx,1
+	jz short suite2_j_2
+	
+    movd xmm0,dword ptr[esi+eax]  ;000000000000BBBB
+	movd xmm1,dword ptr[ebx+eax]  ;000000000000GGGG
+	movd xmm2,dword ptr[edx+eax]  ;000000000000RRRR
 	punpcklbw xmm1,xmm3             ;000000000G0G0G0G
 	punpcklbw xmm0,xmm2             ;00000000RBRBRBRB
 	punpcklbw xmm0,xmm1             ;0RGB0RGB0RGB0RGB
-	movdqa oword ptr[edi+8*eax],xmm0
-	add eax,2
-	loop loop_2_j_2
+	movdqa XMMWORD ptr[edi+4*eax],xmm0
+
+suite2_j_2:	
 	add esi,src_pitch
 	add ebx,src_pitch
 	add edx,src_pitch
@@ -780,7 +458,6 @@ fin_j_2:
 	ret
 
 JPSDR_Median_RGB32_Move_dst_SSE_2 endp
-
 
 
 JPSDR_Median_YUYV_Move_dst proc planar_Y:dword,planar_U:dword,planar_V:dword,dst:dword,w:dword,h:dword,src_offset_Y:dword,src_offset_UV:dword,dst_offset:dword
@@ -826,95 +503,6 @@ fin_k:
 JPSDR_Median_YUYV_Move_dst endp
 
 
-
-JPSDR_Median_YUYV_Move_dst_SSE_1 proc planar_Y:dword,planar_U:dword,planar_V:dword,dst:dword,w:dword,h:dword,src_pitch_Y:dword,src_pitch_UV:dword,dst_pitch:dword
-
-	public JPSDR_Median_YUYV_Move_dst_SSE_1
-	
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,planar_Y
-	mov ebx,planar_U
-	mov edx,planar_V
-	mov edi,dst
-	
-loop_1_k_1:
-	mov ecx,w
-	xor eax,eax
-	shr ecx,2
-	jz short suite_k_1		
-loop_2_k_1:
-	movd xmm1,dword ptr[ebx+2*eax]  ;000000000000UUUU
-	movd xmm2,dword ptr[edx+2*eax]  ;000000000000VVVV
-	movq xmm0,qword ptr[esi+4*eax]  ;00000000YYYYYYYY
-	punpcklbw xmm1,xmm2             ;00000000VUVUVUVU
-	punpcklbw xmm0,xmm1             ;VYUYVYUYVYUYVYUY
-	movq qword ptr[edi+8*eax],xmm0
-	psrldq xmm0,8
-	movq qword ptr[edi+8*eax+8],xmm0
-	add eax,2
-	loop loop_2_k_1
-	
-suite_k_1:
-    mov ecx,w
-	and ecx,3
-	jz short suite_k_2
-
-    push edx
-    mov dl,byte ptr[esi+4*eax]
-	mov dh,byte ptr[ebx+2*eax]
-	mov word ptr[edi+8*eax],dx
-	pop edx
-	push ebx
-	mov bl,byte ptr[esi+4*eax+1]
-	mov bh,byte ptr[edx+2*eax]
-	mov word ptr[edi+8*eax+2],bx
-	pop ebx
-	dec ecx
-	jz short suite_k_2
-    push edx
-    mov dl,byte ptr[esi+4*eax+2]
-	mov dh,byte ptr[ebx+2*eax+1]
-	mov word ptr[edi+8*eax+4],dx
-	pop edx
-	push ebx
-	mov bl,byte ptr[esi+4*eax+3]
-	mov bh,byte ptr[edx+2*eax+1]
-	mov word ptr[edi+8*eax+6],bx
-	pop ebx
-	dec ecx
-	jz short suite_k_2
-    push edx
-    mov dl,byte ptr[esi+4*eax+4]
-	mov dh,byte ptr[ebx+2*eax+2]
-	mov word ptr[edi+8*eax+8],dx
-	pop edx
-	push ebx
-	mov bl,byte ptr[esi+4*eax+5]
-	mov bh,byte ptr[edx+2*eax+2]
-	mov word ptr[edi+8*eax+10],bx
-	pop ebx
-	
-suite_k_2:		
-	add esi,src_pitch_Y
-	add ebx,src_pitch_UV
-	add edx,src_pitch_UV
-	add edi,dst_pitch
-	dec h
-	jnz loop_1_k_1
-		
-fin_k_1:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Median_YUYV_Move_dst_SSE_1 endp
-
-
 JPSDR_Median_YUYV_Move_dst_SSE_2 proc planar_Y:dword,planar_U:dword,planar_V:dword,dst:dword,w:dword,h:dword,src_pitch_Y:dword,src_pitch_UV:dword,dst_pitch:dword
 
 	public JPSDR_Median_YUYV_Move_dst_SSE_2
@@ -931,15 +519,35 @@ JPSDR_Median_YUYV_Move_dst_SSE_2 proc planar_Y:dword,planar_U:dword,planar_V:dwo
 loop_1_k_2:
     xor eax,eax
 	mov ecx,w
+	shr ecx,1
+	jz short suite1_k_2
+	
 loop_2_k_2:
-	movd xmm1,dword ptr[ebx+2*eax]  ;000000000000UUUU
-	movd xmm2,dword ptr[edx+2*eax]  ;000000000000VVVV
-	movq xmm0,qword ptr[esi+4*eax]  ;00000000YYYYYYYY
+	movq xmm1,qword ptr[ebx+eax]  ;00000000UUUUUUUU
+	movq xmm2,qword ptr[edx+eax]  ;00000000VVVVVVVV
+	movdqa xmm0,XMMWORD ptr[esi+2*eax]  ;YYYYYYYYYYYYYYYY
+	punpcklbw xmm1,xmm2             ;VUVUVUVUVUVUVUVU
+	movdqa xmm2,xmm0                ;YYYYYYYYYYYYYYYY
+	punpcklbw xmm0,xmm1             ;VYUYVYUYVYUYVYUY
+	punpckhbw xmm2,xmm1             ;VYUYVYUYVYUYVYUY
+	movdqa XMMWORD ptr[edi+4*eax],xmm0
+	movdqa XMMWORD ptr[edi+4*eax+16],xmm2
+	add eax,8
+	loop loop_2_k_2
+	
+suite1_k_2:	
+	mov ecx,w
+	and ecx,1
+	jz short suite2_k_2
+	
+	movd xmm1,dword ptr[ebx+eax]  ;000000000000UUUU
+	movd xmm2,dword ptr[edx+eax]  ;000000000000VVVV
+	movq xmm0,qword ptr[esi+2*eax]  ;00000000YYYYYYYY
 	punpcklbw xmm1,xmm2             ;00000000VUVUVUVU
 	punpcklbw xmm0,xmm1             ;VYUYVYUYVYUYVYUY
-	movdqa oword ptr[edi+8*eax],xmm0
-	add eax,2
-	loop loop_2_k_2
+	movdqa XMMWORD ptr[edi+4*eax],xmm0
+	
+suite2_k_2:	
 	add esi,src_pitch_Y
 	add ebx,src_pitch_UV
 	add edx,src_pitch_UV
@@ -955,7 +563,6 @@ fin_k_2:
 	ret
 
 JPSDR_Median_YUYV_Move_dst_SSE_2 endp
-
 
 
 JPSDR_Median_UYVY_Move_dst proc planar_Y:dword,planar_U:dword,planar_V:dword,dst:dword,w:dword,h:dword,src_offset_Y:dword,src_offset_UV:dword,dst_offset:dword
@@ -1002,93 +609,6 @@ fin_l:
 JPSDR_Median_UYVY_Move_dst endp
 
 
-JPSDR_Median_UYVY_Move_dst_SSE_1 proc planar_Y:dword,planar_U:dword,planar_V:dword,dst:dword,w:dword,h:dword,src_pitch_Y:dword,src_pitch_UV:dword,dst_pitch:dword
-
-	public JPSDR_Median_UYVY_Move_dst_SSE_1
-	
-	push esi
-	push edi
-	push ebx
-	
-	mov esi,planar_Y
-	mov ebx,planar_U
-	mov edx,planar_V
-	mov edi,dst
-	
-loop_1_l_1:
-	mov ecx,w
-	xor eax,eax
-	shr ecx,2
-	jz short suite_l_1			
-loop_2_l_1:
-	movd xmm1,dword ptr[ebx+2*eax]  ;000000000000UUUU
-	movd xmm2,dword ptr[edx+2*eax]  ;000000000000VVVV
-	movq xmm0,qword ptr[esi+4*eax]  ;00000000YYYYYYYY
-	punpcklbw xmm1,xmm2             ;00000000VUVUVUVU
-	punpcklbw xmm1,xmm0             ;YVYUYVYUYVYUYVYU
-	movq qword ptr[edi+8*eax],xmm1
-	psrldq xmm1,8
-	movq qword ptr[edi+8*eax+8],xmm1
-	add eax,2
-	loop loop_2_l_1	
-suite_l_1:
-    mov ecx,w
-	and ecx,3
-	jz short suite_l_2
-
-    push edx
-	mov dl,byte ptr[ebx+2*eax]
-    mov dh,byte ptr[esi+4*eax]
-	mov word ptr[edi+8*eax],dx
-	pop edx
-	push ebx
-	mov bl,byte ptr[edx+2*eax]
-	mov bh,byte ptr[esi+4*eax+1]
-	mov word ptr[edi+8*eax+2],bx
-	pop ebx
-	dec ecx
-	jz short suite_l_2
-    push edx
-	mov dl,byte ptr[ebx+2*eax+1]
-    mov dh,byte ptr[esi+4*eax+2]
-	mov word ptr[edi+8*eax+4],dx
-	pop edx
-	push ebx
-	mov bl,byte ptr[edx+2*eax+1]
-	mov bh,byte ptr[esi+4*eax+3]
-	mov word ptr[edi+8*eax+6],bx
-	pop ebx
-	dec ecx
-	jz short suite_l_2
-    push edx
-	mov dl,byte ptr[ebx+2*eax+2]
-    mov dh,byte ptr[esi+4*eax+4]
-	mov word ptr[edi+8*eax+8],dx
-	pop edx
-	push ebx
-	mov bl,byte ptr[edx+2*eax+2]
-	mov bh,byte ptr[esi+4*eax+5]
-	mov word ptr[edi+8*eax+10],bx
-	pop ebx
-	
-suite_l_2:			
-	add esi,src_pitch_Y
-	add ebx,src_pitch_UV
-	add edx,src_pitch_UV
-	add edi,dst_pitch
-	dec h
-	jnz loop_1_l_1
-		
-fin_l_1:
-	pop ebx
-	pop edi
-	pop esi
-
-	ret
-
-JPSDR_Median_UYVY_Move_dst_SSE_1 endp
-
-
 JPSDR_Median_UYVY_Move_dst_SSE_2 proc planar_Y:dword,planar_U:dword,planar_V:dword,dst:dword,w:dword,h:dword,src_pitch_Y:dword,src_pitch_UV:dword,dst_pitch:dword
 
 	public JPSDR_Median_UYVY_Move_dst_SSE_2
@@ -1105,16 +625,35 @@ JPSDR_Median_UYVY_Move_dst_SSE_2 proc planar_Y:dword,planar_U:dword,planar_V:dwo
 loop_1_l_2:
     xor eax,eax
 	mov ecx,w
+	shr ecx,1
+	jz short suite1_l_2
+	
 loop_2_l_2:
-	movd xmm1,dword ptr[ebx+2*eax]  ;000000000000UUUU
-	movd xmm2,dword ptr[edx+2*eax]  ;000000000000VVVV
-	movq xmm0,qword ptr[esi+4*eax]  ;00000000YYYYYYYY
+	movq xmm1,qword ptr[ebx+eax]  ;00000000UUUUUUUU
+	movq xmm2,qword ptr[edx+eax]  ;00000000VVVVVVVV
+	movdqa xmm0,XMMWORD ptr[esi+2*eax]  ;YYYYYYYYYYYYYYYY
+	punpcklbw xmm1,xmm2             ;VUVUVUVUVUVUVUVU
+	movdqa xmm2,xmm1                ;VUVUVUVUVUVUVUVU
+	punpcklbw xmm1,xmm0             ;YVYUYVYUYVYUYVYU
+	punpckhbw xmm2,xmm0             ;YVYUYVYUYVYUYVYU
+	movdqa XMMWORD ptr[edi+4*eax],xmm1
+	movdqa XMMWORD ptr[edi+4*eax+16],xmm2
+	add eax,8
+	loop loop_2_l_2
+
+suite1_l_2:	
+	mov ecx,w
+	and ecx,1
+	jz short suite2_l_2
+	
+	movd xmm1,dword ptr[ebx+eax]  ;000000000000UUUU
+	movd xmm2,dword ptr[edx+eax]  ;000000000000VVVV
+	movq xmm0,qword ptr[esi+2*eax]  ;00000000YYYYYYYY
 	punpcklbw xmm1,xmm2             ;00000000VUVUVUVU
 	punpcklbw xmm1,xmm0             ;YVYUYVYUYVYUYVYU
-	movdqa oword ptr[edi+8*eax],xmm1
-	add eax,2
-	loop loop_2_l_2
+	movdqa XMMWORD ptr[edi+4*eax],xmm1
 	
+suite2_l_2:	
 	add esi,src_pitch_Y
 	add ebx,src_pitch_UV
 	add edx,src_pitch_UV
@@ -1130,7 +669,6 @@ fin_l_2:
 	ret
 
 JPSDR_Median_UYVY_Move_dst_SSE_2 endp
-
 
 
 end

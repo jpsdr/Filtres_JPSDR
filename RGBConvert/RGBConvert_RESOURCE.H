@@ -7,16 +7,17 @@
 #define IDC_BT601                        8052
 #define IDC_SMPTE_240M                   8053
 #define IDC_FCC                          8054
-#define IDC_FULL_RANGE                   8055
-#define IDC_PREVIEW                      8056
-#define IDC_MATRIX_GROUP                 8057
-#define IDC_AUTODETECT                   8058
-#define IDC_OUTPUT_GROUP                 8059
-#define IDC_OUTPUT_YV24                  8060
-#define IDC_OUTPUT_YV16                  8061
-#define IDC_OUTPUT_YUY2                  8062
-#define IDC_OUTPUT_YV12                  8063
-#define IDC_ENABLE_MT                    8064
+#define IDC_BT2020                       8055
+#define IDC_FULL_RANGE                   8056
+#define IDC_PREVIEW                      8057
+#define IDC_MATRIX_GROUP                 8058
+#define IDC_AUTODETECT                   8059
+#define IDC_OUTPUT_GROUP                 8060
+#define IDC_OUTPUT_YV24                  8061
+#define IDC_OUTPUT_YV16                  8062
+#define IDC_OUTPUT_YUY2                  8063
+#define IDC_OUTPUT_YV12                  8064
+#define IDC_ENABLE_MT                    8065
 
 // Next default values for new objects
 // 
@@ -24,7 +25,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        852
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         8065
+#define _APS_NEXT_CONTROL_VALUE         8066
 #define _APS_NEXT_SYMED_VALUE           851
 #endif
 #endif

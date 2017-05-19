@@ -128,13 +128,7 @@
     <MASM Include="..\DeinterlaceII\Filtre_JPSDR_DeinterlaceII_asm.asm">
       <Filter>Fichiers sources</Filter>
     </MASM>
-    <MASM Include="..\InterlaceMotion\Filtre_JPSDR_InterlaceMotion_asm.asm">
-      <Filter>Fichiers sources</Filter>
-    </MASM>
     <MASM Include="..\IVTC\Filtre_JPSDR_IVTC_asm.asm">
-      <Filter>Fichiers sources</Filter>
-    </MASM>
-    <MASM Include="..\IVTC_Manual\Filtre_JPSDR_IVTC_Manual_asm.asm">
       <Filter>Fichiers sources</Filter>
     </MASM>
     <MASM Include="..\Median\Filtre_JPSDR_Median_asm.asm">
@@ -291,9 +285,6 @@
       <Filter>Fichiers sources</Filter>
     </CustomBuild>
     <CustomBuild Include="..\IVTC\Filtre_JPSDR_IVTC_asm_x64.asm">
-      <Filter>Fichiers sources</Filter>
-    </CustomBuild>
-    <CustomBuild Include="..\IVTC_Manual\Filtre_JPSDR_IVTC_Manual_asm_x64.asm">
       <Filter>Fichiers sources</Filter>
     </CustomBuild>
     <CustomBuild Include="..\Median\Filtre_JPSDR_Median_asm_x64.asm">

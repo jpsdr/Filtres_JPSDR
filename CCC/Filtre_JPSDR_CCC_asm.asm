@@ -17,14 +17,14 @@ uw_235 word 8 dup(235)
 
 .code
 
-xmm9 equ oword ptr uw_2
-xmm8 equ oword ptr uw_32
-xmm13 equ oword ptr uw_11
-xmm12 equ oword ptr uw_22
-xmm11 equ oword ptr uw_53
-xmm10 equ oword ptr uw_3
-xmm14 equ oword ptr uw_16
-xmm15 equ oword ptr uw_235
+xmm9 equ XMMWORD ptr uw_2
+xmm8 equ XMMWORD ptr uw_32
+xmm13 equ XMMWORD ptr uw_11
+xmm12 equ XMMWORD ptr uw_22
+xmm11 equ XMMWORD ptr uw_53
+xmm10 equ XMMWORD ptr uw_3
+xmm14 equ XMMWORD ptr uw_16
+xmm15 equ XMMWORD ptr uw_235
 
 
 JPSDR_CCC_Planar_SSE_FR proc src:dword,dst:dword,src_pitch:dword,dst_pitch:dword,w:dword

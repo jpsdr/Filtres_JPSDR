@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "resource.h"
+#include "RemoveFrames_resource.h"
 
 #include "..\Filtres_JPSDR\VideoFilter.h"
 #include "..\Filtres_JPSDR\VideoFilterDialog.h"
@@ -11,7 +11,6 @@
 #include "..\Filtres_JPSDR\JPSDR_Filter.h"
 
 extern int g_VFVAPIVersion;
-
 
 
 class JPSDR_RemoveFramesData

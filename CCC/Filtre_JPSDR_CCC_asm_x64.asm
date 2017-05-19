@@ -34,21 +34,21 @@ w equ dword ptr[rbp+48]
 	.pushreg rdi
 	sub rsp,128
 	.allocstack 128
-	movdqa oword ptr[rsp],xmm6
+	movdqa XMMWORD ptr[rsp],xmm6
 	.savexmm128 xmm6,0
-	movdqa oword ptr[rsp+16],xmm7
+	movdqa XMMWORD ptr[rsp+16],xmm7
 	.savexmm128 xmm7,16
-	movdqa oword ptr[rsp+32],xmm8
+	movdqa XMMWORD ptr[rsp+32],xmm8
 	.savexmm128 xmm8,32
-	movdqa oword ptr[rsp+48],xmm9
+	movdqa XMMWORD ptr[rsp+48],xmm9
 	.savexmm128 xmm9,48
-	movdqa oword ptr[rsp+64],xmm10
+	movdqa XMMWORD ptr[rsp+64],xmm10
 	.savexmm128 xmm10,64
-	movdqa oword ptr[rsp+80],xmm11
+	movdqa XMMWORD ptr[rsp+80],xmm11
 	.savexmm128 xmm11,80
-	movdqa oword ptr[rsp+96],xmm12
+	movdqa XMMWORD ptr[rsp+96],xmm12
 	.savexmm128 xmm12,96
-	movdqa oword ptr[rsp+112],xmm13
+	movdqa XMMWORD ptr[rsp+112],xmm13
 	.savexmm128 xmm13,112
 	.endprolog
 	
@@ -59,12 +59,12 @@ w equ dword ptr[rbp+48]
 	add r11,r9
 	xor rcx,rcx
 	
-	movdqa xmm9,oword ptr uw_2
-	movdqa xmm8,oword ptr uw_32
-	movdqa xmm13,oword ptr uw_11
-	movdqa xmm12,oword ptr uw_22
-	movdqa xmm11,oword ptr uw_53
-	movdqa xmm10,oword ptr uw_3
+	movdqa xmm9,XMMWORD ptr uw_2
+	movdqa xmm8,XMMWORD ptr uw_32
+	movdqa xmm13,XMMWORD ptr uw_11
+	movdqa xmm12,XMMWORD ptr uw_22
+	movdqa xmm11,XMMWORD ptr uw_53
+	movdqa xmm10,XMMWORD ptr uw_3
 	
 	mov rax,8
 	
@@ -225,14 +225,14 @@ suite1:
 	movd dword ptr[rdi],xmm4	
 	
 fin1:	
-	movdqa xmm13,oword ptr[rsp+112]
-	movdqa xmm12,oword ptr[rsp+96]
-	movdqa xmm11,oword ptr[rsp+80]
-	movdqa xmm10,oword ptr[rsp+64]
-	movdqa xmm9,oword ptr[rsp+48]
-	movdqa xmm8,oword ptr[rsp+32]
-	movdqa xmm7,oword ptr[rsp+16]
-	movdqa xmm6,oword ptr[rsp]
+	movdqa xmm13,XMMWORD ptr[rsp+112]
+	movdqa xmm12,XMMWORD ptr[rsp+96]
+	movdqa xmm11,XMMWORD ptr[rsp+80]
+	movdqa xmm10,XMMWORD ptr[rsp+64]
+	movdqa xmm9,XMMWORD ptr[rsp+48]
+	movdqa xmm8,XMMWORD ptr[rsp+32]
+	movdqa xmm7,XMMWORD ptr[rsp+16]
+	movdqa xmm6,XMMWORD ptr[rsp]
 	add rsp,128
 	pop rdi
 	pop rsi
