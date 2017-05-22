@@ -118,10 +118,10 @@ class JPSDR_ColorSpaceConvert : public VDXVideoFilter
 {
 public:
 	virtual bool Init();
+	virtual void DeInit();
 	virtual uint32 GetParams();
 	virtual void Start();
 	virtual void Run();
-	virtual void End();
 	virtual bool Configure(VDXHWND hwnd);
 	virtual void GetSettingString(char *buf, int maxlen);
 	virtual void GetScriptString(char *buf, int maxlen);
@@ -142,7 +142,7 @@ protected:
 
 	Public_MT_Data_Thread MT_Thread[MAX_MT_THREADS];
 	MT_Data_Info MT_Data[MAX_MT_THREADS];
-	uint8_t threads_number;
+	uint8_t threads_number,total_cpu;
 	bool threadpoolAllocated;
 	uint16_t UserId;
 
@@ -342,11 +342,28 @@ bool JPSDR_ColorSpaceConvert::Init()
 		MT_Thread[i].pFunc=NULL;
 	}
 
-	threads_number=1;
-	threadpoolAllocated=false;
 	UserId=0;
+	if (poolInterface->GetThreadPoolInterfaceStatus())
+	{
+		total_cpu=poolInterface->GetThreadNumber(0,true);
+
+		if (total_cpu>0)
+			threadpoolAllocated=poolInterface->AllocateThreads(UserId,total_cpu,0,0,true,false,true,-1);
+		else threadpoolAllocated=false;
+	}
+	else
+	{
+		total_cpu=0;
+		threadpoolAllocated=false;
+	}
 
 	return(true);
+}
+
+
+void JPSDR_ColorSpaceConvert::DeInit()
+{
+	if (threadpoolAllocated) poolInterface->DeAllocateThreads(UserId);
 }
 
 
@@ -2790,17 +2807,15 @@ void JPSDR_ColorSpaceConvert::Start()
 
 	Compute_Lookup();
 
+	if (total_cpu==0)
+	{
+		ff->Except("Error with the TheadPool while getting CPU info!");
+		return;
+	}
+
 	if  ( mData.mt_mode && (idata.src_h0>=32) && (idata.dst_h0>=32) &&
 		((mData.color_matrix_in!=mData.color_matrix_out) ||
-		(mData.full_range_in!=mData.full_range_out)) )
-	{
-		threads_number=poolInterface->GetThreadNumber(0,true);
-		if (threads_number==0)
-		{
-			ff->Except("Error with the TheadPool while getting CPU info!");
-			return;
-		}
-	}
+		(mData.full_range_in!=mData.full_range_out)) ) threads_number=total_cpu;
 	else threads_number=1;
 
 	switch (idata.src_video_mode)
@@ -2836,6 +2851,12 @@ void JPSDR_ColorSpaceConvert::Start()
 
 	if (threads_number>1)
 	{
+		if (!threadpoolAllocated)
+		{
+			ff->Except("Error with the TheadPool while allocating threadpool!");
+			return;
+		}
+
 		StaticThreadpoolF=StaticThreadpool;
 
 		for (uint8_t i=0; i<threads_number; i++)
@@ -2845,27 +2866,9 @@ void JPSDR_ColorSpaceConvert::Start()
 			MT_Thread[i].thread_Id=(uint8_t)i;
 			MT_Thread[i].pFunc=StaticThreadpoolF;
 		}
-		if (!threadpoolAllocated)
-			threadpoolAllocated=poolInterface->AllocateThreads(UserId,threads_number,0,0,true,false,true,-1);
-		if (!threadpoolAllocated)
-		{			
-			ff->Except("Error with the TheadPool while allocating threadpool!");
-			return;
-		}
-	}
-
-}
-
-
-void JPSDR_ColorSpaceConvert::End()
-{
-	if (threadpoolAllocated)
-	{
-		poolInterface->DeAllocateThreads(UserId);
-		UserId=0;
-		threadpoolAllocated=false;
 	}
 }
+
 
 
 void JPSDR_ColorSpaceConvert::GetSettingString(char *buf, int maxlen)
@@ -4108,4 +4111,4 @@ void JPSDR_ColorSpaceConvert::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_ColorSpaceConvert=
-VDXVideoFilterDefinition<JPSDR_ColorSpaceConvert>("JPSDR","ColorSpaceConvert v2.3.0","YCbCr color space convertion.\n[ASM][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_ColorSpaceConvert>("JPSDR","ColorSpaceConvert v2.3.1","YCbCr color space convertion.\n[ASM][SSE2] Optimised.");

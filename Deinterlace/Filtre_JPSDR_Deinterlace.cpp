@@ -368,6 +368,7 @@ class JPSDR_Deinterlace : public VDXVideoFilter
 {
 public:
 	virtual bool Init();
+	virtual void DeInit();
 	virtual uint32 GetParams();
 	virtual void Start();
 	virtual void Run();
@@ -398,7 +399,7 @@ protected:
 
 	Public_MT_Data_Thread MT_Thread[MAX_MT_THREADS];
 	MT_Data_Info MT_Data[MAX_MT_THREADS];
-	uint8_t threads_number;
+	uint8_t threads_number,total_cpu;
 	bool threadpoolAllocated;
 	uint16_t UserId;
 
@@ -540,11 +541,28 @@ bool JPSDR_Deinterlace::Init()
 		MT_Thread[i].pFunc=NULL;
 	}
 
-	threads_number=1;
-	threadpoolAllocated=false;
 	UserId=0;
+	if (poolInterface->GetThreadPoolInterfaceStatus())
+	{
+		total_cpu=poolInterface->GetThreadNumber(0,true);
+
+		if (total_cpu>0)
+			threadpoolAllocated=poolInterface->AllocateThreads(UserId,total_cpu,0,0,true,false,true,-1);
+		else threadpoolAllocated=false;
+	}
+	else
+	{
+		total_cpu=0;
+		threadpoolAllocated=false;
+	}
 
 	return(true);
+}
+
+
+void JPSDR_Deinterlace::DeInit()
+{
+	if (threadpoolAllocated) poolInterface->DeAllocateThreads(UserId);
 }
 
 
@@ -836,7 +854,7 @@ uint8_t JPSDR_Deinterlace::CreateMTData(uint8_t max_threads,int32_t size_x,int32
 
 
 static inline void Move_Full(const void *src_, void *dst_, const int32_t w,const int32_t h,
-		ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+		const ptrdiff_t src_pitch, const ptrdiff_t dst_pitch)
 {
 	const uint8_t *src=(uint8_t *)src_;
 	uint8_t *dst=(uint8_t *)dst_;
@@ -863,7 +881,7 @@ static inline void Move_Full(const void *src_, void *dst_, const int32_t w,const
 
 
 static inline void Move_Half(const void *src_, void *dst_, const int32_t w,const int32_t h,
-		ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+		const ptrdiff_t src_pitch,const ptrdiff_t dst_pitch)
 {
 	const uint8_t *src=(uint8_t *)src_;
 	uint8_t *dst=(uint8_t *)dst_;
@@ -2960,16 +2978,14 @@ void JPSDR_Deinterlace::Start()
 		}
 	}
 
-	if ((!mData.file_mode) && mData.mt_mode && (mData.mode<5) &&
-		((idata.src_h0>=32) && (idata.dst_h0>=32)))
+	if (total_cpu==0)
 	{
-		threads_number=poolInterface->GetThreadNumber(0,true);
-		if (threads_number==0)
-		{
-			ff->Except("Error with the TheadPool while getting CPU info!");
-			return;
-		}
+		ff->Except("Error with the TheadPool while getting CPU info!");
+		return;
 	}
+
+	if ((!mData.file_mode) && mData.mt_mode && (mData.mode<5) &&
+		((idata.src_h0>=32) && (idata.dst_h0>=32))) threads_number=total_cpu;
 	else threads_number=1;
 
 	switch (idata.src_video_mode)
@@ -3200,6 +3216,12 @@ void JPSDR_Deinterlace::Start()
 
 	if (threads_number>1)
 	{
+		if (!threadpoolAllocated)
+		{
+			ff->Except("Error with the TheadPool while allocating threadpool!");
+			return;
+		}
+
 		StaticThreadpoolF=StaticThreadpool;
 
 		for (i=0; i<threads_number; i++)
@@ -3208,13 +3230,6 @@ void JPSDR_Deinterlace::Start()
 			MT_Thread[i].f_process=0;
 			MT_Thread[i].thread_Id=(uint8_t)i;
 			MT_Thread[i].pFunc=StaticThreadpoolF;
-		}
-		if (!threadpoolAllocated)
-			threadpoolAllocated=poolInterface->AllocateThreads(UserId,threads_number,0,0,true,false,true,-1);
-		if (!threadpoolAllocated)
-		{			
-			ff->Except("Error with the TheadPool while allocating threadpool!");
-			return;
 		}
 	}
 
@@ -3257,13 +3272,6 @@ void JPSDR_Deinterlace::End()
 		{
 			my_aligned_free(buffer[i][j]);
 		}
-	}
-
-	if (threadpoolAllocated)
-	{
-		poolInterface->DeAllocateThreads(UserId);
-		UserId=0;
-		threadpoolAllocated=false;
 	}
 }
 
@@ -6383,7 +6391,7 @@ void JPSDR_Deinterlace::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScript
 
 		
 extern VDXFilterDefinition filterDef_JPSDR_Deinterlace=
-VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v5.2.1","Deinterlace blending frames. [ASM][MMX][SSE][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v5.2.2","Deinterlace blending frames. [ASM][MMX][SSE][SSE2] Optimised.");
 
 
 

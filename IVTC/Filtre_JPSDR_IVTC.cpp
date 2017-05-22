@@ -471,6 +471,7 @@ class JPSDR_IVTC : public VDXVideoFilter
 {
 public:
 	virtual bool Init();
+	virtual void DeInit();
 	virtual uint32 GetParams();
 	virtual void Start();
 	virtual void Run();
@@ -524,7 +525,7 @@ protected:
 
 	Public_MT_Data_Thread MT_Thread[MAX_MT_THREADS];
 	MT_Data_Info MT_Data[MAX_MT_THREADS];
-	uint8_t threads_number;
+	uint8_t threads_number,total_cpu;
 	bool threadpoolAllocated;
 	uint16_t UserId;
 
@@ -784,11 +785,28 @@ bool JPSDR_IVTC::Init()
 		MT_Thread[i].pFunc=NULL;
 	}
 
-	threads_number=1;
-	threadpoolAllocated=false;
 	UserId=0;
+	if (poolInterface->GetThreadPoolInterfaceStatus())
+	{
+		total_cpu=poolInterface->GetThreadNumber(0,true);
+
+		if (total_cpu>0)
+			threadpoolAllocated=poolInterface->AllocateThreads(UserId,total_cpu,0,0,true,false,true,-1);
+		else threadpoolAllocated=false;
+	}
+	else
+	{
+		total_cpu=0;
+		threadpoolAllocated=false;
+	}
 
 	return(true);
+}
+
+
+void JPSDR_IVTC::DeInit()
+{
+	if (threadpoolAllocated) poolInterface->DeAllocateThreads(UserId);
 }
 
 
@@ -3093,15 +3111,13 @@ void JPSDR_IVTC::Start()
 		}
 	}
 
-	if (mData.mt_mode && ((idata.src_h0>=32) && (idata.dst_h0>=32)))
+	if (total_cpu==0)
 	{
-		threads_number=poolInterface->GetThreadNumber(0,true);
-		if (threads_number==0)
-		{
-			ff->Except("Error with the TheadPool while getting CPU info!");
-			return;
-		}
+		ff->Except("Error with the TheadPool while getting CPU info!");
+		return;
 	}
+
+	if (mData.mt_mode && ((idata.src_h0>=32) && (idata.dst_h0>=32))) threads_number=total_cpu;
 	else threads_number=1;
 
 	buffer_delta_pitch=(((idata.src_w0 << 2)+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
@@ -3364,6 +3380,12 @@ void JPSDR_IVTC::Start()
 
 	if (threads_number>1)
 	{
+		if (!threadpoolAllocated)
+		{
+			ff->Except("Error with the TheadPool while allocating threadpool!");
+			return;
+		}
+
 		StaticThreadpoolF=StaticThreadpool;
 
 		for (i=0; i<threads_number; i++)
@@ -3372,13 +3394,6 @@ void JPSDR_IVTC::Start()
 			MT_Thread[i].f_process=0;
 			MT_Thread[i].thread_Id=(uint8_t)i;
 			MT_Thread[i].pFunc=StaticThreadpoolF;
-		}
-		if (!threadpoolAllocated)
-			threadpoolAllocated=poolInterface->AllocateThreads(UserId,threads_number,0,0,true,false,true,-1);
-		if (!threadpoolAllocated)
-		{			
-			ff->Except("Error with the TheadPool while allocating threadpool!");
-			return;
 		}
 	}
 
@@ -15446,13 +15461,6 @@ void JPSDR_IVTC::End()
 	myfree(buffer_2);
 	myfree(buffer_map);
 	my_aligned_free(buffer_delta);
-
-	if (threadpoolAllocated)
-	{
-		poolInterface->DeAllocateThreads(UserId);
-		UserId=0;
-		threadpoolAllocated=false;
-	}
 }
 
 
@@ -15527,4 +15535,4 @@ void JPSDR_IVTC::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_IVTC=
-VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.3.0","IVTC Filter. [MMX][SSE] Optimised.");
+VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.3.1","IVTC Filter. [MMX][SSE] Optimised.");

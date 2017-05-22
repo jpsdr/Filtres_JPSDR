@@ -47,6 +47,7 @@ public:
 	// linkage routines
 
 	virtual bool Init();
+	virtual void DeInit();
 	virtual uint32 GetParams()=0;
 	virtual void Start();
 	virtual void Run();
