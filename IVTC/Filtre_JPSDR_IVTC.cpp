@@ -470,8 +470,9 @@ bool JPSDR_IVTCDialog::OnCommand(int cmd)
 class JPSDR_IVTC : public VDXVideoFilter
 {
 public:
+	virtual ~JPSDR_IVTC();
+
 	virtual bool Init();
-	virtual void DeInit();
 	virtual uint32 GetParams();
 	virtual void Start();
 	virtual void Run();
@@ -804,7 +805,7 @@ bool JPSDR_IVTC::Init()
 }
 
 
-void JPSDR_IVTC::DeInit()
+JPSDR_IVTC::~JPSDR_IVTC()
 {
 	if (threadpoolAllocated) poolInterface->DeAllocateThreads(UserId);
 }

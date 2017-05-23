@@ -320,8 +320,9 @@ bool JPSDR_MedianDialog::OnCommand(int cmd)
 class JPSDR_Median : public VDXVideoFilter
 {
 public:
+	virtual ~JPSDR_Median();
+
 	virtual bool Init();
-	virtual void DeInit();
 	virtual uint32 GetParams();
 	virtual void Start();
 	virtual void Run();
@@ -412,7 +413,7 @@ bool JPSDR_Median::Init()
 }
 
 
-void JPSDR_Median::DeInit()
+JPSDR_Median::~JPSDR_Median()
 {
 	if (threadpoolAllocated) poolInterface->DeAllocateThreads(UserId);
 }

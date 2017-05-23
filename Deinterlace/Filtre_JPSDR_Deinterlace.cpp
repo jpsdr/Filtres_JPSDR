@@ -367,8 +367,9 @@ bool JPSDR_DeinterlaceDialog::OnCommand(int cmd)
 class JPSDR_Deinterlace : public VDXVideoFilter
 {
 public:
+	virtual ~JPSDR_Deinterlace();
+
 	virtual bool Init();
-	virtual void DeInit();
 	virtual uint32 GetParams();
 	virtual void Start();
 	virtual void Run();
@@ -560,7 +561,7 @@ bool JPSDR_Deinterlace::Init()
 }
 
 
-void JPSDR_Deinterlace::DeInit()
+JPSDR_Deinterlace::~JPSDR_Deinterlace()
 {
 	if (threadpoolAllocated) poolInterface->DeAllocateThreads(UserId);
 }

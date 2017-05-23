@@ -236,8 +236,9 @@ bool JPSDR_AutoYUY2Dialog::OnCommand(int cmd)
 class JPSDR_AutoYUY2 : public VDXVideoFilter
 {
 public:
+	virtual ~JPSDR_AutoYUY2();
+
 	virtual bool Init();
-	virtual void DeInit();
 	virtual uint32 GetParams();
 	virtual void Start();
 	virtual void Run();
@@ -358,7 +359,7 @@ bool JPSDR_AutoYUY2::Init()
 }
 
 
-void JPSDR_AutoYUY2::DeInit()
+JPSDR_AutoYUY2::~JPSDR_AutoYUY2()
 {
 	if (threadpoolAllocated) poolInterface->DeAllocateThreads(UserId);
 }

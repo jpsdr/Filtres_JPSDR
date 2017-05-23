@@ -44,9 +44,6 @@ bool VDXVideoFilter::Init() {
 	return true;
 }
 
-void VDXVideoFilter::DeInit() {
-}
-
 void VDXVideoFilter::Start() {
 }
 
@@ -108,11 +105,7 @@ bool VDXVideoFilter::OnInvalidateCaches() {
 
 ///////////////////////////////////////////////////////////////////////////
 void __cdecl VDXVideoFilter::FilterDeinit   (VDXFilterActivation *fa, const VDXFilterFunctions *ff) {
-	VDXVideoFilter *pThis = *reinterpret_cast<VDXVideoFilter **>(fa->filter_data);
-
-	pThis->fa=fa;
-	pThis->DeInit();
-	pThis->~VDXVideoFilter();
+	(*reinterpret_cast<VDXVideoFilter **>(fa->filter_data))->~VDXVideoFilter();
 }
 
 int  __cdecl VDXVideoFilter::FilterRun      (const VDXFilterActivation *fa, const VDXFilterFunctions *ff) {

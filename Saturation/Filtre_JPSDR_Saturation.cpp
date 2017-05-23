@@ -134,8 +134,9 @@ protected:
 class JPSDR_Saturation : public VDXVideoFilter
 {
 public:
+	virtual ~JPSDR_Saturation();
+
 	virtual bool Init();
-	virtual void DeInit();
 	virtual uint32 GetParams();
 	virtual void Start();
 	virtual void Run();
@@ -417,7 +418,7 @@ bool JPSDR_Saturation::Init()
 }
 
 
-void JPSDR_Saturation::DeInit()
+JPSDR_Saturation::~JPSDR_Saturation()
 {
 	if (threadpoolAllocated) poolInterface->DeAllocateThreads(UserId);
 }

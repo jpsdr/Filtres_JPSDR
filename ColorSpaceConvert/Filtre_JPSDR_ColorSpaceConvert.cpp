@@ -117,8 +117,9 @@ protected:
 class JPSDR_ColorSpaceConvert : public VDXVideoFilter
 {
 public:
+	virtual ~JPSDR_ColorSpaceConvert();
+
 	virtual bool Init();
-	virtual void DeInit();
 	virtual uint32 GetParams();
 	virtual void Start();
 	virtual void Run();
@@ -361,7 +362,7 @@ bool JPSDR_ColorSpaceConvert::Init()
 }
 
 
-void JPSDR_ColorSpaceConvert::DeInit()
+JPSDR_ColorSpaceConvert::~JPSDR_ColorSpaceConvert()
 {
 	if (threadpoolAllocated) poolInterface->DeAllocateThreads(UserId);
 }
