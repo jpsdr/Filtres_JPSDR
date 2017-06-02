@@ -346,8 +346,9 @@ bool JPSDR_AutoYUY2::Init()
 		total_cpu=poolInterface->GetThreadNumber(0,true);
 
 		if (total_cpu>0)
-			threadpoolAllocated=poolInterface->AllocateThreads(UserId,total_cpu,0,0,true,false,true,-1);
+			threadpoolAllocated=poolInterface->AllocateThreads(total_cpu,0,0,true,false,true,-1);
 		else threadpoolAllocated=false;
+		if (threadpoolAllocated) poolInterface->GetUserId(UserId);
 	}
 	else
 	{
@@ -361,7 +362,11 @@ bool JPSDR_AutoYUY2::Init()
 
 JPSDR_AutoYUY2::~JPSDR_AutoYUY2()
 {
-	if (threadpoolAllocated) poolInterface->DeAllocateThreads(UserId);
+	if (threadpoolAllocated)
+	{
+		poolInterface->RemoveUserId(UserId);
+		poolInterface->DeAllocateAllThreads(true);
+	}
 }
 
 
@@ -847,6 +852,12 @@ void JPSDR_AutoYUY2::Start()
 	if (!poolInterface->GetThreadPoolInterfaceStatus())
 	{
 		ff->Except("Error with the TheadPool status!");
+		return;
+	}
+
+	if (UserId==0)
+	{
+		ff->Except("Error with the TheadPool getting UserId!");
 		return;
 	}
 
@@ -7258,5 +7269,5 @@ void JPSDR_AutoYUY2::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_AutoYUY2=
-VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","AutoYUY2 v3.2.2","Convert Planar4:2:0 to severals 4:2:2 modes. [SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","AutoYUY2 v3.2.3","Convert Planar4:2:0 to severals 4:2:2 modes. [SSE2] Optimised.");
 

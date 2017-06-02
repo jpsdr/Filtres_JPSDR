@@ -405,8 +405,9 @@ bool JPSDR_Saturation::Init()
 		total_cpu=poolInterface->GetThreadNumber(0,true);
 
 		if (total_cpu>0)
-			threadpoolAllocated=poolInterface->AllocateThreads(UserId,total_cpu,0,0,true,false,true,-1);
+			threadpoolAllocated=poolInterface->AllocateThreads(total_cpu,0,0,true,false,true,-1);
 		else threadpoolAllocated=false;
+		if (threadpoolAllocated) poolInterface->GetUserId(UserId);
 	}
 	else
 	{
@@ -420,7 +421,11 @@ bool JPSDR_Saturation::Init()
 
 JPSDR_Saturation::~JPSDR_Saturation()
 {
-	if (threadpoolAllocated) poolInterface->DeAllocateThreads(UserId);
+	if (threadpoolAllocated)
+	{
+		poolInterface->RemoveUserId(UserId);
+		poolInterface->DeAllocateAllThreads(true);
+	}
 }
 
 
@@ -1799,6 +1804,12 @@ void JPSDR_Saturation::Start()
 	if (!poolInterface->GetThreadPoolInterfaceStatus())
 	{
 		ff->Except("Error with the TheadPool status!");
+		return;
+	}
+
+	if (UserId==0)
+	{
+		ff->Except("Error with the TheadPool getting UserId!");
 		return;
 	}
 
@@ -3470,4 +3481,4 @@ void JPSDR_Saturation::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptV
 
 		
 extern VDXFilterDefinition filterDef_JPSDR_Saturation=
-VDXVideoFilterDefinition<JPSDR_Saturation>("JPSDR","Sat/Hue/Bright/Contr v4.2.2","[ASM][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Saturation>("JPSDR","Sat/Hue/Bright/Contr v4.2.3","[ASM][SSE2] Optimised.");

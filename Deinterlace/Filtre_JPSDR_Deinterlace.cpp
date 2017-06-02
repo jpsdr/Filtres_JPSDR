@@ -548,8 +548,9 @@ bool JPSDR_Deinterlace::Init()
 		total_cpu=poolInterface->GetThreadNumber(0,true);
 
 		if (total_cpu>0)
-			threadpoolAllocated=poolInterface->AllocateThreads(UserId,total_cpu,0,0,true,false,true,-1);
+			threadpoolAllocated=poolInterface->AllocateThreads(total_cpu,0,0,true,false,true,-1);
 		else threadpoolAllocated=false;
+		if (threadpoolAllocated) poolInterface->GetUserId(UserId);
 	}
 	else
 	{
@@ -563,7 +564,11 @@ bool JPSDR_Deinterlace::Init()
 
 JPSDR_Deinterlace::~JPSDR_Deinterlace()
 {
-	if (threadpoolAllocated) poolInterface->DeAllocateThreads(UserId);
+	if (threadpoolAllocated)
+	{
+		poolInterface->RemoveUserId(UserId);
+		poolInterface->DeAllocateAllThreads(true);
+	}
 }
 
 
@@ -1347,6 +1352,12 @@ void JPSDR_Deinterlace::Start()
 	if (!poolInterface->GetThreadPoolInterfaceStatus())
 	{
 		ff->Except("Error with the TheadPool status!");
+		return;
+	}
+
+	if (UserId==0)
+	{
+		ff->Except("Error with the TheadPool getting UserId!");
 		return;
 	}
 
@@ -6392,7 +6403,7 @@ void JPSDR_Deinterlace::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScript
 
 		
 extern VDXFilterDefinition filterDef_JPSDR_Deinterlace=
-VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v5.2.2","Deinterlace blending frames. [ASM][MMX][SSE][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v5.2.3","Deinterlace blending frames. [ASM][MMX][SSE][SSE2] Optimised.");
 
 
 

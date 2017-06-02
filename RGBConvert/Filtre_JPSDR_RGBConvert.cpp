@@ -320,8 +320,9 @@ bool JPSDR_RGBConvert::Init()
 		total_cpu=poolInterface->GetThreadNumber(0,true);
 
 		if (total_cpu>0)
-			threadpoolAllocated=poolInterface->AllocateThreads(UserId,total_cpu,0,0,true,false,true,-1);
+			threadpoolAllocated=poolInterface->AllocateThreads(total_cpu,0,0,true,false,true,-1);
 		else threadpoolAllocated=false;
+		if (threadpoolAllocated) poolInterface->GetUserId(UserId);
 	}
 	else
 	{
@@ -335,7 +336,11 @@ bool JPSDR_RGBConvert::Init()
 
 JPSDR_RGBConvert::~JPSDR_RGBConvert()
 {
-	if (threadpoolAllocated) poolInterface->DeAllocateThreads(UserId);
+	if (threadpoolAllocated)
+	{
+		poolInterface->RemoveUserId(UserId);
+		poolInterface->DeAllocateAllThreads(true);
+	}
 }
 
 
@@ -1047,6 +1052,12 @@ void JPSDR_RGBConvert::Start()
 	if (!poolInterface->GetThreadPoolInterfaceStatus())
 	{
 		ff->Except("Error with the TheadPool status!");
+		return;
+	}
+
+	if (UserId==0)
+	{
+		ff->Except("Error with the TheadPool getting UserId!");
 		return;
 	}
 
@@ -3809,4 +3820,4 @@ void JPSDR_RGBConvert::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_RGBConvert=
-VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v2.2.2","RGB <-> YCbCr convertion with color matrix option.\n[ASM][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v2.2.3","RGB <-> YCbCr convertion with color matrix option.\n[ASM][SSE2] Optimised.");
