@@ -399,7 +399,7 @@ bool JPSDR_Median::Init()
 	{
 		total_cpu=poolInterface->GetThreadNumber(0,true);
 
-		if (total_cpu>0)
+		if (total_cpu>1)
 			threadpoolAllocated=poolInterface->AllocateThreads(total_cpu,0,0,true,false,true,-1);
 		else threadpoolAllocated=false;
 		if (threadpoolAllocated) poolInterface->GetUserId(UserId);
@@ -2058,7 +2058,7 @@ void JPSDR_Median::Start()
 		return;
 	}
 
-	if (UserId==0)
+	if ((total_cpu>1) && (UserId==0))
 	{
 		ff->Except("Error with the TheadPool getting UserId!");
 		return;
@@ -3870,4 +3870,4 @@ void JPSDR_Median::GetScriptString(char *buf, int maxlen)
 }
 
 extern VDXFilterDefinition filterDef_JPSDR_Median=
-VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v3.2.3","Median filter with threshold.");
+VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v3.2.4","Median filter with threshold.");

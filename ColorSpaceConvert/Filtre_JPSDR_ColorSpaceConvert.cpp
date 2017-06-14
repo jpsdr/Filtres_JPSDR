@@ -348,7 +348,7 @@ bool JPSDR_ColorSpaceConvert::Init()
 	{
 		total_cpu=poolInterface->GetThreadNumber(0,true);
 
-		if (total_cpu>0)
+		if (total_cpu>1)
 			threadpoolAllocated=poolInterface->AllocateThreads(total_cpu,0,0,true,false,true,-1);
 		else threadpoolAllocated=false;
 		if (threadpoolAllocated) poolInterface->GetUserId(UserId);
@@ -1303,7 +1303,7 @@ void JPSDR_ColorSpaceConvert::Start()
 		return;
 	}
 
-	if (UserId==0)
+	if ((total_cpu>1) && (UserId==0))
 	{
 		ff->Except("Error with the TheadPool getting UserId!");
 		return;
@@ -4123,4 +4123,4 @@ void JPSDR_ColorSpaceConvert::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_ColorSpaceConvert=
-VDXVideoFilterDefinition<JPSDR_ColorSpaceConvert>("JPSDR","ColorSpaceConvert v2.3.2","YCbCr color space convertion.\n[ASM][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_ColorSpaceConvert>("JPSDR","ColorSpaceConvert v2.3.3","YCbCr color space convertion.\n[ASM][SSE2] Optimised.");
