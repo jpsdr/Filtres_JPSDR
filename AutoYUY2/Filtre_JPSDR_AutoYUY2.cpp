@@ -238,6 +238,13 @@ class JPSDR_AutoYUY2 : public VDXVideoFilter
 public:
 	virtual ~JPSDR_AutoYUY2();
 
+	JPSDR_AutoYUY2(){}
+	JPSDR_AutoYUY2(const JPSDR_AutoYUY2& a){
+		SSE2_Enable = a.SSE2_Enable;
+		internalInit();
+	}
+	void internalInit();
+
 	virtual bool Init();
 	virtual uint32 GetParams();
 	virtual void Start();
@@ -312,6 +319,13 @@ VDXVF_END_SCRIPT_METHODS()
 
 bool JPSDR_AutoYUY2::Init()
 {
+	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
+	internalInit();
+	return(true);
+}
+
+void JPSDR_AutoYUY2::internalInit()
+{
 	int16_t i,j;
 
 	for (j=0; j<MAX_MT_THREADS; j++)
@@ -329,8 +343,6 @@ bool JPSDR_AutoYUY2::Init()
 		lookup_Upsc[i+256]=(uint16_t)(5*i);
 		lookup_Upsc[i+512]=(uint16_t)(7*i);
 	}
-
-	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
 
 	for (i=0; i<MAX_MT_THREADS; i++)
 	{
@@ -355,8 +367,6 @@ bool JPSDR_AutoYUY2::Init()
 		total_cpu=0;
 		threadpoolAllocated=false;
 	}
-
-	return(true);
 }
 
 
