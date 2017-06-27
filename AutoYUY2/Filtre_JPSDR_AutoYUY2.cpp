@@ -49,16 +49,16 @@ extern "C" void JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4b(const void *scr_1
 class JPSDR_AutoYUY2Data
 {
 public:
+	JPSDR_AutoYUY2Data();
+
 	uint8_t output_format;
 	uint8_t convert_mode;
 	uint8_t threshold;
 	bool mt_mode;
-
-	JPSDR_AutoYUY2Data(void);
 };
 
 
-JPSDR_AutoYUY2Data::JPSDR_AutoYUY2Data(void)
+JPSDR_AutoYUY2Data::JPSDR_AutoYUY2Data()
 {
 	output_format=2;
 	convert_mode=0;
@@ -237,13 +237,13 @@ class JPSDR_AutoYUY2 : public VDXVideoFilter
 {
 public:
 	virtual ~JPSDR_AutoYUY2();
-
 	JPSDR_AutoYUY2(){}
-	JPSDR_AutoYUY2(const JPSDR_AutoYUY2& a){
+	JPSDR_AutoYUY2(const JPSDR_AutoYUY2& a)
+	{
 		SSE2_Enable = a.SSE2_Enable;
-		internalInit();
+		mData=a.mData;
+		InternalInit();
 	}
-	void internalInit();
 
 	virtual bool Init();
 	virtual uint32 GetParams();
@@ -273,6 +273,8 @@ protected:
 	ThreadPoolFunction StaticThreadpoolF;
 
 	static void StaticThreadpool(void *ptr);
+
+	void InternalInit(void);
 
 	inline void Convert_Progressive_to_Planar422(uint8_t thread_num);
 	void Convert_Progressive_to_Planar422_SSE(uint8_t thread_num);
@@ -320,11 +322,12 @@ VDXVF_END_SCRIPT_METHODS()
 bool JPSDR_AutoYUY2::Init()
 {
 	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
-	internalInit();
+	InternalInit();
+
 	return(true);
 }
 
-void JPSDR_AutoYUY2::internalInit()
+void JPSDR_AutoYUY2::InternalInit()
 {
 	int16_t i,j;
 
@@ -344,12 +347,14 @@ void JPSDR_AutoYUY2::internalInit()
 		lookup_Upsc[i+512]=(uint16_t)(7*i);
 	}
 
+	StaticThreadpoolF=StaticThreadpool;
+
 	for (i=0; i<MAX_MT_THREADS; i++)
 	{
-		MT_Thread[i].pClass=NULL;
+		MT_Thread[i].pClass=this;
 		MT_Thread[i].f_process=0;
 		MT_Thread[i].thread_Id=(uint8_t)i;
-		MT_Thread[i].pFunc=NULL;
+		MT_Thread[i].pFunc=StaticThreadpoolF;
 	}
 
 	UserId=0;
@@ -2436,16 +2441,6 @@ void JPSDR_AutoYUY2::Start()
 		{
 			ff->Except("Error with the TheadPool while allocating threadpool!");
 			return;
-		}
-
-		StaticThreadpoolF=StaticThreadpool;
-
-		for (i=0; i<threads_number; i++)
-		{
-			MT_Thread[i].pClass=this;
-			MT_Thread[i].f_process=0;
-			MT_Thread[i].thread_Id=(uint8_t)i;
-			MT_Thread[i].pFunc=StaticThreadpoolF;
 		}
 	}
 }
@@ -7279,5 +7274,5 @@ void JPSDR_AutoYUY2::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_AutoYUY2=
-VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","AutoYUY2 v3.2.4","Convert Planar4:2:0 to severals 4:2:2 modes. [SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","AutoYUY2 v3.2.5","Convert Planar4:2:0 to severals 4:2:2 modes. [SSE2] Optimised.");
 

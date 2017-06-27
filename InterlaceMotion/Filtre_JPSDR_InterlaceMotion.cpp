@@ -12,6 +12,11 @@ extern int g_VFVAPIVersion;
 class JPSDR_InterlaceMotion : public VDXVideoFilter
 {
 public:
+	JPSDR_InterlaceMotion(){}
+	JPSDR_InterlaceMotion(const JPSDR_InterlaceMotion& a)
+	{
+		InternalInit();
+	}
 	virtual bool Init();
 	virtual uint32 GetParams();
 	virtual void Start();
@@ -22,14 +27,22 @@ protected:
 	Image_Data image_data;
 	void *mem;
 	uint32_t nbre_images;
+
+	void InternalInit(void);
 };
 
 
 bool JPSDR_InterlaceMotion::Init()
 {
-	mem=NULL;
+	InternalInit();
 
 	return(true);
+}
+
+
+void JPSDR_InterlaceMotion::InternalInit(void)
+{
+	mem=NULL;
 }
 
 
@@ -2044,5 +2057,5 @@ void JPSDR_InterlaceMotion::End()
 
 
 extern VDXFilterDefinition filterDef_JPSDR_InterlaceMotion=
-VDXVideoFilterDefinition<JPSDR_InterlaceMotion>("JPSDR","InterlaceMotion v2.3.3",
+VDXVideoFilterDefinition<JPSDR_InterlaceMotion>("JPSDR","InterlaceMotion v2.3.4",
 	"Interlace inter frame after x2 frame rate.");

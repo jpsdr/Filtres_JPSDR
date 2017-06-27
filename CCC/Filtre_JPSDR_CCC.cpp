@@ -144,6 +144,12 @@ bool JPSDR_CCCDialog::OnCommand(int cmd)
 class JPSDR_CCC : public VDXVideoFilter
 {
 public:
+	JPSDR_CCC(){}
+	JPSDR_CCC(const JPSDR_CCC& a)
+	{
+		SSE2_Enable = a.SSE2_Enable;
+		mData=a.mData;
+	}
 	virtual bool Init();
 	virtual uint32 GetParams();
 	virtual void Start();
@@ -158,8 +164,6 @@ protected:
 	Image_Data image_data;
 	int16_t lookup[1535];
 	bool SSE2_Enable;
-
-//	inline void MovePlane(const void *src_, void *dst_, const ptrdiff_t src_pitch, const ptrdiff_t dst_pitch,const int32_t w,const int32_t h);
 
 	void CCC_Planar(const void *src, void *dst, const ptrdiff_t src_pitch, const ptrdiff_t dst_pitch, const int32_t w, const int32_t h, const uint8_t phase);
 	void CCC_YUY2(const void *src, void *dst, const ptrdiff_t src_pitch, const ptrdiff_t dst_pitch, const int32_t w, const int32_t h, const uint8_t phase);
@@ -2884,5 +2888,5 @@ void JPSDR_CCC::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_CCC=
-VDXVideoFilterDefinition<JPSDR_CCC>("JPSDR","Cross-Conversion Correction v1.3.1","Restore interlaced 720->1080 upscale. SSE optimized.");
+VDXVideoFilterDefinition<JPSDR_CCC>("JPSDR","Cross-Conversion Correction v1.3.2","Restore interlaced 720->1080 upscale. SSE optimized.");
 

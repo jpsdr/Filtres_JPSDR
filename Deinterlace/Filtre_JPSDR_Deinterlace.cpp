@@ -368,6 +368,13 @@ class JPSDR_Deinterlace : public VDXVideoFilter
 {
 public:
 	virtual ~JPSDR_Deinterlace();
+	JPSDR_Deinterlace(){}
+	JPSDR_Deinterlace(const JPSDR_Deinterlace& a)
+	{
+		SSE2_Enable = a.SSE2_Enable;
+		mData=a.mData;
+		InternalInit();
+	}
 
 	virtual bool Init();
 	virtual uint32 GetParams();
@@ -407,6 +414,8 @@ protected:
 	ThreadPoolFunction StaticThreadpoolF;
 
 	static void StaticThreadpool(void *ptr);
+
+	void InternalInit(void);
 
 	uint8_t CreateMTData(uint8_t max_threads,int32_t size_x,int32_t size_y,uint8_t div_x,uint8_t div_y,uint8_t _32bits);
 
@@ -498,6 +507,15 @@ VDXVF_END_SCRIPT_METHODS()
 
 bool JPSDR_Deinterlace::Init()
 {
+	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
+	InternalInit();
+
+	return(true);
+}
+
+
+void JPSDR_Deinterlace::InternalInit(void)
+{
 	int16_t i,j;	
 
 	buffer0=NULL;
@@ -532,14 +550,14 @@ bool JPSDR_Deinterlace::Init()
 	}
 	spatial_Yadif_buffer=NULL;
 
-	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
+	StaticThreadpoolF=StaticThreadpool;
 
 	for (i=0; i<MAX_MT_THREADS; i++)
 	{
-		MT_Thread[i].pClass=NULL;
+		MT_Thread[i].pClass=this;
 		MT_Thread[i].f_process=0;
 		MT_Thread[i].thread_Id=(uint8_t)i;
-		MT_Thread[i].pFunc=NULL;
+		MT_Thread[i].pFunc=StaticThreadpoolF;
 	}
 
 	UserId=0;
@@ -557,8 +575,6 @@ bool JPSDR_Deinterlace::Init()
 		total_cpu=0;
 		threadpoolAllocated=false;
 	}
-
-	return(true);
 }
 
 
@@ -3232,16 +3248,6 @@ void JPSDR_Deinterlace::Start()
 		{
 			ff->Except("Error with the TheadPool while allocating threadpool!");
 			return;
-		}
-
-		StaticThreadpoolF=StaticThreadpool;
-
-		for (i=0; i<threads_number; i++)
-		{
-			MT_Thread[i].pClass=this;
-			MT_Thread[i].f_process=0;
-			MT_Thread[i].thread_Id=(uint8_t)i;
-			MT_Thread[i].pFunc=StaticThreadpoolF;
 		}
 	}
 
@@ -6403,7 +6409,7 @@ void JPSDR_Deinterlace::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScript
 
 		
 extern VDXFilterDefinition filterDef_JPSDR_Deinterlace=
-VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v5.2.4","Deinterlace blending frames. [ASM][MMX][SSE][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v5.2.5","Deinterlace blending frames. [ASM][MMX][SSE][SSE2] Optimised.");
 
 
 

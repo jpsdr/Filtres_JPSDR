@@ -134,6 +134,13 @@ protected:
 class JPSDR_Saturation : public VDXVideoFilter
 {
 public:
+	JPSDR_Saturation(){}
+	JPSDR_Saturation(const JPSDR_Saturation& a)
+	{
+		SSE2_Enable = a.SSE2_Enable;
+		mData=a.mData;
+		InternalInit();
+	}
 	virtual ~JPSDR_Saturation();
 
 	virtual bool Init();
@@ -162,6 +169,8 @@ protected:
 	ThreadPoolFunction StaticThreadpoolF;
 
 	static void StaticThreadpool(void *ptr);
+
+	void InternalInit(void);
 
 	uint8_t CreateMTData(uint8_t max_threads,int32_t size_x,int32_t size_y,uint8_t div_x,uint8_t div_y,uint8_t _32bits);
 
@@ -390,13 +399,22 @@ bool JPSDR_SaturationDialog::OnCommand(int cmd)
 bool JPSDR_Saturation::Init()
 {
 	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
+	InternalInit();
+
+	return(true);
+}
+
+
+void JPSDR_Saturation::InternalInit(void)
+{
+	StaticThreadpoolF=StaticThreadpool;
 
 	for (uint16_t i=0; i<MAX_MT_THREADS; i++)
 	{
-		MT_Thread[i].pClass=NULL;
+		MT_Thread[i].pClass=this;
 		MT_Thread[i].f_process=0;
 		MT_Thread[i].thread_Id=(uint8_t)i;
-		MT_Thread[i].pFunc=NULL;
+		MT_Thread[i].pFunc=StaticThreadpoolF;
 	}
 
 	UserId=0;
@@ -414,8 +432,6 @@ bool JPSDR_Saturation::Init()
 		total_cpu=0;
 		threadpoolAllocated=false;
 	}
-
-	return(true);
 }
 
 
@@ -3368,16 +3384,6 @@ void JPSDR_Saturation::Start()
 			ff->Except("Error with the TheadPool while allocating threadpool!");
 			return;
 		}
-
-		StaticThreadpoolF=StaticThreadpool;
-
-		for (uint8_t i=0; i<threads_number; i++)
-		{
-			MT_Thread[i].pClass=this;
-			MT_Thread[i].f_process=0;
-			MT_Thread[i].thread_Id=(uint8_t)i;
-			MT_Thread[i].pFunc=StaticThreadpoolF;
-		}
 	}
 
 	Compute_Lookup();
@@ -3481,4 +3487,4 @@ void JPSDR_Saturation::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptV
 
 		
 extern VDXFilterDefinition filterDef_JPSDR_Saturation=
-VDXVideoFilterDefinition<JPSDR_Saturation>("JPSDR","Sat/Hue/Bright/Contr v4.2.4","[ASM][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Saturation>("JPSDR","Sat/Hue/Bright/Contr v4.2.5","[ASM][SSE2] Optimised.");

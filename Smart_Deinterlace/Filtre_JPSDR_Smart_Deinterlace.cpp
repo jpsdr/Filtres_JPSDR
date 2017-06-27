@@ -144,6 +144,14 @@ bool JPSDR_Smart_DeinterlaceDialog::OnCommand(int cmd)
 class JPSDR_Smart_Deinterlace : public VDXVideoFilter
 {
 public:
+	JPSDR_Smart_Deinterlace(){}
+	JPSDR_Smart_Deinterlace(const JPSDR_Smart_Deinterlace& a)
+	{
+		Integer_SSE_Enable=a.Integer_SSE_Enable;
+		mData=a.mData;
+		InternalInit();
+	}
+
 	virtual bool Init();
 	virtual uint32 GetParams();
 	virtual void Start();
@@ -160,6 +168,8 @@ protected:
 	void *buffer_delta;
 	uint8_t *buffer_map,*buffer_2;
 	bool Integer_SSE_Enable;
+
+	void InternalInit(void);
 
 	void Deinterlace_Motion_MapRGB32(const void *src,void *buffer,uint8_t *dst,
 		int32_t w,int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,int32_t w_map,uint8_t thres);
@@ -181,11 +191,18 @@ VDXVF_END_SCRIPT_METHODS()
 
 bool JPSDR_Smart_Deinterlace::Init()
 {
+	Integer_SSE_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_INTEGER_SSE)!=0);
+	InternalInit();
+
+	return(true);
+}
+
+
+void JPSDR_Smart_Deinterlace::InternalInit(void)
+{
 	buffer_delta=NULL;
 	buffer_map=NULL;
 	buffer_2=NULL;
-
-	return(true);
 }
 
 
@@ -2295,8 +2312,6 @@ void JPSDR_Smart_Deinterlace::Start()
 			
 	image_data=idata;
 
-	Integer_SSE_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_INTEGER_SSE)!=0);
-
 	if ((idata.src_w0%4)==0) w_map=idata.src_w0+4;
 	else w_map=(((idata.src_w0 >> 2)+1)<< 2)+4;
 
@@ -2348,6 +2363,6 @@ void JPSDR_Smart_Deinterlace::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_Smart_Deinterlace=
-VDXVideoFilterDefinition<JPSDR_Smart_Deinterlace>("JPSDR","SmartDeinterlace v2.3.4","Smart Deinterlace (Based D. Grafh). [MMX][SSE] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Smart_Deinterlace>("JPSDR","SmartDeinterlace v2.3.5","Smart Deinterlace (Based D. Grafh). [MMX][SSE] Optimised.");
 
 

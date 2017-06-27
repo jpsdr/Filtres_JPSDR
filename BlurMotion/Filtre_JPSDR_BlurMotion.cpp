@@ -15,6 +15,11 @@ extern "C" void JPSDR_BlurMotion_SSE_3_A(const void *src,const void *mem,void *d
 class JPSDR_BlurMotion : public VDXVideoFilter
 {
 public:
+	JPSDR_BlurMotion(){}
+	JPSDR_BlurMotion(const JPSDR_BlurMotion& a)
+	{
+		SSE2_Enable = a.SSE2_Enable;
+	}
 	virtual bool Init();
 	virtual uint32 GetParams();
 	virtual void Start();
@@ -2058,6 +2063,6 @@ void JPSDR_BlurMotion::Start()
 
 
 extern VDXFilterDefinition filterDef_JPSDR_BlurMotion=
-VDXVideoFilterDefinition<JPSDR_BlurMotion>("JPSDR","Correct Frame Rate Blur v3.1.1",
+VDXVideoFilterDefinition<JPSDR_BlurMotion>("JPSDR","Correct Frame Rate Blur v3.1.2",
 	"Blur added frames after changing frame rate. [SSE2] Optimized.");
 

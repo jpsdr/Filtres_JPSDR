@@ -266,6 +266,12 @@ bool JPSDR_ChromaShiftDialog::OnCommand(int cmd)
 class JPSDR_ChromaShift : public VDXVideoFilter
 {
 public:
+	JPSDR_ChromaShift(){}
+	JPSDR_ChromaShift(const JPSDR_ChromaShift& a)
+	{
+		mData=a.mData;
+		InternalInit();
+	}
 	virtual uint32 GetParams();
 	virtual bool Init();
 	virtual void Start();
@@ -284,6 +290,8 @@ protected:
 	ptrdiff_t buffer_Y_modulo,buffer_U_modulo,buffer_V_modulo;
 	int16_t lookupRGB[16][256];
 	
+	void InternalInit(void);
+
 	void ConvertRGB32toPlanarYCbCr(const void *src, uint8_t *dst_Y, uint8_t *dst_U, uint8_t *dst_V,
 		const ptrdiff_t src_modulo, const ptrdiff_t dst_modulo_Y, const ptrdiff_t dst_modulo_U,
 		const ptrdiff_t dst_modulo_V, const int32_t w, const int32_t h);
@@ -677,13 +685,17 @@ void JPSDR_ChromaShift::GetSettingString(char *buf, int maxlen)
 
 bool JPSDR_ChromaShift::Init()
 {
-	buffer_Y=NULL;
-	buffer_U=NULL;
-	buffer_V=NULL;
+	InternalInit();
 
 	return(true);
 }
 
+void JPSDR_ChromaShift::InternalInit(void)
+{
+	buffer_Y=NULL;
+	buffer_U=NULL;
+	buffer_V=NULL;
+}
 
 void JPSDR_ChromaShift::ConvertYUY2toPlanarYCbCr(const void *_src, uint8_t *dst_Y, uint8_t *dst_U, uint8_t *dst_V,
 	const ptrdiff_t src_modulo, const ptrdiff_t dst_modulo_Y, const ptrdiff_t dst_modulo_U, const ptrdiff_t dst_modulo_V,
@@ -3031,5 +3043,5 @@ void JPSDR_ChromaShift::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_ChromaShift=
-VDXVideoFilterDefinition<JPSDR_ChromaShift>("JPSDR","ChromaShift v2.1.1","Shift chrominace channels");
+VDXVideoFilterDefinition<JPSDR_ChromaShift>("JPSDR","ChromaShift v2.1.2","Shift chrominace channels");
 

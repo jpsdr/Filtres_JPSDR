@@ -470,6 +470,15 @@ bool JPSDR_IVTCDialog::OnCommand(int cmd)
 class JPSDR_IVTC : public VDXVideoFilter
 {
 public:
+	JPSDR_IVTC(){}
+	JPSDR_IVTC(const JPSDR_IVTC& a)
+	{
+		Integer_SSE_Enable=a.Integer_SSE_Enable;
+		SSE2_Enable=a.SSE2_Enable;
+		MMX_Enable=a.MMX_Enable;
+		mData=a.mData;
+		InternalInit();
+	}
 	virtual ~JPSDR_IVTC();
 
 	virtual bool Init();
@@ -536,6 +545,8 @@ protected:
 	ThreadPoolFunction StaticThreadpoolF;
 
 	static void StaticThreadpool(void *ptr);
+
+	void InternalInit(void);
 
 	uint8_t CreateMTData(uint8_t max_threads,int32_t src_size_x,int32_t src_size_y,int32_t dst_size_x,int32_t dst_size_y,bool src_UV_w,bool src_UV_h,bool dst_UV_w,bool dst_UV_h);
 	uint8_t CreateMTData(uint8_t max_threads,uint32_t size);
@@ -737,6 +748,17 @@ VDXVF_END_SCRIPT_METHODS()
 
 bool JPSDR_IVTC::Init()
 {
+	Integer_SSE_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_INTEGER_SSE)!=0);
+	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
+	MMX_Enable=ff->isMMXEnabled();
+	InternalInit();
+
+	return(true);
+}
+
+
+void JPSDR_IVTC::InternalInit(void)
+{
 	int16_t i,j;
 
 	resize_720x480=false;
@@ -778,12 +800,14 @@ bool JPSDR_IVTC::Init()
 		lookup_420[i+512]=(uint16_t)(i*7);
 	}
 
+	StaticThreadpoolF=StaticThreadpool;
+
 	for (i=0; i<MAX_MT_THREADS; i++)
 	{
-		MT_Thread[i].pClass=NULL;
+		MT_Thread[i].pClass=this;
 		MT_Thread[i].f_process=0;
 		MT_Thread[i].thread_Id=(uint8_t)i;
-		MT_Thread[i].pFunc=NULL;
+		MT_Thread[i].pFunc=StaticThreadpoolF;
 	}
 
 	UserId=0;
@@ -801,8 +825,6 @@ bool JPSDR_IVTC::Init()
 		total_cpu=0;
 		threadpoolAllocated=false;
 	}
-
-	return(true);
 }
 
 
@@ -3014,10 +3036,6 @@ void JPSDR_IVTC::Start()
 		return;
 	}
 
-	Integer_SSE_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_INTEGER_SSE)!=0);
-	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
-	MMX_Enable=ff->isMMXEnabled();
-
 	if ((idata.src_w0 & 3)==0) w_map=idata.src_w0+4;
 	else w_map=(((idata.src_w0 >> 2)+1)<< 2)+4;
 	
@@ -3396,16 +3414,6 @@ void JPSDR_IVTC::Start()
 		{
 			ff->Except("Error with the TheadPool while allocating threadpool!");
 			return;
-		}
-
-		StaticThreadpoolF=StaticThreadpool;
-
-		for (i=0; i<threads_number; i++)
-		{
-			MT_Thread[i].pClass=this;
-			MT_Thread[i].f_process=0;
-			MT_Thread[i].thread_Id=(uint8_t)i;
-			MT_Thread[i].pFunc=StaticThreadpoolF;
 		}
 	}
 
@@ -15547,4 +15555,4 @@ void JPSDR_IVTC::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_IVTC=
-VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.3.3","IVTC Filter. [MMX][SSE] Optimised.");
+VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.3.4","IVTC Filter. [MMX][SSE] Optimised.");

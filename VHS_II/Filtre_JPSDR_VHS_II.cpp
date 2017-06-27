@@ -138,6 +138,12 @@ bool JPSDR_VHS_IIDialog::OnCommand(int cmd)
 class JPSDR_VHS_II : public VDXVideoFilter
 {
 public:
+	JPSDR_VHS_II(){}
+	JPSDR_VHS_II(const JPSDR_VHS_II& a)
+	{
+		mData=a.mData;
+		InternalInit();
+	}
 	virtual bool Init();
 	virtual uint32 GetParams();
 	virtual void Start();
@@ -158,6 +164,8 @@ protected:
 	uint32_t size;
 	uint8_t indice_4,indice_3,indice_2,indice_1,indice_0;
 
+	void InternalInit(void);
+
 	void ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptValue *argv, int argc);
 		
 	JPSDR_VHS_IIData mData;
@@ -170,6 +178,14 @@ VDXVF_END_SCRIPT_METHODS()
 
 bool JPSDR_VHS_II::Init()
 {
+	InternalInit();
+
+	return(true);
+}
+
+
+void JPSDR_VHS_II::InternalInit(void)
+{
 	int16_t i,j;
 
 	for (i=0; i<3; i++)
@@ -181,9 +197,8 @@ bool JPSDR_VHS_II::Init()
 		_y[i]=NULL;
 	for (i=0; i<3; i++)
 		line_out[i]=NULL;
-
-	return(true);
 }
+
 
 uint32 JPSDR_VHS_II::GetParams()
 {
@@ -2995,5 +3010,5 @@ void JPSDR_VHS_II::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_VHS_II=
-VDXVideoFilterDefinition<JPSDR_VHS_II>("JPSDR","VHS II v2.3.4","Filter to remove VHS noise [lag 2].");
+VDXVideoFilterDefinition<JPSDR_VHS_II>("JPSDR","VHS II v2.3.5","Filter to remove VHS noise [lag 2].");
 

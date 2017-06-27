@@ -141,6 +141,15 @@ bool JPSDR_DeinterlaceIIDialog::OnCommand(int cmd)
 class JPSDR_DeinterlaceII : public VDXVideoFilter
 {
 public:
+	JPSDR_DeinterlaceII(){}
+	JPSDR_DeinterlaceII(const JPSDR_DeinterlaceII& a)
+	{
+		MMX_Enable=a.MMX_Enable;
+		SSE_Integer_Enable=a.SSE_Integer_Enable;
+		SSE2_Enable=a.SSE2_Enable;
+		mData=a.mData;
+		InternalInit();
+	}
 	virtual bool Init();
 	virtual uint32 GetParams();
 	virtual void Start();
@@ -159,6 +168,8 @@ protected:
 	int16_t look_up[1280];
 	uint32_t nbre_images;
 	bool MMX_Enable,SSE_Integer_Enable,SSE2_Enable;
+
+	void InternalInit(void);
 
 	void Blend_UpRGB32(const void *src,void *dst,int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch,
 		ptrdiff_t src_modulo,ptrdiff_t dst_modulo);
@@ -187,6 +198,17 @@ VDXVF_END_SCRIPT_METHODS()
 
 bool JPSDR_DeinterlaceII::Init()
 {
+	MMX_Enable=ff->isMMXEnabled();
+	SSE_Integer_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_INTEGER_SSE)!=0);
+	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
+	InternalInit();
+
+	return(true);
+}
+	
+
+void JPSDR_DeinterlaceII::InternalInit(void)
+{
 	int16_t j;
 
 	for (j=0; j<2; j++)
@@ -200,10 +222,8 @@ bool JPSDR_DeinterlaceII::Init()
 		look_up[j+768]=(int16_t)round(64.0*0.031*j);
 		look_up[j+1024]=(int16_t)round(64.0*-0.026*j);
 	}
-
-	return(true);
 }
-	
+
 
 uint32 JPSDR_DeinterlaceII::GetParams()
 {
@@ -2570,10 +2590,6 @@ void JPSDR_DeinterlaceII::Start()
 
 	image_data=idata;
 
-	MMX_Enable=ff->isMMXEnabled();
-	SSE_Integer_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_INTEGER_SSE)!=0);
-	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
-
 	for (i=0; i<2; i++)
 		buffer_frame[i]=(void *)malloc(idata.src_size0);
 	ok=true;
@@ -2627,4 +2643,4 @@ void JPSDR_DeinterlaceII::GetScriptString(char *buf, int maxlen)
 }
 
 extern VDXFilterDefinition filterDef_JPSDR_DeinterlaceII=
-VDXVideoFilterDefinition<JPSDR_DeinterlaceII>("JPSDR","Deinterlace II v2.3.3","Deinterlace Advanced. Lag 1");
+VDXVideoFilterDefinition<JPSDR_DeinterlaceII>("JPSDR","Deinterlace II v2.3.4","Deinterlace Advanced. Lag 1");

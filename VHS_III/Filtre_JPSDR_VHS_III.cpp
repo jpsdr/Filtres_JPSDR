@@ -406,6 +406,15 @@ bool JPSDR_VHS_IIIDialog::OnCommand(int cmd)
 class JPSDR_VHS_III : public VDXVideoFilter
 {
 public:
+	JPSDR_VHS_III(){}
+	JPSDR_VHS_III(const JPSDR_VHS_III& a)
+	{
+		SSE_Integer_Enable=a.SSE_Integer_Enable;
+		SSE2_Enable=a.SSE2_Enable;
+		mData=a.mData;
+		InternalInit();
+	}
+
 	virtual bool Init();
 	virtual uint32 GetParams();
 	virtual void Start();
@@ -425,6 +434,8 @@ protected:
 	int16_t lookup_RGB_Y[768],lookup_YUV_G[20403],lookup_filter_Y[44881],lookup_filter_UV[89761];
 	uint8_t indice_filtre[5];
 	bool SSE_Integer_Enable,SSE2_Enable;
+
+	void InternalInit(void);
 
 	void convert_RGB_YUV(const void *src,int16_t *y,int16_t *u,int16_t *v,
 		int32_t w,int32_t h,ptrdiff_t src_modulo,int16_t *lookup);
@@ -527,6 +538,16 @@ VDXVF_END_SCRIPT_METHODS()
 
 bool JPSDR_VHS_III::Init()
 {
+	SSE_Integer_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_INTEGER_SSE)!=0);
+	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
+	InternalInit();
+
+	return(true);
+}
+
+
+void JPSDR_VHS_III::InternalInit(void)
+{
 	int32_t i;
 	double a,b,c;
 
@@ -564,9 +585,8 @@ bool JPSDR_VHS_III::Init()
 		lookup_YUV_G[i+4080+(255*16+1)]=(int16_t)round(-1.0*i*a/b);
 		lookup_YUV_G[i+4080+(255*16+1)+(2*255*16+1)]=(int16_t)round(-1.0*i*c/b);
 	}
-
-	return(true);
 }
+
 
 uint32 JPSDR_VHS_III::GetParams()
 {
@@ -4575,9 +4595,6 @@ void JPSDR_VHS_III::Start()
 			break;
 	}
 
-	SSE_Integer_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_INTEGER_SSE)!=0);
-	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
-
 	for (i=0; i<5; i++)
 	{
 		Y_filtre[i]=(int16_t *)malloc(size_Y);
@@ -4761,5 +4778,5 @@ void JPSDR_VHS_III::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_VHS_III=
-VDXVideoFilterDefinition<JPSDR_VHS_III>("JPSDR","VHS III v2.4.1","Filter to remove VHS noise.[ASM][SSE][SSE2] Optimised. Lag 2");
+VDXVideoFilterDefinition<JPSDR_VHS_III>("JPSDR","VHS III v2.4.2","Filter to remove VHS noise.[ASM][SSE][SSE2] Optimised. Lag 2");
 

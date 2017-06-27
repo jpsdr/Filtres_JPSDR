@@ -320,6 +320,13 @@ bool JPSDR_MedianDialog::OnCommand(int cmd)
 class JPSDR_Median : public VDXVideoFilter
 {
 public:
+	JPSDR_Median(){}
+	JPSDR_Median(const JPSDR_Median& a)
+	{
+		SSE2_Enable = a.SSE2_Enable;
+		mData=a.mData;
+		InternalInit();
+	}
 	virtual ~JPSDR_Median();
 
 	virtual bool Init();
@@ -352,6 +359,8 @@ protected:
 
 	static void StaticThreadpool(void *ptr);
 
+	void InternalInit(void);
+
 	uint8_t CreateMTData(uint8_t max_threads,int32_t size_x,int32_t size_y,uint8_t div_x,uint8_t div_y,uint8_t _32bits);
 
 	void square_median_filter(uint8_t thread_num);
@@ -375,6 +384,15 @@ VDXVF_END_SCRIPT_METHODS()
 
 bool JPSDR_Median::Init()
 {
+	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
+	InternalInit();
+
+	return(true);
+}
+
+
+void JPSDR_Median::InternalInit(void)
+{
 	uint16_t i;
 
 	for (i=0; i<3; i++)
@@ -383,14 +401,14 @@ bool JPSDR_Median::Init()
 		buffer_out[i]=NULL;
 	}
 
-	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
+	StaticThreadpoolF=StaticThreadpool;
 
 	for (i=0; i<MAX_MT_THREADS; i++)
 	{
-		MT_Thread[i].pClass=NULL;
+		MT_Thread[i].pClass=this;
 		MT_Thread[i].f_process=0;
 		MT_Thread[i].thread_Id=(uint8_t)i;
-		MT_Thread[i].pFunc=NULL;
+		MT_Thread[i].pFunc=StaticThreadpoolF;
 		Tdata[i]=NULL;
 	}
 
@@ -409,8 +427,6 @@ bool JPSDR_Median::Init()
 		total_cpu=0;
 		threadpoolAllocated=false;
 	}
-
-	return(true);
 }
 
 
@@ -3802,16 +3818,6 @@ void JPSDR_Median::Start()
 			ff->Except("Error with the TheadPool while allocating threadpool!");
 			return;
 		}
-
-		StaticThreadpoolF=StaticThreadpool;
-
-		for (i=0; i<threads_number; i++)
-		{
-			MT_Thread[i].pClass=this;
-			MT_Thread[i].f_process=0;
-			MT_Thread[i].thread_Id=(uint8_t)i;
-			MT_Thread[i].pFunc=StaticThreadpoolF;
-		}
 	}
 }
 
@@ -3870,4 +3876,4 @@ void JPSDR_Median::GetScriptString(char *buf, int maxlen)
 }
 
 extern VDXFilterDefinition filterDef_JPSDR_Median=
-VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v3.2.4","Median filter with threshold.");
+VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v3.2.5","Median filter with threshold.");

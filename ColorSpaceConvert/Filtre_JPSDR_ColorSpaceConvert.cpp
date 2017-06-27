@@ -118,6 +118,13 @@ class JPSDR_ColorSpaceConvert : public VDXVideoFilter
 {
 public:
 	virtual ~JPSDR_ColorSpaceConvert();
+	JPSDR_ColorSpaceConvert(){}
+	JPSDR_ColorSpaceConvert(const JPSDR_ColorSpaceConvert& a)
+	{
+		SSE2_Enable = a.SSE2_Enable;
+		mData=a.mData;
+		InternalInit();
+	}
 
 	virtual bool Init();
 	virtual uint32 GetParams();
@@ -150,6 +157,8 @@ protected:
 	ThreadPoolFunction StaticThreadpoolF;
 
 	static void StaticThreadpool(void *ptr);
+
+	void InternalInit(void);
 
 	uint8_t CreateMTData(uint8_t max_threads,int32_t size_x,int32_t size_y,uint8_t div_x,uint8_t div_y,uint8_t _32bits);
 
@@ -328,19 +337,28 @@ bool JPSDR_ColorSpaceConvertDialog::OnCommand(int cmd)
 
 bool JPSDR_ColorSpaceConvert::Init()
 {
+	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
+	InternalInit();
+
+	return(true);
+}
+
+
+void JPSDR_ColorSpaceConvert::InternalInit(void)
+{
 	uint16_t i;
 
 	for (i=0; i<256; i++)
 		lookup_Upsc[i]=(uint16_t)(3*i);
 
-	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
+	StaticThreadpoolF=StaticThreadpool;
 
 	for (i=0; i<MAX_MT_THREADS; i++)
 	{
-		MT_Thread[i].pClass=NULL;
+		MT_Thread[i].pClass=this;
 		MT_Thread[i].f_process=0;
 		MT_Thread[i].thread_Id=(uint8_t)i;
-		MT_Thread[i].pFunc=NULL;
+		MT_Thread[i].pFunc=StaticThreadpoolF;
 	}
 
 	UserId=0;
@@ -358,8 +376,6 @@ bool JPSDR_ColorSpaceConvert::Init()
 		total_cpu=0;
 		threadpoolAllocated=false;
 	}
-
-	return(true);
 }
 
 
@@ -2868,16 +2884,6 @@ void JPSDR_ColorSpaceConvert::Start()
 			ff->Except("Error with the TheadPool while allocating threadpool!");
 			return;
 		}
-
-		StaticThreadpoolF=StaticThreadpool;
-
-		for (uint8_t i=0; i<threads_number; i++)
-		{
-			MT_Thread[i].pClass=this;
-			MT_Thread[i].f_process=0;
-			MT_Thread[i].thread_Id=(uint8_t)i;
-			MT_Thread[i].pFunc=StaticThreadpoolF;
-		}
 	}
 }
 
@@ -4123,4 +4129,4 @@ void JPSDR_ColorSpaceConvert::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_ColorSpaceConvert=
-VDXVideoFilterDefinition<JPSDR_ColorSpaceConvert>("JPSDR","ColorSpaceConvert v2.3.3","YCbCr color space convertion.\n[ASM][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_ColorSpaceConvert>("JPSDR","ColorSpaceConvert v2.3.4","YCbCr color space convertion.\n[ASM][SSE2] Optimised.");
