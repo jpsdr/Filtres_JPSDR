@@ -82,6 +82,9 @@ public:
 	static void __cdecl FilterAccelRun(const VDXFilterActivation *fa, const VDXFilterFunctions *ff);
 	static bool __cdecl FilterEvent(const VDXFilterActivation *fa, const VDXFilterFunctions *ff, uint32 event, const void *eventData);
 
+	static bool StaticAbout(VDXHWND parent);
+	static bool StaticConfigure(VDXHWND parent);
+	
 	// member variables
 	VDXFilterActivation *fa;
 	const VDXFilterFunctions *ff;
@@ -92,9 +95,13 @@ public:
 		kMinInputCount = 1,
 		kMaxInputCount = 1
 	};
+	
+	static void SetAPIVersion(uint32 apiVersion);	
 
 protected:
 	void SafePrintf(char *buf, int maxbuf, const char *format, ...);
+	
+	static uint32 sAPIVersion;
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -152,6 +159,11 @@ const VDXScriptObject VDXVideoFilterScriptObjectAdapter<T>::sScriptObject = {
 	NULL, (T::sScriptMethods == VDXVideoFilter::sScriptMethods) ? NULL : (VDXScriptFunctionDef *)static_cast<const VDXScriptFunctionDef *>(T::sScriptMethods), NULL
 };
 
+template<bool (&T_Routine)(VDXHWND)>
+static bool VDXAPIENTRY VDXStaticAboutConfigureAdapter(VDXHWND parent) {
+	return T_Routine(parent);
+}
+
 ///////////////////////////////////////////////////////////////////////////
 ///	\class VDXVideoFilterDefinition
 ///
@@ -198,7 +210,10 @@ public:
 		accelRunProc	= sizeof(VDXVideoFilterAccelRunOverloadTest(&T::Prefetch)) > 1 ? T::FilterAccelRun : NULL;
 
 		mSourceCountLowMinus1 = T::kMinInputCount - 1;
-		mSourceCountHighMinus1 = T::kMaxInputCount - 1;	
+		mSourceCountHighMinus1 = T::kMaxInputCount - 1;
+		
+		mpStaticAboutProc = T::StaticAbout == VDXVideoFilter::StaticAbout ? NULL : VDXStaticAboutConfigureAdapter<T::StaticAbout>;
+		mpStaticConfigureProc = T::StaticConfigure == VDXVideoFilter::StaticConfigure ? NULL :VDXStaticAboutConfigureAdapter<T::StaticConfigure>;		
 	}
 
 private:

@@ -25,6 +25,8 @@ extern "C" void JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_3b(const void *scr_y,cons
 		const void *src_v1,const void *src_v2,void *dst,int32_t w);
 extern "C" void JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_4b(const void *scr_y,const void *src_u1,const void *src_u2,
 		const void *src_v1,const void *src_v2,void *dst,int32_t w);
+extern "C" void JPSDR_AutoYUY2_Convert420_to_YUY2_AVX_1b(const void *scr_y,const void *src_u,const void *src_v,
+		void *dst,int32_t w);
 
 extern "C" void JPSDR_AutoYUY2_Convert420_to_UYVY_1(const void *scr_y,const void *src_u,const void *src_v,
 		void *dst,int32_t w);
@@ -241,6 +243,7 @@ public:
 	JPSDR_AutoYUY2(const JPSDR_AutoYUY2& a)
 	{
 		SSE2_Enable = a.SSE2_Enable;
+		AVX_Enable=a.AVX_Enable;
 		mData=a.mData;
 		InternalInit();
 	}
@@ -260,7 +263,7 @@ protected:
 	bool *interlaced_tab_U[MAX_MT_THREADS][Interlaced_Tab_Size],*interlaced_tab_V[MAX_MT_THREADS][Interlaced_Tab_Size];
 	Image_Data image_data;
 	uint16_t lookup_Upsc[768];
-	bool SSE2_Enable;
+	bool SSE2_Enable,AVX_Enable;
 
 	Public_MT_Data_Thread MT_Thread[MAX_MT_THREADS];
 	MT_Data_Info MT_Data[MAX_MT_THREADS];
@@ -322,6 +325,7 @@ VDXVF_END_SCRIPT_METHODS()
 bool JPSDR_AutoYUY2::Init()
 {
 	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
+	AVX_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_AVX)!=0);
 	InternalInit();
 
 	return(true);

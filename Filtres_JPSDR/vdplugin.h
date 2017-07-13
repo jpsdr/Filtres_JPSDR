@@ -58,6 +58,10 @@
 	typedef size_t				uintptr;
 #endif
 
+typedef struct VDXHINSTANCEStruct *VDXHINSTANCE;
+typedef struct VDXHDCStruct *VDXHDC;
+typedef struct VDXHWNDStruct *VDXHWND;
+
 #ifndef VDXAPIENTRY
 	#define VDXAPIENTRY __stdcall
 #endif
@@ -91,6 +95,9 @@ enum {
 	kVDXPluginType_Input
 };
 
+typedef bool (VDXAPIENTRY *VDXShowStaticAboutProc)(VDXHWND parent);
+typedef bool (VDXAPIENTRY *VDXShowStaticConfigureProc)(VDXHWND parent);
+
 struct VDXPluginInfo {
 	uint32			mSize;				// size of this structure in bytes
 	const wchar_t	*mpName;
@@ -104,6 +111,10 @@ struct VDXPluginInfo {
 	uint32			mTypeAPIVersionRequired;
 	uint32			mTypeAPIVersionUsed;
 	const void *	mpTypeSpecificInfo;
+
+	// NEW
+	VDXShowStaticAboutProc		mpStaticAboutProc;
+	VDXShowStaticConfigureProc	mpStaticConfigureProc;
 };
 
 typedef const VDXPluginInfo *const *(VDXAPIENTRY *tpVDXGetPluginInfo)();

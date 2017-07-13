@@ -27,6 +27,8 @@
 
 ///////////////////////////////////////////////////////////////////////////
 
+uint32 VDXVideoFilter::sAPIVersion;
+
 VDXVideoFilter::VDXVideoFilter() {
 }
 
@@ -36,6 +38,10 @@ VDXVideoFilter::~VDXVideoFilter() {
 void VDXVideoFilter::SetHooks(VDXFilterActivation *fa, const VDXFilterFunctions *ff) {
 	this->fa = fa;
 	this->ff = ff;
+}
+
+void VDXVideoFilter::SetAPIVersion(uint32 apiVersion) {
+	sAPIVersion = apiVersion;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -104,6 +110,7 @@ bool VDXVideoFilter::OnInvalidateCaches() {
 }
 
 ///////////////////////////////////////////////////////////////////////////
+
 void __cdecl VDXVideoFilter::FilterDeinit   (VDXFilterActivation *fa, const VDXFilterFunctions *ff) {
 	(*reinterpret_cast<VDXVideoFilter **>(fa->filter_data))->~VDXVideoFilter();
 }
@@ -137,7 +144,7 @@ int  __cdecl VDXVideoFilter::FilterStart    (VDXFilterActivation *fa, const VDXF
 
 	pThis->fa		= fa;
 
-	if (fa->mpVDXA)
+	if (sAPIVersion >= 15 && fa->mpVDXA)
 		pThis->StartAccel(fa->mpVDXA);
 	else
 		pThis->Start();	
@@ -150,7 +157,7 @@ int  __cdecl VDXVideoFilter::FilterEnd      (VDXFilterActivation *fa, const VDXF
 
 	pThis->fa		= fa;
 
-	if (fa->mpVDXA)
+	if (sAPIVersion >= 15 && fa->mpVDXA)
 		pThis->StopAccel(fa->mpVDXA);
 	else
 		pThis->End();	
@@ -231,6 +238,14 @@ void  __cdecl VDXVideoFilter::FilterAccelRun(const VDXFilterActivation *fa, cons
 	pThis->fa		= const_cast<VDXFilterActivation *>(fa);
 
 	pThis->RunAccel(fa->mpVDXA);
+}
+
+bool VDXVideoFilter::StaticAbout(VDXHWND parent) {
+	return false;
+}
+
+bool VDXVideoFilter::StaticConfigure(VDXHWND parent) {
+	return false;
 }
 
 void VDXVideoFilter::SafePrintf(char *buf, int maxbuf, const char *format, ...) {

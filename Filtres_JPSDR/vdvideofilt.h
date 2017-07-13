@@ -35,10 +35,6 @@
 
 #include "vdplugin.h"
 
-typedef struct VDXHINSTANCEStruct *VDXHINSTANCE;
-typedef struct VDXHDCStruct *VDXHDC;
-typedef struct VDXHWNDStruct *VDXHWND;
-
 //////////////////
 
 struct VDXScriptObject;
@@ -191,7 +187,7 @@ public:
 
 enum {
 	// This is the highest API version supported by this header file.
-	VIRTUALDUB_FILTERDEF_VERSION		= 16,
+	VIRTUALDUB_FILTERDEF_VERSION		= 17,
 
 	// This is the absolute lowest API version supported by this header file.
 	// Note that V4 is rather old, corresponding to VirtualDub 1.2.
@@ -263,7 +259,11 @@ struct VDXFilterDefinition {
 	
 	// NEW - V16 / 1.10.1
 	sint32					mSourceCountLowMinus1;
-	sint32					mSourceCountHighMinus1;	
+	sint32					mSourceCountHighMinus1;
+	
+	// NEW - V17 / 1.10.2
+	VDXShowStaticAboutProc		mpStaticAboutProc;
+	VDXShowStaticConfigureProc	mpStaticConfigureProc;	
 };
 
 //////////
@@ -397,6 +397,11 @@ public:
 #define CPUF_SUPPORTS_SSE2			(0x00000020L)
 #define CPUF_SUPPORTS_3DNOW			(0x00000040L)
 #define CPUF_SUPPORTS_3DNOW_EXT		(0x00000080L)
+#define CPUF_SUPPORTS_SSE3			(0x00000100L)
+#define CPUF_SUPPORTS_SSSE3			(0x00000200L)
+#define CPUF_SUPPORTS_SSE41			(0x00000400L)
+#define CPUF_SUPPORTS_AVX			(0x00000800L)
+#define CPUF_SUPPORTS_SSE42			(0x00001000L)
 #endif
 
 struct VDXFilterFunctions {

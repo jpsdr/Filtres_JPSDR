@@ -175,6 +175,73 @@ _SSE2_1b_c:
 JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_1b endp
 
 
+;JPSDR_AutoYUY2_Convert420_to_YUY2_AVX_1b proc src_y:dword,src_u:dword,src_v:dword,dst:dword,w:dword
+; src_y = rcx
+; src_u = rdx
+; src_v = r8
+; dst = r9
+
+JPSDR_AutoYUY2_Convert420_to_YUY2_AVX_1b proc public frame
+
+w equ dword ptr[rbp+48]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push r12
+	.pushreg r12	
+	push r13
+	.pushreg r13
+	.endprolog
+
+	mov r10,rcx
+	xor rcx,rcx
+	mov ecx,w
+	xor rax,rax
+	mov r11,32
+	mov r12,2
+	mov r13,16
+	
+	shr ecx,1
+	jz short _AVX_1b_b
+	
+_AVX_1b_a:
+	vmovq xmm1,qword ptr[rdx+4*rax]		;00000000UUUUUUUU
+	vmovq xmm0,qword ptr[r8+4*rax]		;00000000VVVVVVVV
+	vmovdqa xmm2,XMMWORD ptr[r10+8*rax]		;YYYYYYYYYYYYYYYY
+	vpunpcklbw xmm1,xmm1,xmm0				;VUVUVUVUVUVUVUVU
+	add rax,r12
+	vpunpckhbw xmm3,xmm2,xmm1     			;VYUYVYUYVYUYVYUY
+	vpunpcklbw xmm2,xmm2,xmm1     			;VYUYVYUYVYUYVYUY
+	
+	vmovdqa XMMWORD ptr[r9],xmm2
+	vmovdqa XMMWORD ptr[r9+r13],xmm3
+	add r9,r11
+	loop _AVX_1b_a
+	
+_AVX_1b_b:
+	mov ecx,w
+	and ecx,1
+	jz short _AVX_1b_c
+	
+	vmovd xmm1,dword ptr[rdx+4*rax]		;000000000000UUUU
+	vmovd xmm0,dword ptr[r8+4*rax]		;000000000000VVVV
+	vmovq xmm2,qword ptr[r10+8*rax]		;00000000YYYYYYYY
+	vpunpcklbw xmm1,xmm1,xmm0			;00000000VUVUVUVU
+	vpunpcklbw xmm2,xmm2,xmm1  			;VYUYVYUYVYUYVYUY
+	
+	vmovdqa XMMWORD ptr[r9],xmm2	
+	
+_AVX_1b_c:	
+	pop r13
+	pop r12
+	pop rbp
+
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_YUY2_AVX_1b endp
+
+
 ;JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_1b proc src_y:dword,src_u:dword,src_v:dword,dst:dword,w:dword
 ; src_y = rcx
 ; src_u = rdx
