@@ -212,8 +212,11 @@ public:
 		mSourceCountLowMinus1 = T::kMinInputCount - 1;
 		mSourceCountHighMinus1 = T::kMaxInputCount - 1;
 		
+		// PB !!!!! Build under VS2010 but not under VS2015
+		/*
 		mpStaticAboutProc = T::StaticAbout == VDXVideoFilter::StaticAbout ? NULL : VDXStaticAboutConfigureAdapter<T::StaticAbout>;
 		mpStaticConfigureProc = T::StaticConfigure == VDXVideoFilter::StaticConfigure ? NULL :VDXStaticAboutConfigureAdapter<T::StaticConfigure>;		
+		*/
 	}
 
 private:

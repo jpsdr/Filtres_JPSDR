@@ -254,6 +254,61 @@ _SSE2_0b_c:
 JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_1b endp
 
 
+JPSDR_AutoYUY2_Convert420_to_UYVY_AVX_1b proc src_y:dword,src_u:dword,src_v:dword,dst:dword,w:dword
+
+	public JPSDR_AutoYUY2_Convert420_to_UYVY_AVX_1b
+
+	push esi
+	push edi
+	push ebx
+
+	mov esi,src_y
+	mov ebx,src_u
+	mov edx,src_v
+	mov edi,dst
+	mov ecx,w
+	xor eax,eax
+	
+	shr ecx,1
+	jz short _AVX_0b_b
+	
+_AVX_0b_a:
+	vmovq xmm1,qword ptr[ebx+4*eax]		;00000000UUUUUUUU
+	vmovq xmm0,qword ptr[edx+4*eax]		;00000000VVVVVVVV
+	vmovdqa xmm2,XMMWORD ptr[esi+8*eax]		;YYYYYYYYYYYYYYYY
+	vpunpcklbw xmm1,xmm1,xmm0				;VUVUVUVUVUVUVUVU
+	add eax,2
+	vpunpckhbw xmm3,xmm1,xmm2     			;YVYUYVYUYVYUYVYU
+	vpunpcklbw xmm1,xmm1,xmm2     			;YVYUYVYUYVYUYVYU
+	
+	vmovdqa XMMWORD ptr[edi],xmm1
+	vmovdqa XMMWORD ptr[edi+16],xmm3
+	add edi,32
+	loop _AVX_0b_a
+	
+_AVX_0b_b:
+	mov ecx,w
+	and ecx,1
+	jz short _AVX_0b_c
+	
+	vmovd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	vmovd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	vmovq xmm2,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	vpunpcklbw xmm1,xmm1,xmm0				;00000000VUVUVUVU
+	vpunpcklbw xmm1,xmm1,xmm2     			;YVYUYVYUYVYUYVYU
+	
+	vmovdqa XMMWORD ptr[edi],xmm1	
+	
+_AVX_0b_c:	
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_UYVY_AVX_1b endp
+
+
 JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_2b proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
 
 	public JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_2b
@@ -352,6 +407,105 @@ _SSE2_2b_c:
 	ret
 
 JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_2b endp
+
+
+JPSDR_AutoYUY2_Convert420_to_YUY2_AVX_2b proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
+
+	public JPSDR_AutoYUY2_Convert420_to_YUY2_AVX_2b
+	
+	push esi
+	push edi
+	push ebx
+	
+	vpxor xmm7,xmm7,xmm7
+	
+	mov edi,dst
+	mov esi,src_y
+	mov ecx,w
+	
+	vmovdqa xmm6,XMMWORD ptr uw_4
+	vmovdqa xmm5,XMMWORD ptr uw_3
+	vmovdqa xmm4,XMMWORD ptr uw_5
+	
+	xor eax,eax
+	shr ecx,1
+	jz _AVX_2b_b
+
+_AVX_2b_a:
+	mov ebx,src1_u
+	mov edx,src1_v
+	vmovq xmm0,qword ptr[ebx+4*eax]		;00000000UUUUUUUU
+	vmovq xmm1,qword ptr[edx+4*eax]		;00000000VVVVVVVV
+	vpunpcklbw xmm0,xmm0,xmm7			;0U0U0U0U0U0U0U0U
+	vpunpcklbw xmm1,xmm1,xmm7			;0V0V0V0V0V0V0V0V
+	mov ebx,src2_u
+	mov edx,src2_v
+	vmovq xmm2,qword ptr[ebx+4*eax]		;00000000UUUUUUUU
+	vmovq xmm3,qword ptr[edx+4*eax]		;00000000VVVVVVVV
+	vpunpcklbw xmm2,xmm2,xmm7			;0U0U0U0U0U0U0U0U
+	vpunpcklbw xmm3,xmm3,xmm7			;0V0V0V0V0V0V0V0V
+	
+	vpmullw xmm0,xmm0,xmm5
+	vpmullw xmm1,xmm1,xmm5	
+	vpmullw xmm2,xmm2,xmm4
+	vpmullw xmm3,xmm3,xmm4	
+	vpaddsw xmm2,xmm2,xmm6
+	vpaddsw xmm3,xmm3,xmm6
+	vpaddsw xmm0,xmm0,xmm2
+	vpaddsw xmm1,xmm1,xmm3
+	vmovdqa xmm2,XMMWORD ptr[esi+8*eax]		;YYYYYYYYYYYYYYYY
+	vpsraw xmm0,xmm0,3
+	vpsraw xmm1,xmm1,3
+	vpackuswb xmm0,xmm0,xmm7			;00000000UUUUUUUU
+	vpackuswb xmm1,xmm1,xmm7			;00000000VVVVVVVV
+	vpunpcklbw xmm0,xmm0,xmm1     		;VUVUVUVUVUVUVUVU
+	add eax,2
+	vpunpckhbw xmm3,xmm2,xmm0			;VYUYVYUYVYUYVYUY
+	vpunpcklbw xmm2,xmm2,xmm0			;VYUYVYUYVYUYVYUY
+	vmovdqa XMMWORD ptr[edi],xmm2
+	vmovdqa XMMWORD ptr[edi+16],xmm3
+	add edi,32
+	
+	dec ecx
+	jnz _AVX_2b_a
+	
+_AVX_2b_b:
+	mov ecx,w
+	and ecx,1
+	jz short _AVX_2b_c
+		
+	mov ebx,src1_u
+	mov edx,src1_v
+	vmovd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	vmovd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	vpunpcklbw xmm1,xmm1,xmm0			;00000000VUVUVUVU
+	vpunpcklbw xmm1,xmm1,xmm7			;0V0U0V0U0V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	vmovd xmm2,dword ptr[ebx+4*eax]		;000000000000UUUU
+	vmovd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	vpunpcklbw xmm2,xmm2,xmm0			;00000000VUVUVUVU
+	vpunpcklbw xmm2,xmm2,xmm7			;0V0U0V0U0V0U0V0U	
+	
+	vpmullw xmm1,xmm1,xmm5
+	vpmullw xmm2,xmm2,xmm4
+	vpaddsw xmm1,xmm1,xmm6
+	vmovq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	vpaddsw xmm1,xmm1,xmm2
+	vpsraw xmm1,xmm1,3
+	vpackuswb xmm1,xmm1,xmm7			;00000000VUVUVUVU
+	vpunpcklbw xmm0,xmm0,xmm1     		;VYUYVYUYVYUYVYUY
+	
+	vmovdqa XMMWORD ptr[edi],xmm0	
+		
+_AVX_2b_c:		
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_YUY2_AVX_2b endp
 
 
 JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_2b proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
@@ -454,6 +608,105 @@ _SSE2_6b_c:
 JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_2b endp
 
 
+JPSDR_AutoYUY2_Convert420_to_UYVY_AVX_2b proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
+
+	public JPSDR_AutoYUY2_Convert420_to_UYVY_AVX_2b
+	
+	push esi
+	push edi
+	push ebx
+	
+	vpxor xmm7,xmm7,xmm7
+	
+	mov edi,dst
+	mov esi,src_y
+	mov ecx,w
+	
+	vmovdqa xmm6,XMMWORD ptr uw_4
+	vmovdqa xmm5,XMMWORD ptr uw_3
+	vmovdqa xmm4,XMMWORD ptr uw_5
+	
+	xor eax,eax
+	shr ecx,1
+	jz _AVX_6b_b
+
+_AVX_6b_a:
+	mov ebx,src1_u
+	mov edx,src1_v
+	vmovq xmm0,qword ptr[ebx+4*eax]		;00000000UUUUUUUU
+	vmovq xmm1,qword ptr[edx+4*eax]		;00000000VVVVVVVV
+	vpunpcklbw xmm0,xmm0,xmm7			;0U0U0U0U0U0U0U0U
+	vpunpcklbw xmm1,xmm1,xmm7			;0V0V0V0V0V0V0V0V
+	mov ebx,src2_u
+	mov edx,src2_v
+	vmovq xmm2,qword ptr[ebx+4*eax]		;00000000UUUUUUUU
+	vmovq xmm3,qword ptr[edx+4*eax]		;00000000VVVVVVVV
+	vpunpcklbw xmm2,xmm2,xmm7			;0U0U0U0U0U0U0U0U
+	vpunpcklbw xmm3,xmm3,xmm7			;0V0V0V0V0V0V0V0V
+	
+	vpmullw xmm0,xmm0,xmm5
+	vpmullw xmm1,xmm1,xmm5	
+	vpmullw xmm2,xmm2,xmm4
+	vpmullw xmm3,xmm3,xmm4	
+	vpaddsw xmm2,xmm2,xmm6
+	vpaddsw xmm3,xmm3,xmm6
+	vpaddsw xmm0,xmm0,xmm2
+	vpaddsw xmm1,xmm1,xmm3
+	vpsraw xmm0,xmm0,3
+	vpsraw xmm1,xmm1,3
+	vpackuswb xmm0,xmm0,xmm7				;00000000UUUUUUUU
+	vpackuswb xmm1,xmm1,xmm7				;00000000VVVVVVVV
+	vmovdqa xmm2,XMMWORD ptr[esi+8*eax]		;YYYYYYYYYYYYYYYY
+	vpunpcklbw xmm0,xmm0,xmm1     		;VUVUVUVUVUVUVUVU
+	add eax,2
+	vpunpckhbw xmm3,xmm0,xmm2			;YVYUYVYUYVYUYVYU
+	vpunpcklbw xmm0,xmm0,xmm2			;YVYUYVYUYVYUYVYU
+	vmovdqa XMMWORD ptr[edi],xmm0
+	vmovdqa XMMWORD ptr[edi+16],xmm3
+	add edi,32
+	
+	dec ecx
+	jnz _AVX_6b_a
+	
+_AVX_6b_b:	
+	mov ecx,w
+	and ecx,1
+	jz short _AVX_6b_c
+	
+	mov ebx,src1_u
+	mov edx,src1_v
+	vmovd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	vmovd xmm0,dword ptr[edx+4*eax]	;000000000000VVVV
+	vpunpcklbw xmm1,xmm1,xmm0				;00000000VUVUVUVU
+	vpunpcklbw xmm1,xmm1,xmm7				;0V0U0V0U0V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	vmovd xmm2,dword ptr[ebx+4*eax]		;000000000000UUUU
+	vmovd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	vpunpcklbw xmm2,xmm2,xmm0			;00000000VUVUVUVU
+	vpunpcklbw xmm2,xmm2,xmm7			;0V0U0V0U0V0U0V0U	
+	
+	vpmullw xmm1,xmm1,xmm5
+	vpmullw xmm2,xmm2,xmm4
+	vpaddsw xmm1,xmm1,xmm6
+	vmovq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	vpaddsw xmm1,xmm1,xmm2
+	vpsraw xmm1,xmm1,3
+	vpackuswb xmm1,xmm1,xmm7			;00000000VUVUVUVU
+	vpunpcklbw xmm1,xmm1,xmm0     		;YVYUYVYUYVYUYVYU
+	
+	vmovdqa XMMWORD ptr[edi],xmm1	
+		
+_AVX_6b_c:		
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_UYVY_AVX_2b endp
+
+
 JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_3b proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
 
 	public JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_3b
@@ -547,6 +800,100 @@ _SSE2_3b_c:
 	ret
 
 JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_3b endp
+
+
+JPSDR_AutoYUY2_Convert420_to_YUY2_AVX_3b proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
+
+	public JPSDR_AutoYUY2_Convert420_to_YUY2_AVX_3b
+	
+	push esi
+	push edi
+	push ebx
+	
+	vpxor xmm7,xmm7,xmm7
+	
+	mov edi,dst
+	mov esi,src_y
+	mov ecx,w
+	
+	vmovdqa xmm6,XMMWORD ptr uw_4
+	vmovdqa xmm5,XMMWORD ptr uw_7
+	
+	xor eax,eax
+	shr ecx,1
+	jz _AVX_3b_b
+
+_AVX_3b_a:
+	mov ebx,src1_u
+	mov edx,src1_v
+	vmovq xmm0,qword ptr[ebx+4*eax]		;00000000UUUUUUUU
+	vmovq xmm1,qword ptr[edx+4*eax]		;00000000VVVVVVVV
+	vpunpcklbw xmm0,xmm0,xmm7			;0U0U0U0U0U0U0U0U
+	vpunpcklbw xmm1,xmm1,xmm7			;0V0V0V0V0V0V0V0V
+	mov ebx,src2_u
+	mov edx,src2_v
+	vmovq xmm2,qword ptr[ebx+4*eax]		;00000000UUUUUUUU
+	vmovq xmm3,qword ptr[edx+4*eax]		;00000000VVVVVVVV
+	vpunpcklbw xmm2,xmm2,xmm7				;0U0U0U0U0U0U0U0U
+	vpunpcklbw xmm3,xmm3,xmm7				;0V0V0V0V0V0V0V0V
+	vmovdqa xmm4,XMMWORD ptr[esi+8*eax]		;YYYYYYYYYYYYYYYY
+	
+	vpmullw xmm0,xmm0,xmm5
+	vpmullw xmm1,xmm1,xmm5	
+	vpaddsw xmm2,xmm2,xmm6
+	vpaddsw xmm3,xmm3,xmm6
+	vpaddsw xmm0,xmm0,xmm2
+	vpaddsw xmm1,xmm1,xmm3
+	vpsraw xmm0,xmm0,3
+	vpsraw xmm1,xmm1,3
+	vpackuswb xmm0,xmm0,xmm7			;00000000UUUUUUUU
+	vpackuswb xmm1,xmm1,xmm7			;00000000VVVVVVVV
+	vpunpcklbw xmm0,xmm0,xmm1     		;VUVUVUVUVUVUVUVU
+	add eax,2
+	vpunpcklbw xmm2,xmm4,xmm0			;VYUYVYUYVYUYVYUY
+	vpunpckhbw xmm4,xmm4,xmm0			;VYUYVYUYVYUYVYUY
+	vmovdqa XMMWORD ptr[edi],xmm2
+	vmovdqa XMMWORD ptr[edi+16],xmm4
+	add edi,32
+	
+	loop _AVX_3b_a
+	
+_AVX_3b_b:	
+	mov ecx,w
+	and ecx,1
+	jz short _AVX_3b_c
+	
+	mov ebx,src1_u
+	mov edx,src1_v
+	vmovd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	vmovd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	vpunpcklbw xmm1,xmm1,xmm0			;00000000VUVUVUVU
+	vpunpcklbw xmm1,xmm1,xmm7			;0V0U0V0U0V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	vmovd xmm2,dword ptr[ebx+4*eax]		;000000000000UUUU
+	vmovd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	vpunpcklbw xmm2,xmm2,xmm0			;00000000VUVUVUVU
+	vpunpcklbw xmm2,xmm2,xmm7			;0V0U0V0U0V0U0V0U	
+	
+	vpmullw xmm1,xmm1,xmm5
+	vpaddsw xmm2,xmm2,xmm6
+	vmovq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	vpaddsw xmm1,xmm1,xmm2
+	vpsraw xmm1,xmm1,3
+	vpackuswb xmm1,xmm1,xmm7			;00000000VUVUVUVU
+	vpunpcklbw xmm0,xmm0,xmm1     		;VYUYVYUYVYUYVYUY
+	
+	vmovdqa XMMWORD ptr[edi],xmm0	
+		
+_AVX_3b_c:		
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_YUY2_AVX_3b endp
 
 
 JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_3b proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
@@ -644,6 +991,100 @@ _SSE2_7b_c:
 JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_3b endp
 
 
+JPSDR_AutoYUY2_Convert420_to_UYVY_AVX_3b proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
+
+	public JPSDR_AutoYUY2_Convert420_to_UYVY_AVX_3b
+	
+	push esi
+	push edi
+	push ebx
+	
+	vpxor xmm7,xmm7,xmm7
+	
+	mov edi,dst
+	mov esi,src_y
+	mov ecx,w
+	
+	vmovdqa xmm6,XMMWORD ptr uw_4
+	vmovdqa xmm5,XMMWORD ptr uw_7
+	
+	xor eax,eax
+	shr ecx,1
+	jz _AVX_7b_b
+
+_AVX_7b_a:
+	mov ebx,src1_u
+	mov edx,src1_v
+	vmovq xmm0,qword ptr[ebx+4*eax]		;00000000UUUUUUUU
+	vmovq xmm1,qword ptr[edx+4*eax]		;00000000VVVVVVVV
+	vpunpcklbw xmm0,xmm0,xmm7			;0U0U0U0U0U0U0U0U
+	vpunpcklbw xmm1,xmm1,xmm7			;0V0V0V0V0V0V0V0V
+	mov ebx,src2_u
+	mov edx,src2_v
+	vmovq xmm2,qword ptr[ebx+4*eax]		;00000000UUUUUUUU
+	vmovq xmm3,qword ptr[edx+4*eax]		;00000000VVVVVVVV
+	vpunpcklbw xmm2,xmm2,xmm7			;0U0U0U0U0U0U0U0U
+	vpunpcklbw xmm3,xmm3,xmm7			;0V0V0V0V0V0V0V0V
+	
+	vpmullw xmm0,xmm0,xmm5
+	vpmullw xmm1,xmm1,xmm5	
+	vpaddsw xmm2,xmm2,xmm6
+	vpaddsw xmm3,xmm3,xmm6
+	vpaddsw xmm0,xmm0,xmm2
+	vpaddsw xmm1,xmm1,xmm3
+	vpsraw xmm0,xmm0,3
+	vpsraw xmm1,xmm1,3
+	vpackuswb xmm0,xmm0,xmm7			;00000000UUUUUUUU
+	vpackuswb xmm1,xmm1,xmm7			;00000000VVVVVVVV
+	vmovdqa xmm4,XMMWORD ptr[esi+8*eax]	;YYYYYYYYYYYYYYYY
+	vpunpcklbw xmm0,xmm0,xmm1     		;VUVUVUVUVUVUVUVU
+	add eax,2
+	vpunpckhbw xmm2,xmm0,xmm4			;VYUYVYUYVYUYVYUY
+	vpunpcklbw xmm0,xmm0,xmm4			;VYUYVYUYVYUYVYUY
+	vmovdqa XMMWORD ptr[edi],xmm0
+	vmovdqa XMMWORD ptr[edi+16],xmm2
+	add edi,32
+	
+	loop _AVX_7b_a
+	
+_AVX_7b_b:
+	mov ecx,w
+	and ecx,1
+	jz short _AVX_7b_c
+
+	mov ebx,src1_u
+	mov edx,src1_v
+	vmovd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	vmovd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	vpunpcklbw xmm1,xmm1,xmm0			;00000000VUVUVUVU
+	vpunpcklbw xmm1,xmm1,xmm7			;0V0U0V0U0V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	vmovd xmm2,dword ptr[ebx+4*eax]		;000000000000UUUU
+	vmovd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	vpunpcklbw xmm2,xmm2,xmm0			;00000000VUVUVUVU
+	vpunpcklbw xmm2,xmm2,xmm7			;0V0U0V0U0V0U0V0U	
+	
+	vpmullw xmm1,xmm1,xmm5
+	vpaddsw xmm2,xmm2,xmm6
+	vmovq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	vpaddsw xmm1,xmm1,xmm2
+	vpsraw xmm1,xmm1,3
+	vpackuswb xmm1,xmm1,xmm7			;00000000VUVUVUVU
+	vpunpcklbw xmm1,xmm1,xmm0     		;YVYUYVYUYVYUYVYU
+	
+	vmovdqa XMMWORD ptr[edi],xmm1
+
+_AVX_7b_c:		
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_UYVY_AVX_3b endp
+
+
 JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_4b proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
 
 	public JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_4b
@@ -737,6 +1178,100 @@ _SSE2_4b_c:
 	ret
 
 JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_4b endp
+
+
+JPSDR_AutoYUY2_Convert420_to_YUY2_AVX_4b proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
+
+	public JPSDR_AutoYUY2_Convert420_to_YUY2_AVX_4b
+	
+	push esi
+	push edi
+	push ebx
+	
+	vpxor xmm7,xmm7,xmm7
+	
+	mov edi,dst
+	mov esi,src_y
+	mov ecx,w
+	
+	vmovdqa xmm6,XMMWORD ptr uw_2
+	vmovdqa xmm5,XMMWORD ptr uw_3
+	
+	xor eax,eax
+	shr ecx,1
+	jz _AVX_4b_b
+
+_AVX_4b_a:
+	mov ebx,src1_u
+	mov edx,src1_v
+	vmovq xmm0,qword ptr[ebx+4*eax]		;00000000UUUUUUUU
+	vmovq xmm1,qword ptr[edx+4*eax]		;00000000VVVVVVVV
+	vpunpcklbw xmm0,xmm0,xmm7			;0U0U0U0U0U0U0U0U
+	vpunpcklbw xmm1,xmm1,xmm7			;0V0V0V0V0V0V0V0V
+	mov ebx,src2_u
+	mov edx,src2_v
+	vmovq xmm2,qword ptr[ebx+4*eax]		;00000000UUUUUUUU
+	vmovq xmm3,qword ptr[edx+4*eax]		;00000000VVVVVVVV
+	vpunpcklbw xmm2,xmm2,xmm7			;0U0U0U0U0U0U0U0U
+	vpunpcklbw xmm3,xmm3,xmm7			;0V0V0V0V0V0V0V0V
+	vmovdqa xmm4,XMMWORD ptr[esi+8*eax]	;YYYYYYYYYYYYYYYY
+	
+	vpmullw xmm0,xmm0,xmm5
+	vpmullw xmm1,xmm1,xmm5	
+	vpaddsw xmm2,xmm2,xmm6
+	vpaddsw xmm3,xmm3,xmm6
+	vpaddsw xmm0,xmm0,xmm2
+	vpaddsw xmm1,xmm1,xmm3
+	vpsraw xmm0,xmm0,2
+	vpsraw xmm1,xmm1,2
+	vpackuswb xmm0,xmm0,xmm7			;00000000UUUUUUUU
+	vpackuswb xmm1,xmm1,xmm7			;00000000VVVVVVVV
+	vpunpcklbw xmm0,xmm0,xmm1     		;VUVUVUVUVUVUVUVU
+	add eax,2
+	vpunpcklbw xmm2,xmm4,xmm0			;VYUYVYUYVYUYVYUY
+	vpunpckhbw xmm4,xmm4,xmm0			;VYUYVYUYVYUYVYUY
+	vmovdqa XMMWORD ptr[edi],xmm2
+	vmovdqa XMMWORD ptr[edi+16],xmm4
+	add edi,32
+	
+	loop _AVX_4b_a
+	
+_AVX_4b_b:	
+	mov ecx,w
+	and ecx,1
+	jz short _AVX_4b_c
+	
+	mov ebx,src1_u
+	mov edx,src1_v
+	vmovd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	vmovd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	vpunpcklbw xmm1,xmm1,xmm0			;00000000VUVUVUVU
+	vpunpcklbw xmm1,xmm1,xmm7			;0V0U0V0U0V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	vmovd xmm2,dword ptr[ebx+4*eax]		;000000000000UUUU
+	vmovd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	vpunpcklbw xmm2,xmm2,xmm0			;00000000VUVUVUVU
+	vpunpcklbw xmm2,xmm2,xmm7			;0V0U0V0U0V0U0V0U	
+	
+	vpmullw xmm1,xmm1,xmm5
+	vpaddsw xmm2,xmm2,xmm6
+	vmovq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	vpaddsw xmm1,xmm1,xmm2
+	vpsraw xmm1,xmm1,2
+	vpackuswb xmm1,xmm1,xmm7			;00000000VUVUVUVU
+	vpunpcklbw xmm0,xmm0,xmm1     		;VYUYVYUYVYUYVYUY
+	
+	vmovdqa XMMWORD ptr[edi],xmm0	
+	
+_AVX_4b_c:		
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_YUY2_AVX_4b endp
 
 
 JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_4b proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
@@ -834,6 +1369,100 @@ _SSE2_8b_c:
 JPSDR_AutoYUY2_Convert420_to_UYVY_SSE2_4b endp
 
 
+JPSDR_AutoYUY2_Convert420_to_UYVY_AVX_4b proc src_y:dword,src1_u:dword,src2_u:dword,src1_v:dword,src2_v:dword,dst:dword,w:dword
+
+	public JPSDR_AutoYUY2_Convert420_to_UYVY_AVX_4b
+	
+	push esi
+	push edi
+	push ebx
+	
+	vpxor xmm7,xmm7,xmm7
+	
+	mov edi,dst
+	mov esi,src_y
+	mov ecx,w
+	
+	vmovdqa xmm6,XMMWORD ptr uw_2
+	vmovdqa xmm5,XMMWORD ptr uw_3
+	
+	xor eax,eax
+	shr ecx,1
+	jz _AVX_8b_b
+
+_AVX_8b_a:
+	mov ebx,src1_u
+	mov edx,src1_v
+	vmovq xmm0,qword ptr[ebx+4*eax]		;00000000UUUUUUUU
+	vmovq xmm1,qword ptr[edx+4*eax]		;00000000VVVVVVVV
+	vpunpcklbw xmm0,xmm0,xmm7			;0U0U0U0U0U0U0U0U
+	vpunpcklbw xmm1,xmm1,xmm7			;0V0V0V0V0V0V0V0V
+	mov ebx,src2_u
+	mov edx,src2_v
+	vmovq xmm2,qword ptr[ebx+4*eax]		;00000000UUUUUUUU
+	vmovq xmm3,qword ptr[edx+4*eax]		;00000000VVVVVVVV
+	vpunpcklbw xmm2,xmm2,xmm7			;0U0U0U0U0U0U0U0U
+	vpunpcklbw xmm3,xmm3,xmm7			;0V0V0V0V0V0V0V0V
+	
+	vpmullw xmm0,xmm0,xmm5
+	vpmullw xmm1,xmm1,xmm5	
+	vpaddsw xmm2,xmm2,xmm6
+	vpaddsw xmm3,xmm3,xmm6
+	vpaddsw xmm0,xmm0,xmm2
+	vpaddsw xmm1,xmm1,xmm3
+	vpsraw xmm0,xmm0,2
+	vpsraw xmm1,xmm1,2
+	vpackuswb xmm0,xmm0,xmm7			;00000000UUUUUUUU
+	vpackuswb xmm1,xmm1,xmm7			;00000000VVVVVVVV
+	vmovdqa xmm4,XMMWORD ptr[esi+8*eax]	;YYYYYYYYYYYYYYYY
+	vpunpcklbw xmm0,xmm0,xmm1     		;VUVUVUVUVUVUVUVU
+	add eax,2
+	vpunpckhbw xmm2,xmm0,xmm4			;VYUYVYUYVYUYVYUY
+	vpunpcklbw xmm0,xmm0,xmm4			;VYUYVYUYVYUYVYUY
+	vmovdqa XMMWORD ptr[edi],xmm0
+	vmovdqa XMMWORD ptr[edi+16],xmm2
+	add edi,32
+	
+	loop _AVX_8b_a
+	
+_AVX_8b_b:	
+	mov ecx,w
+	and ecx,1
+	jz short _AVX_8b_c
+	
+	mov ebx,src1_u
+	mov edx,src1_v
+	vmovd xmm1,dword ptr[ebx+4*eax]		;000000000000UUUU
+	vmovd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	vpunpcklbw xmm1,xmm1,xmm0			;00000000VUVUVUVU
+	vpunpcklbw xmm1,xmm1,xmm7			;0V0U0V0U0V0U0V0U
+	mov ebx,src2_u
+	mov edx,src2_v
+	vmovd xmm2,dword ptr[ebx+4*eax]		;000000000000UUUU
+	vmovd xmm0,dword ptr[edx+4*eax]		;000000000000VVVV
+	vpunpcklbw xmm2,xmm2,xmm0			;00000000VUVUVUVU
+	vpunpcklbw xmm2,xmm2,xmm7			;0V0U0V0U0V0U0V0U	
+	
+	vpmullw xmm1,xmm1,xmm5
+	vpaddsw xmm2,xmm2,xmm6
+	vmovq xmm0,qword ptr[esi+8*eax]		;00000000YYYYYYYY
+	vpaddsw xmm1,xmm1,xmm2
+	vpsraw xmm1,xmm1,2
+	vpackuswb xmm1,xmm1,xmm7			;00000000VUVUVUVU
+	vpunpcklbw xmm1,xmm1,xmm0     		;YVYUYVYUYVYUYVYU
+	
+	vmovdqa XMMWORD ptr[edi],xmm1	
+		
+_AVX_8b_c:		
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_UYVY_AVX_4b endp
+
+
 JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_2b proc src1:dword,src2:dword,dst:dword,w:dword
 
 	public JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_2b
@@ -877,6 +1506,50 @@ SSE2_2b_d:
 	ret
 
 JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_2b endp
+
+
+JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_2b proc src1:dword,src2:dword,dst:dword,w:dword
+
+	public JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_2b
+
+	push esi
+	push edi
+	push ebx
+	
+	vpcmpeqb xmm3,xmm3,xmm3
+	
+	mov edi,dst
+	mov esi,src1
+	mov edx,src2
+	xor eax,eax
+	
+	mov ecx,w
+	or ecx,ecx
+	jz short AVX_2b_d
+
+	mov ebx,16
+AVX_2b_a:	
+	vmovdqa xmm0,XMMWORD ptr[edx+eax]
+	vmovdqa xmm1,XMMWORD ptr[esi+eax]
+	vpxor xmm2,xmm0,xmm3
+	vpxor xmm1,xmm1,xmm3
+	vpavgb xmm2,xmm2,xmm1
+	vpavgb xmm2,xmm2,xmm1
+	vpxor xmm2,xmm2,xmm3
+	vpavgb xmm2,xmm2,xmm0
+
+	vmovdqa XMMWORD ptr[edi+eax],xmm2
+	add eax,ebx
+	loop AVX_2b_a
+	
+AVX_2b_d:	
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_2b endp
 
 
 JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_3b proc src1:dword,src2:dword,dst:dword,w:dword
@@ -924,6 +1597,50 @@ SSE2_3b_d:
 JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_3b endp
 
 
+JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_3b proc src1:dword,src2:dword,dst:dword,w:dword
+
+	public JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_3b
+	
+	push esi
+	push edi
+	push ebx
+	
+	vpcmpeqb xmm3,xmm3,xmm3
+	
+	mov edi,dst
+	mov esi,src1
+	mov edx,src2
+	xor eax,eax
+	
+	mov ecx,w
+	or ecx,ecx
+	jz short AVX_3b_d
+	
+	mov ebx,16
+AVX_3b_a:
+	vmovdqa xmm0,XMMWORD ptr[esi+eax]
+	vmovdqa xmm1,XMMWORD ptr[edx+eax]
+	vpxor xmm2,xmm0,xmm3
+	vpxor xmm1,xmm1,xmm3
+	vpavgb xmm1,xmm1,xmm2
+	vpavgb xmm1,xmm1,xmm2
+	vpxor xmm1,xmm1,xmm3
+	vpavgb xmm1,xmm1,xmm0
+	
+	vmovdqa XMMWORD ptr[edi+eax],xmm1
+	add eax,ebx
+	loop AVX_3b_a
+	
+AVX_3b_d:	
+	pop ebx
+	pop edi
+	pop esi
+	
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_3b endp
+
+
 JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4b proc src1:dword,src2:dword,dst:dword,w:dword
 
 	public JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4b
@@ -966,6 +1683,49 @@ SSE2_4b_d:
 	ret
 
 JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4b endp
+
+
+JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_4b proc src1:dword,src2:dword,dst:dword,w:dword
+
+	public JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_4b
+	
+	push esi
+	push edi
+	push ebx
+	
+	vpcmpeqb xmm3,xmm3,xmm3
+	
+	mov edi,dst
+	mov esi,src1
+	mov edx,src2
+	xor eax,eax
+	
+	mov ecx,w
+	or ecx,ecx
+	jz short AVX_4b_d
+	
+	mov ebx,16
+AVX_4b_a:
+	vmovdqa xmm0,XMMWORD ptr[esi+eax]
+	vmovdqa xmm1,XMMWORD ptr[edx+eax]
+	vpxor xmm2,xmm0,xmm3
+	vpxor xmm1,xmm1,xmm3
+	vpavgb xmm2,xmm2,xmm1
+	vpxor xmm2,xmm2,xmm3
+	vpavgb xmm2,xmm2,xmm0
+	
+	vmovdqa XMMWORD ptr[edi+eax],xmm2
+	add eax,ebx
+	loop AVX_4b_a
+	
+AVX_4b_d:	
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_4b endp
 
 
 end
