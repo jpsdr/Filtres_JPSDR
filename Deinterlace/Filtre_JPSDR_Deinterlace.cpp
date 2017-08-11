@@ -27,6 +27,9 @@ extern "C" void JPSDR_Deinterlace_Blend_Non_MMX_32(const void *src1,const void *
 extern "C" void JPSDR_Deinterlace_Blend_SSE_3_A(const void *src1,const void *src2, void *dst,
 		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);		
 
+extern "C" void JPSDR_Deinterlace_Blend_AVX_3_A(const void *src1,const void *src2, void *dst,
+		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);		
+
 extern "C" void JPSDR_Deinterlace_Blend_Tri_SSE_3_A(const void *src,void *dst,int32_t w,
 		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
 extern "C" void JPSDR_Deinterlace_Blend_Tri_SSE_3_A_a(const void *src,void *dst,int32_t w,
@@ -35,12 +38,29 @@ extern "C" void JPSDR_Deinterlace_Blend_Tri_SSE_3_A_b(const void *src,void *dst,
 		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
 extern "C" void JPSDR_Deinterlace_Blend_Tri_SSE_3_A_c(const void *src,void *dst,int32_t w,
 		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-		
+
+extern "C" void JPSDR_Deinterlace_Blend_Tri_AVX_3_A(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Deinterlace_Blend_Tri_AVX_3_A_a(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Deinterlace_Blend_Tri_AVX_3_A_b(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Deinterlace_Blend_Tri_AVX_3_A_c(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+
+
 extern "C" void JPSDR_Deinterlace_YadifAbsDiffAvg_SSE(const void *src_a, const void *scr_b, void *dst_abs, void *dst_avg,
 		ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w, int32_t h);
 extern "C" void JPSDR_Deinterlace_YadifAbsDiff_SSE(const void *src_a, const void *scr_b, void *dst,ptrdiff_t src_pitch,
 		ptrdiff_t dst_pitch, int32_t w, int32_t h);
 extern "C" void JPSDR_Deinterlace_YadifAvg_SSE(const void *src_a, const void *scr_b, void *dst,ptrdiff_t src_pitch,
+		ptrdiff_t dst_pitch, int32_t w, int32_t h);
+
+extern "C" void JPSDR_Deinterlace_YadifAbsDiffAvg_AVX(const void *src_a, const void *scr_b, void *dst_abs, void *dst_avg,
+		ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w, int32_t h);
+extern "C" void JPSDR_Deinterlace_YadifAbsDiff_AVX(const void *src_a, const void *scr_b, void *dst,ptrdiff_t src_pitch,
+		ptrdiff_t dst_pitch, int32_t w, int32_t h);
+extern "C" void JPSDR_Deinterlace_YadifAvg_AVX(const void *src_a, const void *scr_b, void *dst,ptrdiff_t src_pitch,
 		ptrdiff_t dst_pitch, int32_t w, int32_t h);
 
 
@@ -371,6 +391,7 @@ public:
 	JPSDR_Deinterlace(){}
 	JPSDR_Deinterlace(const JPSDR_Deinterlace& a)
 	{
+		AVX_Enable=a.AVX_Enable;
 		SSE2_Enable = a.SSE2_Enable;
 		mData=a.mData;
 		InternalInit();
@@ -403,7 +424,7 @@ protected:
 	uint32_t debut[Number_Max_Lines],fin[Number_Max_Lines];
 	uint8_t tab_mode[Number_Max_Lines];
 	uint16_t nbre_file_mode;
-	bool SSE2_Enable;
+	bool SSE2_Enable,AVX_Enable;
 
 	Public_MT_Data_Thread MT_Thread[MAX_MT_THREADS];
 	MT_Data_Info MT_Data[MAX_MT_THREADS];
@@ -507,6 +528,7 @@ VDXVF_END_SCRIPT_METHODS()
 
 bool JPSDR_Deinterlace::Init()
 {
+	AVX_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_AVX)!=0);
 	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
 	InternalInit();
 
@@ -3641,6 +3663,13 @@ void JPSDR_Deinterlace::YadifAbsDiffAvg(const void *src_a, const void *src_b, vo
 	const uint8_t *src1,*src2;
 	uint8_t *dst_avg,*dst_abs;
 
+
+	if (AVX_Enable)
+	{
+		JPSDR_Deinterlace_YadifAbsDiffAvg_AVX(src_a,src_b,_dst_abs,_dst_avg,src_pitch<<1,dst_pitch,(w+15)>>4,h);
+		return;
+	}
+
 	if (SSE2_Enable)
 	{
 		JPSDR_Deinterlace_YadifAbsDiffAvg_SSE(src_a,src_b,_dst_abs,_dst_avg,src_pitch<<1,dst_pitch,(w+15)>>4,h);
@@ -3677,6 +3706,12 @@ void JPSDR_Deinterlace::YadifAbsDiff(const void *src_a, const void *src_b, void 
 {
 	const uint8_t *src1,*src2;
 	uint8_t *dst;
+
+	if (AVX_Enable)
+	{
+		JPSDR_Deinterlace_YadifAbsDiff_AVX(src_a,src_b,_dst,src_pitch<<1,dst_pitch,(w+15)>>4,h);
+		return;
+	}
 
 	if (SSE2_Enable)
 	{
@@ -3715,6 +3750,12 @@ void JPSDR_Deinterlace::YadifAvgKeepBottom(const void *src, void *_dst, ptrdiff_
 	memcpy(dst,src1,w);
 	dst+=dst_pitch;
 
+	if (AVX_Enable)
+	{
+		JPSDR_Deinterlace_YadifAvg_AVX(src1,src2,dst,src_pitch,dst_pitch,(w+15)>>4,h_1);
+		return;
+	}
+
 	if (SSE2_Enable)
 	{
 		JPSDR_Deinterlace_YadifAvg_SSE(src1,src2,dst,src_pitch,dst_pitch,(w+15)>>4,h_1);
@@ -3744,6 +3785,15 @@ void JPSDR_Deinterlace::YadifAvgKeepTop(const void *src, void *_dst, ptrdiff_t s
 	src1=(uint8_t *)src;
 	src2=src1+src_pitch;
 	dst=(uint8_t *)_dst;
+
+	if (AVX_Enable)
+	{
+		JPSDR_Deinterlace_YadifAvg_AVX(src1,src2,dst,src_pitch,dst_pitch,(w+15)>>4,h_1);
+		dst+=h_1*dst_pitch;
+		src1+=h_1*src_pitch;
+		memcpy(dst,src1,w);
+		return;
+	}
 
 	if (SSE2_Enable)
 	{
@@ -4475,11 +4525,17 @@ void JPSDR_Deinterlace::Deinterlace_Blend_MT_1(uint8_t thread_num)
 		if (mt_data_inf.bottom) h--;
 	}
 
-	if (SSE2_Enable)
-		JPSDR_Deinterlace_Blend_SSE_3_A(mt_data_inf.src1_0,mt_data_inf.src1_1,
+	if (AVX_Enable)
+		JPSDR_Deinterlace_Blend_AVX_3_A(mt_data_inf.src1_0,mt_data_inf.src1_1,
 			mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
-	else JPSDR_Deinterlace_Blend_Non_MMX_24(mt_data_inf.src1_0,mt_data_inf.src1_1,mt_data_inf.dst1,
-		mt_data_inf.src_Y_w_32,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+	else
+	{
+		if (SSE2_Enable)
+			JPSDR_Deinterlace_Blend_SSE_3_A(mt_data_inf.src1_0,mt_data_inf.src1_1,
+				mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		else JPSDR_Deinterlace_Blend_Non_MMX_24(mt_data_inf.src1_0,mt_data_inf.src1_1,mt_data_inf.dst1,
+			mt_data_inf.src_Y_w_32,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+	}
 
 	if (mt_data_inf.div_h)
 	{
@@ -4519,11 +4575,17 @@ void JPSDR_Deinterlace::Deinterlace_Blend_MT_2(uint8_t thread_num)
 		if (mt_data_inf.bottom) h--;
 	}
 
-	if (SSE2_Enable)
-		JPSDR_Deinterlace_Blend_SSE_3_A(mt_data_inf.src1_0,mt_data_inf.src1_1,
+	if (AVX_Enable)
+		JPSDR_Deinterlace_Blend_AVX_3_A(mt_data_inf.src1_0,mt_data_inf.src1_1,
 			mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
-	else JPSDR_Deinterlace_Blend_Non_MMX_32(mt_data_inf.src1_0,mt_data_inf.src1_1,mt_data_inf.dst1,
-		mt_data_inf.src_Y_w_32,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+	else
+	{
+		if (SSE2_Enable)
+			JPSDR_Deinterlace_Blend_SSE_3_A(mt_data_inf.src1_0,mt_data_inf.src1_1,
+				mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		else JPSDR_Deinterlace_Blend_Non_MMX_32(mt_data_inf.src1_0,mt_data_inf.src1_1,mt_data_inf.dst1,
+			mt_data_inf.src_Y_w_32,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+	}
 
 	if (mt_data_inf.div_h)
 	{
@@ -4562,11 +4624,17 @@ void JPSDR_Deinterlace::Deinterlace_Blend_MT_3(uint8_t thread_num)
 		if (mt_data_inf.bottom) h--;
 	}
 
-	if (SSE2_Enable)
-		JPSDR_Deinterlace_Blend_SSE_3_A(mt_data_inf.src1_0,mt_data_inf.src1_1,
+	if (AVX_Enable)
+		JPSDR_Deinterlace_Blend_AVX_3_A(mt_data_inf.src1_0,mt_data_inf.src1_1,
 			mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
-	else JPSDR_Deinterlace_Blend_Non_MMX_8(mt_data_inf.src1_0,mt_data_inf.src1_1,mt_data_inf.dst1,
-		mt_data_inf.src_Y_w,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+	else
+	{
+		if (SSE2_Enable)
+			JPSDR_Deinterlace_Blend_SSE_3_A(mt_data_inf.src1_0,mt_data_inf.src1_1,
+				mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		else JPSDR_Deinterlace_Blend_Non_MMX_8(mt_data_inf.src1_0,mt_data_inf.src1_1,mt_data_inf.dst1,
+			mt_data_inf.src_Y_w,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+	}
 
 	if (mt_data_inf.div_h)
 	{
@@ -4606,11 +4674,17 @@ void JPSDR_Deinterlace::Deinterlace_Blend_MT_4(uint8_t thread_num)
 		if (mt_data_inf.bottom) h--;
 	}
 
-	if (SSE2_Enable)
-		JPSDR_Deinterlace_Blend_SSE_3_A(mt_data_inf.src2_0,mt_data_inf.src2_1,
+	if (AVX_Enable)
+		JPSDR_Deinterlace_Blend_AVX_3_A(mt_data_inf.src2_0,mt_data_inf.src2_1,
 			mt_data_inf.dst2,(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
-	else JPSDR_Deinterlace_Blend_Non_MMX_8(mt_data_inf.src2_0,mt_data_inf.src2_1,mt_data_inf.dst2,
-		mt_data_inf.src_UV_w,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+	else
+	{
+		if (SSE2_Enable)
+			JPSDR_Deinterlace_Blend_SSE_3_A(mt_data_inf.src2_0,mt_data_inf.src2_1,
+				mt_data_inf.dst2,(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+		else JPSDR_Deinterlace_Blend_Non_MMX_8(mt_data_inf.src2_0,mt_data_inf.src2_1,mt_data_inf.dst2,
+			mt_data_inf.src_UV_w,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+	}
 
 	if (mt_data_inf.div_h)
 	{
@@ -4650,11 +4724,17 @@ void JPSDR_Deinterlace::Deinterlace_Blend_MT_5(uint8_t thread_num)
 		if (mt_data_inf.bottom) h--;
 	}
 
-	if (SSE2_Enable)
-		JPSDR_Deinterlace_Blend_SSE_3_A(mt_data_inf.src3_0,mt_data_inf.src3_1,
+	if (AVX_Enable)
+		JPSDR_Deinterlace_Blend_AVX_3_A(mt_data_inf.src3_0,mt_data_inf.src3_1,
 			mt_data_inf.dst3,(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
-	else JPSDR_Deinterlace_Blend_Non_MMX_8(mt_data_inf.src3_0,mt_data_inf.src3_1,mt_data_inf.dst3,
-		mt_data_inf.src_UV_w,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+	else
+	{
+		if (SSE2_Enable)
+			JPSDR_Deinterlace_Blend_SSE_3_A(mt_data_inf.src3_0,mt_data_inf.src3_1,
+				mt_data_inf.dst3,(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+		else JPSDR_Deinterlace_Blend_Non_MMX_8(mt_data_inf.src3_0,mt_data_inf.src3_1,mt_data_inf.dst3,
+			mt_data_inf.src_UV_w,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+	}
 
 	if (mt_data_inf.div_h)
 	{
@@ -4686,34 +4766,52 @@ void JPSDR_Deinterlace::Deinterlace_Tri_MT_1(uint8_t thread_num)
 
 	if (mt_data_inf.top || mt_data_inf.bottom) h--;
 
-	if (SSE2_Enable)
+	if (AVX_Enable)
 	{
 		if (mt_data_inf.top)
-			JPSDR_Deinterlace_Blend_Tri_SSE_3_A_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+			JPSDR_Deinterlace_Blend_Tri_AVX_3_A_a(mt_data_inf.src1_0,mt_data_inf.dst1,
 				(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 		else
 		{
 			if (mt_data_inf.bottom)
-				JPSDR_Deinterlace_Blend_Tri_SSE_3_A_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+				JPSDR_Deinterlace_Blend_Tri_AVX_3_A_c(mt_data_inf.src1_0,mt_data_inf.dst1,
 					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 			else
-				JPSDR_Deinterlace_Blend_Tri_SSE_3_A_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+				JPSDR_Deinterlace_Blend_Tri_AVX_3_A_b(mt_data_inf.src1_0,mt_data_inf.dst1,
 					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 		}
 	}
 	else
 	{
-		if (mt_data_inf.top)
-			Blend_Tri_RGB32a(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
-				mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		if (SSE2_Enable)
+		{
+			if (mt_data_inf.top)
+				JPSDR_Deinterlace_Blend_Tri_SSE_3_A_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			else
+			{
+				if (mt_data_inf.bottom)
+					JPSDR_Deinterlace_Blend_Tri_SSE_3_A_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				else
+					JPSDR_Deinterlace_Blend_Tri_SSE_3_A_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			}
+		}
 		else
 		{
-			if (mt_data_inf.bottom)
-				Blend_Tri_RGB32c(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
+			if (mt_data_inf.top)
+				Blend_Tri_RGB32a(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
 					mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 			else
-				Blend_Tri_RGB32b(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
-					mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			{
+				if (mt_data_inf.bottom)
+					Blend_Tri_RGB32c(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
+						mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				else
+					Blend_Tri_RGB32b(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
+						mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			}
 		}
 	}
 }
@@ -4728,34 +4826,52 @@ void JPSDR_Deinterlace::Deinterlace_Tri_MT_2(uint8_t thread_num)
 
 	if (mt_data_inf.top || mt_data_inf.bottom) h--;
 
-	if (SSE2_Enable)
+	if (AVX_Enable)
 	{
 		if (mt_data_inf.top)
-			JPSDR_Deinterlace_Blend_Tri_SSE_3_A_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+			JPSDR_Deinterlace_Blend_Tri_AVX_3_A_a(mt_data_inf.src1_0,mt_data_inf.dst1,
 				(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 		else
 		{
 			if (mt_data_inf.bottom)
-				JPSDR_Deinterlace_Blend_Tri_SSE_3_A_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+				JPSDR_Deinterlace_Blend_Tri_AVX_3_A_c(mt_data_inf.src1_0,mt_data_inf.dst1,
 					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 			else
-				JPSDR_Deinterlace_Blend_Tri_SSE_3_A_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+				JPSDR_Deinterlace_Blend_Tri_AVX_3_A_b(mt_data_inf.src1_0,mt_data_inf.dst1,
 					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 		}
 	}
 	else
 	{
-		if (mt_data_inf.top)
-			Blend_Tri_YUV32a(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
-				mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		if (SSE2_Enable)
+		{
+			if (mt_data_inf.top)
+				JPSDR_Deinterlace_Blend_Tri_SSE_3_A_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			else
+			{
+				if (mt_data_inf.bottom)
+					JPSDR_Deinterlace_Blend_Tri_SSE_3_A_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				else
+					JPSDR_Deinterlace_Blend_Tri_SSE_3_A_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			}
+		}
 		else
 		{
-			if (mt_data_inf.bottom)
-				Blend_Tri_YUV32c(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
+			if (mt_data_inf.top)
+				Blend_Tri_YUV32a(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
 					mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 			else
-				Blend_Tri_YUV32b(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
-					mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			{
+				if (mt_data_inf.bottom)
+					Blend_Tri_YUV32c(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
+						mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				else
+					Blend_Tri_YUV32b(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
+						mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			}
 		}
 	}
 }
@@ -4770,34 +4886,52 @@ void JPSDR_Deinterlace::Deinterlace_Tri_MT_3(uint8_t thread_num)
 
 	if (mt_data_inf.top || mt_data_inf.bottom) h--;
 
-	if (SSE2_Enable)
+	if (AVX_Enable)
 	{
 		if (mt_data_inf.top)
-			JPSDR_Deinterlace_Blend_Tri_SSE_3_A_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+			JPSDR_Deinterlace_Blend_Tri_AVX_3_A_a(mt_data_inf.src1_0,mt_data_inf.dst1,
 				(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 		else
 		{
 			if (mt_data_inf.bottom)
-				JPSDR_Deinterlace_Blend_Tri_SSE_3_A_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+				JPSDR_Deinterlace_Blend_Tri_AVX_3_A_c(mt_data_inf.src1_0,mt_data_inf.dst1,
 					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 			else
-				JPSDR_Deinterlace_Blend_Tri_SSE_3_A_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+				JPSDR_Deinterlace_Blend_Tri_AVX_3_A_b(mt_data_inf.src1_0,mt_data_inf.dst1,
 					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 		}
 	}
 	else
 	{
-		if (mt_data_inf.top)
-			Blend_Tri_Planar8a(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w,h,
-				mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		if (SSE2_Enable)
+		{
+			if (mt_data_inf.top)
+				JPSDR_Deinterlace_Blend_Tri_SSE_3_A_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			else
+			{
+				if (mt_data_inf.bottom)
+					JPSDR_Deinterlace_Blend_Tri_SSE_3_A_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				else
+					JPSDR_Deinterlace_Blend_Tri_SSE_3_A_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			}
+		}
 		else
 		{
-			if (mt_data_inf.bottom)
-				Blend_Tri_Planar8c(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w,h,
+			if (mt_data_inf.top)
+				Blend_Tri_Planar8a(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w,h,
 					mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 			else
-				Blend_Tri_Planar8b(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w,h,
-					mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			{
+				if (mt_data_inf.bottom)
+					Blend_Tri_Planar8c(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w,h,
+						mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				else
+					Blend_Tri_Planar8b(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w,h,
+						mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			}
 		}
 	}
 }
@@ -4813,34 +4947,52 @@ void JPSDR_Deinterlace::Deinterlace_Tri_MT_4(uint8_t thread_num)
 
 	if (mt_data_inf.top || mt_data_inf.bottom) h--;
 
-	if (SSE2_Enable)
+	if (AVX_Enable)
 	{
 		if (mt_data_inf.top)
-			JPSDR_Deinterlace_Blend_Tri_SSE_3_A_a(mt_data_inf.src2_0,mt_data_inf.dst2,
+			JPSDR_Deinterlace_Blend_Tri_AVX_3_A_a(mt_data_inf.src2_0,mt_data_inf.dst2,
 				(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
 		else
 		{
 			if (mt_data_inf.bottom)
-				JPSDR_Deinterlace_Blend_Tri_SSE_3_A_c(mt_data_inf.src2_0,mt_data_inf.dst2,
+				JPSDR_Deinterlace_Blend_Tri_AVX_3_A_c(mt_data_inf.src2_0,mt_data_inf.dst2,
 					(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
 			else
-				JPSDR_Deinterlace_Blend_Tri_SSE_3_A_b(mt_data_inf.src2_0,mt_data_inf.dst2,
+				JPSDR_Deinterlace_Blend_Tri_AVX_3_A_b(mt_data_inf.src2_0,mt_data_inf.dst2,
 					(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
 		}
 	}
 	else
 	{
-		if (mt_data_inf.top)
-			Blend_Tri_Planar8a(mt_data_inf.src2_0,mt_data_inf.dst2,mt_data_inf.src_UV_w,h,
-				mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+		if (SSE2_Enable)
+		{
+			if (mt_data_inf.top)
+				JPSDR_Deinterlace_Blend_Tri_SSE_3_A_a(mt_data_inf.src2_0,mt_data_inf.dst2,
+					(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+			else
+			{
+				if (mt_data_inf.bottom)
+					JPSDR_Deinterlace_Blend_Tri_SSE_3_A_c(mt_data_inf.src2_0,mt_data_inf.dst2,
+						(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+				else
+					JPSDR_Deinterlace_Blend_Tri_SSE_3_A_b(mt_data_inf.src2_0,mt_data_inf.dst2,
+						(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+			}
+		}
 		else
 		{
-			if (mt_data_inf.bottom)
-				Blend_Tri_Planar8c(mt_data_inf.src2_0,mt_data_inf.dst2,mt_data_inf.src_UV_w,h,
+			if (mt_data_inf.top)
+				Blend_Tri_Planar8a(mt_data_inf.src2_0,mt_data_inf.dst2,mt_data_inf.src_UV_w,h,
 					mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
 			else
-				Blend_Tri_Planar8b(mt_data_inf.src2_0,mt_data_inf.dst2,mt_data_inf.src_UV_w,h,
-					mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+			{
+				if (mt_data_inf.bottom)
+					Blend_Tri_Planar8c(mt_data_inf.src2_0,mt_data_inf.dst2,mt_data_inf.src_UV_w,h,
+						mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+				else
+					Blend_Tri_Planar8b(mt_data_inf.src2_0,mt_data_inf.dst2,mt_data_inf.src_UV_w,h,
+						mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+			}
 		}
 	}
 }
@@ -4855,34 +5007,52 @@ void JPSDR_Deinterlace::Deinterlace_Tri_MT_5(uint8_t thread_num)
 
 	if (mt_data_inf.top || mt_data_inf.bottom) h--;
 
-	if (SSE2_Enable)
+	if (AVX_Enable)
 	{
 		if (mt_data_inf.top)
-			JPSDR_Deinterlace_Blend_Tri_SSE_3_A_a(mt_data_inf.src3_0,mt_data_inf.dst3,
+			JPSDR_Deinterlace_Blend_Tri_AVX_3_A_a(mt_data_inf.src3_0,mt_data_inf.dst3,
 				(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
 		else
 		{
 			if (mt_data_inf.bottom)
-				JPSDR_Deinterlace_Blend_Tri_SSE_3_A_c(mt_data_inf.src3_0,mt_data_inf.dst3,
+				JPSDR_Deinterlace_Blend_Tri_AVX_3_A_c(mt_data_inf.src3_0,mt_data_inf.dst3,
 					(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
 			else
-				JPSDR_Deinterlace_Blend_Tri_SSE_3_A_b(mt_data_inf.src3_0,mt_data_inf.dst3,
+				JPSDR_Deinterlace_Blend_Tri_AVX_3_A_b(mt_data_inf.src3_0,mt_data_inf.dst3,
 					(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
 		}
 	}
 	else
 	{
-		if (mt_data_inf.top)
-			Blend_Tri_Planar8a(mt_data_inf.src3_0,mt_data_inf.dst3,mt_data_inf.src_UV_w,h,
-				mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+		if (SSE2_Enable)
+		{
+			if (mt_data_inf.top)
+				JPSDR_Deinterlace_Blend_Tri_SSE_3_A_a(mt_data_inf.src3_0,mt_data_inf.dst3,
+					(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+			else
+			{
+				if (mt_data_inf.bottom)
+					JPSDR_Deinterlace_Blend_Tri_SSE_3_A_c(mt_data_inf.src3_0,mt_data_inf.dst3,
+						(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+				else
+					JPSDR_Deinterlace_Blend_Tri_SSE_3_A_b(mt_data_inf.src3_0,mt_data_inf.dst3,
+						(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+			}
+		}
 		else
 		{
-			if (mt_data_inf.bottom)
-				Blend_Tri_Planar8c(mt_data_inf.src3_0,mt_data_inf.dst3,mt_data_inf.src_UV_w,h,
+			if (mt_data_inf.top)
+				Blend_Tri_Planar8a(mt_data_inf.src3_0,mt_data_inf.dst3,mt_data_inf.src_UV_w,h,
 					mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
 			else
-				Blend_Tri_Planar8b(mt_data_inf.src3_0,mt_data_inf.dst3,mt_data_inf.src_UV_w,h,
-					mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+			{
+				if (mt_data_inf.bottom)
+					Blend_Tri_Planar8c(mt_data_inf.src3_0,mt_data_inf.dst3,mt_data_inf.src_UV_w,h,
+						mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+				else
+					Blend_Tri_Planar8b(mt_data_inf.src3_0,mt_data_inf.dst3,mt_data_inf.src_UV_w,h,
+						mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+			}
 		}
 	}
 }
@@ -5647,6 +5817,7 @@ void JPSDR_Deinterlace::Run()
 		write_index_Yadif=(write_index_Yadif+1)%3;
 		return;
 	}
+	// Fin de Yadiff
 
 	transfert_buffer=false;
 	if (mData.file_mode)
@@ -6100,6 +6271,41 @@ void JPSDR_Deinterlace::Run()
 			case 1 :
 			case 3 :
 			case 4 :
+				if (AVX_Enable)
+				{
+					switch(idata.video_mode)
+					{
+						case 0 :
+						case 1 :
+							JPSDR_Deinterlace_Blend_AVX_3_A(src1_0,src2_0,dst0_0,(idata.src_w0+3)>>2,
+								h0,idata.src_pitch0,idata.dst_pitch0);
+							break;
+						case 2 :
+						case 3 :
+								JPSDR_Deinterlace_Blend_AVX_3_A(src1_0,src2_0,dst0_0,(idata.src_w0+7)>>3,
+									h0,idata.src_pitch0,idata.dst_pitch0);
+							break;
+						case 4 :
+						case 5 :
+						case 6 :
+						case 7 :
+						case 8 :
+							JPSDR_Deinterlace_Blend_AVX_3_A(src1_0,src2_0,dst0_0,(idata.src_w0+15)>>4,
+								h0,idata.src_pitch0,idata.dst_pitch0);								
+							JPSDR_Deinterlace_Blend_AVX_3_A(src1_1,src2_1,dst0_1,(idata.src_w1+15)>>4,
+								h1,idata.src_pitch1,idata.dst_pitch1);
+							JPSDR_Deinterlace_Blend_AVX_3_A(src1_2,src2_2,dst0_2,(idata.src_w2+15)>>4,
+								h2,idata.src_pitch2,idata.dst_pitch2);
+							break;
+						case 9 :
+							JPSDR_Deinterlace_Blend_AVX_3_A(src1_0,src2_0,dst0_0,(idata.src_w0+15)>>4,
+								h0,idata.src_pitch0,idata.dst_pitch0);
+							break;
+					}
+				}
+				else
+				{
+
 				if (SSE2_Enable)
 				{
 					switch(idata.video_mode)
@@ -6164,6 +6370,8 @@ void JPSDR_Deinterlace::Run()
 							break;
 					}
 				}
+
+				}
 				switch (current_mode)
 				{
 					case 1 :
@@ -6217,6 +6425,41 @@ void JPSDR_Deinterlace::Run()
 				}
 				break;
 			case 2 :
+				if (AVX_Enable && swap_buffer)
+				{
+					switch(idata.video_mode)
+					{
+						case 0 :
+						case 1 :
+							JPSDR_Deinterlace_Blend_Tri_AVX_3_A(src1_0,dst0_0,(idata.src_w0+3)>>2,
+								h0,idata.src_pitch0,idata.dst_pitch0);
+							break;
+						case 2 :
+						case 3 :
+							JPSDR_Deinterlace_Blend_Tri_AVX_3_A(src1_0,dst0_0,(idata.src_w0+7)>>3,
+								h0,idata.src_pitch0,idata.dst_pitch0);
+							break;
+						case 4 :
+						case 5 :
+						case 6 :
+						case 7 :
+						case 8 :
+							JPSDR_Deinterlace_Blend_Tri_AVX_3_A(src1_0,dst0_0,(idata.src_w0+15)>>4,
+								h0,idata.src_pitch0,idata.dst_pitch0);
+							JPSDR_Deinterlace_Blend_Tri_AVX_3_A(src1_1,dst0_1,(idata.src_w1+15)>>4,
+								h1,idata.src_pitch1,idata.dst_pitch1);
+							JPSDR_Deinterlace_Blend_Tri_AVX_3_A(src1_2,dst0_2,(idata.src_w2+15)>>4,
+								h2,idata.src_pitch2,idata.dst_pitch2);
+							break;
+						case 9 :
+							JPSDR_Deinterlace_Blend_Tri_AVX_3_A(src1_0,dst0_0,(idata.src_w0+15)>>4,
+								h0,idata.src_pitch0,idata.dst_pitch0);
+							break;
+					}
+				}
+				else
+				{
+
 				if (SSE2_Enable && swap_buffer)
 				{
 					switch(idata.video_mode)
@@ -6310,6 +6553,8 @@ void JPSDR_Deinterlace::Run()
 							}
 							break;
 					}
+				}
+
 				}
 				break;
 		}
@@ -6409,7 +6654,7 @@ void JPSDR_Deinterlace::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScript
 
 		
 extern VDXFilterDefinition filterDef_JPSDR_Deinterlace=
-VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v5.2.6","Deinterlace blending frames. [ASM][MMX][SSE][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v5.3.0","Deinterlace blending frames. [SSE2][AVX] Optimised.");
 
 
 

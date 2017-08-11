@@ -21,33 +21,43 @@ extern "C" void JPSDR_Median_RGB32_Move_src(const void *src, void *planar_R, voi
 	int32_t w,int32_t h,ptrdiff_t src_offset,ptrdiff_t dst_offset);
 extern "C" void JPSDR_Median_RGB32_Move_src_SSE_2(const void *src, void *planar_R, void *planar_G,void *planar_B,
 	int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Median_RGB32_Move_src_AVX_2(const void *src, void *planar_R, void *planar_G,void *planar_B,
+	int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
 
 extern "C" void JPSDR_Median_YUYV_Move_src(const void *src, void *planar_Y, void *planar_U,void *planar_V,
 	int32_t w,int32_t h,ptrdiff_t src_offset,ptrdiff_t dst_offset_Y,ptrdiff_t dst_offset_UV);
 extern "C" void JPSDR_Median_YUYV_Move_src_SSE_2(const void *src, void *planar_Y, void *planar_U,void *planar_V,
+	int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch_Y,ptrdiff_t dst_pitch_UV);
+extern "C" void JPSDR_Median_YUYV_Move_src_AVX_2(const void *src, void *planar_Y, void *planar_U,void *planar_V,
 	int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch_Y,ptrdiff_t dst_pitch_UV);
 
 extern "C" void JPSDR_Median_UYVY_Move_src(const void *src, void *planar_Y, void *planar_U,void *planar_V,
 	int32_t w,int32_t h,ptrdiff_t src_offset,ptrdiff_t dst_offset_Y,ptrdiff_t dst_offset_UV);
 extern "C" void JPSDR_Median_UYVY_Move_src_SSE_2(const void *src, void *planar_Y, void *planar_U,void *planar_V,
 	int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch_Y,ptrdiff_t dst_pitch_UV);
+extern "C" void JPSDR_Median_UYVY_Move_src_AVX_2(const void *src, void *planar_Y, void *planar_U,void *planar_V,
+	int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch_Y,ptrdiff_t dst_pitch_UV);
 
 extern "C" void JPSDR_Median_RGB32_Move_dst(const void *planar_R,const void *planar_G,const void *planar_B,void *dst,
 	int32_t w,int32_t h,ptrdiff_t src_offset,ptrdiff_t dst_offset);
 extern "C" void JPSDR_Median_RGB32_Move_dst_SSE_2(const void *planar_R,const void *planar_G,const void *planar_B,void *dst,
 	int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-
+extern "C" void JPSDR_Median_RGB32_Move_dst_AVX_2(const void *planar_R,const void *planar_G,const void *planar_B,void *dst,
+	int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
 
 extern "C" void JPSDR_Median_YUYV_Move_dst(const void *planar_Y,const void *planar_U,const void *planar_V,void *dst,
 	int32_t w,int32_t h,ptrdiff_t src_offset_Y,ptrdiff_t src_offset_UV,ptrdiff_t dst_offset);
 extern "C" void JPSDR_Median_YUYV_Move_dst_SSE_2(const void *planar_Y,const void *planar_U,const void *planar_V,void *dst,
+	int32_t w,int32_t h,ptrdiff_t src_pitch_Y,ptrdiff_t src_pitch_UV,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Median_YUYV_Move_dst_AVX_2(const void *planar_Y,const void *planar_U,const void *planar_V,void *dst,
 	int32_t w,int32_t h,ptrdiff_t src_pitch_Y,ptrdiff_t src_pitch_UV,ptrdiff_t dst_pitch);
 
 extern "C" void JPSDR_Median_UYVY_Move_dst(const void *planar_Y,const void *planar_U,const void *planar_V,void *dst,
 	int32_t w,int32_t h,ptrdiff_t src_offset_Y,ptrdiff_t src_offset_UV,ptrdiff_t dst_offset);
 extern "C" void JPSDR_Median_UYVY_Move_dst_SSE_2(const void *planar_Y,const void *planar_U,const void *planar_V,void *dst,
 	int32_t w,int32_t h,ptrdiff_t src_pitch_Y,ptrdiff_t src_pitch_UV,ptrdiff_t dst_pitch);
-
+extern "C" void JPSDR_Median_UYVY_Move_dst_AVX_2(const void *planar_Y,const void *planar_U,const void *planar_V,void *dst,
+	int32_t w,int32_t h,ptrdiff_t src_pitch_Y,ptrdiff_t src_pitch_UV,ptrdiff_t dst_pitch);
 
 
 typedef struct _MT_Data_Info
@@ -323,6 +333,7 @@ public:
 	JPSDR_Median(){}
 	JPSDR_Median(const JPSDR_Median& a)
 	{
+		AVX_Enable=a.AVX_Enable;
 		SSE2_Enable = a.SSE2_Enable;
 		mData=a.mData;
 		InternalInit();
@@ -346,7 +357,7 @@ protected:
 	ptrdiff_t buffer_pitch[3],buffer_modulo[3];
 	uint32_t buffer_size[3];
 	uint8_t *Tdata[MAX_MT_THREADS];
-	bool SSE2_Enable;
+	bool SSE2_Enable,AVX_Enable;
 	int32_t max_median_size;
 
 	Public_MT_Data_Thread MT_Thread[MAX_MT_THREADS];
@@ -384,6 +395,7 @@ VDXVF_END_SCRIPT_METHODS()
 
 bool JPSDR_Median::Init()
 {
+	AVX_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_AVX)!=0);
 	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
 	InternalInit();
 
@@ -1625,14 +1637,22 @@ void JPSDR_Median::Run()
 	{
 		case 0 :
 		case 1 :
-			if (SSE2_Enable)
+			if (AVX_Enable)
 			{
-				JPSDR_Median_RGB32_Move_src_SSE_2(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
+				JPSDR_Median_RGB32_Move_src_AVX_2(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
 					(idata.src_w0+3)>>2,idata.src_h0,idata.src_pitch0,buffer_pitch[0]);
 			}
 			else
-				JPSDR_Median_RGB32_Move_src(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
-					idata.src_w0,idata.src_h0,idata.src_modulo0,buffer_modulo[0]);
+			{
+				if (SSE2_Enable)
+				{
+					JPSDR_Median_RGB32_Move_src_SSE_2(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
+						(idata.src_w0+3)>>2,idata.src_h0,idata.src_pitch0,buffer_pitch[0]);
+				}
+				else
+					JPSDR_Median_RGB32_Move_src(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
+						idata.src_w0,idata.src_h0,idata.src_modulo0,buffer_modulo[0]);
+			}
 			ptrSrc[0]=buffer_in[0];
 			ptrSrc[1]=buffer_in[1];
 			ptrSrc[2]=buffer_in[2];
@@ -1648,14 +1668,22 @@ void JPSDR_Median::Run()
 			use_buffer=true;
 			break;
 		case 2 :
-			if (SSE2_Enable)
+			if (AVX_Enable)
 			{
-				JPSDR_Median_YUYV_Move_src_SSE_2(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
+				JPSDR_Median_YUYV_Move_src_AVX_2(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
 					(idata.src_w0+7)>>3,idata.src_h0,idata.src_pitch0,buffer_pitch[0],buffer_pitch[1]);
 			}
 			else
-				JPSDR_Median_YUYV_Move_src(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
-					(idata.src_w0+1)>>1,idata.src_h0,idata.src_modulo0,buffer_modulo[0],buffer_modulo[1]);
+			{
+				if (SSE2_Enable)
+				{
+					JPSDR_Median_YUYV_Move_src_SSE_2(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
+						(idata.src_w0+7)>>3,idata.src_h0,idata.src_pitch0,buffer_pitch[0],buffer_pitch[1]);
+				}
+				else
+					JPSDR_Median_YUYV_Move_src(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
+						(idata.src_w0+1)>>1,idata.src_h0,idata.src_modulo0,buffer_modulo[0],buffer_modulo[1]);
+			}
 			ptrSrc[0]=buffer_in[0];
 			ptrSrc[1]=buffer_in[1];
 			ptrSrc[2]=buffer_in[2];
@@ -1671,14 +1699,22 @@ void JPSDR_Median::Run()
 			use_buffer=true;
 			break;
 		case 3 :
-			if (SSE2_Enable)
+			if (AVX_Enable)
 			{
-				JPSDR_Median_UYVY_Move_src_SSE_2(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
+				JPSDR_Median_UYVY_Move_src_AVX_2(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
 					(idata.src_w0+7)>>3,idata.src_h0,idata.src_pitch0,buffer_pitch[0],buffer_pitch[1]);
 			}
 			else
-				JPSDR_Median_UYVY_Move_src(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
-					(idata.src_w0+1)>>1,idata.src_h0,idata.src_modulo0,buffer_modulo[0],buffer_modulo[1]);
+			{
+				if (SSE2_Enable)
+				{
+					JPSDR_Median_UYVY_Move_src_SSE_2(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
+						(idata.src_w0+7)>>3,idata.src_h0,idata.src_pitch0,buffer_pitch[0],buffer_pitch[1]);
+				}
+				else
+					JPSDR_Median_UYVY_Move_src(idata.src_plane0,buffer_in[0],buffer_in[1],buffer_in[2],
+						(idata.src_w0+1)>>1,idata.src_h0,idata.src_modulo0,buffer_modulo[0],buffer_modulo[1]);
+			}
 			ptrSrc[0]=buffer_in[0];
 			ptrSrc[1]=buffer_in[1];
 			ptrSrc[2]=buffer_in[2];
@@ -2017,34 +2053,58 @@ void JPSDR_Median::Run()
 	{
 		case 0 :
 		case 1 :
-			if (SSE2_Enable)
+			if (AVX_Enable)
 			{
-				JPSDR_Median_RGB32_Move_dst_SSE_2(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
+				JPSDR_Median_RGB32_Move_dst_AVX_2(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
 					(idata.src_w0+3)>>2,idata.src_h0,buffer_pitch[0],idata.dst_pitch0);
 			}
 			else
-				JPSDR_Median_RGB32_Move_dst(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
-					idata.src_w0,idata.src_h0,buffer_modulo[0],idata.dst_modulo0);
+			{
+				if (SSE2_Enable)
+				{
+					JPSDR_Median_RGB32_Move_dst_SSE_2(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
+						(idata.src_w0+3)>>2,idata.src_h0,buffer_pitch[0],idata.dst_pitch0);
+				}
+				else
+					JPSDR_Median_RGB32_Move_dst(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
+						idata.src_w0,idata.src_h0,buffer_modulo[0],idata.dst_modulo0);
+			}
 			break;
 		case 2 :
-			if (SSE2_Enable)
+			if (AVX_Enable)
 			{
-				JPSDR_Median_YUYV_Move_dst_SSE_2(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
+				JPSDR_Median_YUYV_Move_dst_AVX_2(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
 					(idata.src_w0+7)>>3,idata.src_h0,buffer_pitch[0],buffer_pitch[1],idata.dst_pitch0);
 			}
 			else
-				JPSDR_Median_YUYV_Move_dst(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
-					(idata.src_w0+1)>>1,idata.src_h0,buffer_modulo[0],buffer_modulo[1],idata.dst_modulo0);
+			{
+				if (SSE2_Enable)
+				{
+					JPSDR_Median_YUYV_Move_dst_SSE_2(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
+						(idata.src_w0+7)>>3,idata.src_h0,buffer_pitch[0],buffer_pitch[1],idata.dst_pitch0);
+				}
+				else
+					JPSDR_Median_YUYV_Move_dst(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
+						(idata.src_w0+1)>>1,idata.src_h0,buffer_modulo[0],buffer_modulo[1],idata.dst_modulo0);
+			}
 			break;
 		case 3 :
-			if (SSE2_Enable)
+			if (AVX_Enable)
 			{
-				JPSDR_Median_UYVY_Move_dst_SSE_2(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
+				JPSDR_Median_UYVY_Move_dst_AVX_2(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
 					(idata.src_w0+7)>>3,idata.src_h0,buffer_pitch[0],buffer_pitch[1],idata.dst_pitch0);
 			}
 			else
-				JPSDR_Median_UYVY_Move_dst(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
-					(idata.src_w0+1)>>1,idata.src_h0,buffer_modulo[0],buffer_modulo[1],idata.dst_modulo0);
+			{
+				if (SSE2_Enable)
+				{
+					JPSDR_Median_UYVY_Move_dst_SSE_2(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
+						(idata.src_w0+7)>>3,idata.src_h0,buffer_pitch[0],buffer_pitch[1],idata.dst_pitch0);
+				}
+				else
+					JPSDR_Median_UYVY_Move_dst(buffer_out[0],buffer_out[1],buffer_out[2],idata.dst_plane0,
+						(idata.src_w0+1)>>1,idata.src_h0,buffer_modulo[0],buffer_modulo[1],idata.dst_modulo0);
+			}
 			break;
 	}
 
@@ -3876,4 +3936,4 @@ void JPSDR_Median::GetScriptString(char *buf, int maxlen)
 }
 
 extern VDXFilterDefinition filterDef_JPSDR_Median=
-VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v3.2.6","Median filter with threshold.");
+VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v3.3.0","Median filter with threshold.");

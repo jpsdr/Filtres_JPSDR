@@ -212,6 +212,203 @@ Suite1_2:
 JPSDR_ColorSpaceConvert_YV24_SSE endp
 
 
+JPSDR_ColorSpaceConvert_YV24_AVX proc src_y:dword,src_u:dword,src_v:dword,dst_y:dword,dst_u:dword,dst_v:dword,w:dword,h:dword,offset_Y:word,
+	offset_U:word,offset_V:word,lookup:dword,src_modulo_y:dword,src_modulo_u:dword,src_modulo_v:dword,dst_modulo_y:dword,dst_modulo_u:dword,
+	dst_modulo_v:dword,Min_Y:word,Max_Y:word,Min_U:word,Max_U:word,Min_V:word,Max_V:word
+
+	public JPSDR_ColorSpaceConvert_YV24_AVX
+
+	local i,w0:dword
+
+	push esi
+	push edi
+	push ebx
+
+	vpxor xmm4,xmm4,xmm4					
+	vpxor xmm0,xmm0,xmm0
+	
+	movzx eax,offset_Y
+	vpinsrw xmm1,xmm1,eax,0
+	vpinsrw xmm1,xmm1,eax,1
+	movzx eax,offset_U
+	vpinsrw xmm1,xmm1,eax,2
+	vpinsrw xmm1,xmm1,eax,3
+	movzx eax,offset_V
+	vpinsrw xmm1,xmm1,eax,4
+	vpinsrw xmm1,xmm1,eax,5
+	movzx eax,Min_Y
+	vpinsrw xmm2,xmm2,eax,0
+	vpinsrw xmm2,xmm2,eax,1
+	movzx eax,Max_Y
+	vpinsrw xmm3,xmm3,eax,0
+	vpinsrw xmm3,xmm3,eax,1
+	movzx eax,Min_U
+	vpinsrw xmm2,xmm2,eax,2
+	vpinsrw xmm2,xmm2,eax,3
+	movzx eax,Max_U
+	vpinsrw xmm3,xmm3,eax,2
+	vpinsrw xmm3,xmm3,eax,3
+	movzx eax,Min_V
+	vpinsrw xmm2,xmm2,eax,4
+	vpinsrw xmm2,xmm2,eax,5
+	movzx eax,Max_V
+	vpinsrw xmm3,xmm3,eax,4
+	vpinsrw xmm3,xmm3,eax,5
+	
+	mov eax,w
+	shr eax,1
+	mov w0,eax
+	
+	mov esi,src_y
+
+Boucle0_2_AVX:
+	mov eax,w0
+	mov i,eax
+Boucle1_2_AVX:
+	movzx ebx,byte ptr[esi]
+	movzx eax,byte ptr[esi+1]
+	add src_y,2
+	mov esi,src_u
+	push eax
+	movzx ecx,byte ptr[esi]
+	movzx eax,byte ptr[esi+1]
+	add src_u,2
+	mov esi,src_v
+	push eax
+	movzx edx,byte ptr[esi] ; edx=V ecx=U ebx=Y
+	movzx eax,byte ptr[esi+1]
+	add src_v,2
+	mov esi,lookup
+	push eax
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,0
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,2
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,4
+	
+	pop edx
+	pop ecx
+	pop ebx				; edx=V ecx=U ebx=Y
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,1
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,3
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,5
+	
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm4	
+	
+	mov edi,dst_y
+	vpextrw eax,xmm0,0
+	mov word ptr[edi],ax
+	mov edi,dst_u
+	add dst_y,2
+	vpextrw eax,xmm0,1
+	mov word ptr[edi],ax
+	mov edi,dst_v
+	add dst_u,2
+	vpextrw eax,xmm0,2
+	mov word ptr[edi],ax
+	add dst_v,2
+	
+	mov esi,src_y
+	
+	dec i
+	jnz Boucle1_2_AVX		
+	
+	mov eax,w
+	and eax,1
+	jz Suite1_2_AVX
+	
+	movzx ebx,byte ptr[esi]
+	mov esi,src_u
+	inc src_y
+	movzx ecx,byte ptr[esi]
+	mov esi,src_v
+	inc src_u
+	movzx edx,byte ptr[esi] ; edx=V ecx=U ebx=Y
+	mov esi,lookup
+	inc src_v
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,0
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,1
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,2
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm4
+	
+	mov edi,dst_y
+	vpextrw eax,xmm0,0
+	mov byte ptr[edi],al
+	mov edi,dst_u
+	inc dst_y
+	mov byte ptr[edi],ah
+	mov edi,dst_v
+	inc dst_u
+	vpextrw eax,xmm0,1
+	mov byte ptr[edi],al
+	inc dst_v
+	
+	mov esi,src_y		
+	
+Suite1_2_AVX:	
+	add esi,src_modulo_y
+	mov eax,src_u
+	add eax,src_modulo_u
+	mov src_u,eax
+	mov eax,src_v
+	add eax,src_modulo_v
+	mov src_v,eax	
+	mov eax,dst_y
+	add eax,dst_modulo_y
+	mov dst_y,eax
+	mov eax,dst_u
+	add eax,dst_modulo_u
+	mov dst_u,eax
+	mov eax,dst_v
+	add eax,dst_modulo_v
+	mov dst_v,eax
+	mov src_y,esi
+	dec h
+	jnz Boucle0_2_AVX
+
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_ColorSpaceConvert_YV24_AVX endp
+
 
 JPSDR_ColorSpaceConvert_YUY2_SSE proc src:dword,dst:dword,w:dword,h:dword,offset_Y:word,offset_U:word,offset_V:word,lookup:dword,src_modulo:dword,
 	dst_modulo:dword,Min_Y:word,Max_Y:word,Min_U:word,Max_U:word,Min_V:word,Max_V:word
@@ -501,6 +698,295 @@ Suite2_4:
 JPSDR_ColorSpaceConvert_YUY2_SSE endp
 
 
+JPSDR_ColorSpaceConvert_YUY2_AVX proc src:dword,dst:dword,w:dword,h:dword,offset_Y:word,offset_U:word,offset_V:word,lookup:dword,src_modulo:dword,
+	dst_modulo:dword,Min_Y:word,Max_Y:word,Min_U:word,Max_U:word,Min_V:word,Max_V:word
+
+	public JPSDR_ColorSpaceConvert_YUY2_AVX
+
+	local i,w0:dword
+
+	push esi
+	push edi
+	push ebx
+
+	vpxor xmm4,xmm4,xmm4
+	vpxor xmm0,xmm0,xmm0
+	
+	movzx eax,offset_Y
+	vpinsrw xmm1,xmm1,eax,0
+	vpinsrw xmm1,xmm1,eax,2
+	vpinsrw xmm1,xmm1,eax,4
+	vpinsrw xmm1,xmm1,eax,6
+	movzx eax,offset_U
+	vpinsrw xmm1,xmm1,eax,1
+	vpinsrw xmm1,xmm1,eax,5
+	movzx eax,offset_V
+	vpinsrw xmm1,xmm1,eax,3
+	vpinsrw xmm1,xmm1,eax,7
+	movzx eax,Min_Y
+	vpinsrw xmm2,xmm2,eax,0
+	vpinsrw xmm2,xmm2,eax,2
+	vpinsrw xmm2,xmm2,eax,4
+	vpinsrw xmm2,xmm2,eax,6
+	movzx eax,Max_Y
+	vpinsrw xmm3,xmm3,eax,0
+	vpinsrw xmm3,xmm3,eax,2
+	vpinsrw xmm3,xmm3,eax,4
+	vpinsrw xmm3,xmm3,eax,6
+	movzx eax,Min_U
+	vpinsrw xmm2,xmm2,eax,1
+	vpinsrw xmm2,xmm2,eax,5
+	movzx eax,Max_U
+	vpinsrw xmm3,xmm3,eax,1
+	vpinsrw xmm3,xmm3,eax,5
+	movzx eax,Min_V
+	vpinsrw xmm2,xmm2,eax,3
+	vpinsrw xmm2,xmm2,eax,7
+	movzx eax,Max_V
+	vpinsrw xmm3,xmm3,eax,3
+	vpinsrw xmm3,xmm3,eax,7
+	
+	mov eax,w
+	dec eax
+	shr eax,1
+	mov w0,eax	
+	
+	mov esi,src
+	mov edi,dst
+
+Boucle0_4_AVX:
+	movzx ecx,byte ptr[esi+1]
+	movzx edx,byte ptr[esi+3]
+
+	mov eax,w0
+	or eax,eax
+	jz Suite0_4_AVX
+	
+	mov i,eax
+Boucle1_4_AVX:
+	movzx ebx,byte ptr[esi]
+	movzx eax,byte ptr[esi+5]
+	push eax
+	movzx eax,byte ptr[esi+7]
+	push eax
+	movzx eax,byte ptr[esi+2]	
+	mov esi,lookup
+	push eax							; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,0
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,1
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,3
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,2
+
+	mov esi,src
+	pop edx
+	pop ecx
+	
+	movzx ebx,byte ptr[esi+4]
+	movzx eax,byte ptr[esi+9]
+	push eax
+	movzx eax,byte ptr[esi+11]
+	push eax
+	movzx eax,byte ptr[esi+6]	
+	push eax					; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	mov esi,lookup
+	add src,8
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,4
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,5
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,7
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,6
+
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm4
+
+	vmovq qword ptr[edi],xmm0
+	
+	mov esi,src
+	add edi,8
+	
+	pop edx
+	pop ecx
+	
+	dec i
+	jnz Boucle1_4_AVX
+	
+Suite0_4_AVX:	
+	mov eax,w
+	dec eax
+	and eax,1
+	jz Suite1_4_AVX
+	
+	movzx ebx,byte ptr[esi]
+	movzx eax,byte ptr[esi+5]
+	push eax
+	movzx eax,byte ptr[esi+7]
+	push eax
+	movzx eax,byte ptr[esi+2]	
+	mov esi,lookup
+	push eax							; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+			
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,0
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,1
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,3
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,2
+	
+	pop edx
+	pop ecx
+	
+	mov esi,src
+	movzx ebx,byte ptr[esi+4]
+	movzx eax,byte ptr[esi+6]
+	push eax					; edx=V ecx=U ebx=Y1 [pop eax]=Y2
+	
+	mov esi,lookup
+	add src,8
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,4
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,5
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	pop ebx
+	vpinsrw xmm0,xmm0,eax,7
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,6
+	
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm4
+	
+	vmovq qword ptr[edi],xmm0
+	
+	mov esi,src
+	add edi,8
+
+	jmp Suite2_4_AVX
+	
+Suite1_4_AVX:	
+	movzx ebx,byte ptr[esi]
+	movzx eax,byte ptr[esi+2]	
+	push eax							; edx=V ecx=U ebx=Y1 [pop eax]=Y2
+	
+	mov esi,lookup
+	add src,4
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,0
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,1
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	pop ebx
+	vpinsrw xmm0,xmm0,eax,3
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,2
+	
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm4
+	
+	vmovd dword ptr[edi],xmm0
+	
+	mov esi,src
+	add edi,4	
+	
+Suite2_4_AVX:	
+	add esi,src_modulo
+	add edi,dst_modulo
+	mov src,esi
+	dec h
+	jnz Boucle0_4_AVX
+
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_ColorSpaceConvert_YUY2_AVX endp
+
+
 JPSDR_ColorSpaceConvert_UYVY_SSE proc src:dword,dst:dword,w:dword,h:dword,offset_Y:word,offset_U:word,offset_V:word,lookup:dword,src_modulo:dword,
 	dst_modulo:dword,Min_Y:word,Max_Y:word,Min_U:word,Max_U:word,Min_V:word,Max_V:word
 
@@ -788,6 +1274,294 @@ Suite2_6:
 
 JPSDR_ColorSpaceConvert_UYVY_SSE endp
 
+
+JPSDR_ColorSpaceConvert_UYVY_AVX proc src:dword,dst:dword,w:dword,h:dword,offset_Y:word,offset_U:word,offset_V:word,lookup:dword,src_modulo:dword,
+	dst_modulo:dword,Min_Y:word,Max_Y:word,Min_U:word,Max_U:word,Min_V:word,Max_V:word
+
+	public JPSDR_ColorSpaceConvert_UYVY_AVX
+
+	local i,w0:dword
+
+	push esi
+	push edi
+	push ebx
+
+	vpxor xmm4,xmm4,xmm4
+	vpxor xmm0,xmm0,xmm0
+	
+	movzx eax,offset_Y
+	vpinsrw xmm1,xmm1,eax,1
+	vpinsrw xmm1,xmm1,eax,3
+	vpinsrw xmm1,xmm1,eax,5
+	vpinsrw xmm1,xmm1,eax,7
+	movzx eax,offset_U
+	vpinsrw xmm1,xmm1,eax,0
+	vpinsrw xmm1,xmm1,eax,4
+	movzx eax,offset_V
+	vpinsrw xmm1,xmm1,eax,2
+	vpinsrw xmm1,xmm1,eax,6
+	movzx eax,Min_Y
+	vpinsrw xmm2,xmm2,eax,1
+	vpinsrw xmm2,xmm2,eax,3
+	vpinsrw xmm2,xmm2,eax,5
+	vpinsrw xmm2,xmm2,eax,7
+	movzx eax,Max_Y
+	vpinsrw xmm3,xmm3,eax,1
+	vpinsrw xmm3,xmm3,eax,3
+	vpinsrw xmm3,xmm3,eax,5
+	vpinsrw xmm3,xmm3,eax,7
+	movzx eax,Min_U
+	vpinsrw xmm2,xmm2,eax,0
+	vpinsrw xmm2,xmm2,eax,4
+	movzx eax,Max_U
+	vpinsrw xmm3,xmm3,eax,0
+	vpinsrw xmm3,xmm3,eax,4
+	movzx eax,Min_V
+	vpinsrw xmm2,xmm2,eax,2
+	vpinsrw xmm2,xmm2,eax,6
+	movzx eax,Max_V
+	vpinsrw xmm3,xmm3,eax,2
+	vpinsrw xmm3,xmm3,eax,6
+	
+	mov eax,w
+	dec eax
+	shr eax,1
+	mov w0,eax	
+	
+	mov esi,src
+	mov edi,dst
+
+Boucle0_6_AVX:
+	movzx ecx,byte ptr[esi]
+	movzx edx,byte ptr[esi+2]
+
+	mov eax,w0
+	or eax,eax
+	jz Suite0_6_AVX
+	
+	mov i,eax
+Boucle1_6_AVX:
+	movzx ebx,byte ptr[esi+1]
+	movzx eax,byte ptr[esi+4]
+	push eax
+	movzx eax,byte ptr[esi+6]
+	push eax
+	movzx eax,byte ptr[esi+3]	
+	mov esi,lookup
+	push eax							; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,1
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,0
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,2
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,3
+
+	mov esi,src
+	pop edx
+	pop ecx
+	
+	movzx ebx,byte ptr[esi+5]
+	movzx eax,byte ptr[esi+8]
+	push eax
+	movzx eax,byte ptr[esi+10]
+	push eax
+	movzx eax,byte ptr[esi+7]	
+	push eax					; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	mov esi,lookup
+	add src,8
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,5
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,4
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,6
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,7
+
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm4
+
+	vmovq qword ptr[edi],xmm0
+	
+	mov esi,src
+	add edi,8
+	
+	pop edx
+	pop ecx
+	
+	dec i
+	jnz Boucle1_6_AVX
+	
+Suite0_6_AVX:	
+	mov eax,w
+	dec eax
+	and eax,1
+	jz Suite1_6_AVX
+	
+	movzx ebx,byte ptr[esi+1]
+	movzx eax,byte ptr[esi+4]
+	push eax
+	movzx eax,byte ptr[esi+6]
+	push eax
+	movzx eax,byte ptr[esi+3]	
+	mov esi,lookup
+	push eax							; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+			
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,1
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,0
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,2
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,3
+	
+	pop edx
+	pop ecx
+	
+	mov esi,src
+	movzx ebx,byte ptr[esi+5]
+	movzx eax,byte ptr[esi+7]
+	push eax					; edx=V ecx=U ebx=Y1 [pop eax]=Y2
+	
+	mov esi,lookup
+	add src,8
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,5
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,4
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	pop ebx
+	vpinsrw xmm0,xmm0,eax,6
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,7
+	
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm4
+	
+	vmovq qword ptr[edi],xmm0
+	
+	mov esi,src
+	add edi,8
+
+	jmp Suite2_6_AVX
+	
+Suite1_6_AVX:	
+	movzx ebx,byte ptr[esi+1]
+	movzx eax,byte ptr[esi+3]	
+	push eax							; edx=V ecx=U ebx=Y1 [pop eax]=Y2
+	
+	mov esi,lookup
+	add src,4
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,1
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,0
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	pop ebx
+	vpinsrw xmm0,xmm0,eax,2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,3
+	
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm4
+	
+	vmovd dword ptr[edi],xmm0
+	
+	mov esi,src
+	add edi,4	
+	
+Suite2_6_AVX:	
+	add esi,src_modulo
+	add edi,dst_modulo
+	mov src,esi
+	dec h
+	jnz Boucle0_6_AVX
+
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_ColorSpaceConvert_UYVY_AVX endp
 
 
 JPSDR_ColorSpaceConvert_YV16_SSE proc src_y:dword,src_u:dword,src_v:dword,dst_y:dword,dst_u:dword,dst_v:dword,w:dword,h:dword,offset_Y:word,
@@ -1132,6 +1906,351 @@ Suite2_8:
 	ret
 
 JPSDR_ColorSpaceConvert_YV16_SSE endp
+
+
+JPSDR_ColorSpaceConvert_YV16_AVX proc src_y:dword,src_u:dword,src_v:dword,dst_y:dword,dst_u:dword,dst_v:dword,w:dword,h:dword,offset_Y:word,
+	offset_U:word,offset_V:word,lookup:dword,src_modulo_y:dword,src_modulo_u:dword,src_modulo_v:dword,dst_modulo_y:dword,dst_modulo_u:dword,
+	dst_modulo_v:dword,Min_Y:word,Max_Y:word,Min_U:word,Max_U:word,Min_V:word,Max_V:word
+
+	public JPSDR_ColorSpaceConvert_YV16_AVX
+
+	local i,w0:dword
+
+	push esi
+	push edi
+	push ebx
+
+	vpxor xmm4,xmm4,xmm4
+	vpxor xmm0,xmm0,xmm0
+	
+	movzx eax,offset_Y
+	vpinsrw xmm1,xmm1,eax,0
+	vpinsrw xmm1,xmm1,eax,1
+	vpinsrw xmm1,xmm1,eax,2
+	vpinsrw xmm1,xmm1,eax,3
+	movzx eax,offset_U
+	vpinsrw xmm1,xmm1,eax,4
+	vpinsrw xmm1,xmm1,eax,5
+	movzx eax,offset_V
+	vpinsrw xmm1,xmm1,eax,6
+	vpinsrw xmm1,xmm1,eax,7
+	movzx eax,Min_Y
+	vpinsrw xmm2,xmm2,eax,0
+	vpinsrw xmm2,xmm2,eax,1
+	vpinsrw xmm2,xmm2,eax,2
+	vpinsrw xmm2,xmm2,eax,3
+	movzx eax,Max_Y
+	vpinsrw xmm3,xmm3,eax,0
+	vpinsrw xmm3,xmm3,eax,1
+	vpinsrw xmm3,xmm3,eax,2
+	vpinsrw xmm3,xmm3,eax,3
+	movzx eax,Min_U
+	vpinsrw xmm2,xmm2,eax,4
+	vpinsrw xmm2,xmm2,eax,5
+	movzx eax,Max_U
+	vpinsrw xmm3,xmm3,eax,4
+	vpinsrw xmm3,xmm3,eax,5
+	movzx eax,Min_V
+	vpinsrw xmm2,xmm2,eax,6
+	vpinsrw xmm2,xmm2,eax,7
+	movzx eax,Max_V
+	vpinsrw xmm3,xmm3,eax,6
+	vpinsrw xmm3,xmm3,eax,7
+	
+	mov eax,w
+	dec eax
+	shr eax,1
+	mov w0,eax	
+
+Boucle0_8_AVX:
+	mov esi,src_v
+	movzx edx,byte ptr[esi]
+	
+	mov esi,src_u
+	movzx ecx,byte ptr[esi]
+
+	mov eax,w0
+	or eax,eax
+	jz Suite0_8_AVX
+	
+	mov i,eax
+Boucle1_8_AVX:
+	movzx eax,byte ptr[esi+1]
+	mov esi,src_v
+	push eax
+	movzx eax,byte ptr[esi+1]
+	mov esi,src_y
+	push eax
+	movzx ebx,byte ptr[esi]
+	movzx eax,byte ptr[esi+1]	
+	mov esi,lookup
+	push eax							; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+			
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,0
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,4
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,6
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,1
+	
+	pop edx
+	pop ecx
+	
+	mov esi,src_u
+	movzx eax,byte ptr[esi+2]
+	add src_u,2
+	mov esi,src_v
+	push eax
+	movzx eax,byte ptr[esi+2]
+	add src_v,2
+	mov esi,src_y
+	push eax
+	
+	movzx ebx,byte ptr[esi+2]
+	movzx eax,byte ptr[esi+3]
+	add src_y,4
+	mov esi,lookup
+	push eax					; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,2
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,5
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,7
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,3
+	
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm4
+
+	mov edi,dst_u
+	vpextrw eax,xmm0,2
+	mov word ptr[edi],ax
+	mov edi,dst_v
+	add dst_u,2
+	vpextrw eax,xmm0,3
+	mov word ptr[edi],ax
+	
+	mov edi,dst_y
+	add dst_v,2
+	vmovd dword ptr[edi],xmm0
+	add dst_y,4
+	
+	pop edx
+	pop ecx
+	
+	mov esi,src_u
+		
+	dec i
+	jnz Boucle1_8_AVX
+	
+Suite0_8_AVX:	
+	mov eax,w
+	dec eax
+	and eax,1
+	jz Suite1_8_AVX
+	
+	movzx eax,byte ptr[esi+1]
+	add src_u,2
+	mov esi,src_v
+	push eax
+	movzx eax,byte ptr[esi+1]
+	add src_v,2
+	mov esi,src_y
+	push eax
+	movzx ebx,byte ptr[esi]
+	movzx eax,byte ptr[esi+1]	
+	mov esi,lookup
+	push eax							; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+			
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,0
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,4
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,6
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,1
+	
+	mov esi,src_y
+	pop edx
+	pop ecx
+	
+	movzx ebx,byte ptr[esi+2]
+	movzx eax,byte ptr[esi+3]
+	add src_y,4
+	mov esi,lookup
+	push eax					; edx=V ecx=U ebx=Y1 [pop eax]=Y2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,2
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,5
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	pop ebx
+	vpinsrw xmm0,xmm0,eax,7
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,3
+	
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm4
+
+	mov edi,dst_u
+	vpextrw eax,xmm0,2
+	mov word ptr[edi],ax
+	mov edi,dst_v
+	add dst_u,2
+	vpextrw eax,xmm0,3
+	mov word ptr[edi],ax
+	
+	mov edi,dst_y
+	add dst_v,2
+	vmovd dword ptr[edi],xmm0
+	add dst_y,4
+
+	jmp Suite2_8_AVX
+	
+Suite1_8_AVX:	
+	mov esi,src_y
+	movzx ebx,byte ptr[esi]
+	movzx eax,byte ptr[esi+1]	
+	mov esi,lookup
+	push eax							; edx=V ecx=U ebx=Y1 [pop eax]=Y2
+	
+	add src_y,2
+	inc src_u
+	inc src_v
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,0
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,4
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	pop ebx
+	vpinsrw xmm0,xmm0,eax,6
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,1
+	
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm4
+	
+	mov edi,dst_y
+	vpextrw eax,xmm0,0
+	add dst_y,2
+	mov word ptr[edi],ax
+	mov edi,dst_u
+	vpextrw eax,xmm0,2
+	inc dst_u
+	mov byte ptr[edi],al
+	mov edi,dst_v
+	vpextrw eax,xmm0,3
+	inc dst_v
+	mov byte ptr[edi],al
+	
+Suite2_8_AVX:
+	mov eax,src_y
+	add eax,src_modulo_y
+	mov src_y,eax
+	mov eax,src_u
+	add eax,src_modulo_u
+	mov src_u,eax
+	mov eax,src_v
+	add eax,src_modulo_v
+	mov src_v,eax	
+	mov eax,dst_y
+	add eax,dst_modulo_y
+	mov dst_y,eax
+	mov eax,dst_u
+	add eax,dst_modulo_u
+	mov dst_u,eax
+	mov eax,dst_v
+	add eax,dst_modulo_v
+	mov dst_v,eax
+	dec h
+	jnz Boucle0_8_AVX
+
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_ColorSpaceConvert_YV16_AVX endp
 
 
 JPSDR_ColorSpaceConvert_YV12_SSE2_1 proc src_Y:dword,src_U:dword,src_V:dword,dst_Y:dword,lookup:dword,w:dword,offset_Y:word,Min_Y:word,Max_Y:word
@@ -1516,6 +2635,387 @@ suite3_9:
 JPSDR_ColorSpaceConvert_YV12_SSE2_1 endp	
 
 
+JPSDR_ColorSpaceConvert_YV12_AVX_1 proc src_Y:dword,src_U:dword,src_V:dword,dst_Y:dword,lookup:dword,w:dword,offset_Y:word,Min_Y:word,Max_Y:word
+
+	public JPSDR_ColorSpaceConvert_YV12_AVX_1
+	
+	local i:dword
+	
+	push esi
+	push edi
+	push ebx
+	
+	vpxor xmm4,xmm4,xmm4
+	vpxor xmm0,xmm0,xmm0
+	
+	movzx eax,offset_Y
+	vpinsrw xmm1,xmm1,eax,0
+	vpinsrw xmm1,xmm1,eax,1
+	vpinsrw xmm1,xmm1,eax,2
+	vpinsrw xmm1,xmm1,eax,3
+	vpinsrw xmm1,xmm1,eax,4
+	vpinsrw xmm1,xmm1,eax,5
+	vpinsrw xmm1,xmm1,eax,6
+	vpinsrw xmm1,xmm1,eax,7
+	movzx eax,Min_Y
+	vpinsrw xmm2,xmm2,eax,0
+	vpinsrw xmm2,xmm2,eax,1
+	vpinsrw xmm2,xmm2,eax,2
+	vpinsrw xmm2,xmm2,eax,3
+	vpinsrw xmm2,xmm2,eax,4
+	vpinsrw xmm2,xmm2,eax,5
+	vpinsrw xmm2,xmm2,eax,6
+	vpinsrw xmm2,xmm2,eax,7
+	movzx eax,Max_Y
+	vpinsrw xmm3,xmm3,eax,0
+	vpinsrw xmm3,xmm3,eax,1
+	vpinsrw xmm3,xmm3,eax,2
+	vpinsrw xmm3,xmm3,eax,3
+	vpinsrw xmm3,xmm3,eax,4
+	vpinsrw xmm3,xmm3,eax,5
+	vpinsrw xmm3,xmm3,eax,6
+	vpinsrw xmm3,xmm3,eax,7
+	
+	mov edi,dst_Y
+	
+	mov esi,src_V
+	movzx edx,byte ptr[esi]
+	
+	mov esi,src_U
+	movzx ecx,byte ptr[esi]
+
+	mov eax,w
+	dec eax
+	shr eax,2
+	jz Suite0_9_AVX
+	mov i,eax
+	
+Boucle0_9_AVX:	
+	movzx eax,byte ptr[esi+1]
+	mov esi,src_V
+	push eax
+	movzx eax,byte ptr[esi+1]
+	mov esi,src_Y
+	push eax
+	movzx ebx,byte ptr[esi]
+	movzx eax,byte ptr[esi+1]	
+	mov esi,lookup
+	push eax							; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,0
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,1
+	
+	pop edx
+	pop ecx
+	
+	mov esi,src_U
+	movzx eax,byte ptr[esi+2]
+	mov esi,src_V
+	push eax
+	movzx eax,byte ptr[esi+2]
+	mov esi,src_Y
+	push eax
+	
+	movzx ebx,byte ptr[esi+2]
+	movzx eax,byte ptr[esi+3]
+	mov esi,lookup
+	push eax					; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,2
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,3
+	
+	pop edx
+	pop ecx
+	
+	mov esi,src_U
+	movzx eax,byte ptr[esi+3]
+	mov esi,src_V
+	push eax
+	movzx eax,byte ptr[esi+3]
+	mov esi,src_Y
+	push eax
+	
+	movzx ebx,byte ptr[esi+4]
+	movzx eax,byte ptr[esi+5]
+	mov esi,lookup
+	push eax					; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,4
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,5
+	
+	pop edx
+	pop ecx
+	
+	mov esi,src_U
+	movzx eax,byte ptr[esi+4]
+	add src_U,4
+	mov esi,src_V
+	push eax
+	movzx eax,byte ptr[esi+4]
+	add src_V,4
+	mov esi,src_Y
+	push eax
+	
+	movzx ebx,byte ptr[esi+6]
+	movzx eax,byte ptr[esi+7]
+	add src_Y,8
+	mov esi,lookup
+	push eax					; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,6
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,7
+	
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm4
+
+	vmovq qword ptr[edi],xmm0
+	
+	pop edx
+	pop ecx
+	add edi,8
+	
+	mov esi,src_U
+		
+	dec i
+	jnz Boucle0_9_AVX
+	
+Suite0_9_AVX:
+	mov eax,w
+	dec eax
+	and eax,3
+	jz Suite2_9_AVX
+	and eax,2
+	jz suite1_9_AVX
+	
+	movzx eax,byte ptr[esi+1]
+	mov esi,src_V
+	push eax
+	movzx eax,byte ptr[esi+1]
+	mov esi,src_Y
+	push eax
+	movzx ebx,byte ptr[esi]
+	movzx eax,byte ptr[esi+1]	
+	mov esi,lookup
+	push eax							; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,0
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,1
+	
+	pop edx
+	pop ecx
+	
+	mov esi,src_U
+	movzx eax,byte ptr[esi+2]
+	add src_U,2
+	mov esi,src_V
+	push eax
+	movzx eax,byte ptr[esi+2]
+	add src_V,2
+	mov esi,src_Y
+	push eax
+	
+	movzx ebx,byte ptr[esi+2]
+	movzx eax,byte ptr[esi+3]
+	add src_Y,4
+	mov esi,lookup
+	push eax					; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,2
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,3
+	
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm4
+
+	vmovd dword ptr[edi],xmm0	
+	
+	pop edx
+	pop ecx	
+	add edi,4
+	mov esi,src_U
+	
+	mov eax,w
+	dec eax	
+	and eax,1
+	jz Suite2_9_AVX
+	
+suite1_9_AVX:
+	movzx eax,byte ptr[esi+1]
+	mov esi,src_V
+	push eax
+	movzx eax,byte ptr[esi+1]
+	mov esi,src_Y
+	push eax
+	movzx ebx,byte ptr[esi]
+	movzx eax,byte ptr[esi+1]	
+	mov esi,lookup
+	push eax							; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,0
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,1
+	
+	pop edx
+	pop ecx
+	
+	mov esi,src_Y
+	movzx ebx,byte ptr[esi+2]
+	movzx eax,byte ptr[esi+3]
+	mov esi,lookup
+	push eax					; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	pop ebx
+	vpinsrw xmm0,xmm0,eax,2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,3
+	
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm4
+
+	vmovd dword ptr[edi],xmm0		
+	
+	jmp suite3_9_AVX
+
+suite2_9_AVX:	
+	mov esi,src_Y
+	movzx ebx,byte ptr[esi]
+	movzx eax,byte ptr[esi+1]	
+	mov esi,lookup
+	push eax							; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	pop ebx
+	vpinsrw xmm0,xmm0,eax,0
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,1
+	
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm4
+	
+	vpextrw eax,xmm0,0
+	mov word ptr[edi],ax
+	
+suite3_9_AVX:	
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+	
+JPSDR_ColorSpaceConvert_YV12_AVX_1 endp	
+
 
 JPSDR_ColorSpaceConvert_YV12_SSE2_2 proc src_Y:dword,src_U1:dword,src_U2:dword,src_V1:dword,src_V2:dword,dst_Y:dword,lookup:dword,w:dword,
 	offset_Y:word,Min_Y:word,Max_Y:word
@@ -1561,7 +3061,7 @@ JPSDR_ColorSpaceConvert_YV12_SSE2_2 proc src_Y:dword,src_U1:dword,src_U2:dword,s
 	pinsrw xmm3,eax,6
 	pinsrw xmm3,eax,7
 	
-	movdqa xmm6,oword ptr uw_2
+	movdqa xmm6,XMMWORD ptr uw_2
 	
 	mov edi,dst_Y
 	
@@ -1581,7 +3081,7 @@ Boucle0_10:
 	punpcklbw xmm4,xmm7
 	pinsrw xmm0,eax,4
 	movzx eax,byte ptr[ebx+4]
-	pmullw xmm0,oword ptr uw_3
+	pmullw xmm0,XMMWORD ptr uw_3
 	pinsrw xmm4,eax,4
 	paddsw xmm0,xmm6
 	paddsw xmm4,xmm0
@@ -1596,7 +3096,7 @@ Boucle0_10:
 	punpcklbw xmm5,xmm7
 	pinsrw xmm0,eax,4
 	movzx eax,byte ptr[ebx+4]
-	pmullw xmm0,oword ptr uw_3
+	pmullw xmm0,XMMWORD ptr uw_3
 	pinsrw xmm5,eax,4
 	paddsw xmm0,xmm6
 	paddsw xmm5,xmm0
@@ -1743,7 +3243,7 @@ Suite0_10:
 	movd xmm4,dword ptr[ebx]
 	punpcklbw xmm0,xmm7
 	punpcklbw xmm4,xmm7
-	pmullw xmm0,oword ptr uw_3
+	pmullw xmm0,XMMWORD ptr uw_3
 	paddsw xmm0,xmm6
 	paddsw xmm4,xmm0
 	psraw xmm4,2
@@ -1754,7 +3254,7 @@ Suite0_10:
 	movd xmm5,dword ptr[ebx]
 	punpcklbw xmm0,xmm7
 	punpcklbw xmm5,xmm7
-	pmullw xmm0,oword ptr uw_3
+	pmullw xmm0,XMMWORD ptr uw_3
 	paddsw xmm0,xmm6
 	paddsw xmm5,xmm0
 	psraw xmm5,2
@@ -1995,6 +3495,484 @@ suite3_10:
 	
 JPSDR_ColorSpaceConvert_YV12_SSE2_2 endp	
 
+
+JPSDR_ColorSpaceConvert_YV12_AVX_2 proc src_Y:dword,src_U1:dword,src_U2:dword,src_V1:dword,src_V2:dword,dst_Y:dword,lookup:dword,w:dword,
+	offset_Y:word,Min_Y:word,Max_Y:word
+
+	public JPSDR_ColorSpaceConvert_YV12_AVX_2
+	
+	local i:dword
+	
+	push esi
+	push edi
+	push ebx
+	
+	vpxor xmm7,xmm7,xmm7
+	vpxor xmm5,xmm5,xmm5
+	vpxor xmm4,xmm4,xmm4
+	vpxor xmm0,xmm0,xmm0
+	
+	movzx eax,offset_Y
+	vpinsrw xmm1,xmm1,eax,0
+	vpinsrw xmm1,xmm1,eax,1
+	vpinsrw xmm1,xmm1,eax,2
+	vpinsrw xmm1,xmm1,eax,3
+	vpinsrw xmm1,xmm1,eax,4
+	vpinsrw xmm1,xmm1,eax,5
+	vpinsrw xmm1,xmm1,eax,6
+	vpinsrw xmm1,xmm1,eax,7
+	movzx eax,Min_Y
+	vpinsrw xmm2,xmm2,eax,0
+	vpinsrw xmm2,xmm2,eax,1
+	vpinsrw xmm2,xmm2,eax,2
+	vpinsrw xmm2,xmm2,eax,3
+	vpinsrw xmm2,xmm2,eax,4
+	vpinsrw xmm2,xmm2,eax,5
+	vpinsrw xmm2,xmm2,eax,6
+	vpinsrw xmm2,xmm2,eax,7
+	movzx eax,Max_Y
+	vpinsrw xmm3,xmm3,eax,0
+	vpinsrw xmm3,xmm3,eax,1
+	vpinsrw xmm3,xmm3,eax,2
+	vpinsrw xmm3,xmm3,eax,3
+	vpinsrw xmm3,xmm3,eax,4
+	vpinsrw xmm3,xmm3,eax,5
+	vpinsrw xmm3,xmm3,eax,6
+	vpinsrw xmm3,xmm3,eax,7
+	
+	vmovdqa xmm6,XMMWORD ptr uw_2
+	
+	mov edi,dst_Y
+	
+	mov eax,w
+	dec eax
+	shr eax,2
+	jz Suite0_10_AVX
+	mov i,eax
+	
+Boucle0_10_AVX:	
+	mov esi,src_U1
+	mov ebx,src_U2
+	vmovd xmm0,dword ptr[esi]
+	vmovd xmm4,dword ptr[ebx]
+	vpunpcklbw xmm0,xmm0,xmm7
+	movzx eax,byte ptr[esi+4]
+	vpunpcklbw xmm4,xmm4,xmm7
+	vpinsrw xmm0,xmm0,eax,4
+	movzx eax,byte ptr[ebx+4]
+	vpmullw xmm0,xmm0,XMMWORD ptr uw_3
+	vpinsrw xmm4,xmm4,eax,4
+	vpaddsw xmm0,xmm0,xmm6
+	vpaddsw xmm4,xmm4,xmm0
+	vpsraw xmm4,xmm4,2
+	
+	mov esi,src_V1
+	mov ebx,src_V2
+	vmovd xmm0,dword ptr[esi]
+	vmovd xmm5,dword ptr[ebx]
+	vpunpcklbw xmm0,xmm0,xmm7
+	movzx eax,byte ptr[esi+4]
+	vpunpcklbw xmm5,xmm5,xmm7
+	vpinsrw xmm0,xmm0,eax,4
+	movzx eax,byte ptr[ebx+4]
+	vpmullw xmm0,xmm0,XMMWORD ptr uw_3
+	vpinsrw xmm5,xmm5,eax,4
+	vpaddsw xmm0,xmm0,xmm6
+	vpaddsw xmm5,xmm5,xmm0
+	vpsraw xmm5,xmm5,2
+	
+	vpextrw eax,xmm4,1
+	vpextrw ecx,xmm4,0
+	push eax
+	vpextrw eax,xmm5,1
+	vpextrw edx,xmm5,0
+	push eax
+		
+	mov esi,src_Y
+	movzx ebx,byte ptr[esi]
+	movzx eax,byte ptr[esi+1]	
+	mov esi,lookup
+	push eax							; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,0
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,1
+	
+	pop edx
+	pop ecx
+	
+	vpextrw eax,xmm4,2
+	push eax
+	vpextrw eax,xmm5,2
+	mov esi,src_Y
+	push eax
+	
+	movzx ebx,byte ptr[esi+2]
+	movzx eax,byte ptr[esi+3]
+	mov esi,lookup
+	push eax					; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,2
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,3
+	
+	pop edx
+	pop ecx
+	
+	vpextrw eax,xmm4,3
+	push eax
+	vpextrw eax,xmm5,3
+	mov esi,src_Y
+	push eax
+	
+	movzx ebx,byte ptr[esi+4]
+	movzx eax,byte ptr[esi+5]
+	mov esi,lookup
+	push eax					; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,4
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,5
+	
+	pop edx
+	pop ecx
+	
+	mov esi,src_Y
+	movzx ebx,byte ptr[esi+6]
+	movzx eax,byte ptr[esi+7]
+	add src_Y,8
+	mov esi,lookup
+	push eax					; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,6
+	
+	vpextrw eax,xmm4,4
+	add ecx,eax
+	vpextrw eax,xmm5,4
+	add edx,eax
+	shr ecx,1
+	pop ebx
+	shr edx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,7
+	
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm4
+
+	vmovq qword ptr[edi],xmm0
+	
+	add src_U1,4
+	add src_V1,4
+	add src_U2,4
+	add src_V2,4
+	add edi,8
+	
+	dec i
+	jnz Boucle0_10_AVX
+	
+Suite0_10_AVX:
+	mov esi,src_U1
+	mov ebx,src_U2
+	vmovd xmm0,dword ptr[esi]
+	vmovd xmm4,dword ptr[ebx]
+	vpunpcklbw xmm0,xmm0,xmm7
+	vpunpcklbw xmm4,xmm4,xmm7
+	vpmullw xmm0,xmm0,XMMWORD ptr uw_3
+	vpaddsw xmm0,xmm0,xmm6
+	vpaddsw xmm4,xmm4,xmm0
+	vpsraw xmm4,xmm4,2
+	
+	mov esi,src_V1
+	mov ebx,src_V2
+	vmovd xmm0,dword ptr[esi]
+	vmovd xmm5,dword ptr[ebx]
+	vpunpcklbw xmm0,xmm0,xmm7
+	vpunpcklbw xmm5,xmm5,xmm7
+	vpmullw xmm0,xmm0,XMMWORD ptr uw_3
+	vpaddsw xmm0,xmm0,xmm6
+	vpaddsw xmm5,xmm5,xmm0
+	vpsraw xmm5,xmm5,2
+	
+	vpextrw ecx,xmm4,0
+	vpextrw edx,xmm5,0
+	
+	mov eax,w
+	dec eax
+	and eax,3
+	jz Suite2_10_AVX
+	and eax,2
+	jz suite1_10_AVX
+	
+	vpextrw eax,xmm4,1
+	push eax
+	vpextrw eax,xmm5,1
+	mov esi,src_Y
+	push eax
+	
+	movzx ebx,byte ptr[esi]
+	movzx eax,byte ptr[esi+1]	
+	mov esi,lookup
+	push eax							; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,0
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,1
+	
+	pop edx
+	pop ecx
+	
+	vpextrw eax,xmm4,2
+	push eax
+	vpextrw eax,xmm5,2
+	mov esi,src_Y
+	push eax
+	
+	movzx ebx,byte ptr[esi+2]
+	movzx eax,byte ptr[esi+3]
+	add src_Y,4
+	mov esi,lookup
+	push eax					; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,2
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,3
+	
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm4
+
+	vmovd dword ptr[edi],xmm0	
+	
+	pop edx
+	pop ecx	
+	add edi,4
+	
+	mov eax,w
+	dec eax	
+	and eax,1
+	jz Suite2_10_AVX
+	
+	vpextrw eax,xmm4,3
+	push eax
+	vpextrw eax,xmm5,3
+	mov esi,src_Y
+	push eax
+	
+	movzx ebx,byte ptr[esi]
+	movzx eax,byte ptr[esi+1]	
+	mov esi,lookup
+	push eax							; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,0
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,1
+	
+	pop edx
+	pop ecx
+	
+	mov esi,src_Y
+	movzx ebx,byte ptr[esi+2]
+	movzx eax,byte ptr[esi+3]
+	mov esi,lookup
+	push eax					; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	pop ebx
+	vpinsrw xmm0,xmm0,eax,2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,3
+	
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm4
+
+	vmovd dword ptr[edi],xmm0		
+	
+	jmp suite3_10_AVX
+			
+suite1_10_AVX:
+	vpextrw eax,xmm4,1
+	push eax
+	vpextrw eax,xmm5,1
+	mov esi,src_Y
+	push eax
+	
+	movzx ebx,byte ptr[esi]
+	movzx eax,byte ptr[esi+1]	
+	mov esi,lookup
+	push eax							; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,0
+	
+	add edx,dword ptr[esp+4]
+	add ecx,dword ptr[esp+8]
+	shr edx,1
+	pop ebx
+	shr ecx,1
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,1
+	
+	pop edx
+	pop ecx
+	
+	mov esi,src_Y
+	movzx ebx,byte ptr[esi+2]
+	movzx eax,byte ptr[esi+3]
+	mov esi,lookup
+	push eax					; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	pop ebx
+	vpinsrw xmm0,xmm0,eax,2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,3
+	
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm4
+
+	vmovd dword ptr[edi],xmm0		
+	
+	jmp suite3_10_AVX
+
+suite2_10_AVX:	
+	mov esi,src_Y
+	movzx ebx,byte ptr[esi]
+	movzx eax,byte ptr[esi+1]	
+	mov esi,lookup
+	push eax							; edx=V ecx=U ebx=Y1 [pop eax]=Y2 V2 U2
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	pop ebx
+	vpinsrw xmm0,xmm0,eax,0
+	
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,1
+	
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm4
+	
+	vpextrw eax,xmm0,0
+	mov word ptr[edi],ax
+	
+suite3_10_AVX:	
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+	
+JPSDR_ColorSpaceConvert_YV12_AVX_2 endp
 
 
 JPSDR_ColorSpaceConvert_YV12_SSE2_3 proc src_Y:dword,src_U:dword,src_V:dword,dst_U:dword,dst_V:dword,lookup:dword,w:dword,h:dword,
@@ -2277,6 +4255,288 @@ suite2_11:
 	ret
 	
 JPSDR_ColorSpaceConvert_YV12_SSE2_3 endp
+
+
+JPSDR_ColorSpaceConvert_YV12_AVX_3 proc src_Y:dword,src_U:dword,src_V:dword,dst_U:dword,dst_V:dword,lookup:dword,w:dword,h:dword,
+	src_pitch_y:dword,src_modulo_y:dword,src_modulo_u:dword,src_modulo_v:dword,dst_modulo_u:dword,dst_modulo_v:dword,offset_U:word,Min_U:word,
+	Max_U:word,offset_V:word,Min_V:word,Max_V:word
+
+	public JPSDR_ColorSpaceConvert_YV12_AVX_3
+	
+	local i:dword
+	
+	push esi
+	push edi
+	push ebx
+	
+	vpxor xmm7,xmm7,xmm7
+	vpxor xmm4,xmm4,xmm4
+	vpxor xmm0,xmm0,xmm0
+	
+	movzx eax,offset_U
+	vpinsrw xmm1,xmm1,eax,0
+	vpinsrw xmm1,xmm1,eax,1
+	vpinsrw xmm1,xmm1,eax,2
+	vpinsrw xmm1,xmm1,eax,3
+	movzx eax,offset_V
+	vpinsrw xmm1,xmm1,eax,4
+	vpinsrw xmm1,xmm1,eax,5
+	vpinsrw xmm1,xmm1,eax,6
+	vpinsrw xmm1,xmm1,eax,7	
+	movzx eax,Min_U
+	vpinsrw xmm2,xmm2,eax,0
+	vpinsrw xmm2,xmm2,eax,1
+	vpinsrw xmm2,xmm2,eax,2
+	vpinsrw xmm2,xmm2,eax,3
+	movzx eax,Min_V
+	vpinsrw xmm2,xmm2,eax,4
+	vpinsrw xmm2,xmm2,eax,5
+	vpinsrw xmm2,xmm2,eax,6
+	vpinsrw xmm2,xmm2,eax,7	
+	movzx eax,Max_U
+	vpinsrw xmm3,xmm3,eax,0
+	vpinsrw xmm3,xmm3,eax,1
+	vpinsrw xmm3,xmm3,eax,2
+	vpinsrw xmm3,xmm3,eax,3
+	movzx eax,Max_V
+	vpinsrw xmm3,xmm3,eax,4
+	vpinsrw xmm3,xmm3,eax,5
+	vpinsrw xmm3,xmm3,eax,6
+	vpinsrw xmm3,xmm3,eax,7
+	
+Boucle0_11_AVX:
+	mov eax,w
+	shr eax,2
+	jz Suite0_11_AVX
+	mov i,eax
+	
+Boucle1_11_AVX:	
+	mov esi,src_Y
+	vmovq xmm4,qword ptr[esi]
+	add esi,src_pitch_y
+	add src_Y,8
+	vmovq xmm0,qword ptr[esi]
+	vpavgb xmm4,xmm4,xmm0
+	vpunpcklbw xmm4,xmm4,xmm7
+	
+	mov esi,src_U
+	mov ebx,src_V
+	movzx ecx,byte ptr[esi+3]
+	movzx edx,byte ptr[ebx+3]
+	push ecx
+	push edx
+	movzx ecx,byte ptr[esi+2]
+	movzx edx,byte ptr[ebx+2]
+	push ecx
+	push edx
+	movzx ecx,byte ptr[esi+1]
+	movzx edx,byte ptr[ebx+1]
+	push ecx
+	push edx
+	movzx ecx,byte ptr[esi]
+	movzx edx,byte ptr[ebx]
+	add src_U,4
+	vpextrw ebx,xmm4,0			; edx=V ecx=U ebx=Y
+	mov esi,lookup
+	add src_V,4
+
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,0
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,4
+	
+	vpextrw ebx,xmm4,2
+	pop edx
+	pop ecx	
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,1
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,5
+	
+	vpextrw ebx,xmm4,4
+	pop edx
+	pop ecx	
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,2
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,6
+	
+	vpextrw ebx,xmm4,6
+	pop edx
+	pop ecx	
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,3
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,7
+	mov edi,dst_U
+	
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm7
+	
+	vmovd dword ptr[edi],xmm0
+	add dst_U,4
+	mov edi,dst_V
+	vpsrldq xmm0,xmm0,4
+	add dst_V,4
+	vmovd dword ptr[edi],xmm0
+	
+	dec i
+	jnz Boucle1_11_AVX
+	
+Suite0_11_AVX:
+	mov eax,w
+	and eax,2
+	jz suite1_11_AVX
+	
+	mov esi,src_Y
+	vmovd xmm4,dword ptr[esi]
+	add esi,src_pitch_y
+	add src_Y,4
+	vmovd xmm0,dword ptr[esi]
+	vpavgb xmm4,xmm4,xmm0
+	vpunpcklbw xmm4,xmm4,xmm7
+	
+	mov esi,src_U
+	mov ebx,src_V
+	movzx ecx,byte ptr[esi+1]
+	movzx ebx,byte ptr[ebx+1]
+	push ecx
+	push edx
+	movzx ecx,byte ptr[esi]
+	movzx edx,byte ptr[ebx]
+	add src_U,2
+	vpextrw ebx,xmm4,0			; edx=V ecx=U ebx=Y
+	mov esi,lookup
+	add src_V,2
+
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,0
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,4
+	
+	vpextrw ebx,xmm4,2
+	pop edx
+	pop ecx	
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,1
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,5
+	mov edi,dst_U
+	
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm7
+	
+	vpextrw eax,xmm0,0
+	mov word ptr[edi],ax
+	add dst_U,2
+	mov edi,dst_V
+	vpextrw eax,xmm0,2
+	add dst_V,2
+	mov word ptr[edi],ax
+	
+suite1_11_AVX:	
+	mov eax,w
+	and eax,1
+	jz suite2_11_AVX
+	
+	mov esi,src_Y
+	movzx eax,byte ptr[esi]
+	add esi,src_pitch_y
+	add src_Y,2
+	movzx ebx,byte ptr[esi]
+	add ebx,eax
+	shr ebx,1
+	
+	mov esi,src_U
+	mov edi,src_V
+	movzx ecx,byte ptr[esi]
+	movzx ebx,byte ptr[edi] ; edx=V ecx=U ebx=Y
+	inc src_U
+	mov esi,lookup
+	inc src_V
+	mov edi,dst_U
+	
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,0
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,4
+	
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,6
+	vpmaxsw xmm0,xmm0,xmm2
+	vpminsw xmm0,xmm0,xmm3
+	vpackuswb xmm0,xmm0,xmm7
+	
+	vpextrw eax,xmm0,0
+	mov byte ptr[edi],al
+	inc dst_U
+	mov edi,dst_V
+	vpextrw eax,xmm0,2
+	inc dst_V
+	mov byte ptr[edi],al
+	
+suite2_11_AVX:		
+	mov eax,src_Y
+	add eax,src_modulo_y
+	add eax,src_pitch_y
+	mov src_Y,eax
+	mov eax,src_U
+	add eax,src_modulo_u
+	mov src_U,eax
+	mov eax,src_V
+	add eax,src_modulo_v
+	mov src_V,eax
+	mov eax,dst_U
+	add eax,dst_modulo_u
+	mov dst_U,eax
+	mov eax,dst_V
+	add eax,dst_modulo_v
+	mov dst_V,eax
+	
+	dec h
+	jnz Boucle0_11_AVX
+	
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+	
+JPSDR_ColorSpaceConvert_YV12_AVX_3 endp
 
 
 end

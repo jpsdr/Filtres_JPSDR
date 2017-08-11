@@ -262,8 +262,8 @@ public:
 	JPSDR_AutoYUY2(){}
 	JPSDR_AutoYUY2(const JPSDR_AutoYUY2& a)
 	{
-		SSE2_Enable = a.SSE2_Enable;
 		AVX_Enable=a.AVX_Enable;
+		SSE2_Enable = a.SSE2_Enable;
 		mData=a.mData;
 		InternalInit();
 	}
@@ -350,8 +350,8 @@ VDXVF_END_SCRIPT_METHODS()
 
 bool JPSDR_AutoYUY2::Init()
 {
-	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
 	AVX_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_AVX)!=0);
+	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
 	InternalInit();
 
 	return(true);
@@ -8132,5 +8132,5 @@ void JPSDR_AutoYUY2::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_AutoYUY2=
-VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","AutoYUY2 v3.3.0","Convert Planar4:2:0 to severals 4:2:2 modes. [SSE2/AVX] Optimised.");
+VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","AutoYUY2 v3.3.0","Convert Planar4:2:0 to severals 4:2:2 modes. [SSE2][AVX] Optimised.");
 

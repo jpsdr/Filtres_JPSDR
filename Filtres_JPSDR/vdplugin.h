@@ -113,11 +113,8 @@ struct VDXPluginInfo {
 	const void *	mpTypeSpecificInfo;
 
 	// NEW
-	// PB !!!!! Build under VS2010 but not under VS2015
-	/*
 	VDXShowStaticAboutProc		mpStaticAboutProc;
 	VDXShowStaticConfigureProc	mpStaticConfigureProc;
-	*/
 };
 
 typedef const VDXPluginInfo *const *(VDXAPIENTRY *tpVDXGetPluginInfo)();
