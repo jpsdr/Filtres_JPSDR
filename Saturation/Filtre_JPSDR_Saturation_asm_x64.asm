@@ -151,6 +151,157 @@ Suite2_2:
 JPSDR_Saturation_SSE2_RGB24 endp
 
 
+;JPSDR_Saturation_AVX_RGB24 proc src:dword,dst:dword,w:dword,h:dword,offset_R:word,offset_G:word,
+;offset_B:word,lookup:dword,src_modulo:dword,dst_modulo:dword
+;public JPSDR_Saturation_AVX_RGB24
+; src = rcx
+; dst = rdx
+; w = r8d
+; h = r9d
+
+JPSDR_Saturation_AVX_RGB24 proc public frame
+
+offset_R equ word ptr[rbp+48]
+offset_G equ word ptr[rbp+56]
+offset_B equ word ptr[rbp+64]
+lookup equ qword ptr[rbp+72]
+src_modulo equ qword ptr[rbp+80]
+dst_modulo equ qword ptr[rbp+88]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	push r15
+	.pushreg r15
+	.endprolog
+
+	mov rsi,rcx
+	mov rdi,rdx
+	mov r11,lookup
+	mov r12,8
+	mov r15,4
+	mov r13,src_modulo
+	mov r14,dst_modulo
+	xor rax,rax
+	xor rdx,rdx
+	xor rcx,rcx
+	xor rbx,rbx
+	vpxor xmm2,xmm2,xmm2
+	vpxor xmm1,xmm1,xmm1
+	vpxor xmm0,xmm0,xmm0
+	movzx eax,offset_R
+	vpinsrw xmm1,xmm1,eax,2
+	vpinsrw xmm1,xmm1,eax,6	
+	movzx eax,offset_G
+	vpinsrw xmm1,xmm1,eax,1
+	vpinsrw xmm1,xmm1,eax,5
+	movzx eax,offset_B
+	vpinsrw xmm1,xmm1,eax,0
+	vpinsrw xmm1,xmm1,eax,4
+
+Boucle0_2_AVX:
+	mov r10d,r8d
+	shr r10d,1
+	jz Suite1_2_AVX
+Boucle1_2_AVX:
+	movzx edx,byte ptr[rsi]
+	movzx ecx,byte ptr[rsi+1]
+	movzx ebx,byte ptr[rsi+2] ; ebx=R ecx=G edx=B
+	movzx eax,word ptr[r11+2*rbx]
+	add ax,word ptr[r11+2*rcx+512]
+	add ax,word ptr[r11+2*rdx+1024]
+	vpinsrw xmm0,xmm0,eax,2
+	movzx eax,word ptr[r11+2*rbx+1536]
+	add ax,word ptr[r11+2*rcx+2048]
+	add ax,word ptr[r11+2*rdx+2560]
+	vpinsrw xmm0,xmm0,eax,1
+	movzx eax,word ptr[r11+2*rbx+3072]
+	add ax,word ptr[r11+2*rcx+3584]
+	add ax,word ptr[r11+2*rdx+4096]
+	vpinsrw xmm0,xmm0,eax,0
+	movzx edx,byte ptr[rsi+4]
+	movzx ecx,byte ptr[rsi+5]
+	movzx ebx,byte ptr[rsi+6] ; ebx=R ecx=G edx=B
+	movzx eax,word ptr[r11+2*rbx]
+	add ax,word ptr[r11+2*rcx+512]
+	add ax,word ptr[r11+2*rdx+1024]
+	vpinsrw xmm0,xmm0,eax,6
+	movzx eax,word ptr[r11+2*rbx+1536]
+	add ax,word ptr[r11+2*rcx+2048]
+	add ax,word ptr[r11+2*rdx+2560]
+	vpinsrw xmm0,xmm0,eax,5
+	movzx eax,word ptr[r11+2*rbx+3072]
+	add ax,word ptr[r11+2*rcx+3584]
+	add ax,word ptr[r11+2*rdx+4096]
+	vpinsrw xmm0,xmm0,eax,4
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,4
+	vpackuswb xmm0,xmm0,xmm2
+	vmovq qword ptr[rdi],xmm0
+	add rsi,r12
+	add rdi,r12
+	dec r10d
+	jnz Boucle1_2_AVX
+	
+Suite1_2_AVX:
+	mov r10d,r8d
+	and r10d,1
+	jz short Suite2_2_AVX
+
+	movzx edx,byte ptr[rsi]
+	movzx ecx,byte ptr[rsi+1]
+	movzx ebx,byte ptr[rsi+2] ; ebx=R ecx=G edx=B
+	movzx eax,word ptr[r11+2*rbx]
+	add ax,word ptr[r11+2*rcx+512]
+	add ax,word ptr[r11+2*rdx+1024]
+	vpinsrw xmm0,xmm0,eax,2
+	movzx eax,word ptr[r11+2*rbx+1536]
+	add ax,word ptr[r11+2*rcx+2048]
+	add ax,word ptr[r11+2*rdx+2560]
+	vpinsrw xmm0,xmm0,eax,1
+	movzx eax,word ptr[r11+2*rbx+3072]
+	add ax,word ptr[r11+2*rcx+3584]
+	add ax,word ptr[r11+2*rdx+4096]
+	vpinsrw xmm0,xmm0,eax,0
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,4
+	vpackuswb xmm0,xmm0,xmm2
+	vmovd dword ptr[rdi],xmm0
+	add rsi,r15
+	add rdi,r15
+	
+Suite2_2_AVX:	
+	add rsi,r13
+	add rdi,r14
+	dec r9d
+	jnz Boucle0_2_AVX
+
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+
+	ret
+
+JPSDR_Saturation_AVX_RGB24 endp
+
+
 ;JPSDR_Saturation_YUYV proc src:dword,dst:dword,w:dword,h:dword,lookup:dword,src_modulo:dword,dst_modulo:dword
 ;public JPSDR_Saturation_YUYV
 ; src = rcx
@@ -743,6 +894,134 @@ SuiteY1_2:
 
 JPSDR_Saturation_Y_SSE2_RGB24 endp
 
+
+;JPSDR_Saturation_Y_AVX_RGB24 proc src:dword,dst:dword,w:dword,h:dword,offset_Y:word,lookup:dword,
+;	src_modulo:dword,dst_modulo:dword
+; src = rcx
+; dst = rdx
+; w = r8d
+; h = r9d
+
+JPSDR_Saturation_Y_AVX_RGB24 proc public frame
+
+offset_Y equ word ptr[rbp+48]
+lookup equ qword ptr[rbp+56]
+src_modulo equ qword ptr[rbp+64]
+dst_modulo equ qword ptr[rbp+72]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	push r15
+	.pushreg r15
+	.endprolog
+
+
+	mov rsi,rcx
+	mov rdi,rdx
+	xor rax,rax
+	xor rcx,rcx
+	xor rdx,rdx
+	xor rbx,rbx
+	vpxor xmm2,xmm2,xmm2
+	vpxor xmm1,xmm1,xmm1
+	vpxor xmm0,xmm0,xmm0
+	movzx eax,offset_Y
+	vpinsrw xmm1,xmm1,eax,6
+	vpinsrw xmm1,xmm1,eax,5
+	vpinsrw xmm1,xmm1,eax,4		
+	vpinsrw xmm1,xmm1,eax,2
+	vpinsrw xmm1,xmm1,eax,1
+	vpinsrw xmm1,xmm1,eax,0	
+	mov r10,8
+	mov r15,4
+	mov r12,lookup
+	mov r13,src_modulo
+	mov r14,dst_modulo
+
+BoucleY_0_2_AVX:
+	mov r11d,r8d
+	shr r11d,1
+	jz SuiteY1_1_AVX
+BoucleY_1_2_AVX:
+	movzx edx,byte ptr[rsi]
+	movzx ecx,byte ptr[rsi+1]
+	movzx ebx,byte ptr[rsi+2] ; ebx=R ecx=G edx=B
+	movzx eax,word ptr[r12+2*rbx]
+	add ax,word ptr[r12+2*rcx+512]
+	add ax,word ptr[r12+2*rdx+1024]
+	vpinsrw xmm0,xmm0,eax,2
+	vpinsrw xmm0,xmm0,eax,1
+	vpinsrw xmm0,xmm0,eax,0
+	movzx edx,byte ptr[rsi+4]
+	movzx ecx,byte ptr[rsi+5]
+	movzx ebx,byte ptr[rsi+6] ; ebx=R ecx=G edx=B
+	movzx eax,word ptr[r12+2*rbx]
+	add ax,word ptr[r12+2*rcx+512]
+	add ax,word ptr[r12+2*rdx+1024]
+	vpinsrw xmm0,xmm0,eax,6
+	vpinsrw xmm0,xmm0,eax,5
+	vpinsrw xmm0,xmm0,eax,4
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,4
+	vpackuswb xmm0,xmm0,xmm2
+	vmovq qword ptr[rdi],xmm0
+	add rsi,r10
+	add rdi,r10
+	dec r11d
+	jnz short BoucleY_1_2_AVX
+	
+SuiteY1_1_AVX:
+	mov r11d,r8d
+	and r11d,1
+	jz short SuiteY1_2_AVX
+	
+	movzx edx,byte ptr[rsi]
+	movzx ecx,byte ptr[rsi+1]
+	movzx ebx,byte ptr[rsi+2] ; ebx=R ecx=G edx=B
+	movzx eax,word ptr[r12+2*rbx]
+	add ax,word ptr[r12+2*rcx+512]
+	add ax,word ptr[r12+2*rdx+1024]
+	vpinsrw xmm0,xmm0,eax,2
+	vpinsrw xmm0,xmm0,eax,1
+	vpinsrw xmm0,xmm0,eax,0
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,4
+	vpackuswb xmm0,xmm0,xmm2
+	vmovd dword ptr[rdi],xmm0
+	add rsi,r15
+	add rdi,r15
+
+SuiteY1_2_AVX:	
+	add rsi,r13
+	add rdi,r14
+	dec r9d
+	jnz BoucleY_0_2_AVX
+	
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_Saturation_Y_AVX_RGB24 endp
 
 
 ;JPSDR_Saturation_Non_SSE_RGB24 proc src:dword,dst:dword,w:dword,h:dword,offset_R:word,offset_G:word,

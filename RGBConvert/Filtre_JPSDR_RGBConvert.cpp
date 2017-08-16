@@ -48,6 +48,38 @@ extern "C" void JPSDR_RGBConvert_YV24toRGB32_SSE(const void *src_y,const void *s
 	int32_t h,int16_t offset_R,int16_t offset_G,int16_t offset_B,int16_t *lookup,
 	ptrdiff_t src_modulo_Y,ptrdiff_t src_modulo_U,ptrdiff_t src_modulo_V,ptrdiff_t dst_modulo);
 
+extern "C" void JPSDR_RGBConvert_RGB32toYV24_AVX(const void *src,void *dst_y,void *dst_u,void *dst_v,int32_t w,int32_t h,
+	int16_t offset_Y,int16_t offset_U,int16_t offset_V,int16_t *lookup, ptrdiff_t src_modulo,
+	ptrdiff_t dst_modulo_Y,ptrdiff_t dst_modulo_U,ptrdiff_t dst_modulo_V,int16_t Min_Y,int16_t Max_Y,
+	int16_t Min_U,int16_t Max_U,int16_t Min_V,int16_t Max_V);
+
+extern "C" void JPSDR_RGBConvert_RGB32toYV16_AVX(const void *src,void *dst_y,void *dst_u,void *dst_v,int32_t w,int32_t h,
+	int16_t offset_Y,int16_t offset_U,int16_t offset_V,int16_t *lookup, ptrdiff_t src_modulo,
+	ptrdiff_t dst_modulo_Y,ptrdiff_t dst_modulo_U,ptrdiff_t dst_modulo_V,int16_t Min_Y,int16_t Max_Y,
+	int16_t Min_U,int16_t Max_U,int16_t Min_V,int16_t Max_V);
+
+extern "C" void JPSDR_RGBConvert_RGB32toYUYV_AVX(const void *src,void *dst,int32_t w,int32_t h,
+	int16_t offset_Y,int16_t offset_U,int16_t offset_V,int16_t *lookup, ptrdiff_t src_modulo,
+	ptrdiff_t dst_modulo,int16_t Min_Y,int16_t Max_Y,int16_t Min_U,int16_t Max_U,int16_t Min_V,
+	int16_t Max_V);
+
+extern "C" void JPSDR_RGBConvert_RGB32toYV12_AVX(const void *src,void *dst_y,void *dst_u,void *dst_v,int32_t w,int32_t h,
+	int16_t offset_Y,int16_t offset_U,int16_t offset_V,int16_t *lookup, ptrdiff_t src_pitch,ptrdiff_t src_modulo,
+	ptrdiff_t dst_pitch_Y,ptrdiff_t dst_modulo_Y,ptrdiff_t dst_modulo_U,ptrdiff_t dst_modulo_V,
+	int16_t Min_Y,int16_t Max_Y,int16_t Min_U,int16_t Max_U,int16_t Min_V,int16_t Max_V);
+extern "C" void JPSDR_RGBConvert_RGB32toYV12_AVX_1(const void *src,void *dst_y,void *dst_u,void *dst_v,int32_t w,int32_t h,
+	int16_t offset_Y,int16_t offset_U,int16_t offset_V,int16_t *lookup, ptrdiff_t src_pitch,ptrdiff_t src_modulo,
+	ptrdiff_t dst_pitch_Y,ptrdiff_t dst_modulo_Y,ptrdiff_t dst_modulo_U,ptrdiff_t dst_modulo_V,
+	int16_t Min_Y,int16_t Max_Y,int16_t Min_U,int16_t Max_U,int16_t Min_V,int16_t Max_V);
+extern "C" void JPSDR_RGBConvert_RGB32toYV12_AVX_2(const void *src,void *dst_y,void *dst_u,void *dst_v,int32_t w,int32_t h,
+	int16_t offset_Y,int16_t offset_U,int16_t offset_V,int16_t *lookup, ptrdiff_t src_pitch,ptrdiff_t src_modulo,
+	ptrdiff_t dst_pitch_Y,ptrdiff_t dst_modulo_Y,ptrdiff_t dst_modulo_U,ptrdiff_t dst_modulo_V,
+	int16_t Min_Y,int16_t Max_Y,int16_t Min_U,int16_t Max_U,int16_t Min_V,int16_t Max_V);
+
+extern "C" void JPSDR_RGBConvert_YV24toRGB32_AVX(const void *src_y,const void *src_u,const void *src_v,void *dst,int32_t w,
+	int32_t h,int16_t offset_R,int16_t offset_G,int16_t offset_B,int16_t *lookup,
+	ptrdiff_t src_modulo_Y,ptrdiff_t src_modulo_U,ptrdiff_t src_modulo_V,ptrdiff_t dst_modulo);
+
 
 typedef struct _MT_Data_Info
 {
@@ -123,6 +155,7 @@ public:
 	JPSDR_RGBConvert(){}
 	JPSDR_RGBConvert(const JPSDR_RGBConvert& a)
 	{
+		AVX_Enable=a.AVX_Enable;
 		SSE2_Enable = a.SSE2_Enable;
 		mData=a.mData;
 		InternalInit();
@@ -147,7 +180,7 @@ protected:
 	int16_t Min_U,Max_U,Min_Y,Max_Y,Min_V,Max_V;
 	int16_t Offset_Y,Offset_U,Offset_V,Offset_R,Offset_G,Offset_B;
 	double Coeff_Y,Coeff_U,Coeff_V;
-	bool SSE2_Enable;
+	bool SSE2_Enable,AVX_Enable;
 
 	Public_MT_Data_Thread MT_Thread[MAX_MT_THREADS];
 	MT_Data_Info MT_Data[MAX_MT_THREADS];
@@ -166,6 +199,7 @@ protected:
 	void ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptValue *argv, int argc);
 
 	void RGB32toYV12_SSE_MT(uint8_t thread_num);
+	void RGB32toYV12_AVX_MT(uint8_t thread_num);
 
 	void RGB32toYV24_MT(uint8_t thread_num);
 	void RGB32toYV16_MT(uint8_t thread_num);
@@ -313,6 +347,7 @@ bool JPSDR_RGBConvertDialog::OnCommand(int cmd)
 
 bool JPSDR_RGBConvert::Init()
 {
+	AVX_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_AVX)!=0);
 	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
 	InternalInit();
 
@@ -3424,6 +3459,26 @@ void JPSDR_RGBConvert::RGB32toYV12_SSE_MT(uint8_t thread_num)
 }
 
 
+void JPSDR_RGBConvert::RGB32toYV12_AVX_MT(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	const int32_t h = mt_data_inf.src_h ? mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min : mt_data_inf.dst_Y_h_max-mt_data_inf.dst_Y_h_min;
+	const int32_t w = mt_data_inf.src_w ? mt_data_inf.src_Y_w : mt_data_inf.dst_Y_w;
+
+	if (mt_data_inf.bottom)
+		JPSDR_RGBConvert_RGB32toYV12_AVX_2(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.dst2,mt_data_inf.dst3,
+			w,h,Offset_Y,Offset_U,Offset_V,Tlookup,mt_data_inf.src_pitch1,mt_data_inf.src_modulo1,mt_data_inf.dst_pitch1,
+			mt_data_inf.dst_modulo1,mt_data_inf.dst_modulo2,mt_data_inf.dst_modulo3,Min_Y,Max_Y,Min_U,Max_U,
+			Min_V,Max_V);
+	else
+		JPSDR_RGBConvert_RGB32toYV12_AVX_1(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.dst2,mt_data_inf.dst3,
+			w,h,Offset_Y,Offset_U,Offset_V,Tlookup,mt_data_inf.src_pitch1,mt_data_inf.src_modulo1,mt_data_inf.dst_pitch1,
+			mt_data_inf.dst_modulo1,mt_data_inf.dst_modulo2,mt_data_inf.dst_modulo3,Min_Y,Max_Y,Min_U,Max_U,
+			Min_V,Max_V);
+}
+
+
 void JPSDR_RGBConvert::YV24toRGB32(const void *src_y_,const void *src_u_,const void *src_v_, void *dst_,
 	const int32_t w,const int32_t h,ptrdiff_t src_pitch_y,ptrdiff_t src_pitch_u,ptrdiff_t src_pitch_v,ptrdiff_t dst_pitch)
 {
@@ -3484,13 +3539,20 @@ void JPSDR_RGBConvert::RGB32toYV24_MT(uint8_t thread_num)
 	const int32_t h = mt_data_inf.src_h ? mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min : mt_data_inf.dst_Y_h_max-mt_data_inf.dst_Y_h_min;
 	const int32_t w = mt_data_inf.src_w ? mt_data_inf.src_Y_w : mt_data_inf.dst_Y_w;
 
-	if (SSE2_Enable)
-		JPSDR_RGBConvert_RGB32toYV24_SSE(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.dst2,mt_data_inf.dst3,
+	if (AVX_Enable)
+		JPSDR_RGBConvert_RGB32toYV24_AVX(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.dst2,mt_data_inf.dst3,
 			w,h,Offset_Y,Offset_U,Offset_V,Tlookup,mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1,
 			mt_data_inf.dst_modulo2,mt_data_inf.dst_modulo3,Min_Y,Max_Y,Min_U,Max_U,Min_V,Max_V);
 	else
-		RGB32toYV24(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.dst2,mt_data_inf.dst3,w,h,mt_data_inf.src_pitch1,
-			mt_data_inf.dst_pitch1,mt_data_inf.dst_pitch2,mt_data_inf.dst_pitch3);
+	{
+		if (SSE2_Enable)
+			JPSDR_RGBConvert_RGB32toYV24_SSE(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.dst2,mt_data_inf.dst3,
+				w,h,Offset_Y,Offset_U,Offset_V,Tlookup,mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1,
+				mt_data_inf.dst_modulo2,mt_data_inf.dst_modulo3,Min_Y,Max_Y,Min_U,Max_U,Min_V,Max_V);
+		else
+			RGB32toYV24(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.dst2,mt_data_inf.dst3,w,h,mt_data_inf.src_pitch1,
+				mt_data_inf.dst_pitch1,mt_data_inf.dst_pitch2,mt_data_inf.dst_pitch3);
+	}
 }
 
 
@@ -3501,13 +3563,20 @@ void JPSDR_RGBConvert::RGB32toYV16_MT(uint8_t thread_num)
 	const int32_t h = mt_data_inf.src_h ? mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min : mt_data_inf.dst_Y_h_max-mt_data_inf.dst_Y_h_min;
 	const int32_t w = mt_data_inf.src_w ? mt_data_inf.src_Y_w : mt_data_inf.dst_Y_w;
 
-	if (SSE2_Enable)
-		JPSDR_RGBConvert_RGB32toYV16_SSE(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.dst2,mt_data_inf.dst3,
+	if (AVX_Enable)
+		JPSDR_RGBConvert_RGB32toYV16_AVX(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.dst2,mt_data_inf.dst3,
 			w,h,Offset_Y,Offset_U,Offset_V,Tlookup,mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1,
 			mt_data_inf.dst_modulo2,mt_data_inf.dst_modulo3,Min_Y,Max_Y,Min_U,Max_U,Min_V,Max_V);
 	else
-		RGB32toYV16(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.dst2,mt_data_inf.dst3,w,h,mt_data_inf.src_pitch1,
-			mt_data_inf.dst_pitch1,mt_data_inf.dst_pitch2,mt_data_inf.dst_pitch3);
+	{
+		if (SSE2_Enable)
+			JPSDR_RGBConvert_RGB32toYV16_SSE(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.dst2,mt_data_inf.dst3,
+				w,h,Offset_Y,Offset_U,Offset_V,Tlookup,mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1,
+				mt_data_inf.dst_modulo2,mt_data_inf.dst_modulo3,Min_Y,Max_Y,Min_U,Max_U,Min_V,Max_V);
+		else
+			RGB32toYV16(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.dst2,mt_data_inf.dst3,w,h,mt_data_inf.src_pitch1,
+				mt_data_inf.dst_pitch1,mt_data_inf.dst_pitch2,mt_data_inf.dst_pitch3);
+	}
 }
 
 
@@ -3518,11 +3587,17 @@ void JPSDR_RGBConvert::RGB32toYUY2_MT(uint8_t thread_num)
 	const int32_t h = mt_data_inf.src_h ? mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min : mt_data_inf.dst_Y_h_max-mt_data_inf.dst_Y_h_min;
 	const int32_t w = mt_data_inf.src_w ? mt_data_inf.src_Y_w : mt_data_inf.dst_Y_w;
 
-	if (SSE2_Enable)
-		JPSDR_RGBConvert_RGB32toYUYV_SSE(mt_data_inf.src1,mt_data_inf.dst1,w,h,Offset_Y,Offset_U,Offset_V,
+	if (AVX_Enable)
+		JPSDR_RGBConvert_RGB32toYUYV_AVX(mt_data_inf.src1,mt_data_inf.dst1,w,h,Offset_Y,Offset_U,Offset_V,
 			Tlookup,mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1,Min_Y,Max_Y,Min_U,Max_U,Min_V,Max_V);
 	else
-		RGB32toYUY2(mt_data_inf.src1,mt_data_inf.dst1,w,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+	{
+		if (SSE2_Enable)
+			JPSDR_RGBConvert_RGB32toYUYV_SSE(mt_data_inf.src1,mt_data_inf.dst1,w,h,Offset_Y,Offset_U,Offset_V,
+				Tlookup,mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1,Min_Y,Max_Y,Min_U,Max_U,Min_V,Max_V);
+		else
+			RGB32toYUY2(mt_data_inf.src1,mt_data_inf.dst1,w,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+	}
 }
 
 
@@ -3533,13 +3608,20 @@ void JPSDR_RGBConvert::YV24toRGB32_MT(uint8_t thread_num)
 	const int32_t h = mt_data_inf.src_h ? mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min : mt_data_inf.dst_Y_h_max-mt_data_inf.dst_Y_h_min;
 	const int32_t w = mt_data_inf.src_w ? mt_data_inf.src_Y_w : mt_data_inf.dst_Y_w;
 
-	if (SSE2_Enable)
-		JPSDR_RGBConvert_YV24toRGB32_SSE(mt_data_inf.src1,mt_data_inf.src2,mt_data_inf.src3,mt_data_inf.dst1,
+	if (AVX_Enable)
+		JPSDR_RGBConvert_YV24toRGB32_AVX(mt_data_inf.src1,mt_data_inf.src2,mt_data_inf.src3,mt_data_inf.dst1,
 			w,h,Offset_R,Offset_G,Offset_B,Tlookup,mt_data_inf.src_modulo1,mt_data_inf.src_modulo2,
 			mt_data_inf.src_modulo3,mt_data_inf.dst_modulo1);
 	else
-		YV24toRGB32(mt_data_inf.src1,mt_data_inf.src2,mt_data_inf.src3,mt_data_inf.dst1,w,h,mt_data_inf.src_pitch1,
-			mt_data_inf.src_pitch2,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch1);
+	{
+		if (SSE2_Enable)
+			JPSDR_RGBConvert_YV24toRGB32_SSE(mt_data_inf.src1,mt_data_inf.src2,mt_data_inf.src3,mt_data_inf.dst1,
+				w,h,Offset_R,Offset_G,Offset_B,Tlookup,mt_data_inf.src_modulo1,mt_data_inf.src_modulo2,
+				mt_data_inf.src_modulo3,mt_data_inf.dst_modulo1);
+		else
+			YV24toRGB32(mt_data_inf.src1,mt_data_inf.src2,mt_data_inf.src3,mt_data_inf.dst1,w,h,mt_data_inf.src_pitch1,
+				mt_data_inf.src_pitch2,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch1);
+	}
 }
 
 
@@ -3557,6 +3639,7 @@ void JPSDR_RGBConvert::StaticThreadpool(void *ptr)
 		case 4 : ptrClass->YV24toRGB32_MT(data->thread_Id); break;
 		case 5 : ptrClass->RGB32toYV12_MT(data->thread_Id); break;
 		case 6 : ptrClass->RGB32toYV12_SSE_MT(data->thread_Id); break;
+		case 7 : ptrClass->RGB32toYV12_AVX_MT(data->thread_Id); break;
 		default : ;
 	}
 }
@@ -3756,8 +3839,12 @@ void JPSDR_RGBConvert::Run()
 						case 1 : f_proc=2; break;
 						case 2 : f_proc=3; break;
 						case 3 : 
-							if (SSE2_Enable) f_proc=6;
-							else f_proc=5;
+							if (AVX_Enable) f_proc=7;
+							else
+							{
+								if (SSE2_Enable) f_proc=6;
+								else f_proc=5;
+							}
 							break;
 					}
 					break;
@@ -3786,11 +3873,18 @@ void JPSDR_RGBConvert::Run()
 					case 1 : RGB32toYV16_MT(0); break;
 					case 2 : RGB32toYUY2_MT(0); break;
 					case 3 :
-						if (SSE2_Enable)
-							JPSDR_RGBConvert_RGB32toYV12_SSE(idata.src_plane0,idata.dst_plane0,idata.dst_plane1,idata.dst_plane2,w,h,
+						if (AVX_Enable)
+							JPSDR_RGBConvert_RGB32toYV12_AVX(idata.src_plane0,idata.dst_plane0,idata.dst_plane1,idata.dst_plane2,w,h,
 									Offset_Y,Offset_U,Offset_V,Tlookup,idata.src_pitch0,idata.src_modulo0+d_src0,idata.dst_pitch0,idata.dst_modulo0+d_dst0,
 									idata.dst_modulo1+d_dst1,idata.dst_modulo2+d_dst2,Min_Y,Max_Y,Min_U,Max_U,Min_V,Max_V);
-						else RGB32toYV12_MT(0);
+						else
+						{
+							if (SSE2_Enable)
+								JPSDR_RGBConvert_RGB32toYV12_SSE(idata.src_plane0,idata.dst_plane0,idata.dst_plane1,idata.dst_plane2,w,h,
+										Offset_Y,Offset_U,Offset_V,Tlookup,idata.src_pitch0,idata.src_modulo0+d_src0,idata.dst_pitch0,idata.dst_modulo0+d_dst0,
+										idata.dst_modulo1+d_dst1,idata.dst_modulo2+d_dst2,Min_Y,Max_Y,Min_U,Max_U,Min_V,Max_V);
+							else RGB32toYV12_MT(0);
+						}
 						break;
 				}
 				break;
@@ -3826,4 +3920,4 @@ void JPSDR_RGBConvert::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_RGBConvert=
-VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v2.2.6","RGB <-> YCbCr convertion with color matrix option.\n[ASM][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v2.3.0","RGB <-> YCbCr convertion with color matrix option.\n[ASM][SSE2] Optimised.");

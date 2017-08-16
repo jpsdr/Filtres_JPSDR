@@ -126,6 +126,127 @@ Suite2_2:
 JPSDR_Saturation_SSE2_RGB24 endp
 
 
+JPSDR_Saturation_AVX_RGB24 proc src:dword,dst:dword,w:dword,h:dword,offset_R:word,offset_G:word,
+	offset_B:word,lookup:dword,src_modulo:dword,dst_modulo:dword
+
+	public JPSDR_Saturation_AVX_RGB24
+
+	local i:dword
+
+	push esi
+	push edi
+	push ebx
+
+	xor eax,eax
+	vpxor xmm2,xmm2,xmm2
+	vpxor xmm1,xmm1,xmm1
+	vpxor xmm0,xmm0,xmm0
+	movzx eax,offset_R
+	vpinsrw xmm1,xmm1,eax,2
+	vpinsrw xmm1,xmm1,eax,6	
+	movzx eax,offset_G
+	vpinsrw xmm1,xmm1,eax,1
+	vpinsrw xmm1,xmm1,eax,5
+	movzx eax,offset_B
+	vpinsrw xmm1,xmm1,eax,0
+	vpinsrw xmm1,xmm1,eax,4
+	mov edi,dst
+	mov esi,src
+
+Boucle0_2_AVX:
+	mov eax,w
+	shr eax,1
+	jz Suite1_2_AVX
+	mov i,eax
+Boucle1_2_AVX:
+	movzx edx,byte ptr[esi]
+	movzx ecx,byte ptr[esi+1]
+	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,2
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,1
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,0
+	mov esi,src
+	movzx edx,byte ptr[esi+4]
+	movzx ecx,byte ptr[esi+5]
+	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,6
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,5
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,4
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,4
+	vpackuswb xmm0,xmm0,xmm2
+	vmovq qword ptr[edi],xmm0
+	add src,8
+	add edi,8
+	mov esi,src
+	dec i
+	jnz Boucle1_2_AVX
+	
+Suite1_2_AVX:	
+	mov eax,w
+	and eax,1
+	jz short Suite2_2_AVX
+	
+	movzx edx,byte ptr[esi]
+	movzx ecx,byte ptr[esi+1]
+	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,2
+	movzx eax,word ptr[esi+2*ebx+1536]
+	add ax,word ptr[esi+2*ecx+2048]
+	add ax,word ptr[esi+2*edx+2560]
+	vpinsrw xmm0,xmm0,eax,1
+	movzx eax,word ptr[esi+2*ebx+3072]
+	add ax,word ptr[esi+2*ecx+3584]
+	add ax,word ptr[esi+2*edx+4096]
+	vpinsrw xmm0,xmm0,eax,0
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,4
+	vpackuswb xmm0,xmm0,xmm2
+	vmovd dword ptr[edi],xmm0
+	add src,4
+	add edi,4
+	mov esi,src
+	
+Suite2_2_AVX:	
+	add esi,src_modulo
+	add edi,dst_modulo
+	mov src,esi
+	dec h
+	jnz Boucle0_2_AVX
+
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_Saturation_AVX_RGB24 endp
+
+
 JPSDR_Saturation_YUYV proc src:dword,dst:dword,w:dword,h:dword,lookup:dword,src_modulo:dword,dst_modulo:dword
 
 	public JPSDR_Saturation_YUYV
@@ -532,6 +653,109 @@ SuiteY2_2:
 
 JPSDR_Saturation_Y_SSE2_RGB24 endp
 
+
+JPSDR_Saturation_Y_AVX_RGB24 proc src:dword,dst:dword,w:dword,h:dword,offset_Y:word,lookup:dword,
+	src_modulo:dword,dst_modulo:dword
+
+	public JPSDR_Saturation_Y_AVX_RGB24
+
+	local i:dword
+
+	push esi
+	push edi
+	push ebx
+
+	xor eax,eax
+	xor ebx,ebx
+	xor ecx,ecx
+	xor edx,edx
+	vpxor xmm2,xmm2,xmm2
+	vpxor xmm1,xmm1,xmm1
+	vpxor xmm0,xmm0,xmm0
+	movzx eax,offset_Y
+	vpinsrw xmm1,xmm1,eax,6
+	vpinsrw xmm1,xmm1,eax,5
+	vpinsrw xmm1,xmm1,eax,4		
+	vpinsrw xmm1,xmm1,eax,2
+	vpinsrw xmm1,xmm1,eax,1
+	vpinsrw xmm1,xmm1,eax,0	
+	mov edi,dst
+	mov esi,src
+
+BoucleY_0_2_AVX:
+	mov eax,w
+	shr eax,1
+	jz SuiteY1_2_AVX
+	mov i,eax
+BoucleY_1_2_AVX:
+	movzx edx,byte ptr[esi]
+	movzx ecx,byte ptr[esi+1]
+	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,2
+	vpinsrw xmm0,xmm0,eax,1
+	vpinsrw xmm0,xmm0,eax,0
+	mov esi,src
+	movzx edx,byte ptr[esi+4]
+	movzx ecx,byte ptr[esi+5]
+	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,6
+	vpinsrw xmm0,xmm0,eax,5
+	vpinsrw xmm0,xmm0,eax,4
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,4
+	vpackuswb xmm0,xmm0,xmm2
+	vmovq qword ptr[edi],xmm0
+	add src,8
+	add edi,8
+	mov esi,src
+	dec i
+	jnz BoucleY_1_2_AVX
+	
+SuiteY1_2_AVX:
+	mov eax,w
+	and eax,1
+	jz short SuiteY2_2_AVX
+
+	movzx edx,byte ptr[esi]
+	movzx ecx,byte ptr[esi+1]
+	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
+	mov esi,lookup
+	movzx eax,word ptr[esi+2*ebx]
+	add ax,word ptr[esi+2*ecx+512]
+	add ax,word ptr[esi+2*edx+1024]
+	vpinsrw xmm0,xmm0,eax,2
+	vpinsrw xmm0,xmm0,eax,1
+	vpinsrw xmm0,xmm0,eax,0
+	vpaddsw xmm0,xmm0,xmm1
+	vpsraw xmm0,xmm0,4
+	vpackuswb xmm0,xmm0,xmm2
+	vmovd dword ptr[edi],xmm0
+	add src,4
+	add edi,4
+	mov esi,src
+	
+SuiteY2_2_AVX:	
+	add esi,src_modulo
+	add edi,dst_modulo
+	mov src,esi
+	dec h
+	jnz BoucleY_0_2_AVX
+
+	pop ebx
+	pop edi
+	pop esi
+
+	ret
+
+JPSDR_Saturation_Y_AVX_RGB24 endp
 
 
 JPSDR_Saturation_Non_SSE_RGB24 proc src:dword,dst:dword,w:dword,h:dword,offset_R:word,offset_G:word,

@@ -30,6 +30,9 @@ extern "C" void JPSDR_Saturation_Hue_Planar_YUV(const void *src_U,const void *sr
 	ptrdiff_t src_U_modulo,ptrdiff_t src_V_modulo,ptrdiff_t dst_U_modulo,
 	ptrdiff_t dst_V_modulo);
 
+extern "C" void JPSDR_Saturation_AVX_RGB24(const void *src,void *dst,int32_t w,int32_t h,
+	int16_t offset_R,int16_t offset_G,int16_t offset_B,int16_t *lookup,
+	ptrdiff_t src_modulo,ptrdiff_t dst_modulo);
 extern "C" void JPSDR_Saturation_SSE2_RGB24(const void *src,void *dst,int32_t w,int32_t h,
 	int16_t offset_R,int16_t offset_G,int16_t offset_B,int16_t *lookup,
 	ptrdiff_t src_modulo,ptrdiff_t dst_modulo);
@@ -43,6 +46,9 @@ extern "C" void JPSDR_Saturation_Y_YUYV(const void *src,void *dst,int32_t w,int3
 extern "C" void JPSDR_Saturation_Y_UYVY(const void *src,void *dst,int32_t w,int32_t h,
 	uint8_t offset_U,uint8_t offset_V,int16_t *lookup,
 	ptrdiff_t src_modulo,ptrdiff_t dst_modulo);
+
+extern "C" void JPSDR_Saturation_Y_AVX_RGB24(const void *src,void *dst,int32_t w,int32_t h,
+	int16_t offset_Y,int16_t *lookup,ptrdiff_t src_modulo,ptrdiff_t dst_modulo);
 extern "C" void JPSDR_Saturation_Y_SSE2_RGB24(const void *src,void *dst,int32_t w,int32_t h,
 	int16_t offset_Y,int16_t *lookup,ptrdiff_t src_modulo,ptrdiff_t dst_modulo);
 extern "C" void JPSDR_Saturation_Y_Non_SSE_RGB24(const void *src,void *dst,int32_t w,int32_t h,
@@ -137,6 +143,7 @@ public:
 	JPSDR_Saturation(){}
 	JPSDR_Saturation(const JPSDR_Saturation& a)
 	{
+		AVX_Enable = a.AVX_Enable;
 		SSE2_Enable = a.SSE2_Enable;
 		mData=a.mData;
 		InternalInit();
@@ -157,7 +164,7 @@ public:
 protected:
 	Image_Data image_data;
 	int16_t lookup[2304],offset_R,offset_G,offset_B,offset_Y,offset_U,offset_V;
-	bool SSE_Integer_Enable,SSE2_Enable;
+	bool SSE2_Enable,AVX_Enable;
 	uint16_t lookup_hue_CbCr[65536];
 
 	Public_MT_Data_Thread MT_Thread[MAX_MT_THREADS];
@@ -398,6 +405,7 @@ bool JPSDR_SaturationDialog::OnCommand(int cmd)
 
 bool JPSDR_Saturation::Init()
 {
+	AVX_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_AVX)!=0);
 	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
 	InternalInit();
 
@@ -1309,14 +1317,21 @@ void JPSDR_Saturation::Saturation_RGB24(uint8_t thread_num)
 {
 	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
 
-	if (SSE2_Enable)
-		JPSDR_Saturation_SSE2_RGB24(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.src_Y_w,
+	if (AVX_Enable)
+		JPSDR_Saturation_AVX_RGB24(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.src_Y_w,
 			mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,offset_R,offset_G,offset_B,lookup,
 			mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1);
 	else
-		JPSDR_Saturation_Non_SSE_RGB24(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.src_Y_w,
-			mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,offset_R,offset_G,offset_B,lookup,
-			mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1);
+	{
+		if (SSE2_Enable)
+			JPSDR_Saturation_SSE2_RGB24(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.src_Y_w,
+				mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,offset_R,offset_G,offset_B,lookup,
+				mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1);
+		else
+			JPSDR_Saturation_Non_SSE_RGB24(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.src_Y_w,
+				mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,offset_R,offset_G,offset_B,lookup,
+				mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1);
+	}
 }
 
 
@@ -1346,14 +1361,21 @@ void JPSDR_Saturation::Saturation_Y_RGB24(uint8_t thread_num)
 {
 	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
 
-	if (SSE2_Enable)
-		JPSDR_Saturation_Y_SSE2_RGB24(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.src_Y_w,
+	if (AVX_Enable)
+		JPSDR_Saturation_Y_AVX_RGB24(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.src_Y_w,
 			mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,offset_Y,lookup,mt_data_inf.src_modulo1,
 			mt_data_inf.dst_modulo1);
 	else
-		JPSDR_Saturation_Y_Non_SSE_RGB24(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.src_Y_w,
-			mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,offset_Y,lookup,mt_data_inf.src_modulo1,
-			mt_data_inf.dst_modulo1);
+	{
+		if (SSE2_Enable)
+			JPSDR_Saturation_Y_SSE2_RGB24(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.src_Y_w,
+				mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,offset_Y,lookup,mt_data_inf.src_modulo1,
+				mt_data_inf.dst_modulo1);
+		else
+			JPSDR_Saturation_Y_Non_SSE_RGB24(mt_data_inf.src1,mt_data_inf.dst1,mt_data_inf.src_Y_w,
+				mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,offset_Y,lookup,mt_data_inf.src_modulo1,
+				mt_data_inf.dst_modulo1);
+	}
 }
 
 
@@ -3487,4 +3509,4 @@ void JPSDR_Saturation::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptV
 
 		
 extern VDXFilterDefinition filterDef_JPSDR_Saturation=
-VDXVideoFilterDefinition<JPSDR_Saturation>("JPSDR","Sat/Hue/Bright/Contr v4.2.6","[ASM][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Saturation>("JPSDR","Sat/Hue/Bright/Contr v4.3.0","[SSE2][AVX] Optimised.");
