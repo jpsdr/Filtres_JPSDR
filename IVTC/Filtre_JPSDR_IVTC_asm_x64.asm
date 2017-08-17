@@ -393,6 +393,223 @@ Loop_A_3b:
 JPSDR_IVTC_Histogramme_DeltaPicture_Motion_Map_SSE2_RGB32 endp
 
 
+;JPSDR_IVTC_Histogramme_DeltaPicture_Motion_Map_AVX_RGB32 proc src:dword,map:dword,dst:dword,histo:dword,
+;	repart:dword,w:dword,h:dword,src_pitch:dword,scr_modulo:dword,dst_pitch:dword,dst_modulo:dword,w_map:dword,error_motion_map:dword
+; src = rcx
+; map = rdx
+; dst = r8
+; histo = r9
+
+JPSDR_IVTC_Histogramme_DeltaPicture_Motion_Map_AVX_RGB32 proc public frame
+
+repart equ qword ptr[rbp+48]
+w equ dword ptr[rbp+56]
+h equ dword ptr[rbp+64]
+src_pitch equ qword ptr[rbp+72]
+src_modulo equ qword ptr[rbp+80]
+dst_pitch equ qword ptr[rbp+88]
+dst_modulo equ qword ptr[rbp+96]
+w_map equ dword ptr[rbp+104]
+error_motion_map equ qword ptr[rbp+112]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	push r15
+	.pushreg r15
+	sub rsp,32
+	.allocstack 32
+	vmovdqu XMMWORD ptr[rsp],xmm6
+	.savexmm128 xmm6,0
+	vmovdqu XMMWORD ptr[rsp+16],xmm7
+	.savexmm128 xmm7,16	
+	.endprolog
+
+	cld
+	xor rax,rax
+	mov rbx,rdx				; rbx = map
+	mov rsi,rcx				; rsi = src
+	mov rdx,r9				; rdx = histo
+	xor rcx,rcx
+		
+	mov rdi,r9
+	mov ecx,128
+	rep stosq
+	
+	mov rdi,r8				;rdi = dst
+	xor r8,r8
+	xor r9,r9
+	xor r15,r15
+	mov r8d,w
+	mov r9d,h
+	mov r10,4
+	mov r11,dst_pitch
+	
+	xor r12,r12
+	xor r13,r13
+	mov r12d,w_map
+	mov r13d,r8d
+	shl r12,1
+	shl r13,2
+	sub r12,r13	
+	
+	mov ecx,w_map
+	mov r13,16
+	mov r14,src_pitch
+
+	vpxor xmm1,xmm1,xmm1	; return value (s)
+	vpxor xmm2,xmm2,xmm2	; error_motion_map
+	vpxor xmm3,xmm3,xmm3
+
+Loop_A_1b_AVX:
+	mov r15d,r8d
+Loop_A_2b_AVX:
+	vmovd xmm5,dword ptr[rbx]
+	vpunpcklbw xmm5,xmm5,xmm3
+	vpunpcklwd xmm5,xmm5,xmm3
+
+	vmovdqa xmm0,XMMWORD ptr[rsi]
+	vpcmpgtd xmm5,xmm5,xmm3
+	vpsadbw xmm4,xmm0,xmm3
+	vpand xmm5,xmm5,xmm0
+	vpunpckhbw xmm7,xmm0,xmm3
+	vmovdqa xmm6,xmm5
+	vpaddd xmm1,xmm1,xmm4
+	vpsadbw xmm5,xmm5,xmm3
+	vpunpcklbw xmm0,xmm0,xmm3
+	vpaddd xmm2,xmm2,xmm5
+	vpextrw eax,xmm0,0
+	inc dword ptr[rdx+4*rax]
+	vpextrw eax,xmm0,1
+	inc dword ptr [rdx+4*rax]
+	vpextrw eax,xmm0,2
+	inc dword ptr[rdx+4*rax]
+	vpextrw eax,xmm0,4
+	inc dword ptr[rdx+4*rax]
+	vpextrw eax,xmm0,5
+	inc dword ptr [rdx+4*rax]
+	vpextrw eax,xmm0,6
+	inc dword ptr[rdx+4*rax]
+	vpextrw eax,xmm7,0
+	inc dword ptr[rdx+4*rax]
+	vpextrw eax,xmm7,1
+	inc dword ptr [rdx+4*rax]
+	vpextrw eax,xmm7,2
+	inc dword ptr[rdx+4*rax]
+	vpextrw eax,xmm7,4
+	inc dword ptr[rdx+4*rax]
+	vpextrw eax,xmm7,5
+	inc dword ptr [rdx+4*rax]
+	vpextrw eax,xmm7,6
+	inc dword ptr[rdx+4*rax]
+	
+	vmovdqa XMMWORD ptr[rdi],xmm6
+	
+	vmovd xmm5,dword ptr[rbx+rcx]
+	vpunpcklbw xmm5,xmm5,xmm3
+	vpunpcklwd xmm5,xmm5,xmm3	
+
+	vmovdqa xmm0,XMMWORD ptr[rsi+r14]
+	vpcmpgtd xmm5,xmm5,xmm3
+	vpand xmm5,xmm5,xmm0
+	vpunpckhbw xmm7,xmm0,xmm3
+	vmovdqa xmm6,xmm5
+	vpsadbw xmm5,xmm5,xmm3
+	vpunpcklbw xmm0,xmm0,xmm3
+	vpaddd xmm2,xmm2,xmm5
+	vpextrw eax,xmm0,0
+	inc dword ptr[rdx+4*rax]
+	vpextrw eax,xmm0,1
+	inc dword ptr [rdx+4*rax]
+	vpextrw eax,xmm0,2
+	inc dword ptr[rdx+4*rax]
+	vpextrw eax,xmm0,4
+	inc dword ptr[rdx+4*rax]
+	vpextrw eax,xmm0,5
+	inc dword ptr [rdx+4*rax]
+	vpextrw eax,xmm0,6
+	inc dword ptr[rdx+4*rax]
+	vpextrw eax,xmm7,0
+	inc dword ptr[rdx+4*rax]
+	vpextrw eax,xmm7,1
+	inc dword ptr [rdx+4*rax]
+	vpextrw eax,xmm7,2
+	inc dword ptr[rdx+4*rax]
+	vpextrw eax,xmm7,4
+	inc dword ptr[rdx+4*rax]
+	vpextrw eax,xmm7,5
+	inc dword ptr [rdx+4*rax]
+	vpextrw eax,xmm7,6
+	inc dword ptr[rdx+4*rax]
+	
+	vmovdqa XMMWORD ptr[rdi+r11],xmm6
+
+	add rdi,r13
+	add rsi,r13
+	add rbx,r10
+	dec r15
+	jnz Loop_A_2b_AVX
+	add rdi,dst_modulo
+	add rbx,r12
+	add rsi,r14
+	add rdi,r11
+	add rsi,src_modulo
+	dec r9d
+	jnz Loop_A_1b_AVX
+
+	mov rsi,rdx
+	mov rdi,repart
+	add rsi,1020
+	add rdi,1020
+	xor rbx,rbx
+	std
+	mov ecx,256
+Loop_A_3b_AVX:
+	lodsd
+	add ebx,eax
+	mov eax,ebx
+	stosd
+	loop Loop_A_3b_AVX
+	cld
+
+	vmovhlps xmm0,xmm0,xmm1
+	vmovhlps xmm4,xmm4,xmm2
+	vpaddd xmm1,xmm1,xmm0
+	vpaddd xmm2,xmm2,xmm4
+	
+	mov rdi,error_motion_map
+	vmovd dword ptr[rdi],xmm2
+	vmovd eax,xmm1
+
+	vmovdqu xmm7,XMMWORD ptr[rsp+16]
+	vmovdqu xmm6,XMMWORD ptr[rsp]	
+	add rsp,32	
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+
+	ret
+
+JPSDR_IVTC_Histogramme_DeltaPicture_Motion_Map_AVX_RGB32 endp
+
+
 ;JPSDR_IVTC_DeltaPicture_Motion_Map_SSE_RGB32 proc src:dword,map:dword,w:dword,h:dword,w_map:dword,
 ;	src_pitch:dword,src_modulo:dword,error_motion_map:dword
 ; src = rcx
@@ -586,6 +803,110 @@ Loop_A1_2:
 	ret
 
 JPSDR_IVTC_DeltaPicture_Motion_Map_SSE2_RGB32 endp
+
+
+;JPSDR_IVTC_DeltaPicture_Motion_Map_AVX_RGB32 proc src:dword,map:dword,w:dword,h:dword,w_map:dword,
+;	src_pitch:dword,src_modulo:dword,error_motion_map:dword
+; src = rcx
+; map = rdx
+; w = r8d
+; h = r9d
+
+JPSDR_IVTC_DeltaPicture_Motion_Map_AVX_RGB32 proc public frame
+
+w_map equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+src_modulo equ qword ptr[rbp+64]
+error_motion_map equ qword ptr[rbp+72]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	.endprolog
+
+	mov rsi,rcx
+	mov rdi,rdx
+	mov r10,16
+	mov r12,4
+	
+	xor rbx,rbx
+	xor rax,rax
+	xor rdx,rdx
+	mov eax,w_map
+	mov edx,r8d
+	shl rax,1
+	shl rdx,2
+	sub rax,rdx	
+	
+	mov ebx,w_map
+	mov rdx,src_pitch
+	mov r11,src_modulo
+	vpxor xmm1,xmm1,xmm1
+	vpxor xmm2,xmm2,xmm2
+	vpxor xmm3,xmm3,xmm3
+	
+	xor rcx,rcx
+Loop_A1_1_AVX:
+	mov ecx,r8d
+Loop_A1_2_AVX:
+	vmovd xmm4,dword ptr[rdi]
+	vpunpcklbw xmm4,xmm4,xmm3
+	vpunpcklwd xmm4,xmm4,xmm3
+	
+	vmovdqa xmm0,XMMWORD ptr[rsi]
+	vpcmpgtd xmm4,xmm4,xmm3
+	vpand xmm4,xmm4,xmm0
+	vpsadbw xmm0,xmm0,xmm3
+	vpsadbw xmm4,xmm4,xmm3
+	vpaddd xmm1,xmm1,xmm0
+	vpaddd xmm2,xmm2,xmm4
+	
+	vmovd xmm4,dword ptr[rdi+rbx]
+	vpunpcklbw xmm4,xmm4,xmm3
+	vpunpcklwd xmm4,xmm4,xmm3
+	
+	vmovdqa xmm0,XMMWORD ptr[rsi+rdx]
+	vpcmpgtd xmm4,xmm4,xmm3
+	vpand xmm4,xmm4,xmm0
+	vpsadbw xmm4,xmm4,xmm3
+	vpaddd xmm2,xmm2,xmm4
+	
+	add rsi,r10
+	add rdi,r12
+	loop Loop_A1_2_AVX
+	add rsi,r11
+	add rdi,rax
+	add rsi,rdx
+	dec r9d
+	jnz short Loop_A1_1_AVX
+
+	mov rdi,error_motion_map
+	
+	vmovhlps xmm4,xmm4,xmm2
+	vmovhlps xmm0,xmm0,xmm1
+	vpaddd xmm2,xmm2,xmm4
+	vpaddd xmm1,xmm1,xmm0	
+	
+	vmovd dword ptr[rdi],xmm2
+	vmovd eax,xmm1
+	
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_DeltaPicture_Motion_Map_AVX_RGB32 endp
 
 
 ;JPSDR_IVTC_Motion_Map_SSE_RGB32 proc src1:dword,src2:dword,buffer:dword,dst:dword,w:dword,h:dword,
@@ -913,8 +1234,8 @@ Loop_A0_2:
 	movdqa xmm7,xmm0
 	movdqa xmm3,xmm1
 	movdqa xmm4,xmm2
-	punpcklbw xmm3,xmm5
 	punpcklbw xmm7,xmm5
+	punpcklbw xmm3,xmm5
 	punpcklbw xmm4,xmm5
 	pcmpgtw xmm7,xmm3
 	pcmpgtw xmm4,xmm3
@@ -952,13 +1273,13 @@ Loop_A0_2:
 	
 	movq xmm0,qword ptr[rdi+r12]			;Ici : xmm0=src4, xmm1=src2, xmm2=src3	
 	movdqa xmm7,xmm2
-	movdqa xmm3,xmm0
 	movdqa xmm4,xmm1
+	movdqa xmm3,xmm0
 	punpcklbw xmm7,xmm5
-	punpcklbw xmm3,xmm5
 	punpcklbw xmm4,xmm5
-	pcmpgtw xmm3,xmm7
+	punpcklbw xmm3,xmm5
 	pcmpgtw xmm4,xmm7
+	pcmpgtw xmm3,xmm7
 	pxor xmm4,xmm3				;xmm4 = FF si produit est négatif
 	movdqa xmm3,xmm1
 	pxor xmm4,xmm9              ;xmm4 = FF si produit est positif		
@@ -1053,6 +1374,241 @@ Loop_A0_3:
 	ret
 
 JPSDR_IVTC_Motion_Map_SSE2_RGB32 endp
+
+
+;JPSDR_IVTC_Motion_Map_AVX_RGB32 proc src1:dword,src2:dword,buffer:dword,dst:dword,w:dword,h:dword,
+;	pitch:dword,modulo:dword,thr:dword,w_map:dword
+; src1 = rcx
+; src2 = rdx
+; buffer = r8
+; dst = r9
+
+JPSDR_IVTC_Motion_Map_AVX_RGB32 proc public frame
+
+w equ dword ptr[rbp+48]
+h equ dword ptr[rbp+56]
+pitch equ qword ptr[rbp+64]
+modulo equ qword ptr[rbp+72]
+pitch_buffer equ qword ptr[rbp+80]
+modulo_buffer equ qword ptr[rbp+88]
+thr equ dword ptr[rbp+96]
+w_map equ dword ptr[rbp+104]
+
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	push r15
+	.pushreg r15
+	sub rsp,80
+	.allocstack 80
+	vmovdqu XMMWORD ptr[rsp],xmm6
+	.savexmm128 xmm6,0
+	vmovdqu XMMWORD ptr[rsp+16],xmm7
+	.savexmm128 xmm7,16	
+	vmovdqu XMMWORD ptr[rsp+32],xmm8
+	.savexmm128 xmm8,32
+	vmovdqu XMMWORD ptr[rsp+48],xmm9
+	.savexmm128 xmm9,48
+	vmovdqu XMMWORD ptr[rsp+64],xmm10
+	.savexmm128 xmm10,64
+	.endprolog	
+	
+	mov rsi,rcx
+	mov r13,pitch_buffer
+	xor rcx,rcx
+	
+	mov rdi,r9
+	xor rax,rax
+	cld
+	mov ecx,w_map
+	shr ecx,2
+	rep stosd
+	
+	mov rcx,r8
+	xor r8,r8
+	xor r9,r9
+	mov r8d,w
+	mov r9d,h
+	xor r14,r14
+	mov r10,8
+	mov r11,2	
+	
+	mov rbx,rdi
+	mov rdi,rdx
+	
+	xor rdx,rdx
+	mov edx,w_map
+	
+	mov r15,rdx
+	mov rax,r8
+	shl r15,1
+	shl rax,1
+	sub r15,rax	
+	
+	mov eax,thr
+	vpxor xmm5,xmm5,xmm5
+	vmovd xmm6,eax
+	vpinsrw xmm6,xmm6,eax,2
+	vpinsrw xmm6,xmm6,eax,3
+	vpunpcklbw xmm6,xmm6,xmm5
+	
+	vmovdqa xmm8,XMMWORD ptr ub_FC
+	vmovdqa xmm9,XMMWORD ptr ub_FF
+	vmovdqa xmm10,XMMWORD ptr filtre_1	
+
+	mov r12,pitch
+	shl r12,1
+	
+Loop_A0_1_AVX:
+	mov r14d,r8d
+Loop_A0_2_AVX:
+	vmovq xmm0,qword ptr[rsi]				;xmm0=src1
+	vmovq xmm1,qword ptr[rdi]				;xmm1=src2
+	vmovq xmm2,qword ptr[rsi+r12]			;xmm2=src3
+	vpunpcklbw xmm7,xmm0,xmm5
+	vpunpcklbw xmm3,xmm1,xmm5
+	vpunpcklbw xmm4,xmm2,xmm5
+	vpcmpgtw xmm7,xmm7,xmm3
+	vpcmpgtw xmm4,xmm4,xmm3
+	vpxor xmm7,xmm7,xmm4				;xmm7 = FF si produit est négatif
+	vpxor xmm7,xmm7,xmm9              ;xmm7 = FF si produit est positif		
+	vpmaxub xmm3,xmm0,xmm1
+	vpminub xmm0,xmm0,xmm1
+	vpsubb xmm3,xmm3,xmm0				; xmm3=abs(src1-src2)
+	
+	vpminub xmm0,xmm2,xmm1
+	vpmaxub xmm4,xmm2,xmm1
+	vpsubb xmm4,xmm4,xmm0				; xmm4=abs(sr3-src2)
+	vpminub xmm4,xmm4,xmm3				; xmm4 = min(abs(sr3-src2),abs(src1-src2))
+	vpunpcklbw xmm4,xmm4,xmm5
+	vpcmpgtw xmm4,xmm4,xmm6				; xmm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	vpand xmm4,xmm4,xmm7				; xmm4=(FF) si min>Threshold & (src2-scr1)*(src2-src3)>0
+	vpacksswb xmm4,xmm4,xmm5
+	vpand xmm4,xmm4,xmm10
+	vmovd eax,xmm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+	vpsrlq xmm4,xmm4,32
+	mov byte ptr[rbx],al
+
+	vmovd eax,xmm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al	
+	vpand xmm3,xmm3,xmm8				; Filtre par 0xFC, pour lever le bruit
+	mov byte ptr[rbx+1],al
+	
+	vmovq qword ptr[rcx],xmm3
+	
+	vmovq xmm0,qword ptr[rdi+r12]			;Ici : xmm0=src4, xmm1=src2, xmm2=src3	
+	vpunpcklbw xmm7,xmm2,xmm5
+	vpunpcklbw xmm4,xmm1,xmm5
+	vpunpcklbw xmm3,xmm0,xmm5
+	vpcmpgtw xmm4,xmm4,xmm7
+	vpcmpgtw xmm3,xmm3,xmm7
+	vpxor xmm4,xmm4,xmm3				;xmm4 = FF si produit est négatif
+	vpxor xmm4,xmm4,xmm9              ;xmm4 = FF si produit est positif		
+	vpmaxub xmm3,xmm1,xmm2
+	vpminub xmm1,xmm1,xmm2
+	vpsubb xmm3,xmm3,xmm1				; xmm3=abs(src2-src3)
+	
+	vpminub xmm1,xmm0,xmm2
+	vpmaxub xmm0,xmm0,xmm2
+	vpsubb xmm0,xmm0,xmm1				; xmm0=abs(sr4-src3)
+	vpminub xmm0,xmm0,xmm3				; xmm0 = min(abs(sr3-src2),abs(src1-src2))
+	vpunpcklbw xmm0,xmm0,xmm5
+	vpcmpgtw xmm0,xmm0,xmm6				; xmm0=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	vpand xmm0,xmm0,xmm4
+	vpacksswb xmm0,xmm0,xmm5
+	vpand xmm0,xmm0,xmm10
+	
+	vmovd eax,xmm0
+	or eax,eax					; si aucun ne satisfait les 2...
+	setnz al
+	vpsrlq xmm0,xmm0,32
+	mov byte ptr[rbx+rdx],al
+	
+	vmovd eax,xmm0
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al		
+	vpand xmm3,xmm3,xmm8	
+	mov byte ptr[rbx+rdx+1],al
+	
+	vmovq qword ptr[rcx+r13],xmm3	
+
+	add rsi,r10
+	add rdi,r10
+	add rcx,r10
+	add rbx,r11
+
+	dec r14d
+	jnz Loop_A0_2_AVX
+
+	add rcx,r13
+	add rbx,r15
+	add rcx,modulo_buffer
+	add rsi,modulo
+	add rdi,modulo
+	add rsi,pitch
+	add rdi,pitch
+
+	dec r9d
+	jnz Loop_A0_1_AVX
+
+	mov r15,rcx
+	mov rdx,rcx
+	xor rax,rax
+	add rdx,r13
+	mov ecx,r8d
+Loop_A0_3_AVX:
+	vmovq xmm0,qword ptr[rsi+8*rax]
+	vmovq xmm1,qword ptr[rdi+8*rax]
+	vpmaxub xmm2,xmm0,xmm1
+	vpminub xmm0,xmm0,xmm1
+	vpsubb xmm2,xmm2,xmm0
+	vpand xmm2,xmm2,xmm8
+	vmovq qword ptr[r15+8*rax],xmm2
+	vmovq qword ptr[rdx+8*rax],xmm2
+	inc rax
+	loop Loop_A0_3_AVX
+
+	xor rcx,rcx
+	mov ecx,w_map
+	xor rax,rax
+	shr ecx,2
+	mov rdi,rbx
+	rep stosd
+
+	vmovdqu xmm10,XMMWORD ptr[rsp+64]
+	vmovdqu xmm9,XMMWORD ptr[rsp+48]
+	vmovdqu xmm8,XMMWORD ptr[rsp+32]
+	vmovdqu xmm7,XMMWORD ptr[rsp+16]
+	vmovdqu xmm6,XMMWORD ptr[rsp]
+	add rsp,80	
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Motion_Map_AVX_RGB32 endp
 
 
 ;JPSDR_IVTC_Motion_Map_SSE_RGB32_a proc src1:dword,src2:dword,buffer:dword,dst:dword,w:dword,h:dword,
@@ -1412,8 +1968,8 @@ Loop_A0_2_1:
 	movdqa xmm7,xmm0
 	movdqa xmm3,xmm1
 	movdqa xmm4,xmm2
-	punpcklbw xmm3,xmm5
 	punpcklbw xmm7,xmm5
+	punpcklbw xmm3,xmm5
 	punpcklbw xmm4,xmm5
 	pcmpgtw xmm7,xmm3
 	pcmpgtw xmm4,xmm3
@@ -1451,13 +2007,13 @@ Loop_A0_2_1:
 	
 	movq xmm0,qword ptr[rdi+r12]			;Ici : xmm0=src4, xmm1=src2, xmm2=src3
 	movdqa xmm7,xmm2
-	movdqa xmm3,xmm0
 	movdqa xmm4,xmm1
+	movdqa xmm3,xmm0
 	punpcklbw xmm7,xmm5
-	punpcklbw xmm3,xmm5
 	punpcklbw xmm4,xmm5
-	pcmpgtw xmm3,xmm7
+	punpcklbw xmm3,xmm5
 	pcmpgtw xmm4,xmm7
+	pcmpgtw xmm3,xmm7
 	pxor xmm4,xmm3				;xmm4 = FF si produit est négatif
 	movdqa xmm3,xmm1
 	pxor xmm4,xmm9              ;xmm4 = FF si produit est positif
@@ -1517,8 +2073,8 @@ Loop_A0_2_1_a:
 	movdqa xmm7,xmm0
 	movdqa xmm3,xmm1
 	movdqa xmm4,xmm2
-	punpcklbw xmm3,xmm5
 	punpcklbw xmm7,xmm5
+	punpcklbw xmm3,xmm5
 	punpcklbw xmm4,xmm5
 	pcmpgtw xmm7,xmm3
 	pcmpgtw xmm4,xmm3
@@ -1580,6 +2136,264 @@ Loop_A0_2_1_a:
 	ret
 
 JPSDR_IVTC_Motion_Map_SSE2_RGB32_a endp
+
+
+;JPSDR_IVTC_Motion_Map_AVX_RGB32_a proc src1:dword,src2:dword,buffer:dword,dst:dword,w:dword,h:dword,
+;	pitch:dword,modulo:dword,pitch_buffer:dword,modulo_buffer:dword,thr:dword,w_map:dword
+; src1 = rcx
+; src2 = rdx
+; buffer = r8
+; dst = r9
+
+JPSDR_IVTC_Motion_Map_AVX_RGB32_a proc public frame
+
+w equ dword ptr[rbp+48]
+h equ dword ptr[rbp+56]
+pitch equ qword ptr[rbp+64]
+modulo equ qword ptr[rbp+72]
+pitch_buffer equ qword ptr[rbp+80]
+modulo_buffer equ qword ptr[rbp+88]
+thr equ dword ptr[rbp+96]
+w_map equ dword ptr[rbp+104]
+
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	push r15
+	.pushreg r15
+	sub rsp,80
+	.allocstack 80
+	vmovdqu XMMWORD ptr[rsp],xmm6
+	.savexmm128 xmm6,0
+	vmovdqu XMMWORD ptr[rsp+16],xmm7
+	.savexmm128 xmm7,16	
+	vmovdqu XMMWORD ptr[rsp+32],xmm8
+	.savexmm128 xmm8,32
+	vmovdqu XMMWORD ptr[rsp+48],xmm9
+	.savexmm128 xmm9,48
+	vmovdqu XMMWORD ptr[rsp+64],xmm10
+	.savexmm128 xmm10,64
+	.endprolog	
+
+	
+	mov rsi,rcx
+	mov r15,pitch_buffer
+	xor rcx,rcx
+	
+	mov rdi,r9
+	xor rax,rax
+	cld
+	mov ecx,w_map
+	shr ecx,2
+	rep stosd
+	mov rbx,rdi
+	
+	mov rdi,rdx
+	mov rcx,r8
+	xor r8,r8
+	xor r9,r9
+	mov r8d,w
+	mov r9d,h
+	mov r10,8
+	mov r11,2	
+	xor r14,r14
+	
+	xor rdx,rdx
+	mov edx,w_map
+	
+	mov r13,rdx
+	mov rax,r8
+	shl r13,1
+	shl rax,1
+	sub r13,rax		
+	
+	mov eax,thr
+	vpxor xmm5,xmm5,xmm5
+	vmovd xmm6,eax
+	vpinsrw xmm6,xmm6,eax,2
+	vpinsrw xmm6,xmm6,eax,3
+	vpunpcklbw xmm6,xmm6,xmm5
+	
+	vmovdqa xmm8,XMMWORD ptr ub_FC
+	vmovdqa xmm9,XMMWORD ptr ub_FF
+	vmovdqa xmm10,XMMWORD ptr filtre_1			
+	
+	mov r12,pitch
+	shl r12,1	
+
+Loop_A0_1_1_AVX:
+	mov r14d,r8d
+Loop_A0_2_1_AVX:
+	vmovq xmm0,qword ptr[rsi]				;xmm0=src1
+	vmovq xmm1,qword ptr[rdi]				;xmm1=src2
+	vmovq xmm2,qword ptr[rsi+r12]			;xmm2=src3
+	vpunpcklbw xmm7,xmm0,xmm5
+	vpunpcklbw xmm3,xmm1,xmm5
+	vpunpcklbw xmm4,xmm2,xmm5	
+	vpcmpgtw xmm7,xmm7,xmm3
+	vpcmpgtw xmm4,xmm4,xmm3
+	vpxor xmm7,xmm7,xmm4				;xmm7 = FF si produit est négatif
+	vpxor xmm7,xmm7,xmm9              ;xmm7 = FF si produit est positif
+	vpmaxub xmm3,xmm0,xmm1
+	vpminub xmm0,xmm0,xmm1
+	vpsubb xmm3,xmm3,xmm0				; xmm3=abs(src1-src2)
+
+	vpminub xmm0,xmm2,xmm1
+	vpmaxub xmm4,xmm2,xmm1
+	vpsubb xmm4,xmm4,xmm0				; xmm4=abs(sr3-src2)
+	vpminub xmm4,xmm4,xmm3				; xmm4 = min(abs(sr3-src2),abs(src1-src2))
+	vpunpcklbw xmm4,xmm4,xmm5
+	vpcmpgtw xmm4,xmm4,xmm6				; xmm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	vpand xmm4,xmm4,xmm7				; xmm4=(FF) si max>Threshold & (src2-scr1)*(src2-src3)>0
+	vpacksswb xmm4,xmm4,xmm5
+	vpand xmm4,xmm4,xmm10
+	vmovd eax,xmm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+	vpsrlq xmm4,xmm4,32
+	mov byte ptr[rbx],al
+
+	vmovd eax,xmm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al	
+	vpand xmm3,xmm3,xmm8				; Filtre par 0xFC, pour lever le bruit
+	mov byte ptr[rbx+1],al
+	
+	vmovq qword ptr[rcx],xmm3	
+	
+	vmovq xmm0,qword ptr[rdi+r12]			;Ici : xmm0=src4, xmm1=src2, xmm2=src3
+	vpunpcklbw xmm7,xmm2,xmm5
+	vpunpcklbw xmm4,xmm1,xmm5
+	vpunpcklbw xmm3,xmm0,xmm5
+	vpcmpgtw xmm4,xmm4,xmm7
+	vpcmpgtw xmm3,xmm3,xmm7
+	vpxor xmm4,xmm4,xmm3				;xmm4 = FF si produit est négatif
+	vpxor xmm4,xmm4,xmm9              ;xmm4 = FF si produit est positif
+	vpmaxub xmm3,xmm1,xmm2
+	vpminub xmm1,xmm1,xmm2
+	vpsubb xmm3,xmm3,xmm1				; xmm3=abs(src2-src3)
+	
+	vpminub xmm1,xmm0,xmm2
+	vpmaxub xmm0,xmm0,xmm2
+	vpsubb xmm0,xmm0,xmm1				; xmm0=abs(sr4-src3)
+	vpminub xmm0,xmm0,xmm3				; xmm0 = min(abs(sr3-src2),abs(src1-src2))
+	vpunpcklbw xmm0,xmm0,xmm5
+	vpcmpgtw xmm0,xmm0,xmm6				; xmm0=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	vpand xmm0,xmm0,xmm4
+	vpacksswb xmm0,xmm0,xmm5
+	vpand xmm0,xmm0,xmm10
+	
+	vmovd eax,xmm0
+	or eax,eax					; si aucun ne satisfait les 2...
+	setnz al
+	vpsrlq xmm0,xmm0,32
+	mov byte ptr[rbx+rdx],al
+	
+	vmovd eax,xmm0
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al		
+	vpand xmm3,xmm3,xmm8	
+	mov byte ptr[rbx+rdx+1],al
+	
+	vmovq qword ptr[rcx+r15],xmm3
+
+	add rsi,r10
+	add rdi,r10
+	add rcx,r10
+	add rbx,r11
+
+	dec r14d
+	jnz Loop_A0_2_1_AVX
+
+	add rcx,r15
+	add rbx,r13
+	add rcx,modulo_buffer
+	add rsi,pitch
+	add rdi,pitch
+	add rsi,modulo
+	add rdi,modulo
+
+	dec r9d
+	jnz Loop_A0_1_1_AVX
+
+	mov r14d,r8d
+Loop_A0_2_1_a_AVX:
+	vmovq xmm0,qword ptr[rsi]				;xmm0=src1
+	vmovq xmm1,qword ptr[rdi]				;xmm1=src2
+	vmovq xmm2,qword ptr[rsi+r12]			;xmm2=src3
+	vpunpcklbw xmm7,xmm0,xmm5
+	vpunpcklbw xmm3,xmm1,xmm5
+	vpunpcklbw xmm4,xmm2,xmm5
+	vpcmpgtw xmm7,xmm7,xmm3
+	vpcmpgtw xmm4,xmm4,xmm3
+	vpxor xmm7,xmm7,xmm4				;xmm7 = FF si produit est négatif
+	vpxor xmm7,xmm7,xmm9              ;xmm7 = FF si produit est positif
+	vpmaxub xmm3,xmm0,xmm1
+	vpminub xmm0,xmm0,xmm1
+	vpsubb xmm3,xmm3,xmm0				; mm3=abs(src1-src2)
+	vpminub xmm0,xmm2,xmm1
+	vpmaxub xmm4,xmm2,xmm1
+	vpsubb xmm4,xmm4,xmm0				; mm4=abs(sr3-src2)
+	vpminub xmm4,xmm4,xmm3				; mm4 = min(abs(sr3-src2),abs(src1-src2))
+	vpunpcklbw xmm4,xmm4,xmm5
+	vpcmpgtw xmm4,xmm4,xmm6				; mm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	vpand xmm4,xmm4,xmm7				; xmm4=(FF) si max>Threshold & (src2-scr1)*(src2-src3)>0	
+	
+	vpacksswb xmm4,xmm4,xmm5
+	vpand xmm4,xmm4,xmm10
+	vmovd eax,xmm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+	vpsrlq xmm4,xmm4,32
+	mov byte ptr[rbx],al
+
+	vmovd eax,xmm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al	
+	vpand xmm3,xmm3,xmm8				; Filtre par 0xFC, pour lever le bruit
+	mov byte ptr[rbx+1],al
+	
+	vmovq qword ptr[rcx],xmm3	
+	
+	add rsi,r10
+	add rdi,r10
+	add rcx,r10
+	add rbx,r11
+
+	dec r14d
+	jnz Loop_A0_2_1_a_AVX
+
+	vmovdqu xmm10,XMMWORD ptr[rsp+64]
+	vmovdqu xmm9,XMMWORD ptr[rsp+48]
+	vmovdqu xmm8,XMMWORD ptr[rsp+32]
+	vmovdqu xmm7,XMMWORD ptr[rsp+16]
+	vmovdqu xmm6,XMMWORD ptr[rsp]
+	add rsp,80		
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Motion_Map_AVX_RGB32_a endp
 
 
 ;JPSDR_IVTC_Motion_Map_SSE_RGB32_b proc src1:dword,src2:dword,buffer:dword,dst:dword,w:dword,h:dword,
@@ -1863,8 +2677,8 @@ Loop_A0_2_2:
 	movdqa xmm7,xmm0
 	movdqa xmm3,xmm1
 	movdqa xmm4,xmm2
-	punpcklbw xmm3,xmm5
 	punpcklbw xmm7,xmm5
+	punpcklbw xmm3,xmm5
 	punpcklbw xmm4,xmm5
 	pcmpgtw xmm7,xmm3
 	pcmpgtw xmm4,xmm3
@@ -1901,13 +2715,13 @@ Loop_A0_2_2:
 
 	movq xmm0,qword ptr[rdi+r12]			;Ici : xmm0=src4, xmm1=src2, xmm2=src3
 	movdqa xmm7,xmm2
-	movdqa xmm3,xmm0
 	movdqa xmm4,xmm1
+	movdqa xmm3,xmm0
 	punpcklbw xmm7,xmm5
-	punpcklbw xmm3,xmm5
 	punpcklbw xmm4,xmm5
-	pcmpgtw xmm3,xmm7
+	punpcklbw xmm3,xmm5
 	pcmpgtw xmm4,xmm7
+	pcmpgtw xmm3,xmm7
 	pxor xmm4,xmm3				;xmm4 = FF si produit est négatif
 	movdqa xmm3,xmm1
 	pxor xmm4,xmm9              ;xmm4 = FF si produit est positif
@@ -1976,6 +2790,205 @@ Loop_A0_2_2:
 	ret
 
 JPSDR_IVTC_Motion_Map_SSE2_RGB32_b endp
+
+
+;JPSDR_IVTC_Motion_Map_AVX_RGB32_b proc src1:dword,src2:dword,buffer:dword,dst:dword,w:dword,h:dword,
+;	pitch:dword,modulo:dword,pitch_buffer:dword,modulo_buffer:dword,thr:dword,w_map:dword
+; src1 = rcx
+; src2 = rdx
+; buffer = r8
+; dst = r9
+
+JPSDR_IVTC_Motion_Map_AVX_RGB32_b proc public frame
+
+w equ dword ptr[rbp+48]
+h equ dword ptr[rbp+56]
+pitch equ qword ptr[rbp+64]
+modulo equ qword ptr[rbp+72]
+pitch_buffer equ qword ptr[rbp+80]
+modulo_buffer equ qword ptr[rbp+88]
+thr equ dword ptr[rbp+96]
+w_map equ dword ptr[rbp+104]
+
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	push r15
+	.pushreg r15
+	sub rsp,80
+	.allocstack 80
+	vmovdqu XMMWORD ptr[rsp],xmm6
+	.savexmm128 xmm6,0
+	vmovdqu XMMWORD ptr[rsp+16],xmm7
+	.savexmm128 xmm7,16	
+	vmovdqu XMMWORD ptr[rsp+32],xmm8
+	.savexmm128 xmm8,32
+	vmovdqu XMMWORD ptr[rsp+48],xmm9
+	.savexmm128 xmm9,48
+	vmovdqu XMMWORD ptr[rsp+64],xmm10
+	.savexmm128 xmm10,64
+	.endprolog	
+
+	mov rsi,rcx
+	mov r13,pitch_buffer
+	mov rbx,r9
+	mov rdi,rdx
+	mov rcx,r8
+	xor r8,r8
+	xor r9,r9
+	mov r8d,w
+	mov r9d,h
+	mov r10,8
+	mov r11,2	
+	xor r14,r14
+	
+	xor rdx,rdx
+	mov edx,w_map
+	
+	mov r15,rdx
+	mov rax,r8
+	shl r15,1
+	shl rax,1
+	sub r15,rax	
+	
+	mov eax,thr
+	vpxor xmm5,xmm5,xmm5
+	vmovd xmm6,eax
+	vpinsrw xmm6,xmm6,eax,2
+	vpinsrw xmm6,xmm6,eax,3
+	vpunpcklbw xmm6,xmm6,xmm5
+	
+	vmovdqa xmm8,XMMWORD ptr ub_FC
+	vmovdqa xmm9,XMMWORD ptr ub_FF
+	vmovdqa xmm10,XMMWORD ptr filtre_1		
+
+	mov r12,pitch
+	shl r12,1
+	
+Loop_A0_1_2_AVX:
+	mov r14d,r8d
+Loop_A0_2_2_AVX:
+	vmovq xmm0,qword ptr[rsi]				;xmm0=src1
+	vmovq xmm1,qword ptr[rdi]				;xmm1=src2
+	vmovq xmm2,qword ptr[rsi+r12]			;xmm2=src3
+	vpunpcklbw xmm7,xmm0,xmm5
+	vpunpcklbw xmm3,xmm1,xmm5
+	vpunpcklbw xmm4,xmm2,xmm5
+	vpcmpgtw xmm7,xmm7,xmm3
+	vpcmpgtw xmm4,xmm4,xmm3
+	vpxor xmm7,xmm7,xmm4				;xmm7 = FF si produit est négatif
+	vpxor xmm7,xmm7,xmm9              ;xmm7 = FF si produit est positif
+	vpmaxub xmm3,xmm0,xmm1
+	vpminub xmm0,xmm0,xmm1
+	vpsubb xmm3,xmm3,xmm0				; xmm3=abs(src1-src2)
+	vpminub xmm0,xmm2,xmm1
+	vpmaxub xmm4,xmm2,xmm1
+	vpsubb xmm4,xmm4,xmm0				; xmm4=abs(sr3-src2)
+	vpminub xmm4,xmm4,xmm3				; xmm4 = min(abs(sr3-src2),abs(src1-src2))
+	vpunpcklbw xmm4,xmm4,xmm5
+	vpcmpgtw xmm4,xmm4,xmm6				; xmm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	vpand xmm4,xmm4,xmm7				; xmm4=(FF) si max>Threshold & (src2-scr1)*(src2-src3)>0
+	vpacksswb xmm4,xmm4,xmm5
+	vpand xmm4,xmm4,xmm10
+	vmovd eax,xmm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+	vpsrlq xmm4,xmm4,32
+	mov byte ptr[rbx],al
+
+	vmovd eax,xmm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al	
+	vpand xmm3,xmm3,xmm8				; Filtre par 0xFC, pour lever le bruit
+	mov byte ptr[rbx+1],al
+	
+	vmovq qword ptr[rcx],xmm3	
+
+	vmovq xmm0,qword ptr[rdi+r12]			;Ici : xmm0=src4, xmm1=src2, xmm2=src3
+	vpunpcklbw xmm7,xmm2,xmm5
+	vpunpcklbw xmm4,xmm1,xmm5
+	vpunpcklbw xmm3,xmm0,xmm5
+	vpcmpgtw xmm4,xmm4,xmm7
+	vpcmpgtw xmm3,xmm3,xmm7
+	vpxor xmm4,xmm4,xmm3				;xmm4 = FF si produit est négatif
+	vpxor xmm4,xmm4,xmm9              ;xmm4 = FF si produit est positif
+	vpmaxub xmm3,xmm1,xmm2
+	vpminub xmm1,xmm1,xmm2
+	vpsubb xmm3,xmm3,xmm1				; xmm3=abs(src2-src3)
+	vpminub xmm1,xmm0,xmm2
+	vpmaxub xmm0,xmm0,xmm2
+	vpsubb xmm0,xmm0,xmm1				; xmm0=abs(sr4-src3)
+	vpminub xmm0,xmm0,xmm3				; xmm0 = min(abs(sr3-src2),abs(src1-src2))
+	vpunpcklbw xmm0,xmm0,xmm5
+	vpcmpgtw xmm0,xmm0,xmm6				; xmm0=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	vpand xmm0,xmm0,xmm4
+	vpacksswb xmm0,xmm0,xmm5
+	vpand xmm0,xmm0,xmm10
+	
+	vmovd eax,xmm0
+	or eax,eax					; si aucun ne satisfait les 2...
+	setnz al
+	vpsrlq xmm0,xmm0,32
+	mov byte ptr[rbx+rdx],al
+	
+	vmovd eax,xmm0
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al		
+	vpand xmm3,xmm3,xmm8	
+	mov byte ptr[rbx+rdx+1],al
+	
+	vmovq qword ptr[rcx+r13],xmm3	
+
+	add rsi,r10
+	add rdi,r10
+	add rcx,r10
+	add rbx,r11
+
+	dec r14d
+	jnz Loop_A0_2_2_AVX
+
+	add rcx,r13
+	add rbx,r15
+	add rcx,modulo_buffer
+	add rsi,pitch
+	add rdi,pitch
+	add rsi,modulo
+	add rdi,modulo
+
+	dec r9d
+	jnz Loop_A0_1_2_AVX
+
+	vmovdqu xmm10,XMMWORD ptr[rsp+64]
+	vmovdqu xmm9,XMMWORD ptr[rsp+48]
+	vmovdqu xmm8,XMMWORD ptr[rsp+32]
+	vmovdqu xmm7,XMMWORD ptr[rsp+16]
+	vmovdqu xmm6,XMMWORD ptr[rsp]
+	add rsp,80			
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Motion_Map_AVX_RGB32_b endp
 
 
 ;JPSDR_IVTC_Motion_Map_SSE_RGB32 proc src1:dword,src2:dword,buffer:dword,dst:dword,w:dword,h:dword,
@@ -2341,8 +3354,8 @@ Loop_A0_2_3:
 	movdqa xmm7,xmm0
 	movdqa xmm3,xmm1
 	movdqa xmm4,xmm2
-	punpcklbw xmm3,xmm5
 	punpcklbw xmm7,xmm5
+	punpcklbw xmm3,xmm5
 	punpcklbw xmm4,xmm5
 	pcmpgtw xmm7,xmm3
 	pcmpgtw xmm4,xmm3
@@ -2379,13 +3392,13 @@ Loop_A0_2_3:
 	
 	movq xmm0,qword ptr[rdi+r12]			;Ici : mm0=src4, mm1=src2, mm2=src3
 	movdqa xmm7,xmm2
-	movdqa xmm3,xmm0
 	movdqa xmm4,xmm1
+	movdqa xmm3,xmm0
 	punpcklbw xmm7,xmm5
-	punpcklbw xmm3,xmm5
 	punpcklbw xmm4,xmm5
-	pcmpgtw xmm3,xmm7
+	punpcklbw xmm3,xmm5
 	pcmpgtw xmm4,xmm7
+	pcmpgtw xmm3,xmm7
 	pxor xmm4,xmm3				;xmm4 = FF si produit est négatif
 	movdqa xmm3,xmm1
 	pxor xmm4,xmm9              ;xmm4 = FF si produit est positif
@@ -2444,8 +3457,8 @@ Loop_A0_2_3_c:
 	movdqa xmm7,xmm0
 	movdqa xmm3,xmm1
 	movdqa xmm4,xmm2
-	punpcklbw xmm3,xmm5
 	punpcklbw xmm7,xmm5
+	punpcklbw xmm3,xmm5
 	punpcklbw xmm4,xmm5
 	pcmpgtw xmm7,xmm3
 	pcmpgtw xmm4,xmm3
@@ -2536,6 +3549,280 @@ Loop_A0_2_3_c:
 	ret
 
 JPSDR_IVTC_Motion_Map_SSE2_RGB32_c endp
+
+
+;JPSDR_IVTC_Motion_Map_AVX_RGB32_c proc src1:dword,src2:dword,buffer:dword,dst:dword,w:dword,h:dword,
+;	pitch:dword,modulo:dword,pitch_buffer:dword,modulo_buffer:dword,thr:dword,w_map:dword
+; src1 = rcx
+; src2 = rdx
+; buffer = r8
+; dst = r9
+
+JPSDR_IVTC_Motion_Map_AVX_RGB32_c proc public frame
+
+w equ dword ptr[rbp+48]
+h equ dword ptr[rbp+56]
+pitch equ qword ptr[rbp+64]
+modulo equ qword ptr[rbp+72]
+pitch_buffer equ qword ptr[rbp+80]
+modulo_buffer equ qword ptr[rbp+88]
+thr equ dword ptr[rbp+96]
+w_map equ dword ptr[rbp+104]
+
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	push r14
+	.pushreg r14
+	push r15
+	.pushreg r15
+	sub rsp,80
+	.allocstack 80
+	vmovdqu XMMWORD ptr[rsp],xmm6
+	.savexmm128 xmm6,0
+	vmovdqu XMMWORD ptr[rsp+16],xmm7
+	.savexmm128 xmm7,16	
+	vmovdqu XMMWORD ptr[rsp+32],xmm8
+	.savexmm128 xmm8,32
+	vmovdqu XMMWORD ptr[rsp+48],xmm9
+	.savexmm128 xmm9,48
+	vmovdqu XMMWORD ptr[rsp+64],xmm10
+	.savexmm128 xmm10,64
+	.endprolog	
+
+	mov rsi,rcx
+	mov r13,pitch_buffer
+	mov rbx,r9
+	mov rdi,rdx
+	mov rcx,r8
+	xor r8,r8
+	xor r9,r9
+	mov r8d,w
+	mov r9d,h
+	mov r10,8
+	mov r11,2	
+	xor r14,r14
+	
+	xor rdx,rdx
+	mov edx,w_map
+	
+	mov r15,rdx
+	mov rax,r8
+	shl r15,1
+	shl rax,1
+	sub r15,rax	
+	
+	mov eax,thr
+	vpxor xmm5,xmm5,xmm5
+	vmovd xmm6,eax
+	vpinsrw xmm6,xmm6,eax,2
+	vpinsrw xmm6,xmm6,eax,3
+	vpunpcklbw xmm6,xmm6,xmm5
+	
+	vmovdqa xmm8,XMMWORD ptr ub_FC
+	vmovdqa xmm9,XMMWORD ptr ub_FF
+	vmovdqa xmm10,XMMWORD ptr filtre_1		
+
+	mov r12,pitch
+	shl r12,1	
+
+Loop_A0_1_3_AVX:
+	mov r14d,r8d
+Loop_A0_2_3_AVX:
+	vmovq xmm0,qword ptr[rsi]				;xmm0=src1
+	vmovq xmm1,qword ptr[rdi]				;xmm1=src2
+	vmovq xmm2,qword ptr[rsi+r12]			;xmm2=src3
+	vpunpcklbw xmm7,xmm0,xmm5
+	vpunpcklbw xmm3,xmm1,xmm5
+	vpunpcklbw xmm4,xmm2,xmm5
+	vpcmpgtw xmm7,xmm7,xmm3
+	vpcmpgtw xmm4,xmm4,xmm3
+	vpxor xmm7,xmm7,xmm4				;xmm7 = FF si produit est négatif
+	vpxor xmm7,xmm7,xmm9              ;xmm7 = FF si produit est positif
+	vpmaxub xmm3,xmm0,xmm1
+	vpminub xmm0,xmm0,xmm1
+	vpsubb xmm3,xmm3,xmm0				; xmm3=abs(src1-src2)
+	vpminub xmm0,xmm2,xmm1
+	vpmaxub xmm4,xmm2,xmm1
+	vpsubb xmm4,xmm4,xmm0				; xmm4=abs(sr3-src2)
+	vpminub xmm4,xmm4,xmm3				; xmm4 = min(abs(sr3-src2),abs(src1-src2))
+	vpunpcklbw xmm4,xmm4,xmm5
+	vpcmpgtw xmm4,xmm4,xmm6				; xmm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	vpand xmm4,xmm4,xmm7				; xmm4=(FF) si max>Threshold & (src2-scr1)*(src2-src3)>0
+	vpacksswb xmm4,xmm4,xmm5
+	vpand xmm4,xmm4,xmm10
+	vmovd eax,xmm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+	vpsrlq xmm4,xmm4,32
+	mov byte ptr[rbx],al
+
+	vmovd eax,xmm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al	
+	vpand xmm3,xmm3,xmm8				; Filtre par 0xFC, pour lever le bruit
+	mov byte ptr[rbx+1],al
+	
+	vmovq qword ptr[rcx],xmm3	
+	
+	vmovq xmm0,qword ptr[rdi+r12]			;Ici : mm0=src4, mm1=src2, mm2=src3
+	vpunpcklbw xmm7,xmm2,xmm5
+	vpunpcklbw xmm4,xmm1,xmm5
+	vpunpcklbw xmm3,xmm0,xmm5
+	vpcmpgtw xmm4,xmm4,xmm7
+	vpcmpgtw xmm3,xmm3,xmm7
+	vpxor xmm4,xmm4,xmm3				;xmm4 = FF si produit est négatif
+	vpxor xmm4,xmm4,xmm9              ;xmm4 = FF si produit est positif
+	vpmaxub xmm3,xmm1,xmm2
+	vpminub xmm1,xmm1,xmm2
+	vpsubb xmm3,xmm3,xmm1				; xmm3=abs(src2-src3)
+	vpminub xmm1,xmm0,xmm2
+	vpmaxub xmm0,xmm0,xmm2
+	vpsubb xmm0,xmm0,xmm1				; xmm0=abs(sr4-src3)
+	vpminub xmm0,xmm0,xmm3				; xmm0 = min(abs(sr3-src2),abs(src1-src2))
+	vpunpcklbw xmm0,xmm0,xmm5
+	vpcmpgtw xmm0,xmm0,xmm6				; xmm0=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	vpand xmm0,xmm0,xmm4
+	vpacksswb xmm0,xmm0,xmm5
+	vpand xmm0,xmm0,xmm10
+	
+	vmovd eax,xmm0
+	or eax,eax					; si aucun ne satisfait les 2...
+	setnz al
+	vpsrlq xmm0,xmm0,32
+	mov byte ptr[rbx+rdx],al
+	
+	vmovd eax,xmm0
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al		
+	vpand xmm3,xmm3,xmm8	
+	mov byte ptr[rbx+rdx+1],al
+	
+	vmovq qword ptr[rcx+r13],xmm3	
+
+	add rsi,r10
+	add rdi,r10
+	add rcx,r10
+	add rbx,r11
+
+	dec r14d
+	jnz Loop_A0_2_3_AVX
+
+	add rcx,r13
+	add rbx,r15
+	add rcx,modulo_buffer
+	add rsi,pitch
+	add rdi,pitch
+	add rsi,modulo
+	add rdi,modulo
+
+	dec r9d
+	jnz Loop_A0_1_3_AVX
+		
+	mov r14d,r8d
+Loop_A0_2_3_c_AVX:
+	vmovq xmm0,qword ptr[rsi]				;xmm0=src1
+	vmovq xmm1,qword ptr[rdi]				;xmm1=src2
+	vmovq xmm2,qword ptr[rsi+r12]			;xmm2=src3
+	vpunpcklbw xmm7,xmm0,xmm5
+	vpunpcklbw xmm3,xmm1,xmm5
+	vpunpcklbw xmm4,xmm2,xmm5
+	vpcmpgtw xmm7,xmm7,xmm3
+	vpcmpgtw xmm4,xmm4,xmm3
+	vpxor xmm7,xmm7,xmm4				;xmm7 = FF si produit est négatif
+	vpxor xmm7,xmm7,xmm9              ;xmm7 = FF si produit est positif
+	vpmaxub xmm3,xmm0,xmm1
+	vpminub xmm0,xmm0,xmm1
+	vpsubb xmm3,xmm3,xmm0				; xmm3=abs(src1-src2)
+	vpminub xmm0,xmm2,xmm1
+	vpmaxub xmm4,xmm2,xmm1
+	vpsubb xmm4,xmm4,xmm0				; xmm4=abs(sr3-src2)
+	vpminub xmm4,xmm4,xmm3				; xmm4 = min(abs(sr3-src2),abs(src1-src2))
+	vpunpcklbw xmm4,xmm4,xmm5
+	vpcmpgtw xmm4,xmm4,xmm6				; xmm4=(FF) si min(abs(src3-src2),abs(src2-src1))>Threshold
+	vpand xmm4,xmm4,xmm7
+	
+	vpacksswb xmm4,xmm4,xmm5
+	vpand xmm4,xmm4,xmm10
+	vmovd eax,xmm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al
+	vpsrlq xmm4,xmm4,32
+	mov byte ptr[rbx],al
+
+	vmovd eax,xmm4
+	or eax,eax					; si aucun ne satisfait les 2, al=0
+	setnz al	
+	vpand xmm3,xmm3,xmm8				; Filtre par 0xFC, pour lever le bruit
+	mov byte ptr[rbx+1],al
+	
+	vmovq qword ptr[rcx],xmm3
+
+	vpmaxub xmm3,xmm1,xmm2			;Ici : xmm1=src2, xmm2=src3
+	vpminub xmm1,xmm1,xmm2
+	vpsubb xmm3,xmm3,xmm1				; xmm3=abs(src2-src3)
+	vpand xmm3,xmm3,xmm8
+	vmovq qword ptr[rcx+r13],xmm3	
+	
+	add rsi,r10
+	add rdi,r10
+	add rcx,r10
+	add rbx,r11
+
+	dec r14d
+	jnz Loop_A0_2_3_c_AVX		
+	
+	add rcx,modulo_buffer
+	
+	mov rax,r8
+	add rbx,rdx
+	shl rax,1
+	sub rbx,rax
+	
+	mov rdx,rcx
+	xor rcx,rcx
+	xor rax,rax
+	mov ecx,w_map
+	mov rdi,rbx
+	shr ecx,2
+	rep stosd	
+	
+	xor rcx,rcx	
+	mov rdi,rdx
+	mov rsi,rdx
+	add rdi,r13
+	mov ecx,r8d
+	rep movsq
+	
+	vmovdqu xmm10,XMMWORD ptr[rsp+64]
+	vmovdqu xmm9,XMMWORD ptr[rsp+48]
+	vmovdqu xmm8,XMMWORD ptr[rsp+32]
+	vmovdqu xmm7,XMMWORD ptr[rsp+16]
+	vmovdqu xmm6,XMMWORD ptr[rsp]
+	add rsp,80				
+	pop r15
+	pop r14
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Motion_Map_AVX_RGB32_c endp
 
 
 ;JPSDR_IVTC_Smart_Deinterlace_Motion_Map_SSE_RGB32 proc src1:dword,src2:dword,buffer:dword,dst:dword,w:dword,
@@ -4698,6 +5985,68 @@ Loop_B_2:
 JPSDR_IVTC_Norme1_SSE2_RGB32 endp
 
 
+;JPSDR_IVTC_Norme1_AVX_RGB32 proc src1:dword,src2,w:dword,h:dword,pitch:dword
+; src1 = rcx
+; src2 = rdx
+; w = r8d
+; h = r9d
+
+JPSDR_IVTC_Norme1_AVX_RGB32 proc public frame
+
+pitch equ qword ptr[rbp+48]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	.endprolog
+
+	mov rsi,rcx
+	mov rdi,rdx
+	mov r10,pitch
+	shl r10,1
+	mov rdx,16
+	
+	xor rcx,rcx	
+	vpxor xmm2,xmm2,xmm2
+	vpxor xmm5,xmm5,xmm5
+	vmovdqa xmm3,XMMWORD ptr ub_FC
+	
+Loop_B_1_AVX:
+	xor rax,rax
+	mov ecx,r8d
+Loop_B_2_AVX:
+	vmovdqa xmm1,XMMWORD ptr[rsi+rax]
+	vmovdqa xmm0,XMMWORD ptr[rdi+rax]
+	vpmaxub xmm4,xmm1,xmm0
+	vpminub xmm1,xmm1,xmm0
+	vpsubb xmm4,xmm4,xmm1	
+	vpand xmm4,xmm4,xmm3
+	vpsadbw xmm4,xmm4,xmm5
+	add rax,rdx
+	vpaddd xmm2,xmm2,xmm4
+	loop loop_B_2_AVX
+	add rsi,r10
+	add rdi,r10
+	dec r9d
+	jnz short Loop_B_1_AVX
+	
+	vmovhlps xmm0,xmm0,xmm2
+	vpaddd xmm2,xmm2,xmm0
+	vmovd eax,xmm2	
+	
+	pop rsi
+	pop rdi
+	pop rbp
+
+	ret
+
+JPSDR_IVTC_Norme1_AVX_RGB32 endp
+
+
 ;JPSDR_IVTC_Norme1_SSE_2_RGB32 proc src1:dword,src2,w:dword,h:dword,pitch:dword
 ; src1 = rcx
 ; src2 = rdx
@@ -5754,9 +7103,9 @@ loop_1_e:
 	xor rax,rax
 	mov ecx,r8d
 loop_2_e_1:
-	movdqa xmm0,[rsi+rax]
-	pavgb xmm0,[rdx+rax]
-	movdqa [rdi+rax],xmm0
+	movdqa xmm0,XMMWORD ptr[rsi+rax]
+	pavgb xmm0,XMMWORD ptr[rdx+rax]
+	movdqa XMMWORD ptr[rdi+rax],xmm0
 	add rax,rbx
 	loop loop_2_e_1
 	add rsi,r10
@@ -5765,9 +7114,9 @@ loop_2_e_1:
 	xor rax,rax
 	mov ecx,r8d
 loop_2_e_2:
-	movdqa xmm0,[rsi+rax]
-	pavgb xmm0,[rdx+rax]
-	movdqa [rdi+rax],xmm0
+	movdqa xmm0,XMMWORD ptr[rsi+rax]
+	pavgb xmm0,XMMWORD ptr[rdx+rax]
+	movdqa XMMWORD ptr[rdi+rax],xmm0
 	add rax,rbx
 	loop loop_2_e_2
 	add rdx,r10
@@ -5779,9 +7128,9 @@ loop_2_e_2:
 	xor rax,rax
 	mov ecx,r8d
 loop_2_e_3:
-	movdqa xmm0,[rsi+rax]
-	pavgb xmm0,[rdx+rax]
-	movdqa [rdi+rax],xmm0
+	movdqa xmm0,XMMWORD ptr[rsi+rax]
+	pavgb xmm0,XMMWORD ptr[rdx+rax]
+	movdqa XMMWORD ptr[rdi+rax],xmm0
 	add rax,rbx
 	loop loop_2_e_3
 	
@@ -5802,7 +7151,92 @@ loop_2_e_3:
 JPSDR_IVTC_Deinterlace_Blend_SSE_3 endp
 
 
-;JPSDR_IVTC_Deinterlace_Blend_SSE_3 proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;JPSDR_IVTC_Deinterlace_Blend_AVX proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;	src_pitch:dword,dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Blend_AVX proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	.endprolog
+
+	mov rsi,rcx
+	mov rdi,r8
+	mov r8d,r9d
+	mov r9d,h
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	xor rcx,rcx
+	mov rbx,16
+
+loop_1_e_AVX:
+	xor rax,rax
+	mov ecx,r8d
+loop_2_e_1_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rsi+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,rbx
+	loop loop_2_e_1_AVX
+	add rsi,r10
+	add rdi,r11
+
+	xor rax,rax
+	mov ecx,r8d
+loop_2_e_2_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rsi+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,rbx
+	loop loop_2_e_2_AVX
+	add rdx,r10
+	add rdi,r11
+
+	dec r9d
+	jnz short loop_1_e_AVX
+
+	xor rax,rax
+	mov ecx,r8d
+loop_2_e_3_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rsi+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,rbx
+	loop loop_2_e_3_AVX
+	
+	mov rsi,rdi
+	add rdi,r11
+	mov ecx,r8d
+	cld
+	shl rcx,1
+	rep movsq
+	
+	pop rbx
+	pop rsi	
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Blend_AVX endp
+
+
+;JPSDR_IVTC_Deinterlace_Blend_SSE_3_a proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
 ;	src_pitch:dword,dst_pitch:dword
 ; src1 = rcx
 ; src2 = rdx
@@ -5839,9 +7273,9 @@ loop_1_e_1:
 	xor rax,rax
 	mov ecx,r8d
 loop_2_e_1_1:
-	movdqa xmm0,[rsi+rax]
-	pavgb xmm0,[rdx+rax]
-	movdqa [rdi+rax],xmm0
+	movdqa xmm0,XMMWORD ptr[rsi+rax]
+	pavgb xmm0,XMMWORD ptr[rdx+rax]
+	movdqa XMMWORD ptr[rdi+rax],xmm0
 	add rax,rbx
 	loop loop_2_e_1_1
 	add rsi,r10
@@ -5850,9 +7284,9 @@ loop_2_e_1_1:
 	xor rax,rax
 	mov ecx,r8d
 loop_2_e_2_1:
-	movdqa xmm0,[rsi+rax]
-	pavgb xmm0,[rdx+rax]
-	movdqa [rdi+rax],xmm0
+	movdqa xmm0,XMMWORD ptr[rsi+rax]
+	pavgb xmm0,XMMWORD ptr[rdx+rax]
+	movdqa XMMWORD ptr[rdi+rax],xmm0
 	add rax,rbx
 	loop loop_2_e_2_1
 	add rdx,r10
@@ -5871,7 +7305,76 @@ loop_2_e_2_1:
 JPSDR_IVTC_Deinterlace_Blend_SSE_3_a endp
 
 
-;JPSDR_IVTC_Deinterlace_Blend_SSE_3 proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;JPSDR_IVTC_Deinterlace_Blend_AVX_a proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;	src_pitch:dword,dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Blend_AVX_a proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	.endprolog
+
+	mov rsi,rcx
+	mov rdi,r8
+	mov r8d,r9d
+	mov r9d,h
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	xor rcx,rcx
+	mov rbx,16
+
+loop_1_e_1_AVX:
+	xor rax,rax
+	mov ecx,r8d
+loop_2_e_1_1_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rsi+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,rbx
+	loop loop_2_e_1_1_AVX
+	add rsi,r10
+	add rdi,r11
+
+	xor rax,rax
+	mov ecx,r8d
+loop_2_e_2_1_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rsi+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,rbx
+	loop loop_2_e_2_1_AVX
+	add rdx,r10
+	add rdi,r11
+
+	dec r9d
+	jnz short loop_1_e_1_AVX
+
+	pop rbx
+	pop rsi	
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Blend_AVX_a endp
+
+
+;JPSDR_IVTC_Deinterlace_Blend_SSE_3_b proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
 ;	src_pitch:dword,dst_pitch:dword
 ; src1 = rcx
 ; src2 = rdx
@@ -5908,9 +7411,9 @@ loop_1_e_2:
 	xor rax,rax
 	mov ecx,r8d
 loop_2_e_1_2:
-	movdqa xmm0,[rsi+rax]
-	pavgb xmm0,[rdx+rax]
-	movdqa [rdi+rax],xmm0
+	movdqa xmm0,XMMWORD ptr[rsi+rax]
+	pavgb xmm0,XMMWORD ptr[rdx+rax]
+	movdqa XMMWORD ptr[rdi+rax],xmm0
 	add rax,rbx
 	loop loop_2_e_1_2
 	add rsi,r10
@@ -5919,9 +7422,9 @@ loop_2_e_1_2:
 	xor rax,rax
 	mov ecx,r8d
 loop_2_e_2_2:
-	movdqa xmm0,[rsi+rax]
-	pavgb xmm0,[rdx+rax]
-	movdqa [rdi+rax],xmm0
+	movdqa xmm0,XMMWORD ptr[rsi+rax]
+	pavgb xmm0,XMMWORD ptr[rdx+rax]
+	movdqa XMMWORD ptr[rdi+rax],xmm0
 	add rax,rbx
 	loop loop_2_e_2_2
 	add rdx,r10
@@ -5933,9 +7436,9 @@ loop_2_e_2_2:
 	xor rax,rax
 	mov ecx,r8d
 loop_2_e_3_2:
-	movdqa xmm0,[rsi+rax]
-	pavgb xmm0,[rdx+rax]
-	movdqa [rdi+rax],xmm0
+	movdqa xmm0,XMMWORD ptr[rsi+rax]
+	pavgb xmm0,XMMWORD ptr[rdx+rax]
+	movdqa XMMWORD ptr[rdi+rax],xmm0
 	add rax,rbx
 	loop loop_2_e_3_2
 	
@@ -5954,6 +7457,91 @@ loop_2_e_3_2:
 	ret
 
 JPSDR_IVTC_Deinterlace_Blend_SSE_3_b endp
+
+
+;JPSDR_IVTC_Deinterlace_Blend_AVX_b proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;	src_pitch:dword,dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Blend_AVX_b proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	.endprolog
+
+	mov rsi,rcx
+	mov rdi,r8
+	mov r8d,r9d
+	mov r9d,h
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	xor rcx,rcx
+	mov rbx,16
+
+loop_1_e_2_AVX:
+	xor rax,rax
+	mov ecx,r8d
+loop_2_e_1_2_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rsi+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,rbx
+	loop loop_2_e_1_2_AVX
+	add rsi,r10
+	add rdi,r11
+
+	xor rax,rax
+	mov ecx,r8d
+loop_2_e_2_2_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rsi+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,rbx
+	loop loop_2_e_2_2_AVX
+	add rdx,r10
+	add rdi,r11
+
+	dec r9d
+	jnz short loop_1_e_2_AVX
+
+	xor rax,rax
+	mov ecx,r8d
+loop_2_e_3_2_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rsi+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,rbx
+	loop loop_2_e_3_2_AVX
+	
+	mov rsi,rdi
+	add rdi,r11
+	mov ecx,r8d
+	cld
+	shl rcx,1
+	rep movsq
+	
+	pop rbx
+	pop rsi	
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Blend_AVX_b endp
 
 
 ;JPSDR_IVTC_Deinterlace_Tri_Blend_SSE proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
@@ -6060,7 +7648,111 @@ loop_1_f_d:
 JPSDR_IVTC_Deinterlace_Tri_Blend_SSE endp
 
 
-;JPSDR_IVTC_Deinterlace_Tri_Blend_SSE proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;JPSDR_IVTC_Deinterlace_Tri_Blend_AVX proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;	src_pitch:dword,dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Tri_Blend_AVX proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	.endprolog
+
+	mov rbx,rcx
+	mov r12,16
+	mov r10,src_pitch
+	mov r11,dst_pitch	
+	
+	mov rsi,rcx	
+	xor rcx,rcx
+	mov rdi,r8
+	xor rax,rax
+	mov ecx,r9d
+loop_1_f_c_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rsi+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,r12
+	loop loop_1_f_c_AVX
+	
+	mov rdi,r8
+	mov rsi,rdx
+	mov r8d,r9d
+	mov r9d,h
+	mov rdx,rbx
+	add rdx,r10
+	add rdi,r11				;rbx=ln-1   rsi=ln    rdx=ln+1
+	
+loop_1_f_AVX:
+	xor rax,rax
+	mov ecx,r8d
+loop_1_f_a_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rbx+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rsi+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,r12
+	loop loop_1_f_a_AVX
+
+	mov rbx,rsi
+	add rbx,r10
+	add rdi,r11				;rsi=ln-1	rdx=ln	rbx=ln+1
+	
+	xor rax,rax
+	mov ecx,r8d
+loop_1_f_b_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rsi+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rbx+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,r12
+	loop loop_1_f_b_AVX
+
+	mov rsi,rbx
+	mov rbx,rdx
+	add rdx,r10
+	add rdi,r11
+
+	dec r9d
+	jnz loop_1_f_AVX
+	
+	xor rax,rax
+	mov ecx,r8d
+loop_1_f_d_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rbx+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rsi+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,r12
+	loop loop_1_f_d_AVX
+
+	pop r12
+	pop rbx
+	pop rsi	
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Tri_Blend_AVX endp
+
+
+;JPSDR_IVTC_Deinterlace_Tri_Blend_SSE_a proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
 ;	src_pitch:dword,dst_pitch:dword
 ; src1 = rcx
 ; src2 = rdx
@@ -6165,7 +7857,112 @@ loop_1_f_c_1:
 JPSDR_IVTC_Deinterlace_Tri_Blend_SSE_a endp
 
 
-;JPSDR_IVTC_Deinterlace_Tri_Blend_SSE proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;JPSDR_IVTC_Deinterlace_Tri_Blend_AVX_a proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;	src_pitch:dword,dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Tri_Blend_AVX_a proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12	
+	.endprolog
+
+	mov rbx,rcx
+	mov r12,16
+	mov r10,src_pitch
+	mov r11,dst_pitch	
+	
+	mov rsi,rcx	
+	xor rcx,rcx
+	mov rdi,r8
+	xor rax,rax
+	mov ecx,r9d
+loop_1_f_d_1_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rsi+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,r12
+	loop loop_1_f_d_1_AVX
+	
+	mov rsi,rdx
+	mov r8d,r9d
+	mov r9d,h
+	mov rdx,rbx
+	add rdx,r10
+	add rdi,r11				;rbx=ln-1   rsi=ln    rdx=ln+1
+	xor rcx,rcx
+	
+loop_1_f_1_AVX:
+	xor rax,rax
+	mov ecx,r8d
+loop_1_f_a_1_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rbx+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rsi+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,r12
+	loop loop_1_f_a_1_AVX
+
+	mov rbx,rsi
+	add rbx,r10
+	add rdi,r11				;rsi=ln-1	rdx=ln	rbx=ln+1
+	
+	xor rax,rax
+	mov ecx,r8d
+loop_1_f_b_1_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rsi+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rbx+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,r12
+	loop loop_1_f_b_1_AVX
+
+	mov rsi,rbx
+	mov rbx,rdx
+	add rdx,r10
+	add rdi,r11
+
+	dec r9d
+	jnz loop_1_f_1_AVX
+
+	xor rax,rax
+	mov ecx,r8d	
+loop_1_f_c_1_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rbx+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rsi+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,r12
+	loop loop_1_f_c_1_AVX
+
+	pop r12
+	pop rbx
+	pop rsi	
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Tri_Blend_AVX_a endp
+
+
+;JPSDR_IVTC_Deinterlace_Tri_Blend_SSE_b proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
 ;	src_pitch:dword,dst_pitch:dword
 ; src1 = rcx
 ; src2 = rdx
@@ -6247,7 +8044,89 @@ loop_1_f_b_2:
 JPSDR_IVTC_Deinterlace_Tri_Blend_SSE_b endp
 
 
-;JPSDR_IVTC_Deinterlace_Tri_Blend_SSE proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;JPSDR_IVTC_Deinterlace_Tri_Blend_AVX_b proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;	src_pitch:dword,dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Tri_Blend_AVX_b proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12		
+	.endprolog
+
+	mov rdi,r8
+	mov rbx,rcx	
+	mov rsi,rdx
+	mov r12,16
+	mov r8d,r9d
+	mov r9d,h
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	mov rdx,rbx
+	add rdx,r10             ;rbx=ln-1   rsi=ln    rdx=ln+1
+	xor rcx,rcx
+	
+loop_1_f_2_AVX:
+	xor rax,rax
+	mov ecx,r8d
+loop_1_f_a_2_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rbx+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rsi+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,r12
+	loop loop_1_f_a_2_AVX
+
+	mov rbx,rsi
+	add rbx,r10
+	add rdi,r11				;rsi=ln-1	rdx=ln	rbx=ln+1
+	
+	xor rax,rax
+	mov ecx,r8d
+loop_1_f_b_2_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rsi+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rbx+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,r12
+	loop loop_1_f_b_2_AVX
+
+	mov rsi,rbx
+	mov rbx,rdx
+	add rdx,r10
+	add rdi,r11
+
+	dec r9d
+	jnz loop_1_f_2_AVX
+
+	pop r12
+	pop rbx
+	pop rsi	
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Tri_Blend_AVX_b endp
+
+
+;JPSDR_IVTC_Deinterlace_Tri_Blend_SSE_c proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
 ;	src_pitch:dword,dst_pitch:dword
 ; src1 = rcx
 ; src2 = rdx
@@ -6348,6 +8227,109 @@ loop_1_f_d_3:
 	ret
 
 JPSDR_IVTC_Deinterlace_Tri_Blend_SSE_c endp
+
+
+;JPSDR_IVTC_Deinterlace_Tri_Blend_AVX_c proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
+;	src_pitch:dword,dst_pitch:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w = r9d
+
+JPSDR_IVTC_Deinterlace_Tri_Blend_AVX_c proc public frame
+
+h equ dword ptr[rbp+48]
+src_pitch equ qword ptr[rbp+56]
+dst_pitch equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12			
+	.endprolog
+
+	mov rdi,r8
+	mov rbx,rcx
+	mov r12,16
+	mov rsi,rdx
+	mov r8d,r9d
+	mov r9d,h
+	mov r10,src_pitch
+	mov r11,dst_pitch
+	mov rdx,rbx
+	add rdx,r10             ;rbx=ln-1   rsi=ln    rdx=ln+1
+	xor rcx,rcx
+	
+loop_1_f_3_AVX:
+	xor rax,rax
+	mov ecx,r8d
+loop_1_f_a_3_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rbx+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rsi+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,r12
+	loop loop_1_f_a_3_AVX
+
+	mov rbx,rsi
+	add rbx,r10
+	add rdi,r11				;rsi=ln-1	rdx=ln	rbx=ln+1
+	
+	xor rax,rax
+	mov ecx,r8d
+loop_1_f_b_3_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rsi+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rbx+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,r12
+	loop loop_1_f_b_3_AVX
+
+	mov rsi,rbx
+	mov rbx,rdx
+	add rdx,r10
+	add rdi,r11
+
+	dec r9d
+	jnz loop_1_f_3_AVX
+	
+	xor rax,rax
+	mov ecx,r8d
+loop_1_f_c_3_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rbx+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rsi+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,r12
+	loop loop_1_f_c_3_AVX
+
+	add rdi,r11
+	
+	xor rax,rax
+	mov ecx,r8d
+loop_1_f_d_3_AVX:
+	vmovdqa xmm0,XMMWORD ptr[rsi+rax]
+	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
+	vmovdqa XMMWORD ptr[rdi+rax],xmm0
+	add rax,r12
+	loop loop_1_f_d_3_AVX
+	
+	pop r12
+	pop rbx
+	pop rsi	
+	pop rdi
+	pop rbp
+	
+	ret
+
+JPSDR_IVTC_Deinterlace_Tri_Blend_AVX_c endp
 
 
 ;JPSDR_IVTC_Deinterlace_Tri_Blend_MMX proc src1:dword,src2:dword,dst:dword,w:dword,h:dword,
@@ -6964,6 +8946,98 @@ Loop_I_2a:
 JPSDR_IVTC_Convert_YUYV_to_RGB32_SSE2_2 endp
 
 
+;JPSDR_IVTC_Convert_YUYV_to_RGB32_AVX proc src:dword,dst:dword,lookup:dword,w:dword,h:dword,src_modulo:dword,dst_modulo:dword
+; src = rcx
+; dst = rdx
+; lookup = r8
+; w = r9d
+
+JPSDR_IVTC_Convert_YUYV_to_RGB32_AVX proc public frame
+
+h equ dword ptr[rbp+48]
+src_modulo equ qword ptr[rbp+56]
+dst_modulo equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	.endprolog
+
+	mov rsi,rcx
+	mov rdi,rdx
+	mov rdx,r8
+	xor rcx,rcx
+	xor rax,rax
+	mov r8,8
+	mov r10d,h
+	mov r11,src_modulo
+	mov r12,dst_modulo
+	cld
+	
+	vpxor xmm3,xmm3,xmm3
+	vpxor xmm2,xmm2,xmm2
+	vpxor xmm1,xmm1,xmm1
+	
+Loop_I_2_AVX:
+	mov ecx,r9d
+Loop_I_2a_AVX:	
+	lodsb				; al=Y1
+	vpxor xmm0,xmm0,xmm0
+	movzx ebx,word ptr[rdx+2*rax]
+	lodsb				; al=U
+	vpinsrw xmm0,xmm0,ebx,0
+	vpinsrw xmm0,xmm0,ebx,1
+	vpinsrw xmm0,xmm0,ebx,2
+	movzx ebx,word ptr[rdx+2*rax+1536]
+	vpinsrw xmm1,xmm1,ebx,1
+	vpinsrw xmm1,xmm1,ebx,5
+	movzx ebx,word ptr[rdx+2*rax+2048]
+	lodsb				; al=Y2
+	vpinsrw xmm1,xmm1,ebx,0
+	vpinsrw xmm1,xmm1,ebx,4
+	movzx ebx,word ptr[rdx+2*rax]
+	lodsb				; al=V
+	vpinsrw xmm0,xmm0,ebx,4
+	vpinsrw xmm0,xmm0,ebx,5
+	vpinsrw xmm0,xmm0,ebx,6
+	movzx ebx,word ptr[rdx+2*rax+512]
+	vpinsrw xmm2,xmm2,ebx,2
+	vpinsrw xmm2,xmm2,ebx,6
+	movzx ebx,word ptr[rdx+2*rax+1024]
+	vpinsrw xmm2,xmm2,ebx,1
+	vpinsrw xmm2,xmm2,ebx,5
+	vpaddsw xmm0,xmm0,xmm1
+	vpaddsw xmm0,xmm0,xmm2
+	vpsraw xmm0,xmm0,6
+	vpackuswb xmm0,xmm0,xmm3
+	vmovq qword ptr[rdi],xmm0
+	add rdi,r8
+	dec rcx
+	jnz Loop_I_2a_AVX
+	add rsi,r11
+	add rdi,r12
+	dec r10d
+	jnz Loop_I_2_AVX
+	
+	pop r12
+	pop rbx
+	pop rsi	
+	pop rdi
+	pop rbp
+
+	ret
+	
+JPSDR_IVTC_Convert_YUYV_to_RGB32_AVX endp
+
+
 ;JPSDR_IVTC_Convert_UYVY_to_RGB32_SSE2_2 proc src:dword,dst:dword,lookup:dword,w:dword,h:dword,src_modulo:dword,dst_modulo:dword
 ; src = rcx
 ; dst = rdx
@@ -7058,6 +9132,102 @@ Loop_J_2a:
 	ret
 	
 JPSDR_IVTC_Convert_UYVY_to_RGB32_SSE2_2 endp
+
+
+;JPSDR_IVTC_Convert_UYVY_to_RGB32_AVX proc src:dword,dst:dword,lookup:dword,w:dword,h:dword,src_modulo:dword,dst_modulo:dword
+; src = rcx
+; dst = rdx
+; lookup = r8
+; w = r9d
+
+JPSDR_IVTC_Convert_UYVY_to_RGB32_AVX proc public frame
+
+h equ dword ptr[rbp+48]
+src_modulo equ qword ptr[rbp+56]
+dst_modulo equ qword ptr[rbp+64]
+
+	push rbp
+	.pushreg rbp
+	mov rbp,rsp
+	push rdi
+	.pushreg rdi
+	push rsi
+	.pushreg rsi
+	push rbx
+	.pushreg rbx
+	push r12
+	.pushreg r12
+	push r13
+	.pushreg r13
+	.endprolog
+
+	mov rsi,rcx
+	mov rdi,rdx
+	xor rcx,rcx
+	mov rdx,r8
+	mov r8,4
+	mov r10,8
+	mov r11d,h
+	mov r12,src_modulo
+	mov r13,dst_modulo
+	
+	vpxor xmm3,xmm3,xmm3
+	vpxor xmm2,xmm2,xmm2
+	vpxor xmm1,xmm1,xmm1
+	xor rax,rax
+	
+Loop_J_2_AVX:
+	mov ecx,r9d
+Loop_J_2a_AVX:
+	movzx eax,byte ptr[rsi+1]		; al=Y1
+	vpxor xmm0,xmm0,xmm0
+	movzx ebx,word ptr[rdx+2*rax]
+	movzx eax,byte ptr[rsi]		; al=U
+	vpinsrw xmm0,xmm0,ebx,0
+	vpinsrw xmm0,xmm0,ebx,1
+	vpinsrw xmm0,xmm0,ebx,2
+	movzx ebx,word ptr[rdx+2*rax+1536]
+	vpinsrw xmm1,xmm1,ebx,1
+	vpinsrw xmm1,xmm1,ebx,5
+	movzx ebx,word ptr[rdx+2*rax+2048]
+	movzx eax,byte ptr[rsi+3]		; al=Y2
+	vpinsrw xmm1,xmm1,ebx,0
+	vpinsrw xmm1,xmm1,ebx,4
+	movzx ebx,word ptr[rdx+2*rax]
+	movzx eax,byte ptr[rsi+2]		; al=V
+	vpinsrw xmm0,xmm0,ebx,4
+	vpinsrw xmm0,xmm0,ebx,5
+	vpinsrw xmm0,xmm0,ebx,6
+	movzx ebx,word ptr[rdx+2*rax+512]
+	vpinsrw xmm2,xmm2,ebx,2
+	vpinsrw xmm2,xmm2,ebx,6
+	movzx ebx,word ptr[rdx+2*rax+1024]
+	vpinsrw xmm2,xmm2,ebx,1
+	vpinsrw xmm2,xmm2,ebx,5
+	vpaddsw xmm0,xmm0,xmm1
+	vpaddsw xmm0,xmm0,xmm2
+	vpsraw xmm0,xmm0,6
+	vpackuswb xmm0,xmm0,xmm3
+	vmovq qword ptr[rdi],xmm0
+	add rsi,r8
+	add rdi,r10
+	dec rcx
+	jnz Loop_J_2a_AVX
+	add rsi,r12
+	add rdi,r13
+	dec r11d
+	jnz Loop_J_2_AVX
+
+	pop r13
+	pop r12
+	pop rbx
+	pop rsi	
+	pop rdi
+	pop rbp
+		
+	ret
+	
+JPSDR_IVTC_Convert_UYVY_to_RGB32_AVX endp
 
 
 ;JPSDR_IVTC_Convert420_to_YUY2_1 proc src_y:dword,src_u:dword,src_v:dword,dst:dword,w:dword

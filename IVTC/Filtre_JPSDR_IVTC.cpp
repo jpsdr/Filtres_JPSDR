@@ -22,15 +22,22 @@ extern "C" uint32_t JPSDR_IVTC_Histogramme_DeltaPicture_Motion_Map_SSE_RGB32(con
 extern "C" uint32_t JPSDR_IVTC_Histogramme_DeltaPicture_Motion_Map_SSE2_RGB32(const void *src,
 		uint8_t *map,void *dst,uint32_t *histo,uint32_t *repart,int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t src_modulo,
 		ptrdiff_t dst_pitch,ptrdiff_t dst_modulo,int32_t w_map,uint32_t &error_motion_map);
+extern "C" uint32_t JPSDR_IVTC_Histogramme_DeltaPicture_Motion_Map_AVX_RGB32(const void *src,
+		uint8_t *map,void *dst,uint32_t *histo,uint32_t *repart,int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t src_modulo,
+		ptrdiff_t dst_pitch,ptrdiff_t dst_modulo,int32_t w_map,uint32_t &error_motion_map);
 extern "C" uint32_t JPSDR_IVTC_DeltaPicture_Motion_Map_SSE_RGB32(const void *src,uint8_t *map,
 		int32_t w,int32_t h,int32_t w_map,ptrdiff_t src_pitch,ptrdiff_t src_modulo,uint32_t &error_motion_map);
 extern "C" uint32_t JPSDR_IVTC_DeltaPicture_Motion_Map_SSE2_RGB32(const void *src,uint8_t *map,
+		int32_t w,int32_t h,int32_t w_map,ptrdiff_t src_pitch,ptrdiff_t src_modulo,uint32_t &error_motion_map);
+extern "C" uint32_t JPSDR_IVTC_DeltaPicture_Motion_Map_AVX_RGB32(const void *src,uint8_t *map,
 		int32_t w,int32_t h,int32_t w_map,ptrdiff_t src_pitch,ptrdiff_t src_modulo,uint32_t &error_motion_map);
 extern "C" uint32_t JPSDR_IVTC_Norme1_SSE_1_RGB32(const void *src1,const void *src2,int32_t w,
 		int32_t h,ptrdiff_t pitch);
 extern "C" uint32_t JPSDR_IVTC_Norme1_SSE_2_RGB32(const void *src1,const void *src2,int32_t w,
 		int32_t h,ptrdiff_t pitch);
 extern "C" uint32_t JPSDR_IVTC_Norme1_SSE2_RGB32(const void *src1,const void *src2,int32_t w,
+		int32_t h,ptrdiff_t pitch);
+extern "C" uint32_t JPSDR_IVTC_Norme1_AVX_RGB32(const void *src1,const void *src2,int32_t w,
 		int32_t h,ptrdiff_t pitch);
 
 extern "C" void JPSDR_IVTC_Motion_Map_SSE_RGB32(const void *src1,const void *src2,void *buffer,
@@ -56,6 +63,19 @@ extern "C" void JPSDR_IVTC_Motion_Map_SSE2_RGB32_b(const void *src1,const void *
 		uint8_t *dst,int32_t w,int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,ptrdiff_t pitch_buffer,
 		ptrdiff_t modulo_buffer,uint32_t thr,int32_t w_map);
 extern "C" void JPSDR_IVTC_Motion_Map_SSE2_RGB32_c(const void *src1,const void *src2,void *buffer,
+		uint8_t *dst,int32_t w,int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,ptrdiff_t pitch_buffer,
+		ptrdiff_t modulo_buffer,uint32_t thr,int32_t w_map);
+
+extern "C" void JPSDR_IVTC_Motion_Map_AVX_RGB32(const void *src1,const void *src2,void *buffer,
+		uint8_t *dst,int32_t w,int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,ptrdiff_t pitch_buffer,
+		ptrdiff_t modulo_buffer,uint32_t thr,int32_t w_map);
+extern "C" void JPSDR_IVTC_Motion_Map_AVX_RGB32_a(const void *src1,const void *src2,void *buffer,
+		uint8_t *dst,int32_t w,int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,ptrdiff_t pitch_buffer,
+		ptrdiff_t modulo_buffer,uint32_t thr,int32_t w_map);
+extern "C" void JPSDR_IVTC_Motion_Map_AVX_RGB32_b(const void *src1,const void *src2,void *buffer,
+		uint8_t *dst,int32_t w,int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,ptrdiff_t pitch_buffer,
+		ptrdiff_t modulo_buffer,uint32_t thr,int32_t w_map);
+extern "C" void JPSDR_IVTC_Motion_Map_AVX_RGB32_c(const void *src1,const void *src2,void *buffer,
 		uint8_t *dst,int32_t w,int32_t h,ptrdiff_t pitch,ptrdiff_t modulo,ptrdiff_t pitch_buffer,
 		ptrdiff_t modulo_buffer,uint32_t thr,int32_t w_map);
 
@@ -114,6 +134,13 @@ extern "C" void JPSDR_IVTC_Deinterlace_Blend_SSE_3_a(const void *src1,const void
 extern "C" void JPSDR_IVTC_Deinterlace_Blend_SSE_3_b(const void *src1,const void *src2,void *dst,
 		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
 
+extern "C" void JPSDR_IVTC_Deinterlace_Blend_AVX(const void *src1,const void *src2,void *dst,
+		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_IVTC_Deinterlace_Blend_AVX_a(const void *src1,const void *src2,void *dst,
+		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_IVTC_Deinterlace_Blend_AVX_b(const void *src1,const void *src2,void *dst,
+		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+
 extern "C" void JPSDR_IVTC_Deinterlace_Tri_Blend_SSE(const void *src1,const void *src2,void *dst,
 		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
 extern "C" void JPSDR_IVTC_Deinterlace_Tri_Blend_SSE_a(const void *src1,const void *src2,void *dst,
@@ -121,6 +148,15 @@ extern "C" void JPSDR_IVTC_Deinterlace_Tri_Blend_SSE_a(const void *src1,const vo
 extern "C" void JPSDR_IVTC_Deinterlace_Tri_Blend_SSE_b(const void *src1,const void *src2,void *dst,
 		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
 extern "C" void JPSDR_IVTC_Deinterlace_Tri_Blend_SSE_c(const void *src1,const void *src2,void *dst,
+		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+
+extern "C" void JPSDR_IVTC_Deinterlace_Tri_Blend_AVX(const void *src1,const void *src2,void *dst,
+		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_IVTC_Deinterlace_Tri_Blend_AVX_a(const void *src1,const void *src2,void *dst,
+		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_IVTC_Deinterlace_Tri_Blend_AVX_b(const void *src1,const void *src2,void *dst,
+		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_IVTC_Deinterlace_Tri_Blend_AVX_c(const void *src1,const void *src2,void *dst,
 		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
 
 extern "C" void JPSDR_IVTC_Deinterlace_Tri_Blend_MMX(const void *src1,const void *src2,void *dst,
@@ -139,7 +175,12 @@ extern "C" void JPSDR_IVTC_Convert_YUYV_to_RGB32_SSE2_2(const void *src,void *ds
 		int32_t w, int32_t h, ptrdiff_t src_modulo, ptrdiff_t dst_modulo);
 extern "C" void JPSDR_IVTC_Convert_UYVY_to_RGB32_SSE2_2(const void *src,void *dst,void *lookup,
 		int32_t w, int32_t h, ptrdiff_t src_modulo, ptrdiff_t dst_modulo);
-		
+
+extern "C" void JPSDR_IVTC_Convert_YUYV_to_RGB32_AVX(const void *src,void *dst,void *lookup,
+		int32_t w, int32_t h, ptrdiff_t src_modulo, ptrdiff_t dst_modulo);
+extern "C" void JPSDR_IVTC_Convert_UYVY_to_RGB32_AVX(const void *src,void *dst,void *lookup,
+		int32_t w, int32_t h, ptrdiff_t src_modulo, ptrdiff_t dst_modulo);
+
 
 #define Buffer_Size_Manual 10
 #define Max_Sequence 2048
@@ -473,8 +514,9 @@ public:
 	JPSDR_IVTC(){}
 	JPSDR_IVTC(const JPSDR_IVTC& a)
 	{
-		Integer_SSE_Enable=a.Integer_SSE_Enable;
+		AVX_Enable=a.AVX_Enable;
 		SSE2_Enable=a.SSE2_Enable;
+		Integer_SSE_Enable=a.Integer_SSE_Enable;
 		MMX_Enable=a.MMX_Enable;
 		mData=a.mData;
 		InternalInit();
@@ -531,7 +573,7 @@ protected:
 
 	int16_t lookup_RGB[1280];
 	uint16_t lookup_420[768];
-	bool Integer_SSE_Enable,SSE2_Enable,MMX_Enable;
+	bool Integer_SSE_Enable,SSE2_Enable,MMX_Enable,AVX_Enable;
 
 	Public_MT_Data_Thread MT_Thread[MAX_MT_THREADS];
 	MT_Data_Info MT_Data[MAX_MT_THREADS];
@@ -560,24 +602,30 @@ protected:
 
 	void Deinterlace_Tri_Blend_MMX_MT(uint8_t thread_num);
 	void Deinterlace_Tri_Blend_SSE_MT(uint8_t thread_num);
+	void Deinterlace_Tri_Blend_AVX_MT(uint8_t thread_num);
 
 	void Deinterlace_Blend_Non_MMX_RGB32_MT(uint8_t thread_num);
 	void Deinterlace_Blend_SSE_MT(uint8_t thread_num);
 	void Deinterlace_Blend_SSE_2_MT(uint8_t thread_num);
 	void Deinterlace_Blend_SSE_3_MT(uint8_t thread_num);
+	void Deinterlace_Blend_AVX_MT(uint8_t thread_num);
 
 	void DeltaPicture_Motion_Map_SSE_RGB32_MT(uint8_t thread_num);
 	void DeltaPicture_Motion_Map_SSE2_RGB32_MT(uint8_t thread_num);
+	void DeltaPicture_Motion_Map_AVX_RGB32_MT(uint8_t thread_num);
 
 	void Norme1_SSE_RGB32_MT_1(uint8_t thread_num);
 	void Norme1_SSE_RGB32_MT_2(uint8_t thread_num);
 	void Norme1_SSE2_RGB32_MT(uint8_t thread_num);
+	void Norme1_AVX_RGB32_MT(uint8_t thread_num);
 
 	void Histogramme_DeltaPicture_Motion_Map_SSE_RGB32_MT(uint8_t thread_num);
 	void Histogramme_DeltaPicture_Motion_Map_SSE2_RGB32_MT(uint8_t thread_num);
+	void Histogramme_DeltaPicture_Motion_Map_AVX_RGB32_MT(uint8_t thread_num);
 
 	void Motion_Map_SSE_RGB32_MT(uint8_t thread_num);
 	void Motion_Map_SSE2_RGB32_MT(uint8_t thread_num);
+	void Motion_Map_AVX_RGB32_MT(uint8_t thread_num);
 
 	void Smart_Deinterlace_Motion_Map_SSE_RGB32_MT(uint8_t thread_num);
 
@@ -642,9 +690,11 @@ protected:
 	void Convert_UYVY_to_RGB32(const void *src, void *dst, const int32_t w, const int32_t h,const ptrdiff_t src_pitch,
 		const ptrdiff_t src_modulo,const ptrdiff_t dst_pitch,const ptrdiff_t dst_modulo);
 
+	void JPSDR_IVTC_Convert_YUYV_to_RGB32_AVX_MT(uint8_t thread_num);
 	void JPSDR_IVTC_Convert_YUYV_to_RGB32_SSE2_2_MT(uint8_t thread_num);
 	void JPSDR_IVTC_Convert_YUYV_to_RGB32_2_MT(uint8_t thread_num);
 
+	void JPSDR_IVTC_Convert_UYVY_to_RGB32_AVX_MT(uint8_t thread_num);
 	void JPSDR_IVTC_Convert_UYVY_to_RGB32_SSE2_2_MT(uint8_t thread_num);
 	void JPSDR_IVTC_Convert_UYVY_to_RGB32_2_MT(uint8_t thread_num);
 
@@ -748,8 +798,9 @@ VDXVF_END_SCRIPT_METHODS()
 
 bool JPSDR_IVTC::Init()
 {
-	Integer_SSE_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_INTEGER_SSE)!=0);
+	AVX_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_AVX)!=0);
 	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
+	Integer_SSE_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_INTEGER_SSE)!=0);
 	MMX_Enable=ff->isMMXEnabled();
 	InternalInit();
 
@@ -3603,6 +3654,15 @@ void JPSDR_IVTC::JPSDR_IVTC_Convert_YUYV_to_RGB32_SSE2_2_MT(uint8_t thread_num)
 }
 
 
+void JPSDR_IVTC::JPSDR_IVTC_Convert_YUYV_to_RGB32_AVX_MT(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	JPSDR_IVTC_Convert_YUYV_to_RGB32_AVX(mt_data_inf.src1,mt_data_inf.dst1,lookup_RGB,
+		(mt_data_inf.src_Y_w+1)>>1,mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,
+		mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1);
+}
+
 
 void JPSDR_IVTC::JPSDR_IVTC_Convert_YUYV_to_RGB32_2_MT(uint8_t thread_num)
 {
@@ -3700,8 +3760,12 @@ void JPSDR_IVTC::Convert_YUYV_to_RGB32(const void *src_0, void *dst_0, const int
 
 	if (Nb_Threads>1)
 	{
-		if (SSE2_Enable) f_proc=4;
-		else f_proc=5;
+		if (AVX_Enable) f_proc=56;
+		else
+		{
+			if (SSE2_Enable) f_proc=4;
+			else f_proc=5;
+		}
 
 		for(uint8_t i=0; i<Nb_Threads; i++)
 			MT_Thread[i].f_process=f_proc;
@@ -3713,8 +3777,12 @@ void JPSDR_IVTC::Convert_YUYV_to_RGB32(const void *src_0, void *dst_0, const int
 	}
 	else
 	{
-		if (SSE2_Enable) JPSDR_IVTC_Convert_YUYV_to_RGB32_SSE2_2_MT(0);
-		else JPSDR_IVTC_Convert_YUYV_to_RGB32_2_MT(0);
+		if (AVX_Enable) JPSDR_IVTC_Convert_YUYV_to_RGB32_AVX_MT(0);
+		else
+		{
+			if (SSE2_Enable) JPSDR_IVTC_Convert_YUYV_to_RGB32_SSE2_2_MT(0);
+			else JPSDR_IVTC_Convert_YUYV_to_RGB32_2_MT(0);
+		}
 	}
 
 }
@@ -3726,6 +3794,16 @@ void JPSDR_IVTC::JPSDR_IVTC_Convert_UYVY_to_RGB32_SSE2_2_MT(uint8_t thread_num)
 	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
 
 	JPSDR_IVTC_Convert_UYVY_to_RGB32_SSE2_2(mt_data_inf.src1,mt_data_inf.dst1,lookup_RGB,
+		(mt_data_inf.src_Y_w+1)>>1,mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,
+		mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1);
+}
+
+
+void JPSDR_IVTC::JPSDR_IVTC_Convert_UYVY_to_RGB32_AVX_MT(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	JPSDR_IVTC_Convert_UYVY_to_RGB32_AVX(mt_data_inf.src1,mt_data_inf.dst1,lookup_RGB,
 		(mt_data_inf.src_Y_w+1)>>1,mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,
 		mt_data_inf.src_modulo1,mt_data_inf.dst_modulo1);
 }
@@ -3826,8 +3904,12 @@ void JPSDR_IVTC::Convert_UYVY_to_RGB32(const void *src_0, void *dst_0, const int
 
 	if (Nb_Threads>1)
 	{
-		if (SSE2_Enable) f_proc=8;
-		else f_proc=9;
+		if (AVX_Enable) f_proc=57;
+		else
+		{
+			if (SSE2_Enable) f_proc=8;
+			else f_proc=9;
+		}
 
 		for(uint8_t i=0; i<Nb_Threads; i++)
 			MT_Thread[i].f_process=f_proc;
@@ -3839,8 +3921,12 @@ void JPSDR_IVTC::Convert_UYVY_to_RGB32(const void *src_0, void *dst_0, const int
 	}
 	else
 	{
-		if (SSE2_Enable) JPSDR_IVTC_Convert_UYVY_to_RGB32_SSE2_2_MT(0);
-		else JPSDR_IVTC_Convert_UYVY_to_RGB32_2_MT(0);
+		if (AVX_Enable) JPSDR_IVTC_Convert_UYVY_to_RGB32_AVX_MT(0);
+		else
+		{
+			if (SSE2_Enable) JPSDR_IVTC_Convert_UYVY_to_RGB32_SSE2_2_MT(0);
+			else JPSDR_IVTC_Convert_UYVY_to_RGB32_2_MT(0);
+		}
 	}
 }
 
@@ -4429,6 +4515,21 @@ void JPSDR_IVTC::Deinterlace_Blend_SSE_3_MT(uint8_t thread_num)
 }
 
 
+void JPSDR_IVTC::Deinterlace_Blend_AVX_MT(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	if (mt_data_inf.bottom)
+		JPSDR_IVTC_Deinterlace_Blend_AVX_b(mt_data_inf.src1,mt_data_inf.src2,mt_data_inf.dst1,
+			(mt_data_inf.src_Y_w_32+3)>>2,mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min-1,
+			mt_data_inf.src_pitch1<<1,mt_data_inf.dst_pitch1);
+	else
+		JPSDR_IVTC_Deinterlace_Blend_AVX_a(mt_data_inf.src1,mt_data_inf.src2,mt_data_inf.dst1,
+			(mt_data_inf.src_Y_w_32+3)>>2,mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,
+			mt_data_inf.src_pitch1<<1,mt_data_inf.dst_pitch1);
+}
+
+
 void JPSDR_IVTC::Deinterlace_Tri_Blend_SSE_MT(uint8_t thread_num)
 {
 	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
@@ -4460,6 +4561,35 @@ void JPSDR_IVTC::Deinterlace_Tri_Blend_SSE_MT(uint8_t thread_num)
 }
 
 
+void JPSDR_IVTC::Deinterlace_Tri_Blend_AVX_MT(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	const void *src1_0,*src2_0;
+
+	if (mt_data_inf.top)
+	{
+		src1_0=mt_data_inf.src1;
+		src2_0=mt_data_inf.src2;
+	}
+	else
+	{
+		src1_0=(void *)((uint8_t *)mt_data_inf.src2-(mt_data_inf.src_pitch1 << 1));
+		src2_0=mt_data_inf.src1;
+	}
+	if (mt_data_inf.top)
+		JPSDR_IVTC_Deinterlace_Tri_Blend_AVX_a(src1_0,src2_0,mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,
+			mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min-1,mt_data_inf.src_pitch1<<1,mt_data_inf.dst_pitch1);
+	else
+	{
+		if (mt_data_inf.bottom)
+			JPSDR_IVTC_Deinterlace_Tri_Blend_AVX_c(src1_0,src2_0,mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,
+				mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min-1,mt_data_inf.src_pitch1<<1,mt_data_inf.dst_pitch1);
+		else
+			JPSDR_IVTC_Deinterlace_Tri_Blend_AVX_b(src1_0,src2_0,mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,
+				mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,mt_data_inf.src_pitch1<<1,mt_data_inf.dst_pitch1);
+	}
+}
 
 
 void JPSDR_IVTC::Deinterlace_Tri_Blend_MMX_MT(uint8_t thread_num)
@@ -6009,24 +6139,32 @@ void JPSDR_IVTC::Deinterlace_RGB32(const void *src1,const void *src2,void *dst,i
 		}
 		if (tri_linear)
 		{
-			if (SSE2_Enable && align_data) f_proc=12;
+			if (AVX_Enable && align_data) f_proc=58;
 			else
 			{
-				if (MMX_Enable) f_proc=13;
-				else f_proc=11;
+				if (SSE2_Enable && align_data) f_proc=12;
+				else
+				{
+					if (MMX_Enable) f_proc=13;
+					else f_proc=11;
+				}
 			}
 		}
 		else
 		{
-			if (SSE2_Enable && align_data) f_proc=22;
+			if (AVX_Enable && align_data) f_proc=59;
 			else
 			{
-				if (Integer_SSE_Enable)
+				if (SSE2_Enable && align_data) f_proc=22;
+				else
 				{
-					if ((w&0x01)!=0) f_proc=20;
-					else f_proc=21;
+					if (Integer_SSE_Enable)
+					{
+						if ((w&0x01)!=0) f_proc=20;
+						else f_proc=21;
+					}
+					else f_proc=19;
 				}
-				else f_proc=19;
 			}
 		}
 
@@ -6043,34 +6181,48 @@ void JPSDR_IVTC::Deinterlace_RGB32(const void *src1,const void *src2,void *dst,i
 		h--;
 		if (tri_linear)
 		{
-			if (SSE2_Enable && align_data)
+			if (AVX_Enable && align_data)
 			{
-				JPSDR_IVTC_Deinterlace_Tri_Blend_SSE(src1,src2,dst,(w+3)>>2,h,src_pitch<<1,dst_pitch);
+				JPSDR_IVTC_Deinterlace_Tri_Blend_AVX(src1,src2,dst,(w+3)>>2,h,src_pitch<<1,dst_pitch);
 			}
 			else
-				if (MMX_Enable)
-					JPSDR_IVTC_Deinterlace_Tri_Blend_MMX(src1,src2,dst,w,h,src_pitch<<1,dst_pitch);
+			{
+				if (SSE2_Enable && align_data)
+				{
+					JPSDR_IVTC_Deinterlace_Tri_Blend_SSE(src1,src2,dst,(w+3)>>2,h,src_pitch<<1,dst_pitch);
+				}
 				else
-					Deinterlace_Tri_Blend_RGB32(src1,src2,dst,w,h,src_pitch,dst_pitch);
+					if (MMX_Enable)
+						JPSDR_IVTC_Deinterlace_Tri_Blend_MMX(src1,src2,dst,w,h,src_pitch<<1,dst_pitch);
+					else
+						Deinterlace_Tri_Blend_RGB32(src1,src2,dst,w,h,src_pitch,dst_pitch);
+			}
 		}
 		else
 		{
-			if (SSE2_Enable && align_data)
+			if (AVX_Enable && align_data)
 			{
-					JPSDR_IVTC_Deinterlace_Blend_SSE_3(src1,src2,dst,(w+3)>>2,h,src_pitch<<1,dst_pitch);
+				JPSDR_IVTC_Deinterlace_Blend_AVX(src1,src2,dst,(w+3)>>2,h,src_pitch<<1,dst_pitch);
 			}
 			else
 			{
-				if (Integer_SSE_Enable)
+				if (SSE2_Enable && align_data)
 				{
-					if ((w&0x01)!=0)
-						JPSDR_IVTC_Deinterlace_Blend_SSE(src1,src2,dst,w,h,src_pitch<<1,dst_pitch);
-					else
-						JPSDR_IVTC_Deinterlace_Blend_SSE_2(src1,src2,dst,w>>1,h,src_pitch<<1,dst_pitch);
+					JPSDR_IVTC_Deinterlace_Blend_SSE_3(src1,src2,dst,(w+3)>>2,h,src_pitch<<1,dst_pitch);
 				}
 				else
 				{
-					JPSDR_IVTC_Deinterlace_Blend_Non_MMX_RGB32(src1,src2,dst,w,h,src_pitch<<1,dst_pitch);
+					if (Integer_SSE_Enable)
+					{
+						if ((w&0x01)!=0)
+							JPSDR_IVTC_Deinterlace_Blend_SSE(src1,src2,dst,w,h,src_pitch<<1,dst_pitch);
+						else
+							JPSDR_IVTC_Deinterlace_Blend_SSE_2(src1,src2,dst,w>>1,h,src_pitch<<1,dst_pitch);
+					}
+					else
+					{
+						JPSDR_IVTC_Deinterlace_Blend_Non_MMX_RGB32(src1,src2,dst,w,h,src_pitch<<1,dst_pitch);
+					}
 				}
 			}
 		}
@@ -6111,24 +6263,32 @@ void JPSDR_IVTC::Deinterlace_YUYV(const void *src1,const void *src2,void *dst,in
 		{
 			if (tri_linear)
 			{
-				if (SSE2_Enable && align_data) f_proc=12;
+				if (AVX_Enable && align_data) f_proc=58;
 				else
 				{
-					if (MMX_Enable) f_proc=13;
-					else f_proc=14;
+					if (SSE2_Enable && align_data) f_proc=12;
+					else
+					{
+						if (MMX_Enable) f_proc=13;
+						else f_proc=14;
+					}
 				}
 			}
 			else
 			{
-				if (SSE2_Enable && align_data) f_proc=22;
+				if (AVX_Enable && align_data) f_proc=59;
 				else
 				{
-					if (Integer_SSE_Enable)
+					if (SSE2_Enable && align_data) f_proc=22;
+					else
 					{
-						if ((w&0x03)!=0) f_proc=20;
-						else f_proc=21;
+						if (Integer_SSE_Enable)
+						{
+							if ((w&0x03)!=0) f_proc=20;
+							else f_proc=21;
+						}
+						else f_proc=23;
 					}
-					else f_proc=23;
 				}
 			}
 		}
@@ -6154,34 +6314,48 @@ void JPSDR_IVTC::Deinterlace_YUYV(const void *src1,const void *src2,void *dst,in
 
 		if (tri_linear)
 		{
-			if (SSE2_Enable && align_data)
+			if (AVX_Enable && align_data)
 			{
-				JPSDR_IVTC_Deinterlace_Tri_Blend_SSE(src1,src2,dst,(w+7)>>3,h,src_pitch<<1,dst_pitch);
+				JPSDR_IVTC_Deinterlace_Tri_Blend_AVX(src1,src2,dst,(w+7)>>3,h,src_pitch<<1,dst_pitch);
 			}
 			else
-				if (MMX_Enable)
-					JPSDR_IVTC_Deinterlace_Tri_Blend_MMX(src1,src2,dst,(w+1)>>1,h,src_pitch<<1,dst_pitch);
+			{
+				if (SSE2_Enable && align_data)
+				{
+					JPSDR_IVTC_Deinterlace_Tri_Blend_SSE(src1,src2,dst,(w+7)>>3,h,src_pitch<<1,dst_pitch);
+				}
 				else
-					Deinterlace_Tri_Blend_YUYV(src1,src2,dst,(w+1)>>1,h,src_pitch,dst_pitch);
+					if (MMX_Enable)
+						JPSDR_IVTC_Deinterlace_Tri_Blend_MMX(src1,src2,dst,(w+1)>>1,h,src_pitch<<1,dst_pitch);
+					else
+						Deinterlace_Tri_Blend_YUYV(src1,src2,dst,(w+1)>>1,h,src_pitch,dst_pitch);
+			}
 		}
 		else
 		{
-			if (SSE2_Enable && align_data)
+			if (AVX_Enable && align_data)
 			{
-					JPSDR_IVTC_Deinterlace_Blend_SSE_3(src1,src2,dst,(w+7)>>3,h,src_pitch<<1,dst_pitch);
+				JPSDR_IVTC_Deinterlace_Blend_AVX(src1,src2,dst,(w+7)>>3,h,src_pitch<<1,dst_pitch);
 			}
 			else
 			{
-				if (Integer_SSE_Enable)
+				if (SSE2_Enable && align_data)
 				{
-					if ((w&0x03)!=0)
-						JPSDR_IVTC_Deinterlace_Blend_SSE(src1,src2,dst,(w+1)>>1,h,src_pitch<<1,dst_pitch);
-					else
-						JPSDR_IVTC_Deinterlace_Blend_SSE_2(src1,src2,dst,((w+1)>>1)>>1,h,src_pitch<<1,dst_pitch);
+					JPSDR_IVTC_Deinterlace_Blend_SSE_3(src1,src2,dst,(w+7)>>3,h,src_pitch<<1,dst_pitch);
 				}
 				else
 				{
-					Deinterlace_Blend_YUYV(src1,src2,dst,(w+1)>>1,h,src_pitch,dst_pitch);
+					if (Integer_SSE_Enable)
+					{
+						if ((w&0x03)!=0)
+							JPSDR_IVTC_Deinterlace_Blend_SSE(src1,src2,dst,(w+1)>>1,h,src_pitch<<1,dst_pitch);
+						else
+							JPSDR_IVTC_Deinterlace_Blend_SSE_2(src1,src2,dst,((w+1)>>1)>>1,h,src_pitch<<1,dst_pitch);
+					}
+					else
+					{
+						Deinterlace_Blend_YUYV(src1,src2,dst,(w+1)>>1,h,src_pitch,dst_pitch);
+					}
 				}
 			}
 		}
@@ -6221,24 +6395,32 @@ void JPSDR_IVTC::Deinterlace_UYVY(const void *src1,const void *src2,void *dst,in
 		{
 			if (tri_linear)
 			{
-				if (SSE2_Enable && align_data) f_proc=12;
+				if (AVX_Enable && align_data) f_proc=58;
 				else
 				{
-					if (MMX_Enable) f_proc=13;
-					else f_proc=16;
+					if (SSE2_Enable && align_data) f_proc=12;
+					else
+					{
+						if (MMX_Enable) f_proc=13;
+						else f_proc=16;
+					}
 				}
 			}
 			else
 			{
-				if (SSE2_Enable && align_data) f_proc=22;
+				if (AVX_Enable && align_data) f_proc=59;
 				else
 				{
-					if (Integer_SSE_Enable)
+					if (SSE2_Enable && align_data) f_proc=22;
+					else
 					{
-						if ((w&0x03)!=0) f_proc=20;
-						else f_proc=21;
+						if (Integer_SSE_Enable)
+						{
+							if ((w&0x03)!=0) f_proc=20;
+							else f_proc=21;
+						}
+						else f_proc=25;
 					}
-					else f_proc=25;
 				}
 			}
 		}
@@ -6264,34 +6446,48 @@ void JPSDR_IVTC::Deinterlace_UYVY(const void *src1,const void *src2,void *dst,in
 
 		if (tri_linear)
 		{
-			if (SSE2_Enable && align_data)
+			if (AVX_Enable && align_data)
 			{
-				JPSDR_IVTC_Deinterlace_Tri_Blend_SSE(src1,src2,dst,(w+7)>>3,h,src_pitch<<1,dst_pitch);
+				JPSDR_IVTC_Deinterlace_Tri_Blend_AVX(src1,src2,dst,(w+7)>>3,h,src_pitch<<1,dst_pitch);
 			}
 			else
-				if (MMX_Enable)
-					JPSDR_IVTC_Deinterlace_Tri_Blend_MMX(src1,src2,dst,(w+1)>>1,h,src_pitch<<1,dst_pitch);
+			{
+				if (SSE2_Enable && align_data)
+				{
+					JPSDR_IVTC_Deinterlace_Tri_Blend_SSE(src1,src2,dst,(w+7)>>3,h,src_pitch<<1,dst_pitch);
+				}
 				else
-					Deinterlace_Tri_Blend_UYVY(src1,src2,dst,(w+1)>>1,h,src_pitch,dst_pitch);
+					if (MMX_Enable)
+						JPSDR_IVTC_Deinterlace_Tri_Blend_MMX(src1,src2,dst,(w+1)>>1,h,src_pitch<<1,dst_pitch);
+					else
+						Deinterlace_Tri_Blend_UYVY(src1,src2,dst,(w+1)>>1,h,src_pitch,dst_pitch);
+			}
 		}
 		else
 		{
-			if (SSE2_Enable && align_data)
+			if (AVX_Enable && align_data)
 			{
-					JPSDR_IVTC_Deinterlace_Blend_SSE_3(src1,src2,dst,(w+7)>>3,h,src_pitch<<1,dst_pitch);
+				JPSDR_IVTC_Deinterlace_Blend_AVX(src1,src2,dst,(w+7)>>3,h,src_pitch<<1,dst_pitch);
 			}
 			else
 			{
-				if (Integer_SSE_Enable)
+				if (SSE2_Enable && align_data)
 				{
-					if ((w&0x03)!=0)
-						JPSDR_IVTC_Deinterlace_Blend_SSE(src1,src2,dst,(w+1)>>1,h,src_pitch<<1,dst_pitch);
-					else
-						JPSDR_IVTC_Deinterlace_Blend_SSE_2(src1,src2,dst,((w+1)>>1)>>1,h,src_pitch<<1,dst_pitch);
+					JPSDR_IVTC_Deinterlace_Blend_SSE_3(src1,src2,dst,(w+7)>>3,h,src_pitch<<1,dst_pitch);
 				}
 				else
 				{
-					Deinterlace_Blend_UYVY(src1,src2,dst,(w+1)>>1,h,src_pitch,dst_pitch);
+					if (Integer_SSE_Enable)
+					{
+						if ((w&0x03)!=0)
+							JPSDR_IVTC_Deinterlace_Blend_SSE(src1,src2,dst,(w+1)>>1,h,src_pitch<<1,dst_pitch);
+						else
+							JPSDR_IVTC_Deinterlace_Blend_SSE_2(src1,src2,dst,((w+1)>>1)>>1,h,src_pitch<<1,dst_pitch);
+					}
+					else
+					{
+						Deinterlace_Blend_UYVY(src1,src2,dst,(w+1)>>1,h,src_pitch,dst_pitch);
+					}
 				}
 			}
 		}
@@ -6323,24 +6519,32 @@ void JPSDR_IVTC::Deinterlace_Planar(const uint8_t *src1,const uint8_t *src2,uint
 		}
 		if (tri_linear)
 		{
-			if (SSE2_Enable && align_data) f_proc=12;
+			if (AVX_Enable && align_data) f_proc=58;
 			else
 			{
-				if ((MMX_Enable) && ((w&0x03)==0)) f_proc=13;
-				else f_proc=18;
+				if (SSE2_Enable && align_data) f_proc=12;
+				else
+				{
+					if ((MMX_Enable) && ((w&0x03)==0)) f_proc=13;
+					else f_proc=18;
+				}
 			}
 		}
 		else
 		{
-			if (SSE2_Enable && align_data) f_proc=22;
+			if (AVX_Enable && align_data) f_proc=59;
 			else
 			{
-				if ((Integer_SSE_Enable) && ((w&0x03)==0))
+				if (SSE2_Enable && align_data) f_proc=22;
+				else
 				{
-					if ((w&0x07)!=0) f_proc=20;
-					else f_proc=21;
+					if ((Integer_SSE_Enable) && ((w&0x03)==0))
+					{
+						if ((w&0x07)!=0) f_proc=20;
+						else f_proc=21;
+					}
+					else f_proc=27;
 				}
-				else f_proc=27;
 			}
 		}
 
@@ -6357,36 +6561,50 @@ void JPSDR_IVTC::Deinterlace_Planar(const uint8_t *src1,const uint8_t *src2,uint
 		h--;
 		if (tri_linear)
 		{
-			if (SSE2_Enable && align_data)
+			if (AVX_Enable && align_data)
 			{
-				JPSDR_IVTC_Deinterlace_Tri_Blend_SSE(src1,src2,dst,(w+15)>>4,h,src_pitch<<1,dst_pitch);
+				JPSDR_IVTC_Deinterlace_Tri_Blend_AVX(src1,src2,dst,(w+15)>>4,h,src_pitch<<1,dst_pitch);
 			}
 			else
 			{
-				if ((MMX_Enable) && ((w&0x03)==0))
-					JPSDR_IVTC_Deinterlace_Tri_Blend_MMX(src1,src2,dst,w>>2,h,src_pitch<<1,dst_pitch);
+				if (SSE2_Enable && align_data)
+				{
+					JPSDR_IVTC_Deinterlace_Tri_Blend_SSE(src1,src2,dst,(w+15)>>4,h,src_pitch<<1,dst_pitch);
+				}
 				else
-					Deinterlace_Tri_Blend_Planar(src1,src2,dst,w,h,src_pitch,dst_pitch);
+				{
+					if ((MMX_Enable) && ((w&0x03)==0))
+						JPSDR_IVTC_Deinterlace_Tri_Blend_MMX(src1,src2,dst,w>>2,h,src_pitch<<1,dst_pitch);
+					else
+						Deinterlace_Tri_Blend_Planar(src1,src2,dst,w,h,src_pitch,dst_pitch);
+				}
 			}
 		}
 		else
 		{
-			if (SSE2_Enable && align_data)
+			if (AVX_Enable && align_data)
 			{
-					JPSDR_IVTC_Deinterlace_Blend_SSE_3(src1,src2,dst,(w+15)>>4,h,src_pitch<<1,dst_pitch);
+				JPSDR_IVTC_Deinterlace_Blend_AVX(src1,src2,dst,(w+15)>>4,h,src_pitch<<1,dst_pitch);
 			}
 			else
 			{
-				if ((Integer_SSE_Enable) && ((w&0x03)==0))
+				if (SSE2_Enable && align_data)
 				{
-					if ((w&0x07)!=0)
-						JPSDR_IVTC_Deinterlace_Blend_SSE(src1,src2,dst,w>>2,h,src_pitch<<1,dst_pitch);
-					else
-						JPSDR_IVTC_Deinterlace_Blend_SSE_2(src1,src2,dst,w>>3,h,src_pitch<<1,dst_pitch);
+					JPSDR_IVTC_Deinterlace_Blend_SSE_3(src1,src2,dst,(w+15)>>4,h,src_pitch<<1,dst_pitch);
 				}
 				else
 				{
-					Deinterlace_Blend_Planar(src1,src2,dst,w,h,src_pitch,dst_pitch);
+					if ((Integer_SSE_Enable) && ((w&0x03)==0))
+					{
+						if ((w&0x07)!=0)
+							JPSDR_IVTC_Deinterlace_Blend_SSE(src1,src2,dst,w>>2,h,src_pitch<<1,dst_pitch);
+						else
+							JPSDR_IVTC_Deinterlace_Blend_SSE_2(src1,src2,dst,w>>3,h,src_pitch<<1,dst_pitch);
+					}
+					else
+					{
+						Deinterlace_Blend_Planar(src1,src2,dst,w,h,src_pitch,dst_pitch);
+					}
 				}
 			}
 		}
@@ -6561,6 +6779,43 @@ void JPSDR_IVTC::Motion_Map_SSE2_RGB32_MT(uint8_t thread_num)
 				mt_data_inf.dst_pitch2,mt_data_inf.dst_modulo2,mt_data_inf.data_u32_1,mt_data_inf.data_i32);
 		else
 			JPSDR_IVTC_Motion_Map_SSE2_RGB32_b(src1,src2,buffer,(uint8_t *)mt_data_inf.dst1,mt_data_inf.src_Y_w>>1,
+				mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,mt_data_inf.src_pitch1,mt_data_inf.src_modulo1,
+				mt_data_inf.dst_pitch2,mt_data_inf.dst_modulo2,mt_data_inf.data_u32_1,mt_data_inf.data_i32);
+	}
+}
+
+
+void JPSDR_IVTC::Motion_Map_AVX_RGB32_MT(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	const void *src1,*src2;
+	void *buffer;
+
+	if (mt_data_inf.top)
+	{
+		src1=mt_data_inf.src1;
+		src2=mt_data_inf.src2;
+		buffer=mt_data_inf.dst2;
+	}
+	else
+	{
+		src1=(void *)((uint8_t *)mt_data_inf.src2-(mt_data_inf.src_pitch1 << 1));
+		src2=(void *)mt_data_inf.src1;
+		buffer=(void *)((uint8_t *)mt_data_inf.dst2-mt_data_inf.dst_pitch2);
+	}
+	if (mt_data_inf.top)
+		JPSDR_IVTC_Motion_Map_AVX_RGB32_a(src1,src2,buffer,(uint8_t *)mt_data_inf.dst1,mt_data_inf.src_Y_w>>1,
+			mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min-1,mt_data_inf.src_pitch1,mt_data_inf.src_modulo1,
+			mt_data_inf.dst_pitch2,mt_data_inf.dst_modulo2,mt_data_inf.data_u32_1,mt_data_inf.data_i32);
+	else
+	{
+		if (mt_data_inf.bottom)
+			JPSDR_IVTC_Motion_Map_AVX_RGB32_c(src1,src2,buffer,(uint8_t *)mt_data_inf.dst1,mt_data_inf.src_Y_w>>1,
+				mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min-1,mt_data_inf.src_pitch1,mt_data_inf.src_modulo1,
+				mt_data_inf.dst_pitch2,mt_data_inf.dst_modulo2,mt_data_inf.data_u32_1,mt_data_inf.data_i32);
+		else
+			JPSDR_IVTC_Motion_Map_AVX_RGB32_b(src1,src2,buffer,(uint8_t *)mt_data_inf.dst1,mt_data_inf.src_Y_w>>1,
 				mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,mt_data_inf.src_pitch1,mt_data_inf.src_modulo1,
 				mt_data_inf.dst_pitch2,mt_data_inf.dst_modulo2,mt_data_inf.data_u32_1,mt_data_inf.data_i32);
 	}
@@ -8169,6 +8424,20 @@ void JPSDR_IVTC::Histogramme_DeltaPicture_Motion_Map_SSE2_RGB32_MT(uint8_t threa
 }
 
 
+void JPSDR_IVTC::Histogramme_DeltaPicture_Motion_Map_AVX_RGB32_MT(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	uint32_t s_motion_map;
+
+	MT_Data[thread_num].data_u32_1=JPSDR_IVTC_Histogramme_DeltaPicture_Motion_Map_AVX_RGB32(mt_data_inf.src1,
+		(uint8_t *)mt_data_inf.src2,mt_data_inf.dst1,(uint32_t *)mt_data_inf.dst2,(uint32_t *)mt_data_inf.dst3,
+		mt_data_inf.src_Y_w>>2,mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,mt_data_inf.src_pitch1,mt_data_inf.src_modulo1,
+		mt_data_inf.dst_pitch1,mt_data_inf.dst_modulo1,mt_data_inf.data_i32,s_motion_map);
+	MT_Data[thread_num].data_u32_2=s_motion_map;
+}
+
+
 void JPSDR_IVTC::Histogramme_DeltaPicture_RGB32_MT(uint8_t thread_num)
 {
 	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
@@ -8286,11 +8555,15 @@ uint32_t JPSDR_IVTC::Norme1_Histogramme_DeltaPicture_RGB32(const void *src1,cons
 			MT_Data[i].data_i32=w_map;
 		}
 
-		if (SSE2_Enable && ((w&1)==0)) f_proc=54;
+		if (AVX_Enable && ((w&1)==0)) f_proc=62;
 		else
 		{
-			if (Integer_SSE_Enable) f_proc=28;
-			else f_proc=29;
+			if (SSE2_Enable && ((w&1)==0)) f_proc=54;
+			else
+			{
+				if (Integer_SSE_Enable) f_proc=28;
+				else f_proc=29;
+			}
 		}
 
 		for(uint8_t i=0; i<Nb_Threads; i++)
@@ -8303,22 +8576,31 @@ uint32_t JPSDR_IVTC::Norme1_Histogramme_DeltaPicture_RGB32(const void *src1,cons
 	}
 	else
 	{
-		if (SSE2_Enable && ((w&1)==0))
+		if (AVX_Enable && ((w&1)==0))
 		{
 			const uint32_t thr=((uint32_t)thrs<<16)|((uint32_t)thrs<<8)|(uint32_t)thrs;
 
-			JPSDR_IVTC_Motion_Map_SSE2_RGB32(src1,src2,buffer_0,map,w>>1,h-1,src_pitch,src_modulo,buffer_pitch,buffer_modulo,thr,w_map);
+			JPSDR_IVTC_Motion_Map_AVX_RGB32(src1,src2,buffer_0,map,w>>1,h-1,src_pitch,src_modulo,buffer_pitch,buffer_modulo,thr,w_map);
 		}
 		else
 		{
-			if (Integer_SSE_Enable)
+			if (SSE2_Enable && ((w&1)==0))
 			{
 				const uint32_t thr=((uint32_t)thrs<<16)|((uint32_t)thrs<<8)|(uint32_t)thrs;
 
-				JPSDR_IVTC_Motion_Map_SSE_RGB32(src1,src2,buffer_0,map,w,h-1,src_pitch,src_modulo,buffer_pitch,buffer_modulo,thr,w_map);
+				JPSDR_IVTC_Motion_Map_SSE2_RGB32(src1,src2,buffer_0,map,w>>1,h-1,src_pitch,src_modulo,buffer_pitch,buffer_modulo,thr,w_map);
 			}
 			else
-				Motion_Map_RGB32(src1,src2,buffer_0,map,w,h,src_pitch,buffer_pitch,w_map,thrs);
+			{
+				if (Integer_SSE_Enable)
+				{
+					const uint32_t thr=((uint32_t)thrs<<16)|((uint32_t)thrs<<8)|(uint32_t)thrs;
+
+					JPSDR_IVTC_Motion_Map_SSE_RGB32(src1,src2,buffer_0,map,w,h-1,src_pitch,src_modulo,buffer_pitch,buffer_modulo,thr,w_map);
+				}
+				else
+					Motion_Map_RGB32(src1,src2,buffer_0,map,w,h,src_pitch,buffer_pitch,w_map,thrs);
+			}
 		}
 	}
 
@@ -8377,11 +8659,15 @@ uint32_t JPSDR_IVTC::Norme1_Histogramme_DeltaPicture_RGB32(const void *src1,cons
 			MT_Data[i].data_i32=w_map;
 		}
 
-		if (SSE2_Enable && ((w&3)==0)) f_proc=52;
+		if (AVX_Enable && ((w&3)==0)) f_proc=60;
 		else
 		{
-			if (Integer_SSE_Enable) f_proc=37;
-			else f_proc=38;
+			if (SSE2_Enable && ((w&3)==0)) f_proc=52;
+			else
+			{
+				if (Integer_SSE_Enable) f_proc=37;
+				else f_proc=38;
+			}
 		}
 
 		for(uint8_t i=0; i<Nb_Threads; i++)
@@ -8415,6 +8701,12 @@ uint32_t JPSDR_IVTC::Norme1_Histogramme_DeltaPicture_RGB32(const void *src1,cons
 	}
 	else
 	{
+		if (AVX_Enable && ((w&3)==0))
+				s=JPSDR_IVTC_Histogramme_DeltaPicture_Motion_Map_AVX_RGB32(buffer_0,map,dst_0,histo,repart,w>>2,
+					h,buffer_pitch,buffer_modulo,dst_pitch,dst_modulo,w_map,s_motion_map);
+		else
+		{
+
 		if (SSE2_Enable && ((w&3)==0))
 				s=JPSDR_IVTC_Histogramme_DeltaPicture_Motion_Map_SSE2_RGB32(buffer_0,map,dst_0,histo,repart,w>>2,
 					h,buffer_pitch,buffer_modulo,dst_pitch,dst_modulo,w_map,s_motion_map);
@@ -8487,6 +8779,8 @@ uint32_t JPSDR_IVTC::Norme1_Histogramme_DeltaPicture_RGB32(const void *src1,cons
 				for (int32_t i=254; i>=0; i--)
 					repart[i]=histo[i]+repart[i+1];
 			}
+		}
+
 		}
 	}
 
@@ -9401,6 +9695,21 @@ void JPSDR_IVTC::DeltaPicture_Motion_Map_SSE2_RGB32_MT(uint8_t thread_num)
 }
 
 
+void JPSDR_IVTC::DeltaPicture_Motion_Map_AVX_RGB32_MT(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	uint32_t s,s_motion_map;
+
+	s=JPSDR_IVTC_DeltaPicture_Motion_Map_AVX_RGB32(mt_data_inf.src1,(uint8_t *)mt_data_inf.src2,
+		mt_data_inf.src_Y_w>>2,mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,mt_data_inf.data_i32,
+		mt_data_inf.src_pitch1,mt_data_inf.src_modulo1,s_motion_map);
+
+	MT_Data[thread_num].data_u32_1=s;
+	MT_Data[thread_num].data_u32_2=s_motion_map;
+}
+
+
 uint32_t JPSDR_IVTC::Norme1_Motion_Map_RGB32(const void *src1,const void *src2,void *buffer_0,
 		uint8_t *map,uint8_t *buffer_map,const int32_t w,const int32_t h,ptrdiff_t pitch,ptrdiff_t buffer_pitch,
 		ptrdiff_t modulo,ptrdiff_t buffer_modulo,uint32_t &error_motion_map,const uint8_t thrs)
@@ -9432,10 +9741,14 @@ uint32_t JPSDR_IVTC::Norme1_Motion_Map_RGB32(const void *src1,const void *src2,v
 			MT_Data[i].data_i32=w_map;
 		}
 
-		if (SSE2_Enable && ((w&1)==0)) f_proc=54;
+		if (AVX_Enable && ((w&1)==0)) f_proc=62;
+		else
 		{
-			if (Integer_SSE_Enable) f_proc=28;
-			else f_proc=29;
+			if (SSE2_Enable && ((w&1)==0)) f_proc=54;
+			{
+				if (Integer_SSE_Enable) f_proc=28;
+				else f_proc=29;
+			}
 		}
 
 		for(uint8_t i=0; i<Nb_Threads; i++)
@@ -9448,22 +9761,31 @@ uint32_t JPSDR_IVTC::Norme1_Motion_Map_RGB32(const void *src1,const void *src2,v
 	}
 	else
 	{
-		if (SSE2_Enable && ((w&1)==0))
+		if (AVX_Enable && ((w&1)==0))
 		{
 			const uint32_t thr=((uint32_t)thrs<<16)|((uint32_t)thrs<<8)|(uint32_t)thrs;
 
-			JPSDR_IVTC_Motion_Map_SSE2_RGB32(src1,src2,buffer_0,map,w>>1,h-1,pitch,modulo,buffer_pitch,buffer_modulo,thr,w_map);
+			JPSDR_IVTC_Motion_Map_AVX_RGB32(src1,src2,buffer_0,map,w>>1,h-1,pitch,modulo,buffer_pitch,buffer_modulo,thr,w_map);
 		}
 		else
 		{
-			if (Integer_SSE_Enable)
+			if (SSE2_Enable && ((w&1)==0))
 			{
 				const uint32_t thr=((uint32_t)thrs<<16)|((uint32_t)thrs<<8)|(uint32_t)thrs;
 
-				JPSDR_IVTC_Motion_Map_SSE_RGB32(src1,src2,buffer_0,map,w,h-1,pitch,modulo,buffer_pitch,buffer_modulo,thr,w_map);
+				JPSDR_IVTC_Motion_Map_SSE2_RGB32(src1,src2,buffer_0,map,w>>1,h-1,pitch,modulo,buffer_pitch,buffer_modulo,thr,w_map);
 			}
 			else
-				Motion_Map_RGB32(src1,src2,buffer_0,map,w,h,pitch,buffer_pitch,w_map,thrs);
+			{
+				if (Integer_SSE_Enable)
+				{
+					const uint32_t thr=((uint32_t)thrs<<16)|((uint32_t)thrs<<8)|(uint32_t)thrs;
+
+					JPSDR_IVTC_Motion_Map_SSE_RGB32(src1,src2,buffer_0,map,w,h-1,pitch,modulo,buffer_pitch,buffer_modulo,thr,w_map);
+				}
+				else
+					Motion_Map_RGB32(src1,src2,buffer_0,map,w,h,pitch,buffer_pitch,w_map,thrs);
+			}
 		}
 	}
 
@@ -9517,11 +9839,15 @@ uint32_t JPSDR_IVTC::Norme1_Motion_Map_RGB32(const void *src1,const void *src2,v
 			MT_Data[i].data_i32=w_map;
 		}
 
-		if (SSE2_Enable && ((w&3)==0)) f_proc=53;
+		if (AVX_Enable && ((w&3)==0)) f_proc=61;
 		else
 		{
-			if (Integer_SSE_Enable) f_proc=32;
-			else f_proc=33;
+			if (SSE2_Enable && ((w&3)==0)) f_proc=53;
+			else
+			{
+				if (Integer_SSE_Enable) f_proc=32;
+				else f_proc=33;
+			}
 		}
 
 		for(uint8_t i=0; i<Nb_Threads; i++)
@@ -9542,6 +9868,11 @@ uint32_t JPSDR_IVTC::Norme1_Motion_Map_RGB32(const void *src1,const void *src2,v
 	}
 	else
 	{
+		if (AVX_Enable && ((w&3)==0))
+			s=JPSDR_IVTC_DeltaPicture_Motion_Map_AVX_RGB32(buffer_0,map,w>>2,h,w_map,buffer_pitch,buffer_modulo,s_motion_map);
+		else
+		{
+
 		if (SSE2_Enable && ((w&3)==0))
 			s=JPSDR_IVTC_DeltaPicture_Motion_Map_SSE2_RGB32(buffer_0,map,w>>2,h,w_map,buffer_pitch,buffer_modulo,s_motion_map);
 		else
@@ -9582,6 +9913,8 @@ uint32_t JPSDR_IVTC::Norme1_Motion_Map_RGB32(const void *src1,const void *src2,v
 					buffer2=(RGB32BMP *)((uint8_t *)buffer2+buffer_pitch2);
 				}
 			}
+		}
+
 		}
 	}
 
@@ -9668,6 +10001,15 @@ void JPSDR_IVTC::Norme1_SSE2_RGB32_MT(uint8_t thread_num)
 }
 
 
+void JPSDR_IVTC::Norme1_AVX_RGB32_MT(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	MT_Data[thread_num].data_u32_1=JPSDR_IVTC_Norme1_AVX_RGB32(mt_data_inf.src1,mt_data_inf.src2,
+		mt_data_inf.src_Y_w>>2,mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min,mt_data_inf.src_pitch1);
+}
+
+
 void JPSDR_IVTC::Norme1_RGB32_MT(uint8_t thread_num)
 {
 	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
@@ -9728,15 +10070,19 @@ uint32_t JPSDR_IVTC::Norme1_RGB32(const void *src1_0,const void *src2_0,const in
 			MT_Data[i].src_modulo1=modulo;
 		}
 
-		if (SSE2_Enable && ((w&3)==0)) f_proc=55;
+		if (AVX_Enable && ((w&3)==0)) f_proc=63;
 		else
 		{
-			if (Integer_SSE_Enable)
+			if (SSE2_Enable && ((w&3)==0)) f_proc=55;
+			else
 			{
-				if ((w&0x01)!=0) f_proc=35;
-				else f_proc=34;
+				if (Integer_SSE_Enable)
+				{
+					if ((w&0x01)!=0) f_proc=35;
+					else f_proc=34;
+				}
+				else f_proc=36;
 			}
-			else f_proc=36;
 		}
 
 		for(uint8_t i=0; i<Nb_Threads; i++)
@@ -9753,6 +10099,11 @@ uint32_t JPSDR_IVTC::Norme1_RGB32(const void *src1_0,const void *src2_0,const in
 	}
 	else
 	{
+		if (AVX_Enable && ((w&3)==0))
+			s=JPSDR_IVTC_Norme1_AVX_RGB32(src1_0,src2_0,w>>2,h,pitch);
+		else
+		{
+
 		if (SSE2_Enable && ((w&3)==0))
 			s=JPSDR_IVTC_Norme1_SSE2_RGB32(src1_0,src2_0,w>>2,h,pitch);
 		else
@@ -9791,6 +10142,8 @@ uint32_t JPSDR_IVTC::Norme1_RGB32(const void *src1_0,const void *src2_0,const in
 					src2=(RGB32BMP *)((uint8_t *)src2 + (modulo+pitch));
 				}
 			}
+		}
+
 		}
 	}
 
@@ -9906,6 +10259,22 @@ void JPSDR_IVTC::StaticThreadpool(void *ptr)
 		case 54 : ptrClass->Motion_Map_SSE2_RGB32_MT(data->thread_Id);
 			break;
 		case 55 : ptrClass->Norme1_SSE2_RGB32_MT(data->thread_Id);
+			break;
+		case 56 : ptrClass->JPSDR_IVTC_Convert_YUYV_to_RGB32_AVX_MT(data->thread_Id);
+			break;
+		case 57 : ptrClass->JPSDR_IVTC_Convert_UYVY_to_RGB32_AVX_MT(data->thread_Id);
+			break;
+		case 58 : ptrClass->Deinterlace_Tri_Blend_AVX_MT(data->thread_Id);
+			break;
+		case 59 : ptrClass->Deinterlace_Blend_AVX_MT(data->thread_Id);
+			break;
+		case 60 : ptrClass->Histogramme_DeltaPicture_Motion_Map_AVX_RGB32_MT(data->thread_Id);
+			break;
+		case 61 : ptrClass->DeltaPicture_Motion_Map_AVX_RGB32_MT(data->thread_Id);
+			break;
+		case 62 : ptrClass->Motion_Map_AVX_RGB32_MT(data->thread_Id);
+			break;
+		case 63 : ptrClass->Norme1_AVX_RGB32_MT(data->thread_Id);
 			break;
 		default : break;
 	}
@@ -15555,4 +15924,4 @@ void JPSDR_IVTC::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_IVTC=
-VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.3.5","IVTC Filter. [MMX][SSE] Optimised.");
+VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.4.0","IVTC Filter. [SSE2][AVX] Optimised.");
