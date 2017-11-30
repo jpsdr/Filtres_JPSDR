@@ -1371,24 +1371,42 @@ uint8_t JPSDR_IVTC::CreateMTData(uint8_t max_threads,int32_t src_size_x,int32_t 
 		return(1);
 	}
 
+	int32_t _y_min,_dh;
 	int32_t src_dh_Y,src_dh_UV,dst_dh_Y,dst_dh_UV;
 	int32_t h_y;
-	uint8_t i,max=0;
+	uint8_t i,max_src=0,max_dst=0,max;
 
 	dst_dh_Y=(dst_size_y+(uint32_t)max_threads-1)/(uint32_t)max_threads;
 	if (dst_dh_Y<16) dst_dh_Y=16;
 	if ((dst_dh_Y & 3)!=0) dst_dh_Y=((dst_dh_Y+3) >> 2) << 2;
 
 	if (src_size_y==dst_size_y) src_dh_Y=dst_dh_Y;
-	else src_dh_Y=trunc((((float)src_size_y)/((float)dst_size_y))*(float)dst_dh_Y);
-	if ((src_dh_Y & 1)!=0) src_dh_Y++;
-
-	h_y=0;
-	while (h_y<(dst_size_y-16))
+	else
 	{
-		max++;
-		h_y+=dst_dh_Y;
+		src_dh_Y=trunc((((float)src_size_y)/((float)dst_size_y))*(float)dst_dh_Y);
+		if (src_dh_Y<16) src_dh_Y=16;
+		if ((src_dh_Y & 3)!=0) src_dh_Y=((src_dh_Y+3) >> 2) << 2;
 	}
+
+	_y_min=src_size_y;
+	_dh=src_dh_Y;
+	h_y=0;
+	while (h_y<(_y_min-16))
+	{
+		max_src++;
+		h_y+=_dh;
+	}
+
+	_y_min=dst_size_y;
+	_dh=dst_dh_Y;
+	h_y=0;
+	while (h_y<(_y_min-16))
+	{
+		max_dst++;
+		h_y+=_dh;
+	}
+
+	max=(max_src<max_dst) ? max_src:max_dst;
 
 	if (max==1)
 	{
@@ -15924,4 +15942,4 @@ void JPSDR_IVTC::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_IVTC=
-VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.4.2","IVTC Filter. [SSE2][AVX] Optimised.");
+VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.4.3","IVTC Filter. [SSE2][AVX] Optimised.");
