@@ -431,7 +431,7 @@ void JPSDR_Saturation::InternalInit(void)
 		total_cpu=poolInterface->GetThreadNumber(0,true);
 
 		if (total_cpu>1)
-			threadpoolAllocated=poolInterface->AllocateThreads(total_cpu,0,0,true,false,true,-1);
+			threadpoolAllocated=poolInterface->AllocateThreads(total_cpu,0,0,true,true,true,-1);
 		else threadpoolAllocated=false;
 		if (threadpoolAllocated) poolInterface->GetUserId(UserId);
 	}
@@ -3509,4 +3509,4 @@ void JPSDR_Saturation::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptV
 
 		
 extern VDXFilterDefinition filterDef_JPSDR_Saturation=
-VDXVideoFilterDefinition<JPSDR_Saturation>("JPSDR","Sat/Hue/Bright/Contr v4.3.2","[SSE2][AVX] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Saturation>("JPSDR","Sat/Hue/Bright/Contr v4.3.3","[SSE2][AVX] Optimised.");

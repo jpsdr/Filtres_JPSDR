@@ -393,7 +393,7 @@ void JPSDR_AutoYUY2::InternalInit()
 		total_cpu=poolInterface->GetThreadNumber(0,true);
 
 		if (total_cpu>1)
-			threadpoolAllocated=poolInterface->AllocateThreads(total_cpu,0,0,true,false,true,-1);
+			threadpoolAllocated=poolInterface->AllocateThreads(total_cpu,0,0,true,true,true,-1);
 		else threadpoolAllocated=false;
 		if (threadpoolAllocated) poolInterface->GetUserId(UserId);
 	}
@@ -8132,5 +8132,5 @@ void JPSDR_AutoYUY2::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition filterDef_JPSDR_AutoYUY2=
-VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","AutoYUY2 v3.3.2","Convert Planar4:2:0 to severals 4:2:2 modes. [SSE2][AVX] Optimised.");
+VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","AutoYUY2 v3.3.3","Convert Planar4:2:0 to severals 4:2:2 modes. [SSE2][AVX] Optimised.");
 
