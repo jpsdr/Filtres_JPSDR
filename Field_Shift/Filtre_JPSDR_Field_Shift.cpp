@@ -2836,6 +2836,6 @@ void JPSDR_Field_Shift::GetScriptString(char *buf, int maxlen)
 }
 
 
-extern VDXFilterDefinition filterDef_JPSDR_Field_Shift=
+extern VDXFilterDefinition2 filterDef_JPSDR_Field_Shift=
 VDXVideoFilterDefinition<JPSDR_Field_Shift>("JPSDR","FieldShift v3.1.1","Shift Field from previous and current frame.");
 

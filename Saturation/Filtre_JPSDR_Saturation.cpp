@@ -3508,5 +3508,5 @@ void JPSDR_Saturation::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptV
 
 
 		
-extern VDXFilterDefinition filterDef_JPSDR_Saturation=
+extern VDXFilterDefinition2 filterDef_JPSDR_Saturation=
 VDXVideoFilterDefinition<JPSDR_Saturation>("JPSDR","Sat/Hue/Bright/Contr v4.3.3","[SSE2][AVX] Optimised.");

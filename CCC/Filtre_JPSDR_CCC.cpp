@@ -2887,6 +2887,6 @@ void JPSDR_CCC::GetScriptString(char *buf, int maxlen)
 }
 
 
-extern VDXFilterDefinition filterDef_JPSDR_CCC=
+extern VDXFilterDefinition2 filterDef_JPSDR_CCC=
 VDXVideoFilterDefinition<JPSDR_CCC>("JPSDR","Cross-Conversion Correction v1.3.2","Restore interlaced 720->1080 upscale. SSE optimized.");
 

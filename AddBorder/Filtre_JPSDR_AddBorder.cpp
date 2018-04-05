@@ -2431,6 +2431,6 @@ void JPSDR_AddBorder::GetScriptString(char *buf, int maxlen)
 
 
 
-extern VDXFilterDefinition filterDef_JPSDR_AddBorder=
+extern VDXFilterDefinition2 filterDef_JPSDR_AddBorder=
 VDXVideoFilterDefinition<JPSDR_AddBorder>("JPSDR","AddBorder v1.3.1","Add boder to picture.");
 

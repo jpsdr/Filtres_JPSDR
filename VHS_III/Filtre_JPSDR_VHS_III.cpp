@@ -4777,6 +4777,6 @@ void JPSDR_VHS_III::GetScriptString(char *buf, int maxlen)
 }
 
 
-extern VDXFilterDefinition filterDef_JPSDR_VHS_III=
+extern VDXFilterDefinition2 filterDef_JPSDR_VHS_III=
 VDXVideoFilterDefinition<JPSDR_VHS_III>("JPSDR","VHS III v2.4.2","Filter to remove VHS noise.[ASM][SSE][SSE2] Optimised. Lag 2");
 

@@ -2362,7 +2362,7 @@ void JPSDR_Smart_Deinterlace::GetScriptString(char *buf, int maxlen)
 }
 
 
-extern VDXFilterDefinition filterDef_JPSDR_Smart_Deinterlace=
+extern VDXFilterDefinition2 filterDef_JPSDR_Smart_Deinterlace=
 VDXVideoFilterDefinition<JPSDR_Smart_Deinterlace>("JPSDR","SmartDeinterlace v2.3.5","Smart Deinterlace (Based D. Grafh). [MMX][SSE] Optimised.");
 
 

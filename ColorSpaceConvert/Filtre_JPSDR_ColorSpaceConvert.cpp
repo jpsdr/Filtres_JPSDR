@@ -4356,5 +4356,5 @@ void JPSDR_ColorSpaceConvert::GetScriptString(char *buf, int maxlen)
 }
 
 
-extern VDXFilterDefinition filterDef_JPSDR_ColorSpaceConvert=
+extern VDXFilterDefinition2 filterDef_JPSDR_ColorSpaceConvert=
 VDXVideoFilterDefinition<JPSDR_ColorSpaceConvert>("JPSDR","ColorSpaceConvert v2.4.3","YCbCr color space convertion.\n[SSE2][AVX] Optimised.");

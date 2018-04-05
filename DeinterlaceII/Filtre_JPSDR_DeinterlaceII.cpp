@@ -2642,5 +2642,5 @@ void JPSDR_DeinterlaceII::GetScriptString(char *buf, int maxlen)
     SafePrintf(buf, maxlen,"Config(%d, %d, %d)",mData.sharp,mData.frame_offset,mData.frame_freq);
 }
 
-extern VDXFilterDefinition filterDef_JPSDR_DeinterlaceII=
+extern VDXFilterDefinition2 filterDef_JPSDR_DeinterlaceII=
 VDXVideoFilterDefinition<JPSDR_DeinterlaceII>("JPSDR","Deinterlace II v2.3.4","Deinterlace Advanced. Lag 1");
