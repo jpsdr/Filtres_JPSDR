@@ -215,6 +215,17 @@ uint32 JPSDR_RemoveFrames::GetParams()
 		case nsVDXPixmap::kPixFormat_VDXA_RGB :
 		case nsVDXPixmap::kPixFormat_VDXA_YUV :		
 			break;
+		case nsVDXPixmap::kPixFormat_XRGB64 :
+		case nsVDXPixmap::kPixFormat_YUV444_Alpha_Planar :
+		case nsVDXPixmap::kPixFormat_YUV422_Alpha_Planar :
+		case nsVDXPixmap::kPixFormat_YUV420_Alpha_Planar :
+		case nsVDXPixmap::kPixFormat_YUV444_Planar16 :
+		case nsVDXPixmap::kPixFormat_YUV422_Planar16 :
+		case nsVDXPixmap::kPixFormat_YUV420_Planar16 :
+		case nsVDXPixmap::kPixFormat_YUV444_Alpha_Planar16 :
+		case nsVDXPixmap::kPixFormat_YUV422_Alpha_Planar16 :
+		case nsVDXPixmap::kPixFormat_YUV420_Alpha_Planar16 :
+			break;
 		default : return FILTERPARAM_NOT_SUPPORTED;
 	}
 
