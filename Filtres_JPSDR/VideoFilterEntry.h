@@ -25,38 +25,10 @@
 #ifndef f_VD2_VDXFRAME_VIDEOFILTERENTRY_H
 #define f_VD2_VDXFRAME_VIDEOFILTERENTRY_H
 
-#include "vdvideofilt.h"
-
-#ifdef _MSC_VER
-	#pragma once
-#endif
-
 struct VDXFilterModule;
 struct VDXFilterFunctions;
-struct VDXFilterDefinition;
-
-///////////////////////////////////////////////////////////////////////////////
-///	Video filter module entry point declaration macros
-///
-/// To declare the module init and deinit functions:
-///
-///		VDX_DECLARE_VFMODULE()
-///
-///	By default this declares the module as requiring copy contructor support
-///	(V9 / VirtualDub 1.4.12). If you need to declare a different minimum
-///	version, use:
-///
-///		VDX_DECLARE_VFMODULE_APIVER(version)
-///
-#define VDX_DECLARE_VFMODULE() VDX_DECLARE_VFMODULE_APIVER(VIRTUALDUB_FILTERDEF_COMPATIBLE_COPYCTOR)
-#define VDX_DECLARE_VFMODULE_APIVER(apiver)	\
-	extern "C" __declspec(dllexport) int __cdecl VirtualdubFilterModuleInit2(struct VDXFilterModule *fm, const VDXFilterFunctions *ff, int& vdfd_ver, int& vdfd_compat) {	\
-		return VDXVideoFilterModuleInit2(fm, ff, vdfd_ver, vdfd_compat, (apiver));	\
-	}	\
-	\
-	extern "C" __declspec(dllexport) void __cdecl VirtualdubFilterModuleDeinit(struct VDXFilterModule *fm, const VDXFilterFunctions *ff) {	\
-		VDXVideoFilterModuleDeinit(fm, ff);		\
-	}
+struct FilterModInitFunctions;
+struct VDXFilterDefinition2;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Video filter declaration macros
@@ -72,13 +44,13 @@ struct VDXFilterDefinition;
 /// Video filters declared this way are automatically registered by the module init
 /// routine.
 ///
-#define VDX_DECLARE_VIDEOFILTERS_BEGIN()		VDXFilterDefinition *VDXGetVideoFilterDefinition(int index) {
-#define VDX_DECLARE_VIDEOFILTER(defVarName)			if (!index--) { extern VDXFilterDefinition defVarName; return &defVarName; }
+#define VDX_DECLARE_VIDEOFILTERS_BEGIN()		VDXFilterDefinition2 *VDXGetVideoFilterDefinition(int index) {
+#define VDX_DECLARE_VIDEOFILTER(defVarName)			if (!index--) { extern VDXFilterDefinition2 defVarName; return &defVarName; }
 #define VDX_DECLARE_VIDEOFILTERS_END()				return NULL;	\
 												}
-int VDXVideoFilterModuleInit2(struct VDXFilterModule *fm, const VDXFilterFunctions *ff, int& vdfd_ver, int& vdfd_compat, int ver_compat_target);
-void VDXVideoFilterModuleDeinit(struct VDXFilterModule *fm, const VDXFilterFunctions *ff);
+#define VDX_DECLARE_VFMODULE()
 
-int VDXGetVideoFilterAPIVersion();
+int VDXVideoFilterModuleInit2(struct VDXFilterModule *fm, const VDXFilterFunctions *ff, int vdfd_ver);
+int VDXVideoFilterModuleInitFilterMod(struct VDXFilterModule *fm, const FilterModInitFunctions *ff, int vdfd_ver, int mod_ver);
 
 #endif

@@ -58,13 +58,15 @@ public:
 	virtual int Deserialize(const char *buf, int maxbuf);
 	virtual sint64 Prefetch(sint64 frame);
 	virtual bool Prefetch2(sint64 frame, IVDXVideoPrefetcher *prefetcher);
-	
+
 	virtual void StartAccel(IVDXAContext *vdxa);
 	virtual void RunAccel(IVDXAContext *vdxa);
 	virtual void StopAccel(IVDXAContext *vdxa);
 
 	virtual bool OnEvent(uint32 event, const void *eventData);
 	virtual bool OnInvalidateCaches();
+
+	virtual uint32 GetFilterModParams(){ return 0; }
 
 	static void __cdecl FilterDeinit   (VDXFilterActivation *fa, const VDXFilterFunctions *ff);
 	static int  __cdecl FilterRun      (const VDXFilterActivation *fa, const VDXFilterFunctions *ff);
@@ -84,24 +86,45 @@ public:
 
 	static bool StaticAbout(VDXHWND parent);
 	static bool StaticConfigure(VDXHWND parent);
-	
+
+	static void __cdecl FilterModActivate(FilterModActivation *fma, const VDXFilterFunctions *ff);
+	static long __cdecl FilterModParam(VDXFilterActivation *fa, const VDXFilterFunctions *ff);
+
 	// member variables
 	VDXFilterActivation *fa;
+	FilterModActivation *fma;
 	const VDXFilterFunctions *ff;
 
 	static const VDXScriptFunctionDef sScriptMethods[];
-	
+
 	enum InputCountDefaults {
 		kMinInputCount = 1,
 		kMaxInputCount = 1
 	};
-	
-	static void SetAPIVersion(uint32 apiVersion);	
+
+	static void SetAPIVersion(uint32 apiVersion);
+	static void SetFilterModVersion(uint32 version);
 
 protected:
 	void SafePrintf(char *buf, int maxbuf, const char *format, ...);
-	
+
 	static uint32 sAPIVersion;
+	static uint32 FilterModVersion;
+
+public:
+
+	//---------------------------------------------------------------------
+	// Helper functions. Using these is safe for any host version.
+
+	// remove details such as colorspace to help avoid insane switch statements
+	nsVDXPixmap::VDXPixmapFormat ExtractBaseFormat(sint32 format);
+
+	// extract details from legacy pixmap or from extended pixmap, based on what is available
+	nsVDXPixmap::ColorSpaceMode ExtractColorSpace(const VDXFBitmap* bitmap);
+	nsVDXPixmap::ColorRangeMode ExtractColorRange(const VDXFBitmap* bitmap);
+
+	nsVDXPixmap::ColorSpaceMode ExtractColorSpace(sint32 format);
+	nsVDXPixmap::ColorRangeMode ExtractColorRange(sint32 format);
 };
 
 ///////////////////////////////////////////////////////////////////////////
@@ -170,8 +193,24 @@ static bool VDXAPIENTRY VDXStaticAboutConfigureAdapter(VDXHWND parent) {
 ///	This template creates the FilterDefinition structure for you based on
 ///	your filter class.
 ///
+
+struct VDXFilterDefinition2: public VDXFilterDefinition{
+	FilterModDefinition filterMod;
+
+	VDXFilterDefinition2() {
+		fm = 0;
+	}
+
+	VDXFilterDefinition2(const VDXFilterDefinition2& a)
+		:VDXFilterDefinition(a)
+	{
+		filterMod = a.filterMod;
+		fm = &filterMod;
+	}
+};
+
 template<class T>
-class VDXVideoFilterDefinition : public VDXFilterDefinition {
+class VDXVideoFilterDefinition : public VDXFilterDefinition2 {
 public:
 	VDXVideoFilterDefinition(const char *pszAuthor, const char *pszName, const char *pszDescription) {
 		_next			= NULL;
@@ -204,16 +243,19 @@ public:
 
 		prefetchProc	= sizeof(VDXVideoFilterPrefetchOverloadTest(&T::Prefetch)) > 1 ? T::FilterPrefetch : NULL;
 		prefetchProc2	= sizeof(VDXVideoFilterPrefetch2OverloadTest(&T::Prefetch2)) > 1 || sizeof(VDXVideoFilterPrefetchOverloadTest(&T::Prefetch)) > 1 ? T::FilterPrefetch2 : NULL;
-		
+
 		eventProc		= T::FilterEvent;
 
 		accelRunProc	= sizeof(VDXVideoFilterAccelRunOverloadTest(&T::Prefetch)) > 1 ? T::FilterAccelRun : NULL;
 
 		mSourceCountLowMinus1 = T::kMinInputCount - 1;
 		mSourceCountHighMinus1 = T::kMaxInputCount - 1;
-		
+
 		mpStaticAboutProc = T::StaticAbout == VDXVideoFilter::StaticAbout ? NULL : VDXStaticAboutConfigureAdapter<T::StaticAbout>;
-		mpStaticConfigureProc = T::StaticConfigure == VDXVideoFilter::StaticConfigure ? NULL :VDXStaticAboutConfigureAdapter<T::StaticConfigure>;		
+		mpStaticConfigureProc = T::StaticConfigure == VDXVideoFilter::StaticConfigure ? NULL :VDXStaticAboutConfigureAdapter<T::StaticConfigure>;
+
+		filterMod.activateProc = T::FilterModActivate;
+		filterMod.paramProc = T::FilterModParam;
 	}
 
 private:
