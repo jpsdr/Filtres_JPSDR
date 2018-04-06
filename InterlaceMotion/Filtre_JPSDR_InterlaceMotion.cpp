@@ -2056,6 +2056,6 @@ void JPSDR_InterlaceMotion::End()
 }
 
 
-extern VDXFilterDefinition filterDef_JPSDR_InterlaceMotion=
+extern VDXFilterDefinition2 filterDef_JPSDR_InterlaceMotion=
 VDXVideoFilterDefinition<JPSDR_InterlaceMotion>("JPSDR","InterlaceMotion v2.3.4",
 	"Interlace inter frame after x2 frame rate.");

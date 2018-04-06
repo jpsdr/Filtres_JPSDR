@@ -3042,6 +3042,6 @@ void JPSDR_ChromaShift::GetScriptString(char *buf, int maxlen)
 }
 
 
-extern VDXFilterDefinition filterDef_JPSDR_ChromaShift=
+extern VDXFilterDefinition2 filterDef_JPSDR_ChromaShift=
 VDXVideoFilterDefinition<JPSDR_ChromaShift>("JPSDR","ChromaShift v2.1.2","Shift chrominace channels");
 

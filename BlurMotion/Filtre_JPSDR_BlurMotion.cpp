@@ -2062,7 +2062,7 @@ void JPSDR_BlurMotion::Start()
 }
 
 
-extern VDXFilterDefinition filterDef_JPSDR_BlurMotion=
+extern VDXFilterDefinition2 filterDef_JPSDR_BlurMotion=
 VDXVideoFilterDefinition<JPSDR_BlurMotion>("JPSDR","Correct Frame Rate Blur v3.1.2",
 	"Blur added frames after changing frame rate. [SSE2] Optimized.");
 

@@ -81,18 +81,21 @@ enum VDXCPUFeatureFlags {
 	kVDXCPUF_SSE3		= 0x00000100,
 	kVDXCPUF_SSSE3		= 0x00000200,
 	kVDXCPUF_SSE41		= 0x00000400,
-	kVDXCPUF_AVX		= 0x00000800	
+	kVDXCPUF_AVX		= 0x00000800
 };
 
 enum {
-	kVDXPlugin_APIVersion		= 10
+	kVDXPlugin_APIVersion		= 12
 };
 
 
 enum {
 	kVDXPluginType_Video,		// Updated video filter API is not yet complete.
 	kVDXPluginType_Audio,
-	kVDXPluginType_Input
+	kVDXPluginType_Input,
+	kVDXPluginType_Tool,
+	kVDXPluginType_Output,
+	kVDXPluginType_AudioEnc
 };
 
 typedef bool (VDXAPIENTRY *VDXShowStaticAboutProc)(VDXHWND parent);
@@ -161,6 +164,84 @@ struct VDXRect {
 	sint32	bottom;
 };
 
+namespace nsVDXPixmap {
+	enum ColorSpaceMode {
+		kColorSpaceMode_None,
+		kColorSpaceMode_601,
+		kColorSpaceMode_709,
+		kColorSpaceModeCount
+	};
+
+	enum ColorRangeMode {
+		kColorRangeMode_None,
+		kColorRangeMode_Limited,
+		kColorRangeMode_Full,
+		kColorRangeModeCount
+	};
+};
+
+struct FilterModPixmapInfo {
+	enum MappingType {
+		kTransferUnknown = 0,
+		kTransferGamma = 1,
+		kTransferLinear = 2,
+	};
+	enum AlphaType {
+		kAlphaInvalid = 0,      // not present or garbage
+		kAlphaMask = 1,         // arbitrary data, no default display
+		kAlphaOpacity_pm = 2,   // display with transparency
+		kAlphaOpacity = 3,      // display with transparency
+	};
+
+	uint32 ref_r;
+	uint32 ref_g;
+	uint32 ref_b;
+	uint32 ref_a;
+
+	uint32 transfer_type;
+	uint32 alpha_type;
+	int64 frame_num;
+
+	// FilterModVersion>=5
+	nsVDXPixmap::ColorSpaceMode colorSpaceMode;
+	nsVDXPixmap::ColorRangeMode colorRangeMode;
+
+	FilterModPixmapInfo() {
+		clear();
+	}
+
+	void clear() {
+		ref_r = 0;
+		ref_g = 0;
+		ref_b = 0;
+		ref_a = 0;
+		transfer_type = kTransferUnknown;
+		alpha_type = kAlphaInvalid;
+		frame_num = -1;
+		colorSpaceMode = nsVDXPixmap::kColorSpaceMode_None;
+		colorRangeMode = nsVDXPixmap::kColorRangeMode_None;
+	}
+
+	void copy_ref(const FilterModPixmapInfo& a) {
+		ref_r = a.ref_r;
+		ref_g = a.ref_g;
+		ref_b = a.ref_b;
+		ref_a = a.ref_a;
+	}
+	void copy_frame(const FilterModPixmapInfo& a) {
+		frame_num = a.frame_num;
+	}
+	void copy_alpha(const FilterModPixmapInfo& a) {
+		alpha_type = a.alpha_type;
+	}
+	void copy_dynamic(const FilterModPixmapInfo& a) {
+		copy_ref(a);
+		copy_frame(a);
+		copy_alpha(a);
+		transfer_type = a.transfer_type;
+	}
+};
+
 struct VDXPixmap {
 	void			*data;
 	const uint32	*palette;
@@ -191,6 +272,24 @@ struct VDXPixmapLayout {
 	ptrdiff_t		pitch3;
 };
 
+// Alpha extensions: safe to upcast only when format defines alpha plane
+
+struct VDXPixmapAlpha: public VDXPixmap {
+	void			*data4;
+	ptrdiff_t		pitch4;
+};
+
+struct VDXPixmapLayoutAlpha: public VDXPixmapLayout {
+	ptrdiff_t		data4;
+	ptrdiff_t		pitch4;
+};
+
+class IFilterModPixmap {
+public:
+	virtual FilterModPixmapInfo* GetPixmapInfo(const VDXPixmap* pixmap)=NULL;
+	virtual uint64 GetFormat_XRGB64()=0;
+};
+
 namespace nsVDXPixmap {
 	enum VDXPixmapFormat {
 		kPixFormat_Null						= 0,
@@ -206,6 +305,7 @@ namespace nsVDXPixmap {
 		kPixFormat_YUV420_Planar			= 15,
 		kPixFormat_YUV411_Planar			= 16,
 		kPixFormat_YUV410_Planar			= 17,
+		kPixFormat_YUV422_V210				= 21,
 		kPixFormat_YUV422_UYVY_709			= 22,
 		kPixFormat_Y8_FR					= 24,
 		kPixFormat_YUV422_YUYV_709			= 25,
@@ -239,10 +339,35 @@ namespace nsVDXPixmap {
 		kPixFormat_YUV420ib_Planar			= 53,
 		kPixFormat_YUV420ib_Planar_FR		= 54,
 		kPixFormat_YUV420ib_Planar_709		= 55,
-		kPixFormat_YUV420ib_Planar_709_FR	= 56,	
+		kPixFormat_YUV420ib_Planar_709_FR	= 56,
+
+		kPixFormat_XRGB64			= 57,
+		kPixFormat_YUV444_Planar16	= 58,
+		kPixFormat_YUV422_Planar16	= 59,
+		kPixFormat_YUV420_Planar16	= 60,
+		kPixFormat_Y16				= 61,
+		kPixFormat_YUV444_Y416	= 62,
+		kPixFormat_YUV444_V410	= 63,
+		kPixFormat_YUV444_Y410	= 64,
+		kPixFormat_R210			= 65,
+		kPixFormat_R10K			= 66,
+		kPixFormat_YUV444_V308	= 67,
+		kPixFormat_YUV422_P210	= 68,
+		kPixFormat_YUV420_P010	= 69,
+		kPixFormat_YUV422_P216	= 70,
+		kPixFormat_YUV420_P016	= 71,
+
+		kPixFormat_YUV444_Alpha_Planar = 72,
+		kPixFormat_YUV422_Alpha_Planar = 73,
+		kPixFormat_YUV420_Alpha_Planar = 74,
+		kPixFormat_YUV444_Alpha_Planar16 = 75,
+		kPixFormat_YUV422_Alpha_Planar16 = 76,
+		kPixFormat_YUV420_Alpha_Planar16 = 77,
+
+		kPixFormat_YUV422_YU64 = 78,
 
 		kPixFormat_VDXA_RGB			= 0x10001,
-		kPixFormat_VDXA_YUV			= 0x10002	
+		kPixFormat_VDXA_YUV			= 0x10002
 	};
 };
 

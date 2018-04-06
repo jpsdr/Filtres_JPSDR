@@ -2576,6 +2576,6 @@ void JPSDR_IVTC_Manual::GetScriptString(char *buf, int maxlen)
 }
 
 
-extern VDXFilterDefinition filterDef_JPSDR_IVTC_Manual=
+extern VDXFilterDefinition2 filterDef_JPSDR_IVTC_Manual=
 VDXVideoFilterDefinition<JPSDR_IVTC_Manual>("JPSDR","IVTC Manual v3.1.3","IVTC Filter (Manual). [ASM] Optimised.");
 

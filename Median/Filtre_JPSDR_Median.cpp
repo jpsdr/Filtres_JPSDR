@@ -3935,5 +3935,5 @@ void JPSDR_Median::GetScriptString(char *buf, int maxlen)
 		mData.mt_mode);
 }
 
-extern VDXFilterDefinition filterDef_JPSDR_Median=
+extern VDXFilterDefinition2 filterDef_JPSDR_Median=
 VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v3.3.3","Median filter with threshold.");

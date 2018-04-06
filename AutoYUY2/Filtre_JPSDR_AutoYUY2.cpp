@@ -8131,6 +8131,6 @@ void JPSDR_AutoYUY2::GetScriptString(char *buf, int maxlen)
 
 
 
-extern VDXFilterDefinition filterDef_JPSDR_AutoYUY2=
+extern VDXFilterDefinition2 filterDef_JPSDR_AutoYUY2=
 VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","AutoYUY2 v3.3.3","Convert Planar4:2:0 to severals 4:2:2 modes. [SSE2][AVX] Optimised.");
 

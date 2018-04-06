@@ -70,19 +70,41 @@ typedef union _UUYVY
 
 #pragma pack(pop)		// Put back project alined data setting
 
+#define MATRIX_NONE 0
+#define MATRIX_BT709 1
+#define MATRIX_BT601 2
+#define MATRIX_BT2020 3
+#define INTERLACED_NONE 0
+#define PROGRESSIVE 1
+#define INTERLACED 2
+#define INTERLACED_TFF 3
+#define INTERLACED_BFF 4
+#define VMODE_NONE 0
+#define VMODE_RGB32 1
+#define VMODE_YUYV 2
+#define VMODE_UYVY 3
+#define VMODE_YUV444 4
+#define VMODE_YUV422 5
+#define VMODE_YUV420 6
+#define VMODE_YUV411 7
+#define VMODE_YUV410 8
+#define VMODE_Y 9
+
 typedef struct _Image_Data
 {
 	uint8_t video_mode,src_video_mode,dst_video_mode;
-	const void *src_plane0,*src_plane1,*src_plane2;
-	int32_t src_w0,src_w1,src_w2;
-	int32_t src_h0,src_h1,src_h2;
-	uint32_t src_line0,src_line1,src_line2;
-	ptrdiff_t src_pitch0,src_pitch1,src_pitch2;
-	ptrdiff_t src_pitch0_al,src_pitch1_al,src_pitch2_al;
-	ptrdiff_t src_modulo0,src_modulo1,src_modulo2;
-	ptrdiff_t src_modulo0_al,src_modulo1_al,src_modulo2_al;
-	size_t src_size0,src_size1,src_size2;
-	size_t src_size0_al,src_size1_al,src_size2_al;
+	bool alpha_planar,src_alpha_planar,dst_alpha_planar;
+
+	const void *src_plane0,*src_plane1,*src_plane2,*src_plane3;
+	int32_t src_w0,src_w1,src_w2,src_w3;
+	int32_t src_h0,src_h1,src_h2,src_h3;
+	uint32_t src_line0,src_line1,src_line2,src_line3;
+	ptrdiff_t src_pitch0,src_pitch1,src_pitch2,src_pitch3;
+	ptrdiff_t src_pitch0_al,src_pitch1_al,src_pitch2_al,src_pitch3_al;
+	ptrdiff_t src_modulo0,src_modulo1,src_modulo2,src_modulo3;
+	ptrdiff_t src_modulo0_al,src_modulo1_al,src_modulo2_al,src_modulo3_al;
+	size_t src_size0,src_size1,src_size2,src_size3;
+	size_t src_size0_al,src_size1_al,src_size2_al,src_size3_al;
 	uint16_t src_Y_Min,src_Y_Max,src_U_Min,src_U_Max,src_V_Min,src_V_Max;
 	bool src_full_mode;
 	uint8_t src_color_matrix,src_interlaced,src_bits_pixel;
@@ -90,16 +112,17 @@ typedef struct _Image_Data
 	int16_t src_Off_Y,src_Off_U,src_Off_V;
 	double src_Coeff_Y,src_Coeff_U,src_Coeff_V,src_Rv,src_Gu,src_Gv,src_Bu;
 	double src_Off_R,src_Off_G,src_Off_B;
-	void *dst_plane0,*dst_plane1,*dst_plane2;
-	int32_t dst_w0,dst_w1,dst_w2;
-	int32_t dst_h0,dst_h1,dst_h2;
-	uint32_t dst_line0,dst_line1,dst_line2;
-	ptrdiff_t dst_pitch0,dst_pitch1,dst_pitch2;
-	ptrdiff_t dst_pitch0_al,dst_pitch1_al,dst_pitch2_al;
-	ptrdiff_t dst_modulo0,dst_modulo1,dst_modulo2;
-	ptrdiff_t dst_modulo0_al,dst_modulo1_al,dst_modulo2_al;
-	size_t dst_size0,dst_size1,dst_size2;
-	size_t dst_size0_al,dst_size1_al,dst_size2_al;
+
+	void *dst_plane0,*dst_plane1,*dst_plane2,*dst_plane3;
+	int32_t dst_w0,dst_w1,dst_w2,dst_w3;
+	int32_t dst_h0,dst_h1,dst_h2,dst_h3;
+	uint32_t dst_line0,dst_line1,dst_line2,dst_line3;
+	ptrdiff_t dst_pitch0,dst_pitch1,dst_pitch2,dst_pitch3;
+	ptrdiff_t dst_pitch0_al,dst_pitch1_al,dst_pitch2_al,dst_pitch3_al;
+	ptrdiff_t dst_modulo0,dst_modulo1,dst_modulo2,dst_modulo3;
+	ptrdiff_t dst_modulo0_al,dst_modulo1_al,dst_modulo2_al,dst_modulo3_al;
+	size_t dst_size0,dst_size1,dst_size2,dst_size3;
+	size_t dst_size0_al,dst_size1_al,dst_size2_al,dst_size3_al;
 	uint16_t dst_Y_Min,dst_Y_Max,dst_U_Min,dst_U_Max,dst_V_Min,dst_V_Max;
 	bool dst_full_mode;
 	uint8_t dst_color_matrix,dst_interlaced,dst_bits_pixel;
@@ -107,17 +130,40 @@ typedef struct _Image_Data
 	int16_t dst_Off_Y,dst_Off_U,dst_Off_V;
 	double dst_Coeff_Y,dst_Coeff_U,dst_Coeff_V,dst_Rv,dst_Gu,dst_Gv,dst_Bu;
 	double dst_Off_R,dst_Off_G,dst_Off_B;
-} Image_Data;
 
-#define MATRIX_NONE 0
-#define MATRIX_BT709 1
-#define MATRIX_BT601 2
-#define MATRIX_BT2020 3
-#define PROGRESSIVE 0
-#define INTERLACED_NONE 0
-#define INTERLACED 1
-#define INTERLACED_TFF 2
-#define INTERLACED_BFF 3
+	_Image_Data(void)
+	{
+		video_mode=VMODE_NONE; src_video_mode=VMODE_NONE; dst_video_mode=VMODE_NONE;
+		alpha_planar=false; src_alpha_planar=false; dst_alpha_planar=false;
+
+		src_plane0=NULL; src_plane1=NULL; src_plane2=NULL; src_plane3=NULL;
+		src_w0=0; src_w1=0; src_w2=0; src_w3=0;
+		src_h0=0; src_h1=0; src_h2=0; src_h3=0;
+		src_line0=0; src_line1=0; src_line2=0; src_line3=0;
+		src_pitch0=0; src_pitch1=0; src_pitch2=0; src_pitch3=0;
+		src_pitch0_al=0; src_pitch1_al=0; src_pitch2_al=0; src_pitch3_al=0;
+		src_modulo0=0; src_modulo1=0; src_modulo2=0; src_modulo3=0;
+		src_modulo0_al=0; src_modulo1_al=0; src_modulo2_al=0; src_modulo3_al=0;
+		src_size0=0; src_size1=0; src_size2=0; src_size3=0;
+		src_size0_al=0; src_size1_al=0; src_size2_al=0; src_size3_al=0;
+		src_full_mode=false;
+		src_color_matrix=MATRIX_NONE; src_interlaced=INTERLACED_NONE; src_bits_pixel=8;
+
+		dst_plane0=NULL; dst_plane1=NULL; dst_plane2=NULL; dst_plane3=NULL;
+		dst_w0=0; dst_w1=0; dst_w2=0; dst_w3=0;
+		dst_h0=0; dst_h1=0; dst_h2=0; dst_h3=0;
+		dst_line0=0; dst_line1=0; dst_line2=0; dst_line3=0;
+		dst_pitch0=0; dst_pitch1=0; dst_pitch2=0; dst_pitch3=0;
+		dst_pitch0_al=0; dst_pitch1_al=0; dst_pitch2_al=0; dst_pitch3_al=0;
+		dst_modulo0=0; dst_modulo1=0; dst_modulo2=0; dst_modulo3=0;
+		dst_modulo0_al=0; dst_modulo1_al=0; dst_modulo2_al=0; dst_modulo3_al=0;
+		dst_size0=0; dst_size1=0; dst_size2=0; dst_size3=0;
+		dst_size0_al=0; dst_size1_al=0; dst_size2_al=0; dst_size3_al=0;
+		dst_full_mode=false;
+		dst_color_matrix=MATRIX_NONE; dst_interlaced=INTERLACED_NONE; dst_bits_pixel=8;
+	};
+
+} Image_Data;
 
 #define myfree(ptr) if (ptr!=NULL) { free(ptr); ptr=NULL;}
 #define myCloseHandle(ptr) if (ptr!=NULL) { CloseHandle(ptr); ptr=NULL;}
