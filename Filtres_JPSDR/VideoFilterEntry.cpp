@@ -24,49 +24,33 @@
 
 #include "stdafx.h"
 #include "VideoFilterEntry.h"
+#include "VideoFilter.h"
 
-int g_VFVAPIVersion;
-VDXFilterDefinition **g_VDXRegisteredFilters;
-int g_VDXRegisteredFilterCount;
 
-VDXFilterDefinition *VDXGetVideoFilterDefinition(int index);
+VDXFilterDefinition2 *VDXGetVideoFilterDefinition(int index);
 
-int VDXVideoFilterModuleInit2(struct VDXFilterModule *fm, const VDXFilterFunctions *ff, int& vdfd_ver, int& vdfd_compat, int ver_compat_target) {
-	int def_count = 0;
+int VDXVideoFilterModuleInit2(struct VDXFilterModule *fm, const VDXFilterFunctions *ff, int vdfd_ver) {
+  for(int i=0; ; ++i){
+    VDXFilterDefinition2* def = VDXGetVideoFilterDefinition(i);
+    if(!def) break;
+    ff->addFilter(fm, def, sizeof(VDXFilterDefinition));
+  }
 
-	while(VDXGetVideoFilterDefinition(def_count))
-		++def_count;
-
-	g_VDXRegisteredFilters = (VDXFilterDefinition **)malloc(sizeof(VDXFilterDefinition *) * def_count);
-	if (!g_VDXRegisteredFilters)
-		return 1;
-
-	memset(g_VDXRegisteredFilters, 0, sizeof(VDXFilterDefinition *) * def_count);
-
-	for(int i=0; i<def_count; ++i)
-	    g_VDXRegisteredFilters[i] = ff->addFilter(fm, VDXGetVideoFilterDefinition(i), sizeof(VDXFilterDefinition));
-
-	g_VFVAPIVersion = vdfd_ver;
-    vdfd_ver        = VIRTUALDUB_FILTERDEF_VERSION;
-	vdfd_compat     = ver_compat_target;
-	
-	return 0;
+  VDXVideoFilter::SetAPIVersion(vdfd_ver);
+  
+  return 0;
 }
 
-void VDXVideoFilterModuleDeinit(struct VDXFilterModule *fm, const VDXFilterFunctions *ff) {
-	if (g_VDXRegisteredFilters) {
-		for(int i=g_VDXRegisteredFilterCount-1; i>=0; --i) {
-			VDXFilterDefinition *def = g_VDXRegisteredFilters[i];
+int VDXVideoFilterModuleInitFilterMod(struct VDXFilterModule *fm, const FilterModInitFunctions *ff, int vdfd_ver, int mod_ver) {
+  for(int i=0; ; ++i){
+    VDXFilterDefinition2* def = VDXGetVideoFilterDefinition(i);
+    if(!def) break;
+    ff->addFilter(fm, def, sizeof(VDXFilterDefinition), &def->filterMod, sizeof(FilterModDefinition));
+  }
 
-			if (def)
-				ff->removeFilter(def);
-		}
-
-		free(g_VDXRegisteredFilters);
-		g_VDXRegisteredFilters = NULL;
-	}
+  VDXVideoFilter::SetAPIVersion(vdfd_ver);
+  VDXVideoFilter::SetFilterModVersion(mod_ver);
+  
+  return 0;
 }
 
-int VDXGetVideoFilterAPIVersion() {
-	return g_VFVAPIVersion;
-}
