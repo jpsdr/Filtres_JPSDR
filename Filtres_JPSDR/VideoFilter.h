@@ -198,7 +198,7 @@ struct VDXFilterDefinition2: public VDXFilterDefinition{
 	FilterModDefinition filterMod;
 
 	VDXFilterDefinition2() {
-		fm = 0;
+		fm = NULL;
 	}
 
 	VDXFilterDefinition2(const VDXFilterDefinition2& a)

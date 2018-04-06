@@ -32,7 +32,7 @@ uint32 VDXVideoFilter::sAPIVersion;
 uint32 VDXVideoFilter::FilterModVersion;
 
 VDXVideoFilter::VDXVideoFilter() {
-	fma = 0;
+	fma = NULL;
 }
 
 VDXVideoFilter::~VDXVideoFilter() {
