@@ -3,6 +3,9 @@ WARNING !!!!!!!!!!!!!!!!
 RGB32, YUYV and UYVY struct must be compiled with alined data on 1 byte.
 */ 
 
+#ifndef _JPSDR_FILTER_H
+#define _JPSDR_FILTER_H
+
 #include <stdint.h>
 
 #pragma pack(push,1)		// Compiler option, alined data on 1 byte, equal /Zp1
@@ -21,6 +24,21 @@ typedef union _URGB32
 	RGB32 rgb32;
 	uint32_t data32;
 } URGB32;
+
+
+typedef struct _RGB64
+{
+	uint16_t r;
+	uint16_t g;
+	uint16_t b;
+	uint16_t alpha;
+} RGB64;
+
+typedef union _URGB64
+{
+	RGB64 rgb64;
+	uint64_t data64;
+} URGB64;
 */
 
 typedef struct _RGB32BMP
@@ -46,7 +64,6 @@ typedef struct _YUYV
 	uint8_t v;
 } YUYV;
 
-
 typedef union _UYUYV
 {
 	YUYV yuyv;
@@ -68,19 +85,50 @@ typedef union _UUYVY
 	uint32_t data32;
 } UUYVY;
 
+
+typedef struct _RGB64BMP
+{
+	uint16_t b;
+	uint16_t g;
+	uint16_t r;
+	uint16_t alpha;
+} RGB64BMP;
+
+typedef union _URGB64BMP
+{
+	RGB64BMP rgb64bmp;
+	uint64_t data64;
+} URGB64BMP;
+
+
+typedef struct _YUYV16
+{
+	uint16_t y1;
+	uint16_t u;
+	uint16_t y2;
+	uint16_t v;
+} YUYV16;
+
+typedef union _UYUYV16
+{
+	YUYV16 yuyv;
+	uint64_t data64;
+} UYUYV16;
+
 #pragma pack(pop)		// Put back project alined data setting
 
 #define MATRIX_NONE 0
-#define MATRIX_BT709 1
-#define MATRIX_BT601 2
+#define MATRIX_BT601 1
+#define MATRIX_BT709 2
 #define MATRIX_BT2020 3
+#define MATRIX_BT2100 4
 #define INTERLACED_NONE 0
 #define PROGRESSIVE 1
 #define INTERLACED 2
 #define INTERLACED_TFF 3
 #define INTERLACED_BFF 4
 #define VMODE_NONE 0
-#define VMODE_RGB32 1
+#define VMODE_RGBABMP 1
 #define VMODE_YUYV 2
 #define VMODE_UYVY 3
 #define VMODE_YUV444 4
@@ -179,3 +227,5 @@ inline ptrdiff_t abs64(ptrdiff_t x)
 {
 	if (x<0) return(-x); else return(x);
 }
+
+#endif
