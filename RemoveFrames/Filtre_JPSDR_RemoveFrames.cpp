@@ -4,11 +4,10 @@
 
 #include "RemoveFrames_resource.h"
 
-#include "..\Filtres_JPSDR\VideoFilter.h"
+#include "..\Filtres_JPSDR\JPSDRVideoFilter.h"
 #include "..\Filtres_JPSDR\VideoFilterDialog.h"
 
 #include "..\Filtres_JPSDR\Fraction.h"
-#include "..\Filtres_JPSDR\JPSDR_Filter.h"
 
 extern int g_VFVAPIVersion;
 
@@ -127,7 +126,7 @@ bool JPSDR_RemoveFramesDialog::OnCommand(int cmd)
 
 
 
-class JPSDR_RemoveFrames : public VDXVideoFilter
+class JPSDR_RemoveFrames : public JPSDRVDXVideoFilter
 {
 public:
 	virtual uint32 GetParams();
@@ -149,8 +148,6 @@ protected:
 VDXVF_BEGIN_SCRIPT_METHODS(JPSDR_RemoveFrames)
 VDXVF_DEFINE_SCRIPT_METHOD(JPSDR_RemoveFrames,ScriptConfig,"iii")
 VDXVF_END_SCRIPT_METHODS()
-
-
 
 
 uint32 JPSDR_RemoveFrames::GetParams()
@@ -212,8 +209,31 @@ uint32 JPSDR_RemoveFrames::GetParams()
 		case nsVDXPixmap::kPixFormat_YUV420i_Planar_709_FR :
 		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709_FR :
 		case nsVDXPixmap::kPixFormat_YUV420it_Planar_709_FR :
+		case nsVDXPixmap::kPixFormat_YUV422_V210 :
 		case nsVDXPixmap::kPixFormat_VDXA_RGB :
-		case nsVDXPixmap::kPixFormat_VDXA_YUV :		
+		case nsVDXPixmap::kPixFormat_VDXA_YUV :	
+		// VDub2
+		case nsVDXPixmap::kPixFormat_XRGB64 :
+		case nsVDXPixmap::kPixFormat_YUV444_Planar16 :
+		case nsVDXPixmap::kPixFormat_YUV422_Planar16 :
+		case nsVDXPixmap::kPixFormat_YUV420_Planar16 :
+		case nsVDXPixmap::kPixFormat_Y16 :
+		case nsVDXPixmap::kPixFormat_YUV444_Y416 :
+		case nsVDXPixmap::kPixFormat_YUV444_V410 :
+		case nsVDXPixmap::kPixFormat_YUV444_Y410 :
+		case nsVDXPixmap::kPixFormat_R210 :
+		case nsVDXPixmap::kPixFormat_R10K :
+		case nsVDXPixmap::kPixFormat_YUV422_P210 :
+		case nsVDXPixmap::kPixFormat_YUV420_P010 :
+		case nsVDXPixmap::kPixFormat_YUV422_P216 :
+		case nsVDXPixmap::kPixFormat_YUV420_P016 :
+		case nsVDXPixmap::kPixFormat_YUV444_Alpha_Planar :
+		case nsVDXPixmap::kPixFormat_YUV422_Alpha_Planar :
+		case nsVDXPixmap::kPixFormat_YUV420_Alpha_Planar :
+		case nsVDXPixmap::kPixFormat_YUV444_Alpha_Planar16 :
+		case nsVDXPixmap::kPixFormat_YUV422_Alpha_Planar16 :
+		case nsVDXPixmap::kPixFormat_YUV420_Alpha_Planar16 :
+		case nsVDXPixmap::kPixFormat_YUV422_YU64 :
 			break;
 		default : return FILTERPARAM_NOT_SUPPORTED;
 	}
@@ -326,5 +346,5 @@ void JPSDR_RemoveFrames::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_RemoveFrames=
-VDXVideoFilterDefinition<JPSDR_RemoveFrames>("JPSDR","RemoveFrames v1.2.4","Filter to remove frames.");
+VDXVideoFilterDefinition<JPSDR_RemoveFrames>("JPSDR","RemoveFrames v1.3.0","Filter to remove frames.");
 

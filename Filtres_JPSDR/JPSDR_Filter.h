@@ -122,20 +122,20 @@ typedef union _UYUYV16
 #define MATRIX_BT709 2
 #define MATRIX_BT2020 3
 #define MATRIX_BT2100 4
-#define INTERLACED_NONE 0
-#define PROGRESSIVE 1
-#define INTERLACED 2
-#define INTERLACED_TFF 3
-#define INTERLACED_BFF 4
+#define IMODE_NONE 0
+#define IMODE_PROGRESSIVE 1
+#define IMODE_INTERLACED 2
+#define IMODE_TFF 3
+#define IMODE_BFF 4
 #define VMODE_NONE 0
-#define VMODE_RGBABMP 1
+#define VMODE_BMP_RGBA 1
 #define VMODE_YUYV 2
 #define VMODE_UYVY 3
-#define VMODE_YUV444 4
-#define VMODE_YUV422 5
-#define VMODE_YUV420 6
-#define VMODE_YUV411 7
-#define VMODE_YUV410 8
+#define VMODE_PLANAR_YUV444 4
+#define VMODE_PLANAR_YUV422 5
+#define VMODE_PLANAR_YUV420 6
+#define VMODE_PLANAR_YUV411 7
+#define VMODE_PLANAR_YUV410 8
 #define VMODE_Y 9
 
 typedef struct _Image_Data
@@ -195,7 +195,7 @@ typedef struct _Image_Data
 		src_size0=0; src_size1=0; src_size2=0; src_size3=0;
 		src_size0_al=0; src_size1_al=0; src_size2_al=0; src_size3_al=0;
 		src_full_mode=false;
-		src_color_matrix=MATRIX_NONE; src_interlaced=INTERLACED_NONE; src_bits_pixel=8;
+		src_color_matrix=MATRIX_NONE; src_interlaced=IMODE_NONE; src_bits_pixel=8;
 
 		dst_plane0=NULL; dst_plane1=NULL; dst_plane2=NULL; dst_plane3=NULL;
 		dst_w0=0; dst_w1=0; dst_w2=0; dst_w3=0;
@@ -208,7 +208,7 @@ typedef struct _Image_Data
 		dst_size0=0; dst_size1=0; dst_size2=0; dst_size3=0;
 		dst_size0_al=0; dst_size1_al=0; dst_size2_al=0; dst_size3_al=0;
 		dst_full_mode=false;
-		dst_color_matrix=MATRIX_NONE; dst_interlaced=INTERLACED_NONE; dst_bits_pixel=8;
+		dst_color_matrix=MATRIX_NONE; dst_interlaced=IMODE_NONE; dst_bits_pixel=8;
 	};
 
 } Image_Data;

@@ -7,10 +7,9 @@
 
 #include "Saturation_resource.h"
 
-#include "..\Filtres_JPSDR\VideoFilter.h"
+#include "..\Filtres_JPSDR\JPSDRVideoFilter.h"
 #include "..\Filtres_JPSDR\VideoFilterDialog.h"
 
-#include "..\Filtres_JPSDR\JPSDR_Filter.h"
 #include "..\Filtres_JPSDR\Pascal.h"
 
 #include "..\Filtres_JPSDR\ThreadPoolInterface.h"
@@ -137,7 +136,7 @@ protected:
 };
 
 
-class JPSDR_Saturation : public VDXVideoFilter
+class JPSDR_Saturation : public JPSDRVDXVideoFilter
 {
 public:
 	JPSDR_Saturation(){}
@@ -145,6 +144,7 @@ public:
 	{
 		AVX_Enable = a.AVX_Enable;
 		SSE2_Enable = a.SSE2_Enable;
+		VDub2_Enable = a.VDub2_Enable;
 		mData=a.mData;
 		InternalInit();
 	}
@@ -164,7 +164,7 @@ public:
 protected:
 	Image_Data image_data;
 	int16_t lookup[2304],offset_R,offset_G,offset_B,offset_Y,offset_U,offset_V;
-	bool SSE2_Enable,AVX_Enable;
+	bool SSE2_Enable,AVX_Enable,VDub2_Enable;
 	uint16_t lookup_hue_CbCr[65536];
 
 	Public_MT_Data_Thread MT_Thread[MAX_MT_THREADS];
@@ -407,6 +407,7 @@ bool JPSDR_Saturation::Init()
 {
 	AVX_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_AVX)!=0);
 	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
+	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
 	InternalInit();
 
 	return(true);
@@ -766,8 +767,8 @@ uint32 JPSDR_Saturation::GetParams()
 {
 	if (g_VFVAPIVersion<12) return FILTERPARAM_NOT_SUPPORTED;
 	
-	const VDXPixmapLayout& pxsrc = *fa->src.mpPixmapLayout;
-	VDXPixmapLayout& pxdst = *fa->dst.mpPixmapLayout;
+	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
+	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 
 	if (mData.hue==0)
 	{
@@ -815,7 +816,30 @@ uint32 JPSDR_Saturation::GetParams()
 			case nsVDXPixmap::kPixFormat_YUV410_Planar_709_FR :
 			case nsVDXPixmap::kPixFormat_YUV420i_Planar_709_FR :
 			case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709_FR :
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar_709_FR :				
+			case nsVDXPixmap::kPixFormat_YUV420it_Planar_709_FR :
+/*
+			// VDub2
+			case nsVDXPixmap::kPixFormat_XRGB64 :
+			case nsVDXPixmap::kPixFormat_YUV444_Planar16 :
+			case nsVDXPixmap::kPixFormat_YUV422_Planar16 :
+			case nsVDXPixmap::kPixFormat_YUV420_Planar16 :
+			case nsVDXPixmap::kPixFormat_Y16 :
+			case nsVDXPixmap::kPixFormat_YUV444_Y416 :
+			case nsVDXPixmap::kPixFormat_YUV444_V410 :
+			case nsVDXPixmap::kPixFormat_YUV444_Y410 :
+			case nsVDXPixmap::kPixFormat_R210 :
+			case nsVDXPixmap::kPixFormat_R10K :
+			case nsVDXPixmap::kPixFormat_YUV422_P210 :
+			case nsVDXPixmap::kPixFormat_YUV420_P010 :
+			case nsVDXPixmap::kPixFormat_YUV422_P216 :
+			case nsVDXPixmap::kPixFormat_YUV420_P016 :
+			case nsVDXPixmap::kPixFormat_YUV444_Alpha_Planar :
+			case nsVDXPixmap::kPixFormat_YUV422_Alpha_Planar :
+			case nsVDXPixmap::kPixFormat_YUV420_Alpha_Planar :
+			case nsVDXPixmap::kPixFormat_YUV444_Alpha_Planar16 :
+			case nsVDXPixmap::kPixFormat_YUV422_Alpha_Planar16 :
+			case nsVDXPixmap::kPixFormat_YUV420_Alpha_Planar16 :
+			case nsVDXPixmap::kPixFormat_YUV422_YU64 :*/
 				break;
 			default : return FILTERPARAM_NOT_SUPPORTED;
 		}
@@ -857,130 +881,38 @@ uint32 JPSDR_Saturation::GetParams()
 			case nsVDXPixmap::kPixFormat_YUV410_Planar_709_FR :
 			case nsVDXPixmap::kPixFormat_YUV420i_Planar_709_FR :
 			case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709_FR :
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar_709_FR :								
+			case nsVDXPixmap::kPixFormat_YUV420it_Planar_709_FR :
+/*
+			// VDub2
+			case nsVDXPixmap::kPixFormat_XRGB64 :
+			case nsVDXPixmap::kPixFormat_YUV444_Planar16 :
+			case nsVDXPixmap::kPixFormat_YUV422_Planar16 :
+			case nsVDXPixmap::kPixFormat_YUV420_Planar16 :
+			case nsVDXPixmap::kPixFormat_Y16 :
+			case nsVDXPixmap::kPixFormat_YUV444_Y416 :
+			case nsVDXPixmap::kPixFormat_YUV444_V410 :
+			case nsVDXPixmap::kPixFormat_YUV444_Y410 :
+			case nsVDXPixmap::kPixFormat_R210 :
+			case nsVDXPixmap::kPixFormat_R10K :
+			case nsVDXPixmap::kPixFormat_YUV422_P210 :
+			case nsVDXPixmap::kPixFormat_YUV420_P010 :
+			case nsVDXPixmap::kPixFormat_YUV422_P216 :
+			case nsVDXPixmap::kPixFormat_YUV420_P016 :
+			case nsVDXPixmap::kPixFormat_YUV444_Alpha_Planar :
+			case nsVDXPixmap::kPixFormat_YUV422_Alpha_Planar :
+			case nsVDXPixmap::kPixFormat_YUV420_Alpha_Planar :
+			case nsVDXPixmap::kPixFormat_YUV444_Alpha_Planar16 :
+			case nsVDXPixmap::kPixFormat_YUV422_Alpha_Planar16 :
+			case nsVDXPixmap::kPixFormat_YUV420_Alpha_Planar16 :
+			case nsVDXPixmap::kPixFormat_YUV422_YU64 :*/
 				break;
 			default : return FILTERPARAM_NOT_SUPPORTED;
 		}
 	}
 
-	switch(pxsrc.format)
-	{
-		case nsVDXPixmap::kPixFormat_XRGB8888 :
-		case nsVDXPixmap::kPixFormat_Y8_FR :
-			image_data.src_full_mode=true;
-			image_data.src_color_matrix=MATRIX_NONE;
-			image_data.src_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_Y8 :
-			image_data.src_full_mode=false;
-			image_data.src_color_matrix=MATRIX_NONE;
-			image_data.src_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV422_YUYV :
-		case nsVDXPixmap::kPixFormat_YUV422_UYVY :
-		case nsVDXPixmap::kPixFormat_YUV444_Planar :
-		case nsVDXPixmap::kPixFormat_YUV422_Planar :
-		case nsVDXPixmap::kPixFormat_YUV420_Planar :
-		case nsVDXPixmap::kPixFormat_YUV411_Planar :
-		case nsVDXPixmap::kPixFormat_YUV410_Planar :
-			image_data.src_full_mode=false;
-			image_data.src_color_matrix=MATRIX_BT601;
-			image_data.src_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420i_Planar :
-			image_data.src_full_mode=false;
-			image_data.src_color_matrix=MATRIX_BT601;
-			image_data.src_interlaced=INTERLACED;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420ib_Planar :
-			image_data.src_full_mode=false;
-			image_data.src_color_matrix=MATRIX_BT601;
-			image_data.src_interlaced=INTERLACED_BFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420it_Planar :
-			image_data.src_full_mode=false;
-			image_data.src_color_matrix=MATRIX_BT601;
-			image_data.src_interlaced=INTERLACED_TFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV422_YUYV_709 :
-		case nsVDXPixmap::kPixFormat_YUV422_UYVY_709 :
-		case nsVDXPixmap::kPixFormat_YUV444_Planar_709 :
-		case nsVDXPixmap::kPixFormat_YUV422_Planar_709 :
-		case nsVDXPixmap::kPixFormat_YUV420_Planar_709 :
-		case nsVDXPixmap::kPixFormat_YUV411_Planar_709 :
-		case nsVDXPixmap::kPixFormat_YUV410_Planar_709 :				
-			image_data.src_full_mode=false;
-			image_data.src_color_matrix=MATRIX_BT709;
-			image_data.src_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420i_Planar_709 :
-			image_data.src_full_mode=false;
-			image_data.src_color_matrix=MATRIX_BT709;
-			image_data.src_interlaced=INTERLACED;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709 :
-			image_data.src_full_mode=false;
-			image_data.src_color_matrix=MATRIX_BT709;
-			image_data.src_interlaced=INTERLACED_BFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420it_Planar_709 :
-			image_data.src_full_mode=false;
-			image_data.src_color_matrix=MATRIX_BT709;
-			image_data.src_interlaced=INTERLACED_TFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV422_YUYV_FR :
-		case nsVDXPixmap::kPixFormat_YUV422_UYVY_FR :
-		case nsVDXPixmap::kPixFormat_YUV444_Planar_FR :
-		case nsVDXPixmap::kPixFormat_YUV422_Planar_FR :
-		case nsVDXPixmap::kPixFormat_YUV420_Planar_FR :
-		case nsVDXPixmap::kPixFormat_YUV411_Planar_FR :
-		case nsVDXPixmap::kPixFormat_YUV410_Planar_FR :
-			image_data.src_full_mode=true;
-			image_data.src_color_matrix=MATRIX_BT601;
-			image_data.src_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420i_Planar_FR :
-			image_data.src_full_mode=true;
-			image_data.src_color_matrix=MATRIX_BT601;
-			image_data.src_interlaced=INTERLACED;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_FR :
-			image_data.src_full_mode=true;
-			image_data.src_color_matrix=MATRIX_BT601;
-			image_data.src_interlaced=INTERLACED_BFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420it_Planar_FR :
-			image_data.src_full_mode=true;
-			image_data.src_color_matrix=MATRIX_BT601;
-			image_data.src_interlaced=INTERLACED_TFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV422_YUYV_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV422_UYVY_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV444_Planar_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV422_Planar_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV420_Planar_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV411_Planar_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV410_Planar_709_FR :				
-			image_data.src_full_mode=true;
-			image_data.src_color_matrix=MATRIX_BT709;
-			image_data.src_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420i_Planar_709_FR :
-			image_data.src_full_mode=true;
-			image_data.src_color_matrix=MATRIX_BT709;
-			image_data.src_interlaced=INTERLACED;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709_FR :
-			image_data.src_full_mode=true;
-			image_data.src_color_matrix=MATRIX_BT709;
-			image_data.src_interlaced=INTERLACED_BFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420it_Planar_709_FR :
-			image_data.src_full_mode=true;
-			image_data.src_color_matrix=MATRIX_BT709;
-			image_data.src_interlaced=INTERLACED_TFF;
-			break;
-	}
+	image_data.src_full_mode=CheckFullRangeMode(&fa->src);
+	image_data.src_color_matrix=GetColorMode(&fa->src);
+	image_data.src_interlaced=GetInterlaceMode(&fa->src);
 
 	fa->dst.depth = 0;
 	pxdst.pitch=pxsrc.pitch;
@@ -1129,124 +1061,9 @@ uint32 JPSDR_Saturation::GetParams()
 
 	fa->dst.offset = fa->src.offset;
 
-	switch(pxdst.format)
-	{
-		case nsVDXPixmap::kPixFormat_XRGB8888 :
-		case nsVDXPixmap::kPixFormat_Y8_FR :
-			image_data.dst_full_mode=true;
-			image_data.dst_color_matrix=MATRIX_NONE;
-			image_data.dst_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_Y8 :
-			image_data.dst_full_mode=false;
-			image_data.dst_color_matrix=MATRIX_NONE;
-			image_data.dst_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV422_YUYV :
-		case nsVDXPixmap::kPixFormat_YUV422_UYVY :
-		case nsVDXPixmap::kPixFormat_YUV444_Planar :
-		case nsVDXPixmap::kPixFormat_YUV422_Planar :
-		case nsVDXPixmap::kPixFormat_YUV420_Planar :
-		case nsVDXPixmap::kPixFormat_YUV411_Planar :
-		case nsVDXPixmap::kPixFormat_YUV410_Planar :
-			image_data.dst_full_mode=false;
-			image_data.dst_color_matrix=MATRIX_BT601;
-			image_data.dst_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420i_Planar :
-			image_data.dst_full_mode=false;
-			image_data.dst_color_matrix=MATRIX_BT601;
-			image_data.dst_interlaced=INTERLACED;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420ib_Planar :
-			image_data.dst_full_mode=false;
-			image_data.dst_color_matrix=MATRIX_BT601;
-			image_data.dst_interlaced=INTERLACED_BFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420it_Planar :
-			image_data.dst_full_mode=false;
-			image_data.dst_color_matrix=MATRIX_BT601;
-			image_data.dst_interlaced=INTERLACED_TFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV422_YUYV_709 :
-		case nsVDXPixmap::kPixFormat_YUV422_UYVY_709 :
-		case nsVDXPixmap::kPixFormat_YUV444_Planar_709 :
-		case nsVDXPixmap::kPixFormat_YUV422_Planar_709 :
-		case nsVDXPixmap::kPixFormat_YUV420_Planar_709 :
-		case nsVDXPixmap::kPixFormat_YUV411_Planar_709 :
-		case nsVDXPixmap::kPixFormat_YUV410_Planar_709 :				
-			image_data.dst_full_mode=false;
-			image_data.dst_color_matrix=MATRIX_BT709;
-			image_data.dst_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420i_Planar_709 :
-			image_data.dst_full_mode=false;
-			image_data.dst_color_matrix=MATRIX_BT709;
-			image_data.dst_interlaced=INTERLACED;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709 :
-			image_data.dst_full_mode=false;
-			image_data.dst_color_matrix=MATRIX_BT709;
-			image_data.dst_interlaced=INTERLACED_BFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420it_Planar_709 :
-			image_data.dst_full_mode=false;
-			image_data.dst_color_matrix=MATRIX_BT709;
-			image_data.dst_interlaced=INTERLACED_TFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV422_YUYV_FR :
-		case nsVDXPixmap::kPixFormat_YUV422_UYVY_FR :
-		case nsVDXPixmap::kPixFormat_YUV444_Planar_FR :
-		case nsVDXPixmap::kPixFormat_YUV422_Planar_FR :
-		case nsVDXPixmap::kPixFormat_YUV420_Planar_FR :
-		case nsVDXPixmap::kPixFormat_YUV411_Planar_FR :
-		case nsVDXPixmap::kPixFormat_YUV410_Planar_FR :
-			image_data.dst_full_mode=true;
-			image_data.dst_color_matrix=MATRIX_BT601;
-			image_data.dst_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420i_Planar_FR :
-			image_data.dst_full_mode=true;
-			image_data.dst_color_matrix=MATRIX_BT601;
-			image_data.dst_interlaced=INTERLACED;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_FR :
-			image_data.dst_full_mode=true;
-			image_data.dst_color_matrix=MATRIX_BT601;
-			image_data.dst_interlaced=INTERLACED_BFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420it_Planar_FR :
-			image_data.dst_full_mode=true;
-			image_data.dst_color_matrix=MATRIX_BT601;
-			image_data.dst_interlaced=INTERLACED_TFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV422_YUYV_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV422_UYVY_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV444_Planar_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV422_Planar_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV420_Planar_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV411_Planar_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV410_Planar_709_FR :				
-			image_data.dst_full_mode=true;
-			image_data.dst_color_matrix=MATRIX_BT709;
-			image_data.dst_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420i_Planar_709_FR :
-			image_data.dst_full_mode=true;
-			image_data.dst_color_matrix=MATRIX_BT709;
-			image_data.dst_interlaced=INTERLACED;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709_FR :
-			image_data.dst_full_mode=true;
-			image_data.dst_color_matrix=MATRIX_BT709;
-			image_data.dst_interlaced=INTERLACED_BFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420it_Planar_709_FR :
-			image_data.dst_full_mode=true;
-			image_data.dst_color_matrix=MATRIX_BT709;
-			image_data.dst_interlaced=INTERLACED_TFF;
-			break;
-	}
+	image_data.dst_full_mode=CheckFullRangeMode(&fa->dst);
+	image_data.dst_color_matrix=GetColorMode(&fa->dst);
+	image_data.dst_interlaced=GetInterlaceMode(&fa->dst);
 
 	if (g_VFVAPIVersion<14) return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_ALIGN_SCANLINES);
 	else return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_PURE_TRANSFORM|FILTERPARAM_ALIGN_SCANLINES);
@@ -1404,48 +1221,45 @@ void JPSDR_Saturation::StaticThreadpool(void *ptr)
 
 void JPSDR_Saturation::Run()
 {
-	Image_Data idata;
 	bool chg_scale;
 
-	idata=image_data;
-
-	if ((idata.src_w0==0) || (idata.src_h0==0)) return;
+	if ((image_data.src_w0==0) || (image_data.src_h0==0)) return;
 	if (mData.full_range && (mData.full_mode!=2)) chg_scale=true;
 	else chg_scale=false;
 	if ((mData.brightness==0) && (mData.contrast==0) && (mData.hue==0) && (mData.saturation==0) && (!mData.BW_mode) 
 		&& (!chg_scale)) return;
 
-	const VDXPixmap& pxdst=*fa->dst.mpPixmap;
-	const VDXPixmap& pxsrc=*fa->src.mpPixmap;
+	const VDXPixmapAlpha& pxdst=(const VDXPixmapAlpha&)*fa->dst.mpPixmap;
+	const VDXPixmapAlpha& pxsrc=(const VDXPixmapAlpha&)*fa->src.mpPixmap;
 
-	idata.src_plane0=pxsrc.data;
-	idata.src_plane1=pxsrc.data2;
-	idata.src_plane2=pxsrc.data3;
-	idata.dst_plane0=pxdst.data;
-	idata.dst_plane1=pxdst.data2;
-	idata.dst_plane2=pxdst.data3;
+	image_data.src_plane0=pxsrc.data;
+	image_data.src_plane1=pxsrc.data2;
+	image_data.src_plane2=pxsrc.data3;
+	image_data.dst_plane0=pxdst.data;
+	image_data.dst_plane1=pxdst.data2;
+	image_data.dst_plane2=pxdst.data3;
 
 
 	for (uint8_t i=0; i<threads_number; i++)
 	{
-		MT_Data[i].src1=(void *)((uint8_t *)idata.src_plane0+(idata.src_pitch0*MT_Data[i].src_Y_h_min));
-		MT_Data[i].src2=(void *)((uint8_t *)idata.src_plane1+(idata.src_pitch1*MT_Data[i].src_UV_h_min));
-		MT_Data[i].src3=(void *)((uint8_t *)idata.src_plane2+(idata.src_pitch2*MT_Data[i].src_UV_h_min));
-		MT_Data[i].dst1=(void *)((uint8_t *)idata.dst_plane0+(idata.dst_pitch0*MT_Data[i].dst_Y_h_min));
-		MT_Data[i].dst2=(void *)((uint8_t *)idata.dst_plane1+(idata.dst_pitch1*MT_Data[i].dst_UV_h_min));
-		MT_Data[i].dst3=(void *)((uint8_t *)idata.dst_plane2+(idata.dst_pitch2*MT_Data[i].dst_UV_h_min));
-		MT_Data[i].src_pitch1=idata.src_pitch0;
-		MT_Data[i].src_pitch2=idata.src_pitch1;
-		MT_Data[i].src_pitch3=idata.src_pitch2;
-		MT_Data[i].dst_pitch1=idata.dst_pitch0;
-		MT_Data[i].dst_pitch2=idata.dst_pitch1;
-		MT_Data[i].dst_pitch3=idata.dst_pitch2;
-		MT_Data[i].src_modulo1=idata.src_modulo0;
-		MT_Data[i].src_modulo2=idata.src_modulo1;
-		MT_Data[i].src_modulo3=idata.src_modulo2;
-		MT_Data[i].dst_modulo1=idata.dst_modulo0;
-		MT_Data[i].dst_modulo2=idata.dst_modulo1;
-		MT_Data[i].dst_modulo3=idata.dst_modulo2;
+		MT_Data[i].src1=(void *)((uint8_t *)image_data.src_plane0+(image_data.src_pitch0*MT_Data[i].src_Y_h_min));
+		MT_Data[i].src2=(void *)((uint8_t *)image_data.src_plane1+(image_data.src_pitch1*MT_Data[i].src_UV_h_min));
+		MT_Data[i].src3=(void *)((uint8_t *)image_data.src_plane2+(image_data.src_pitch2*MT_Data[i].src_UV_h_min));
+		MT_Data[i].dst1=(void *)((uint8_t *)image_data.dst_plane0+(image_data.dst_pitch0*MT_Data[i].dst_Y_h_min));
+		MT_Data[i].dst2=(void *)((uint8_t *)image_data.dst_plane1+(image_data.dst_pitch1*MT_Data[i].dst_UV_h_min));
+		MT_Data[i].dst3=(void *)((uint8_t *)image_data.dst_plane2+(image_data.dst_pitch2*MT_Data[i].dst_UV_h_min));
+		MT_Data[i].src_pitch1=image_data.src_pitch0;
+		MT_Data[i].src_pitch2=image_data.src_pitch1;
+		MT_Data[i].src_pitch3=image_data.src_pitch2;
+		MT_Data[i].dst_pitch1=image_data.dst_pitch0;
+		MT_Data[i].dst_pitch2=image_data.dst_pitch1;
+		MT_Data[i].dst_pitch3=image_data.dst_pitch2;
+		MT_Data[i].src_modulo1=image_data.src_modulo0;
+		MT_Data[i].src_modulo2=image_data.src_modulo1;
+		MT_Data[i].src_modulo3=image_data.src_modulo2;
+		MT_Data[i].dst_modulo1=image_data.dst_modulo0;
+		MT_Data[i].dst_modulo2=image_data.dst_modulo1;
+		MT_Data[i].dst_modulo3=image_data.dst_modulo2;
 	}
 
 	if (threads_number>1)
@@ -1454,22 +1268,21 @@ void JPSDR_Saturation::Run()
 
 		if (mData.BW_mode)
 		{
-			switch (idata.video_mode)
+			switch (image_data.video_mode)
 			{
-				case 0 :
-				case 1 : f_proc=6; break;
-				case 2 : f_proc=4; break;
-				case 3 : f_proc=5; break;
-				case 4 :
-				case 5 :
-				case 6 :
-				case 7 :
-				case 8 :
+				case VMODE_BMP_RGBA : f_proc=6; break;
+				case VMODE_YUYV : f_proc=4; break;
+				case VMODE_UYVY : f_proc=5; break;
+				case VMODE_PLANAR_YUV444 :
+				case VMODE_PLANAR_YUV422 :
+				case VMODE_PLANAR_YUV420 :
+				case VMODE_PLANAR_YUV411 :
+				case VMODE_PLANAR_YUV410 :
 					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale) f_proc=7;
-					Planar_Fill(idata.dst_plane1,idata.src_w1,idata.src_h1,(uint8_t)(offset_U>>4),
-						idata.dst_pitch1);
-					Planar_Fill(idata.dst_plane2,idata.src_w2,idata.src_h2,(uint8_t)(offset_V>>4),
-						idata.dst_pitch2);
+					Planar_Fill(image_data.dst_plane1,image_data.src_w1,image_data.src_h1,(uint8_t)(offset_U>>4),
+						image_data.dst_pitch1);
+					Planar_Fill(image_data.dst_plane2,image_data.src_w2,image_data.src_h2,(uint8_t)(offset_V>>4),
+						image_data.dst_pitch2);
 					break;
 				case 9 :
 					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale) f_proc=7;
@@ -1478,17 +1291,16 @@ void JPSDR_Saturation::Run()
 		}
 		else
 		{
-			switch (idata.video_mode)
+			switch (image_data.video_mode)
 			{
-				case 0 :
-				case 1 : f_proc=3; break;
-				case 2 : f_proc=1; break;
-				case 3 : f_proc=2; break;
-				case 4 :
-				case 5 :
-				case 6 :
-				case 7 :
-				case 8 :
+				case VMODE_BMP_RGBA : f_proc=3; break;
+				case VMODE_YUYV : f_proc=1; break;
+				case VMODE_UYVY : f_proc=2; break;
+				case VMODE_PLANAR_YUV444 :
+				case VMODE_PLANAR_YUV422 :
+				case VMODE_PLANAR_YUV420 :
+				case VMODE_PLANAR_YUV411 :
+				case VMODE_PLANAR_YUV410 :
 					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale) f_proc=7;
 					if (mData.hue==0)
 					{
@@ -1541,22 +1353,21 @@ void JPSDR_Saturation::Run()
 	{
 		if (mData.BW_mode)
 		{
-			switch (idata.video_mode)
+			switch (image_data.video_mode)
 			{
-				case 0 :
-				case 1 : Saturation_Y_RGB24(0); break;
-				case 2 : Saturation_Y_YUYV(0); break;
-				case 3 : Saturation_Y_UYVY(0); break;
-				case 4 :
-				case 5 :
-				case 6 :
-				case 7 :
-				case 8 :
+				case VMODE_BMP_RGBA : Saturation_Y_RGB24(0); break;
+				case VMODE_YUYV : Saturation_Y_YUYV(0); break;
+				case VMODE_UYVY : Saturation_Y_UYVY(0); break;
+				case VMODE_PLANAR_YUV444 :
+				case VMODE_PLANAR_YUV422 :
+				case VMODE_PLANAR_YUV420 :
+				case VMODE_PLANAR_YUV411 :
+				case VMODE_PLANAR_YUV410 :
 					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale) Saturation_Planar_Y(0);
-					Planar_Fill(idata.dst_plane1,idata.src_w1,idata.src_h1,(uint8_t)(offset_U>>4),
-						idata.dst_pitch1);
-					Planar_Fill(idata.dst_plane2,idata.src_w2,idata.src_h2,(uint8_t)(offset_V>>4),
-						idata.dst_pitch2);
+					Planar_Fill(image_data.dst_plane1,image_data.src_w1,image_data.src_h1,(uint8_t)(offset_U>>4),
+						image_data.dst_pitch1);
+					Planar_Fill(image_data.dst_plane2,image_data.src_w2,image_data.src_h2,(uint8_t)(offset_V>>4),
+						image_data.dst_pitch2);
 					break;
 				case 9 :
 					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale) Saturation_Planar_Y(0);
@@ -1565,17 +1376,16 @@ void JPSDR_Saturation::Run()
 		}
 		else
 		{
-			switch (idata.video_mode)
+			switch (image_data.video_mode)
 			{
-				case 0 :
-				case 1 : Saturation_RGB24(0); break;
-				case 2 : Saturation_YUYV(0); break;
-				case 3 : Saturation_UYVY(0); break;
-				case 4 :
-				case 5 :
-				case 6 :
-				case 7 :
-				case 8 :
+				case VMODE_BMP_RGBA : Saturation_RGB24(0); break;
+				case VMODE_YUYV : Saturation_YUYV(0); break;
+				case VMODE_UYVY : Saturation_UYVY(0); break;
+				case VMODE_PLANAR_YUV444 :
+				case VMODE_PLANAR_YUV422 :
+				case VMODE_PLANAR_YUV420 :
+				case VMODE_PLANAR_YUV411 :
+				case VMODE_PLANAR_YUV410 :
 					if ((mData.brightness!=0) || (mData.contrast!=0) || chg_scale) Saturation_Planar_Y(0);
 					if (mData.hue==0)
 					{
@@ -1593,7 +1403,6 @@ void JPSDR_Saturation::Run()
 			}
 		}
 	}
-
 }
 
 
@@ -1831,8 +1640,6 @@ void JPSDR_Saturation::Compute_Lookup(void)
 
 void JPSDR_Saturation::Start()
 {
-	Image_Data idata;
-
 	if (g_VFVAPIVersion<12)
 	{
 		ff->Except("This virtualdub version doesn't support this filter!");
@@ -1851,1513 +1658,7 @@ void JPSDR_Saturation::Start()
 		return;
 	}
 
-	const VDXPixmapLayout& pxdst=*fa->dst.mpPixmapLayout;
-	const VDXPixmapLayout& pxsrc=*fa->src.mpPixmapLayout;
-
-		idata.src_h0=pxsrc.h;
-		idata.src_w0=pxsrc.w;
-		idata.src_pitch0=pxsrc.pitch;
-		idata.src_pitch1=pxsrc.pitch2;
-		idata.src_pitch2=pxsrc.pitch3;
-
-		idata.dst_h0=pxdst.h;
-		idata.dst_w0=pxdst.w;
-		idata.dst_pitch0=pxdst.pitch;
-		idata.dst_pitch1=pxdst.pitch2;
-		idata.dst_pitch2=pxdst.pitch3;
-		
-		switch(pxsrc.format)
-		{
-			case nsVDXPixmap::kPixFormat_XRGB8888 :
-				idata.src_video_mode=1;
-				idata.video_mode=1;
-				idata.src_line0=4*idata.src_w0;
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_NONE;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_YUYV :
-				idata.src_video_mode=2;
-				idata.video_mode=2;
-				idata.src_line0=4*((idata.src_w0+1)>>1);
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_YUYV_709 :
-				idata.src_video_mode=2;
-				idata.video_mode=2;
-				idata.src_line0=4*((idata.src_w0+1)>>1);
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_YUYV_FR :
-				idata.src_video_mode=2;
-				idata.video_mode=2;
-				idata.src_line0=4*((idata.src_w0+1)>>1);
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_YUYV_709_FR :
-				idata.src_video_mode=2;
-				idata.video_mode=2;
-				idata.src_line0=4*((idata.src_w0+1)>>1);
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_UYVY :
-				idata.src_video_mode=3;
-				idata.video_mode=3;
-				idata.src_line0=4*((idata.src_w0+1)>>1);
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_UYVY_709 :
-				idata.src_video_mode=3;
-				idata.video_mode=3;
-				idata.src_line0=4*((idata.src_w0+1)>>1);
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_UYVY_FR :
-				idata.src_video_mode=3;
-				idata.video_mode=3;
-				idata.src_line0=4*((idata.src_w0+1)>>1);
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_UYVY_709_FR :
-				idata.src_video_mode=3;
-				idata.video_mode=3;
-				idata.src_line0=4*((idata.src_w0+1)>>1);
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV444_Planar :
-				idata.src_video_mode=4;
-				idata.video_mode=4;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=idata.src_w0;
-				idata.src_w2=idata.src_w0;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV444_Planar_709 :
-				idata.src_video_mode=4;
-				idata.video_mode=4;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=idata.src_w0;
-				idata.src_w2=idata.src_w0;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV444_Planar_FR :
-				idata.src_video_mode=4;
-				idata.video_mode=4;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=idata.src_w0;
-				idata.src_w2=idata.src_w0;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV444_Planar_709_FR :
-				idata.src_video_mode=4;
-				idata.video_mode=4;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=idata.src_w0;
-				idata.src_w2=idata.src_w0;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_Planar :
-				idata.src_video_mode=5;
-				idata.video_mode=5;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_Planar_709 :
-				idata.src_video_mode=5;
-				idata.video_mode=5;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_Planar_FR :
-				idata.src_video_mode=5;
-				idata.video_mode=5;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_Planar_709_FR :
-				idata.src_video_mode=5;
-				idata.video_mode=5;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420_Planar :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=PROGRESSIVE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_BFF;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_TFF;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420_Planar_709 :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=PROGRESSIVE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar_709 :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709 :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_BFF;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar_709 :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_TFF;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420_Planar_FR :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=PROGRESSIVE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar_FR :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar_FR :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_BFF;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar_FR :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_TFF;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420_Planar_709_FR :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=PROGRESSIVE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar_709_FR :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709_FR :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_BFF;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar_709_FR :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_TFF;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV411_Planar :
-				idata.src_video_mode=7;
-				idata.video_mode=7;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=(idata.src_w0+3)>>2;
-				idata.src_w2=(idata.src_w0+3)>>2;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV411_Planar_709 :
-				idata.src_video_mode=7;
-				idata.video_mode=7;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=(idata.src_w0+3)>>2;
-				idata.src_w2=(idata.src_w0+3)>>2;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV411_Planar_FR :
-				idata.src_video_mode=7;
-				idata.video_mode=7;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=(idata.src_w0+3)>>2;
-				idata.src_w2=(idata.src_w0+3)>>2;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV411_Planar_709_FR :
-				idata.src_video_mode=7;
-				idata.video_mode=7;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=(idata.src_w0+3)>>2;
-				idata.src_w2=(idata.src_w0+3)>>2;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV410_Planar :
-				idata.src_video_mode=8;
-				idata.video_mode=8;
-				idata.src_h1=(idata.src_h0+3)>>2;
-				idata.src_h2=(idata.src_h0+3)>>2;
-				idata.src_w1=(idata.src_w0+3)>>2;
-				idata.src_w2=(idata.src_w0+3)>>2;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=PROGRESSIVE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV410_Planar_709 :
-				idata.src_video_mode=8;
-				idata.video_mode=8;
-				idata.src_h1=(idata.src_h0+3)>>2;
-				idata.src_h2=(idata.src_h0+3)>>2;
-				idata.src_w1=(idata.src_w0+3)>>2;
-				idata.src_w2=(idata.src_w0+3)>>2;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=PROGRESSIVE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV410_Planar_FR :
-				idata.src_video_mode=8;
-				idata.video_mode=8;
-				idata.src_h1=(idata.src_h0+3)>>2;
-				idata.src_h2=(idata.src_h0+3)>>2;
-				idata.src_w1=(idata.src_w0+3)>>2;
-				idata.src_w2=(idata.src_w0+3)>>2;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=PROGRESSIVE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV410_Planar_709_FR :
-				idata.src_video_mode=8;
-				idata.video_mode=8;
-				idata.src_h1=(idata.src_h0+3)>>2;
-				idata.src_h2=(idata.src_h0+3)>>2;
-				idata.src_w1=(idata.src_w0+3)>>2;
-				idata.src_w2=(idata.src_w0+3)>>2;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=PROGRESSIVE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_Y8 :
-				idata.src_video_mode=9;
-				idata.video_mode=9;
-				idata.src_line0=idata.src_w0;
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_NONE;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_Y8_FR :			
-				idata.src_video_mode=9;
-				idata.video_mode=9;
-				idata.src_line0=idata.src_w0;
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_NONE;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-		}
-		idata.src_modulo0=idata.src_pitch0-idata.src_line0;
-		idata.src_pitch0_al=(((ptrdiff_t)idata.src_line0+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
-		idata.src_modulo0_al=idata.src_pitch0_al-idata.src_line0;
-		idata.src_size0=(size_t)idata.src_h0*(size_t)idata.src_line0;
-		idata.src_size0_al=(size_t)idata.src_h0*(size_t)idata.src_pitch0_al;
-		idata.src_modulo1=idata.src_pitch1-idata.src_line1;
-		idata.src_pitch1_al=(((ptrdiff_t)idata.src_line1+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
-		idata.src_modulo1_al=idata.src_pitch1_al-idata.src_line1;
-		idata.src_size1=(size_t)idata.src_h1*(size_t)idata.src_line1;
-		idata.src_size1_al=(size_t)idata.src_h1*(size_t)idata.src_pitch1_al;
-		idata.src_modulo2=idata.src_pitch2-idata.src_line2;
-		idata.src_pitch2_al=(((ptrdiff_t)idata.src_line2+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
-		idata.src_modulo2_al=idata.src_pitch2_al-idata.src_line2;
-		idata.src_size2=(size_t)idata.src_h2*(size_t)idata.src_line2;
-		idata.src_size2_al=(size_t)idata.src_h2*(size_t)idata.src_pitch2_al;
-
-		switch(pxdst.format)
-		{
-			case nsVDXPixmap::kPixFormat_XRGB8888 :
-				idata.dst_video_mode=1;
-				idata.dst_line0=4*idata.dst_w0;
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_NONE;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_YUYV :
-				idata.dst_video_mode=2;
-				idata.dst_line0=4*((idata.dst_w0+1)>>1);
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_YUYV_709 :
-				idata.dst_video_mode=2;
-				idata.dst_line0=4*((idata.dst_w0+1)>>1);
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_YUYV_FR :
-				idata.dst_video_mode=2;
-				idata.dst_line0=4*((idata.dst_w0+1)>>1);
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_YUYV_709_FR :			
-				idata.dst_video_mode=2;
-				idata.dst_line0=4*((idata.dst_w0+1)>>1);
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_UYVY :
-				idata.dst_video_mode=3;
-				idata.dst_line0=4*((idata.dst_w0+1)>>1);
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_UYVY_709 :
-				idata.dst_video_mode=3;
-				idata.dst_line0=4*((idata.dst_w0+1)>>1);
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_UYVY_FR :
-				idata.dst_video_mode=3;
-				idata.dst_line0=4*((idata.dst_w0+1)>>1);
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_UYVY_709_FR :			
-				idata.dst_video_mode=3;
-				idata.dst_line0=4*((idata.dst_w0+1)>>1);
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV444_Planar :
-				idata.dst_video_mode=4;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=idata.dst_w0;
-				idata.dst_w2=idata.dst_w0;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV444_Planar_709 :
-				idata.dst_video_mode=4;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=idata.dst_w0;
-				idata.dst_w2=idata.dst_w0;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV444_Planar_FR :
-				idata.dst_video_mode=4;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=idata.dst_w0;
-				idata.dst_w2=idata.dst_w0;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV444_Planar_709_FR :			
-				idata.dst_video_mode=4;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=idata.dst_w0;
-				idata.dst_w2=idata.dst_w0;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_Planar :
-				idata.dst_video_mode=5;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_Planar_709 :
-				idata.dst_video_mode=5;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_Planar_FR :
-				idata.dst_video_mode=5;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_Planar_709_FR :			
-				idata.dst_video_mode=5;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420_Planar :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=PROGRESSIVE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_BFF;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_TFF;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420_Planar_709 :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=PROGRESSIVE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar_709 :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709 :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_BFF;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar_709 :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_TFF;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420_Planar_FR :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=PROGRESSIVE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar_FR :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar_FR :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_BFF;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar_FR :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_TFF;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420_Planar_709_FR :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=PROGRESSIVE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar_709_FR :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709_FR :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_BFF;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar_709_FR :			
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_TFF;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV411_Planar :
-				idata.dst_video_mode=7;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=(idata.dst_w0+3)>>2;
-				idata.dst_w2=(idata.dst_w0+3)>>2;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV411_Planar_709 :
-				idata.dst_video_mode=7;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=(idata.dst_w0+3)>>2;
-				idata.dst_w2=(idata.dst_w0+3)>>2;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV411_Planar_FR :
-				idata.dst_video_mode=7;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=(idata.dst_w0+3)>>2;
-				idata.dst_w2=(idata.dst_w0+3)>>2;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV411_Planar_709_FR :			
-				idata.dst_video_mode=7;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=(idata.dst_w0+3)>>2;
-				idata.dst_w2=(idata.dst_w0+3)>>2;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV410_Planar :
-				idata.dst_video_mode=8;
-				idata.dst_h1=(idata.dst_h0+3)>>2;
-				idata.dst_h2=(idata.dst_h0+3)>>2;
-				idata.dst_w1=(idata.dst_w0+3)>>2;
-				idata.dst_w2=(idata.dst_w0+3)>>2;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=PROGRESSIVE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV410_Planar_709 :
-				idata.dst_video_mode=8;
-				idata.dst_h1=(idata.dst_h0+3)>>2;
-				idata.dst_h2=(idata.dst_h0+3)>>2;
-				idata.dst_w1=(idata.dst_w0+3)>>2;
-				idata.dst_w2=(idata.dst_w0+3)>>2;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=PROGRESSIVE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV410_Planar_FR :
-				idata.dst_video_mode=8;
-				idata.dst_h1=(idata.dst_h0+3)>>2;
-				idata.dst_h2=(idata.dst_h0+3)>>2;
-				idata.dst_w1=(idata.dst_w0+3)>>2;
-				idata.dst_w2=(idata.dst_w0+3)>>2;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=PROGRESSIVE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV410_Planar_709_FR :			
-				idata.dst_video_mode=8;
-				idata.dst_h1=(idata.dst_h0+3)>>2;
-				idata.dst_h2=(idata.dst_h0+3)>>2;
-				idata.dst_w1=(idata.dst_w0+3)>>2;
-				idata.dst_w2=(idata.dst_w0+3)>>2;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=PROGRESSIVE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_Y8 :
-				idata.dst_video_mode=9;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_NONE;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_Y8_FR :						
-				idata.dst_video_mode=9;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_NONE;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-		}
-	idata.dst_modulo0=idata.dst_pitch0-idata.dst_line0;
-	idata.dst_pitch0_al=(((ptrdiff_t)idata.dst_line0+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
-	idata.dst_modulo0_al=idata.dst_pitch0_al-idata.dst_line0;
-	idata.dst_size0=(size_t)idata.dst_h0*(size_t)idata.dst_line0;
-	idata.src_size0_al=(size_t)idata.dst_h0*(size_t)idata.dst_pitch0_al;
-	idata.dst_modulo1=idata.dst_pitch1-idata.dst_line1;
-	idata.dst_pitch1_al=(((ptrdiff_t)idata.dst_line1+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
-	idata.dst_modulo1_al=idata.dst_pitch1_al-idata.dst_line1;
-	idata.dst_size1=(size_t)idata.dst_h1*(size_t)idata.dst_line1;
-	idata.src_size1_al=(size_t)idata.dst_h1*(size_t)idata.dst_pitch1_al;
-	idata.dst_modulo2=idata.dst_pitch2-idata.dst_line2;
-	idata.dst_pitch2_al=(((ptrdiff_t)idata.dst_line2+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
-	idata.dst_modulo2_al=idata.dst_pitch2_al-idata.dst_line2;
-	idata.dst_size2=(size_t)idata.dst_h2*(size_t)idata.dst_line2;
-	idata.src_size2_al=(size_t)idata.dst_h2*(size_t)idata.dst_pitch2_al;
-
-	if (idata.src_bits_pixel<=16)
-	{
-		if (idata.src_full_mode)
-		{
-			idata.src_Y_Min=0;
-			idata.src_U_Min=0;
-			idata.src_V_Min=0;
-
-			idata.src_Y_Max=(uint16_t)(((int)1 << idata.src_bits_pixel)-1);
-			idata.src_U_Max=(uint16_t)(((int)1 << idata.src_bits_pixel)-1);
-			idata.src_V_Max=(uint16_t)(((int)1 << idata.src_bits_pixel)-1);
-		}
-		else
-		{
-			idata.src_Y_Min=(uint16_t)((int)16 << (idata.src_bits_pixel-8));
-			idata.src_U_Min=(uint16_t)((int)16 << (idata.src_bits_pixel-8));
-			idata.src_V_Min=(uint16_t)((int)16 << (idata.src_bits_pixel-8));
-			idata.src_Y_Max=(uint16_t)((int)235 << (idata.src_bits_pixel-8));
-			idata.src_U_Max=(uint16_t)((int)240 << (idata.src_bits_pixel-8));
-			idata.src_V_Max=(uint16_t)((int)240 << (idata.src_bits_pixel-8));
-		}
-	}
-	if (idata.dst_bits_pixel<=16)
-	{
-		if (idata.dst_full_mode)
-		{
-			idata.dst_Y_Min=0;
-			idata.dst_U_Min=0;
-			idata.dst_V_Min=0;
-
-			idata.dst_Y_Max=(uint16_t)(((int)1 << idata.dst_bits_pixel)-1);
-			idata.dst_U_Max=(uint16_t)(((int)1 << idata.dst_bits_pixel)-1);
-			idata.dst_V_Max=(uint16_t)(((int)1 << idata.dst_bits_pixel)-1);
-		}
-		else
-		{
-			idata.dst_Y_Min=(uint16_t)((int)16 << (idata.dst_bits_pixel-8));
-			idata.dst_U_Min=(uint16_t)((int)16 << (idata.dst_bits_pixel-8));
-			idata.dst_V_Min=(uint16_t)((int)16 << (idata.dst_bits_pixel-8));
-			idata.dst_Y_Max=(uint16_t)((int)235 << (idata.dst_bits_pixel-8));
-			idata.dst_U_Max=(uint16_t)((int)240 << (idata.dst_bits_pixel-8));
-			idata.dst_V_Max=(uint16_t)((int)240 << (idata.dst_bits_pixel-8));
-		}
-	}
-
-	switch(idata.src_color_matrix)
-	{
-		case MATRIX_BT601 :
-			idata.src_Kr=0.299;
-			idata.src_Kb=0.114;
-			break;
-		case MATRIX_BT709 :
-			idata.src_Kr=0.2126;
-			idata.src_Kb=0.0722;
-			break;
-		case MATRIX_BT2020 :
-			idata.src_Kr=0.2627;
-			idata.src_Kb=0.0593;
-			break;
-		default :
-			idata.src_Kr=0.299;
-			idata.src_Kb=0.114;
-			break;
-	}
-	idata.src_Kg=1.0-idata.src_Kr-idata.src_Kb;
-	if ((idata.src_full_mode) || (idata.src_bits_pixel>16))
-	{
-		idata.src_Coeff_Y=1.0;
-		idata.src_Coeff_U=1.0;
-		idata.src_Coeff_V=1.0;
-	}
-	else
-	{
-		idata.src_Coeff_Y=219.0/255.0;
-		idata.src_Coeff_U=224.0/255.0;
-		idata.src_Coeff_V=224.0/255.0;
-	}
-	idata.src_Ur=-0.5*idata.src_Kr/(1.0-idata.src_Kb);
-	idata.src_Ug=-0.5*idata.src_Kg/(1.0-idata.src_Kb);
-	idata.src_Ub=0.5;
-	idata.src_Vr=0.5;
-	idata.src_Vg=-0.5*idata.src_Kg/(1.0-idata.src_Kr);
-	idata.src_Vb=-0.5*idata.src_Kb/(1.0-idata.src_Kr);
-	idata.src_Rv=2.0*(1.0-idata.src_Kr);
-	idata.src_Gu=-2.0*idata.src_Kb*(1.0-idata.src_Kb)/idata.src_Kg;
-	idata.src_Gv=-2.0*idata.src_Kr*(1.0-idata.src_Kr)/idata.src_Kg;
-	idata.src_Bu=2.0*(1.0-idata.src_Kb);
-	if (idata.src_bits_pixel<=16)
-	{
-		idata.src_Off_Y=idata.src_Y_Min;
-		idata.src_Off_U=(uint16_t)((int)128 << (idata.dst_bits_pixel-8));
-		idata.src_Off_V=(uint16_t)((int)128 << (idata.dst_bits_pixel-8));
-		idata.src_Off_R=-((double)idata.src_Off_Y/idata.src_Coeff_Y+idata.src_Rv*(double)idata.src_Off_V/idata.src_Coeff_V);
-		idata.src_Off_G=-((double)idata.src_Off_Y/idata.src_Coeff_Y+idata.src_Gu*(double)idata.src_Off_U/idata.src_Coeff_U
-			+idata.src_Gv*(double)idata.src_Off_V/idata.src_Coeff_V);
-		idata.src_Off_B=-((double)idata.src_Off_Y/idata.src_Coeff_Y+idata.src_Bu*(double)idata.src_Off_U/idata.src_Coeff_U);
-	}
-	else
-	{
-		idata.src_Off_Y=0;
-		idata.src_Off_U=0;
-		idata.src_Off_V=0;
-		idata.src_Coeff_Y=1.0;
-		idata.src_Coeff_U=1.0;
-		idata.src_Coeff_V=1.0;
-		idata.src_Off_R=0.0;
-		idata.src_Off_G=0.0;
-		idata.src_Off_B=0.0;
-	}
-
-	switch(idata.dst_color_matrix)
-	{
-		case MATRIX_BT601 :
-			idata.dst_Kr=0.299;
-			idata.dst_Kb=0.114;
-			break;
-		case MATRIX_BT709 :
-			idata.dst_Kr=0.2126;
-			idata.dst_Kb=0.0722;
-			break;
-		case MATRIX_BT2020 :
-			idata.dst_Kr=0.2627;
-			idata.dst_Kb=0.0593;
-			break;
-		default :
-			idata.dst_Kr=0.299;
-			idata.dst_Kb=0.114;
-			break;
-	}
-	idata.dst_Kg=1.0-idata.dst_Kr-idata.dst_Kb;
-	if ((idata.dst_full_mode) || (idata.dst_bits_pixel>16))
-	{
-		idata.dst_Coeff_Y=1.0;
-		idata.dst_Coeff_U=1.0;
-		idata.dst_Coeff_V=1.0;
-	}
-	else
-	{
-		idata.dst_Coeff_Y=219.0/255.0;
-		idata.dst_Coeff_U=224.0/255.0;
-		idata.dst_Coeff_V=224.0/255.0;
-	}
-	idata.dst_Ur=-0.5*idata.dst_Kr/(1.0-idata.dst_Kb);
-	idata.dst_Ug=-0.5*idata.dst_Kg/(1.0-idata.dst_Kb);
-	idata.dst_Ub=0.5;
-	idata.dst_Vr=0.5;
-	idata.dst_Vg=-0.5*idata.dst_Kg/(1.0-idata.dst_Kr);
-	idata.dst_Vb=-0.5*idata.dst_Kb/(1.0-idata.dst_Kr);
-	idata.dst_Rv=2.0*(1.0-idata.dst_Kr);
-	idata.dst_Gu=-2.0*idata.dst_Kb*(1.0-idata.dst_Kb)/idata.dst_Kg;
-	idata.dst_Gv=-2.0*idata.dst_Kr*(1.0-idata.dst_Kr)/idata.dst_Kg;
-	idata.dst_Bu=2.0*(1.0-idata.dst_Kb);
-	if (idata.dst_bits_pixel<=16)
-	{
-		idata.dst_Off_Y=idata.dst_Y_Min;
-		idata.dst_Off_U=(uint16_t)((int)128 << (idata.dst_bits_pixel-8));
-		idata.dst_Off_V=(uint16_t)((int)128 << (idata.dst_bits_pixel-8));
-		idata.dst_Off_R=-((double)idata.dst_Off_Y/idata.dst_Coeff_Y+idata.dst_Rv*(double)idata.dst_Off_V/idata.dst_Coeff_V);
-		idata.dst_Off_G=-((double)idata.dst_Off_Y/idata.dst_Coeff_Y+idata.dst_Gu*(double)idata.dst_Off_U/idata.dst_Coeff_U
-			+idata.dst_Gv*(double)idata.dst_Off_V/idata.dst_Coeff_V);
-		idata.dst_Off_B=-((double)idata.dst_Off_Y/idata.dst_Coeff_Y+idata.dst_Bu*(double)idata.dst_Off_U/idata.dst_Coeff_U);
-	}
-	else
-	{
-		idata.dst_Off_Y=0;
-		idata.dst_Off_U=0;
-		idata.dst_Off_V=0;
-		idata.dst_Coeff_Y=1.0;
-		idata.dst_Coeff_U=1.0;
-		idata.dst_Coeff_V=1.0;
-		idata.dst_Off_R=0.0;
-		idata.dst_Off_G=0.0;
-		idata.dst_Off_B=0.0;
-	}
-	/*
-	R',G',B' : RGB value normalised between (0.0,0.0,0.0)[Black] to (1.0,1.0,1.0)[White]
-	Y' between (0.0 / +1.0) and Pb/Pr between (-0.5 / +0.5)
-
-	Y'=Kr*R'+Kg*G'+Kb*B'
-	Pb=0.5*(B'-Y')/(1-Kb)=-0.5*Kr/(1-Kb))*R'-0.5*Kg/(1-Kb)*G'+0.5*B'
-	Pr=0.5*(R'-Y')/(1-Kr)=0.5*R'-0.5*Kg/(1-Kr)*G'-0.5*Kb/(1-Kr)*B'
-
-	R'=Y'+2*(1-Kr)*Pr
-	G'=Y'-(2*Kb*(1-Kb)/Kg)*Pb-(2*Kr*(1-Kr)/Kg)*Pr
-	B'=Y'+2*(1-Kb)*Pb
-
-	(Y) Y'=Kr*R'+Kg*G'+Kb*B'
-	(U) Pb=Ur*R'+Ug*G'+Ub*B'
-	(V) Pr=Vr*R'+Vg*G'+Vb*B'
-
-	(R) R'=Y'+Rv*Pr
-	(G) G'=Y'+Gu*Pb+Gv*Pr
-	(B) B'=Y'+Bu*Pb
-
-	For 8 bits data limited range :
-	(Y',Cb,Cr) = (16,128,128) + (219*Y',224*Pb,224*Pr)
-
-	Y = Off_Y + (Kr*R+Kg*G+Kb*B)*Coeff_Y
-	(Cb) U = Off_U + (Ur*R+Ug*G+Ub*B)*Coeff_U
-	(Cr) V = Off_V + (Vr*R+Vg*G+Vb*B)*Coeff_V
-
-	R = Y/Coeff_Y + Rv*V/Coeff_V + Off_R [ Off_R = -(Off_Y/Coeff_Y+Rv*Off_V/Coeff_V) ]
-	G = Y/Coeff_Y + Gu*U/Coeff_U + Gv*V/Coeff_V + Off_G [ Off_G = -(Off_Y/Coeff_Y+Gu*Off_U/Coeff_U+Gv*Off_V/Coeff_V) ]
-	B = Y/Coeff_Y + Bu*U/Coeff_U + Off_B [ Off_B = -(Off_Y/Coeff_Y+Bu*Off_U/Coeff_U) ]
-	*/
-
-	image_data=idata;
+	SetImageData(image_data);
 
 	if (total_cpu==0)
 	{
@@ -3365,37 +1666,36 @@ void JPSDR_Saturation::Start()
 		return;
 	}
 
-	if  (mData.mt_mode && (idata.src_h0>=32) && (idata.dst_h0>=32)) threads_number=total_cpu;
+	if  (mData.mt_mode && (image_data.src_h0>=32) && (image_data.dst_h0>=32)) threads_number=total_cpu;
 	else threads_number=1;
 
-	switch (idata.src_video_mode)
+	switch (image_data.src_video_mode)
 	{
-		case 0 :
-		case 1 :
-			threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,0,0,0);
+		case VMODE_BMP_RGBA :
+			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,0,0,0);
 			break;
-		case 4 :
-		case 9 :
-			threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,0,0,2);
+		case VMODE_PLANAR_YUV444 :
+		case VMODE_Y :
+			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,0,0,2);
 			break;
-		case 2 :
-		case 3 :
-			threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,1,0,1);
+		case VMODE_YUYV :
+		case VMODE_UYVY :
+			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,1,0,1);
 			break;
-		case 5 :
-			threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,1,0,2);
+		case VMODE_PLANAR_YUV422 :
+			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,1,0,2);
 			break;
-		case 6 :
-			threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,1,1,2);
+		case VMODE_PLANAR_YUV420 :
+			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,1,1,2);
 			break;
-		case 7 :
-			threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,2,0,2);
+		case VMODE_PLANAR_YUV411 :
+			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,2,0,2);
 			break;
-		case 8 :
-			threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,2,2,2);
+		case VMODE_PLANAR_YUV410 :
+			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,2,2,2);
 			break;
 		default :
-			threads_number=CreateMTData(threads_number,idata.src_w0,idata.src_h0,0,0,0);
+			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,0,0,0);
 			break;
 	}
 
@@ -3509,4 +1809,4 @@ void JPSDR_Saturation::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptV
 
 		
 extern VDXFilterDefinition2 filterDef_JPSDR_Saturation=
-VDXVideoFilterDefinition<JPSDR_Saturation>("JPSDR","Sat/Hue/Bright/Contr v4.3.3","[SSE2][AVX] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Saturation>("JPSDR","Sat/Hue/Bright/Contr v4.4.0","[SSE2][AVX] Optimised.");

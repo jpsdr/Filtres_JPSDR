@@ -2240,6 +2240,7 @@
     <ClCompile Include="Filtres_JPSDR.cpp" />
     <ClCompile Include="Fraction.cpp" />
     <ClCompile Include="int128.cpp" />
+    <ClCompile Include="JPSDRVideoFilter.cpp" />
     <ClCompile Include="math.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="ThreadPool.cpp" />
@@ -3525,6 +3526,7 @@
   <ItemGroup>
     <ClInclude Include="Fraction.h" />
     <ClInclude Include="int128.h" />
+    <ClInclude Include="JPSDRVideoFilter.h" />
     <ClInclude Include="JPSDR_Filter.h" />
     <ClInclude Include="math.h" />
     <ClInclude Include="Pascal.h" />

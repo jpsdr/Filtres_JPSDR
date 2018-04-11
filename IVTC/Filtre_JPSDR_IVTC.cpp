@@ -4,10 +4,9 @@
 
 #include "IVTC_resource.h"
 
-#include "..\Filtres_JPSDR\VideoFilter.h"
+#include "..\Filtres_JPSDR\JPSDRVideoFilter.h"
 #include "..\Filtres_JPSDR\VideoFilterDialog.h"
 
-#include "..\Filtres_JPSDR\JPSDR_Filter.h"
 #include "..\Filtres_JPSDR\Pascal.h"
 
 #include "..\Filtres_JPSDR\ThreadPoolInterface.h"
@@ -508,7 +507,7 @@ bool JPSDR_IVTCDialog::OnCommand(int cmd)
 }
 
 
-class JPSDR_IVTC : public VDXVideoFilter
+class JPSDR_IVTC : public JPSDRVDXVideoFilter
 {
 public:
 	JPSDR_IVTC(){}
@@ -518,6 +517,7 @@ public:
 		SSE2_Enable=a.SSE2_Enable;
 		Integer_SSE_Enable=a.Integer_SSE_Enable;
 		MMX_Enable=a.MMX_Enable;
+		VDub2_Enable = a.VDub2_Enable;
 		mData=a.mData;
 		InternalInit();
 	}
@@ -573,7 +573,7 @@ protected:
 
 	int16_t lookup_RGB[1280];
 	uint16_t lookup_420[768];
-	bool Integer_SSE_Enable,SSE2_Enable,MMX_Enable,AVX_Enable;
+	bool Integer_SSE_Enable,SSE2_Enable,MMX_Enable,AVX_Enable,VDub2_Enable;
 
 	Public_MT_Data_Thread MT_Thread[MAX_MT_THREADS];
 	MT_Data_Info MT_Data[MAX_MT_THREADS];
@@ -802,6 +802,7 @@ bool JPSDR_IVTC::Init()
 	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
 	Integer_SSE_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_INTEGER_SSE)!=0);
 	MMX_Enable=ff->isMMXEnabled();
+	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
 	InternalInit();
 
 	return(true);
@@ -894,14 +895,14 @@ uint32 JPSDR_IVTC::GetParams()
 {
 	if (g_VFVAPIVersion<12) return FILTERPARAM_NOT_SUPPORTED;
 	
-	const VDXPixmapLayout& pxsrc = *fa->src.mpPixmapLayout;
-	VDXPixmapLayout& pxdst = *fa->dst.mpPixmapLayout;
+	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
+	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 	
 	switch(pxsrc.format)
 	{
 /*		case nsVDXPixmap::kPixFormat_XRGB1555 :
 		case nsVDXPixmap::kPixFormat_RGB565 :
-		case nsVDXPixmap::kPixFormat_RGB888 :*/				
+		case nsVDXPixmap::kPixFormat_RGB888 :*/
 		case nsVDXPixmap::kPixFormat_XRGB8888 :
 		case nsVDXPixmap::kPixFormat_YUV422_YUYV :
 		case nsVDXPixmap::kPixFormat_YUV422_UYVY :
@@ -946,129 +947,36 @@ uint32 JPSDR_IVTC::GetParams()
 		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709_FR :
 		case nsVDXPixmap::kPixFormat_YUV420it_Planar_709_FR :
 /*		case nsVDXPixmap::kPixFormat_VDXA_RGB :
-		case nsVDXPixmap::kPixFormat_VDXA_YUV :			*/						
+		case nsVDXPixmap::kPixFormat_VDXA_YUV :
+		// VDub2
+		case nsVDXPixmap::kPixFormat_XRGB64 :
+		case nsVDXPixmap::kPixFormat_YUV444_Planar16 :
+		case nsVDXPixmap::kPixFormat_YUV422_Planar16 :
+		case nsVDXPixmap::kPixFormat_YUV420_Planar16 :
+		case nsVDXPixmap::kPixFormat_Y16 :
+		case nsVDXPixmap::kPixFormat_YUV444_Y416 :
+		case nsVDXPixmap::kPixFormat_YUV444_V410 :
+		case nsVDXPixmap::kPixFormat_YUV444_Y410 :
+		case nsVDXPixmap::kPixFormat_R210 :
+		case nsVDXPixmap::kPixFormat_R10K :
+		case nsVDXPixmap::kPixFormat_YUV422_P210 :
+		case nsVDXPixmap::kPixFormat_YUV420_P010 :
+		case nsVDXPixmap::kPixFormat_YUV422_P216 :
+		case nsVDXPixmap::kPixFormat_YUV420_P016 :
+		case nsVDXPixmap::kPixFormat_YUV444_Alpha_Planar :
+		case nsVDXPixmap::kPixFormat_YUV422_Alpha_Planar :
+		case nsVDXPixmap::kPixFormat_YUV420_Alpha_Planar :
+		case nsVDXPixmap::kPixFormat_YUV444_Alpha_Planar16 :
+		case nsVDXPixmap::kPixFormat_YUV422_Alpha_Planar16 :
+		case nsVDXPixmap::kPixFormat_YUV420_Alpha_Planar16 :
+		case nsVDXPixmap::kPixFormat_YUV422_YU64 :*/			
 			break;
 		default : return FILTERPARAM_NOT_SUPPORTED;
 	}
 
-	switch(pxsrc.format)
-	{
-		case nsVDXPixmap::kPixFormat_XRGB8888 :
-		case nsVDXPixmap::kPixFormat_Y8_FR :
-			image_data.src_full_mode=true;
-			image_data.src_color_matrix=MATRIX_NONE;
-			image_data.src_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_Y8 :
-			image_data.src_full_mode=false;
-			image_data.src_color_matrix=MATRIX_NONE;
-			image_data.src_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV422_YUYV :
-		case nsVDXPixmap::kPixFormat_YUV422_UYVY :
-		case nsVDXPixmap::kPixFormat_YUV444_Planar :
-		case nsVDXPixmap::kPixFormat_YUV422_Planar :
-		case nsVDXPixmap::kPixFormat_YUV420_Planar :
-		case nsVDXPixmap::kPixFormat_YUV411_Planar :
-		case nsVDXPixmap::kPixFormat_YUV410_Planar :
-			image_data.src_full_mode=false;
-			image_data.src_color_matrix=MATRIX_BT601;
-			image_data.src_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420i_Planar :
-			image_data.src_full_mode=false;
-			image_data.src_color_matrix=MATRIX_BT601;
-			image_data.src_interlaced=INTERLACED;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420ib_Planar :
-			image_data.src_full_mode=false;
-			image_data.src_color_matrix=MATRIX_BT601;
-			image_data.src_interlaced=INTERLACED_BFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420it_Planar :
-			image_data.src_full_mode=false;
-			image_data.src_color_matrix=MATRIX_BT601;
-			image_data.src_interlaced=INTERLACED_TFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV422_YUYV_709 :
-		case nsVDXPixmap::kPixFormat_YUV422_UYVY_709 :
-		case nsVDXPixmap::kPixFormat_YUV444_Planar_709 :
-		case nsVDXPixmap::kPixFormat_YUV422_Planar_709 :
-		case nsVDXPixmap::kPixFormat_YUV420_Planar_709 :
-		case nsVDXPixmap::kPixFormat_YUV411_Planar_709 :
-		case nsVDXPixmap::kPixFormat_YUV410_Planar_709 :				
-			image_data.src_full_mode=false;
-			image_data.src_color_matrix=MATRIX_BT709;
-			image_data.src_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420i_Planar_709 :
-			image_data.src_full_mode=false;
-			image_data.src_color_matrix=MATRIX_BT709;
-			image_data.src_interlaced=INTERLACED;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709 :
-			image_data.src_full_mode=false;
-			image_data.src_color_matrix=MATRIX_BT709;
-			image_data.src_interlaced=INTERLACED_BFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420it_Planar_709 :
-			image_data.src_full_mode=false;
-			image_data.src_color_matrix=MATRIX_BT709;
-			image_data.src_interlaced=INTERLACED_TFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV422_YUYV_FR :
-		case nsVDXPixmap::kPixFormat_YUV422_UYVY_FR :
-		case nsVDXPixmap::kPixFormat_YUV444_Planar_FR :
-		case nsVDXPixmap::kPixFormat_YUV422_Planar_FR :
-		case nsVDXPixmap::kPixFormat_YUV420_Planar_FR :
-		case nsVDXPixmap::kPixFormat_YUV411_Planar_FR :
-		case nsVDXPixmap::kPixFormat_YUV410_Planar_FR :
-			image_data.src_full_mode=true;
-			image_data.src_color_matrix=MATRIX_BT601;
-			image_data.src_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420i_Planar_FR :
-			image_data.src_full_mode=true;
-			image_data.src_color_matrix=MATRIX_BT601;
-			image_data.src_interlaced=INTERLACED;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_FR :
-			image_data.src_full_mode=true;
-			image_data.src_color_matrix=MATRIX_BT601;
-			image_data.src_interlaced=INTERLACED_BFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420it_Planar_FR :
-			image_data.src_full_mode=true;
-			image_data.src_color_matrix=MATRIX_BT601;
-			image_data.src_interlaced=INTERLACED_TFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV422_YUYV_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV422_UYVY_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV444_Planar_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV422_Planar_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV420_Planar_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV411_Planar_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV410_Planar_709_FR :				
-			image_data.src_full_mode=true;
-			image_data.src_color_matrix=MATRIX_BT709;
-			image_data.src_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420i_Planar_709_FR :
-			image_data.src_full_mode=true;
-			image_data.src_color_matrix=MATRIX_BT709;
-			image_data.src_interlaced=INTERLACED;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709_FR :
-			image_data.src_full_mode=true;
-			image_data.src_color_matrix=MATRIX_BT709;
-			image_data.src_interlaced=INTERLACED_BFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420it_Planar_709_FR :
-			image_data.src_full_mode=true;
-			image_data.src_color_matrix=MATRIX_BT709;
-			image_data.src_interlaced=INTERLACED_TFF;
-			break;
-	}
+	image_data.src_full_mode=CheckFullRangeMode(&fa->src);
+	image_data.src_color_matrix=GetColorMode(&fa->src);
+	image_data.src_interlaced=GetInterlaceMode(&fa->src);
 
 	fa->dst.depth = 0;
 	pxdst.pitch=pxsrc.pitch;
@@ -1109,124 +1017,9 @@ uint32 JPSDR_IVTC::GetParams()
 	
 	fa->dst.offset = fa->src.offset;
 
-	switch(pxdst.format)
-	{
-		case nsVDXPixmap::kPixFormat_XRGB8888 :
-		case nsVDXPixmap::kPixFormat_Y8_FR :
-			image_data.dst_full_mode=true;
-			image_data.dst_color_matrix=MATRIX_NONE;
-			image_data.dst_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_Y8 :
-			image_data.dst_full_mode=false;
-			image_data.dst_color_matrix=MATRIX_NONE;
-			image_data.dst_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV422_YUYV :
-		case nsVDXPixmap::kPixFormat_YUV422_UYVY :
-		case nsVDXPixmap::kPixFormat_YUV444_Planar :
-		case nsVDXPixmap::kPixFormat_YUV422_Planar :
-		case nsVDXPixmap::kPixFormat_YUV420_Planar :
-		case nsVDXPixmap::kPixFormat_YUV411_Planar :
-		case nsVDXPixmap::kPixFormat_YUV410_Planar :
-			image_data.dst_full_mode=false;
-			image_data.dst_color_matrix=MATRIX_BT601;
-			image_data.dst_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420i_Planar :
-			image_data.dst_full_mode=false;
-			image_data.dst_color_matrix=MATRIX_BT601;
-			image_data.dst_interlaced=INTERLACED;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420ib_Planar :
-			image_data.dst_full_mode=false;
-			image_data.dst_color_matrix=MATRIX_BT601;
-			image_data.dst_interlaced=INTERLACED_BFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420it_Planar :
-			image_data.dst_full_mode=false;
-			image_data.dst_color_matrix=MATRIX_BT601;
-			image_data.dst_interlaced=INTERLACED_TFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV422_YUYV_709 :
-		case nsVDXPixmap::kPixFormat_YUV422_UYVY_709 :
-		case nsVDXPixmap::kPixFormat_YUV444_Planar_709 :
-		case nsVDXPixmap::kPixFormat_YUV422_Planar_709 :
-		case nsVDXPixmap::kPixFormat_YUV420_Planar_709 :
-		case nsVDXPixmap::kPixFormat_YUV411_Planar_709 :
-		case nsVDXPixmap::kPixFormat_YUV410_Planar_709 :				
-			image_data.dst_full_mode=false;
-			image_data.dst_color_matrix=MATRIX_BT709;
-			image_data.dst_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420i_Planar_709 :
-			image_data.dst_full_mode=false;
-			image_data.dst_color_matrix=MATRIX_BT709;
-			image_data.dst_interlaced=INTERLACED;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709 :
-			image_data.dst_full_mode=false;
-			image_data.dst_color_matrix=MATRIX_BT709;
-			image_data.dst_interlaced=INTERLACED_BFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420it_Planar_709 :
-			image_data.dst_full_mode=false;
-			image_data.dst_color_matrix=MATRIX_BT709;
-			image_data.dst_interlaced=INTERLACED_TFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV422_YUYV_FR :
-		case nsVDXPixmap::kPixFormat_YUV422_UYVY_FR :
-		case nsVDXPixmap::kPixFormat_YUV444_Planar_FR :
-		case nsVDXPixmap::kPixFormat_YUV422_Planar_FR :
-		case nsVDXPixmap::kPixFormat_YUV420_Planar_FR :
-		case nsVDXPixmap::kPixFormat_YUV411_Planar_FR :
-		case nsVDXPixmap::kPixFormat_YUV410_Planar_FR :
-			image_data.dst_full_mode=true;
-			image_data.dst_color_matrix=MATRIX_BT601;
-			image_data.dst_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420i_Planar_FR :
-			image_data.dst_full_mode=true;
-			image_data.dst_color_matrix=MATRIX_BT601;
-			image_data.dst_interlaced=INTERLACED;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_FR :
-			image_data.dst_full_mode=true;
-			image_data.dst_color_matrix=MATRIX_BT601;
-			image_data.dst_interlaced=INTERLACED_BFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420it_Planar_FR :
-			image_data.dst_full_mode=true;
-			image_data.dst_color_matrix=MATRIX_BT601;
-			image_data.dst_interlaced=INTERLACED_TFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV422_YUYV_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV422_UYVY_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV444_Planar_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV422_Planar_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV420_Planar_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV411_Planar_709_FR :
-		case nsVDXPixmap::kPixFormat_YUV410_Planar_709_FR :				
-			image_data.dst_full_mode=true;
-			image_data.dst_color_matrix=MATRIX_BT709;
-			image_data.dst_interlaced=INTERLACED_NONE;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420i_Planar_709_FR :
-			image_data.dst_full_mode=true;
-			image_data.dst_color_matrix=MATRIX_BT709;
-			image_data.dst_interlaced=INTERLACED;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709_FR :
-			image_data.dst_full_mode=true;
-			image_data.dst_color_matrix=MATRIX_BT709;
-			image_data.dst_interlaced=INTERLACED_BFF;
-			break;
-		case nsVDXPixmap::kPixFormat_YUV420it_Planar_709_FR :
-			image_data.dst_full_mode=true;
-			image_data.dst_color_matrix=MATRIX_BT709;
-			image_data.dst_interlaced=INTERLACED_TFF;
-			break;
-	}
+	image_data.dst_full_mode=CheckFullRangeMode(&fa->dst);
+	image_data.dst_color_matrix=GetColorMode(&fa->dst);
+	image_data.dst_interlaced=GetInterlaceMode(&fa->dst);
 
 	if (mData.output_filter || !mData.disable_deinterlace)
 	{
@@ -1538,7 +1331,6 @@ uint8_t JPSDR_IVTC::CreateMTData(uint8_t max_threads,uint32_t size)
 
 void JPSDR_IVTC::Start()
 {
-	Image_Data idata;
 	int32_t w_map;
 	bool test;
 	FILE *file_in;
@@ -1567,1525 +1359,19 @@ void JPSDR_IVTC::Start()
 		return;
 	}
 
-	const VDXPixmapLayout& pxdst=*fa->dst.mpPixmapLayout;
-	const VDXPixmapLayout& pxsrc=*fa->src.mpPixmapLayout;
+	SetImageData(image_data);
 
-		idata.src_h0=pxsrc.h;
-		idata.src_w0=pxsrc.w;
-		idata.src_pitch0=-pxsrc.pitch;
-		idata.src_pitch1=-pxsrc.pitch2;
-		idata.src_pitch2=-pxsrc.pitch3;
-
-		idata.dst_h0=pxdst.h;
-		idata.dst_w0=pxdst.w;
-		idata.dst_pitch0=-pxdst.pitch;
-		idata.dst_pitch1=-pxdst.pitch2;
-		idata.dst_pitch2=-pxdst.pitch3;
-
-		switch(pxsrc.format)
-		{
-			case nsVDXPixmap::kPixFormat_XRGB8888 :
-				idata.src_video_mode=1;
-				idata.video_mode=1;
-				idata.src_line0=4*idata.src_w0;
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_NONE;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_YUYV :
-				idata.src_video_mode=2;
-				idata.video_mode=2;
-				idata.src_line0=4*((idata.src_w0+1)>>1);
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_YUYV_709 :
-				idata.src_video_mode=2;
-				idata.video_mode=2;
-				idata.src_line0=4*((idata.src_w0+1)>>1);
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_YUYV_FR :
-				idata.src_video_mode=2;
-				idata.video_mode=2;
-				idata.src_line0=4*((idata.src_w0+1)>>1);
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_YUYV_709_FR :
-				idata.src_video_mode=2;
-				idata.video_mode=2;
-				idata.src_line0=4*((idata.src_w0+1)>>1);
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_UYVY :
-				idata.src_video_mode=3;
-				idata.video_mode=3;
-				idata.src_line0=4*((idata.src_w0+1)>>1);
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_UYVY_709 :
-				idata.src_video_mode=3;
-				idata.video_mode=3;
-				idata.src_line0=4*((idata.src_w0+1)>>1);
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_UYVY_FR :
-				idata.src_video_mode=3;
-				idata.video_mode=3;
-				idata.src_line0=4*((idata.src_w0+1)>>1);
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_UYVY_709_FR :
-				idata.src_video_mode=3;
-				idata.video_mode=3;
-				idata.src_line0=4*((idata.src_w0+1)>>1);
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV444_Planar :
-				idata.src_video_mode=4;
-				idata.video_mode=4;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=idata.src_w0;
-				idata.src_w2=idata.src_w0;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV444_Planar_709 :
-				idata.src_video_mode=4;
-				idata.video_mode=4;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=idata.src_w0;
-				idata.src_w2=idata.src_w0;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV444_Planar_FR :
-				idata.src_video_mode=4;
-				idata.video_mode=4;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=idata.src_w0;
-				idata.src_w2=idata.src_w0;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV444_Planar_709_FR :
-				idata.src_video_mode=4;
-				idata.video_mode=4;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=idata.src_w0;
-				idata.src_w2=idata.src_w0;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_Planar :
-				idata.src_video_mode=5;
-				idata.video_mode=5;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_Planar_709 :
-				idata.src_video_mode=5;
-				idata.video_mode=5;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_Planar_FR :
-				idata.src_video_mode=5;
-				idata.video_mode=5;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_Planar_709_FR :
-				idata.src_video_mode=5;
-				idata.video_mode=5;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420_Planar :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=PROGRESSIVE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_BFF;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_TFF;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420_Planar_709 :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=PROGRESSIVE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar_709 :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709 :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_BFF;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar_709 :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_TFF;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420_Planar_FR :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=PROGRESSIVE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar_FR :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar_FR :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_BFF;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar_FR :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_TFF;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420_Planar_709_FR :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=PROGRESSIVE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar_709_FR :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709_FR :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_BFF;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar_709_FR :
-				idata.src_video_mode=6;
-				idata.video_mode=6;
-				idata.src_h1=(idata.src_h0+1)>>1;
-				idata.src_h2=(idata.src_h0+1)>>1;
-				idata.src_w1=(idata.src_w0+1)>>1;
-				idata.src_w2=(idata.src_w0+1)>>1;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_TFF;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV411_Planar :
-				idata.src_video_mode=7;
-				idata.video_mode=7;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=(idata.src_w0+3)>>2;
-				idata.src_w2=(idata.src_w0+3)>>2;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV411_Planar_709 :
-				idata.src_video_mode=7;
-				idata.video_mode=7;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=(idata.src_w0+3)>>2;
-				idata.src_w2=(idata.src_w0+3)>>2;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV411_Planar_FR :
-				idata.src_video_mode=7;
-				idata.video_mode=7;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=(idata.src_w0+3)>>2;
-				idata.src_w2=(idata.src_w0+3)>>2;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV411_Planar_709_FR :
-				idata.src_video_mode=7;
-				idata.video_mode=7;
-				idata.src_h1=idata.src_h0;
-				idata.src_h2=idata.src_h0;
-				idata.src_w1=(idata.src_w0+3)>>2;
-				idata.src_w2=(idata.src_w0+3)>>2;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV410_Planar :
-				idata.src_video_mode=8;
-				idata.video_mode=8;
-				idata.src_h1=(idata.src_h0+3)>>2;
-				idata.src_h2=(idata.src_h0+3)>>2;
-				idata.src_w1=(idata.src_w0+3)>>2;
-				idata.src_w2=(idata.src_w0+3)>>2;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=PROGRESSIVE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV410_Planar_709 :
-				idata.src_video_mode=8;
-				idata.video_mode=8;
-				idata.src_h1=(idata.src_h0+3)>>2;
-				idata.src_h2=(idata.src_h0+3)>>2;
-				idata.src_w1=(idata.src_w0+3)>>2;
-				idata.src_w2=(idata.src_w0+3)>>2;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=PROGRESSIVE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV410_Planar_FR :
-				idata.src_video_mode=8;
-				idata.video_mode=8;
-				idata.src_h1=(idata.src_h0+3)>>2;
-				idata.src_h2=(idata.src_h0+3)>>2;
-				idata.src_w1=(idata.src_w0+3)>>2;
-				idata.src_w2=(idata.src_w0+3)>>2;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT601;
-				idata.src_interlaced=PROGRESSIVE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV410_Planar_709_FR :
-				idata.src_video_mode=8;
-				idata.video_mode=8;
-				idata.src_h1=(idata.src_h0+3)>>2;
-				idata.src_h2=(idata.src_h0+3)>>2;
-				idata.src_w1=(idata.src_w0+3)>>2;
-				idata.src_w2=(idata.src_w0+3)>>2;
-				idata.src_line0=idata.src_w0;
-				idata.src_line1=idata.src_w1;
-				idata.src_line2=idata.src_w2;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_BT709;
-				idata.src_interlaced=PROGRESSIVE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_Y8 :
-				idata.src_video_mode=9;
-				idata.video_mode=9;
-				idata.src_line0=idata.src_w0;
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=false;
-				idata.src_color_matrix=MATRIX_NONE;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_Y8_FR :			
-				idata.src_video_mode=9;
-				idata.video_mode=9;
-				idata.src_line0=idata.src_w0;
-				idata.src_h1=0;
-				idata.src_h2=0;
-				idata.src_w1=0;
-				idata.src_w2=0;
-				idata.src_line1=0;
-				idata.src_line2=0;
-				idata.src_full_mode=true;
-				idata.src_color_matrix=MATRIX_NONE;
-				idata.src_interlaced=INTERLACED_NONE;
-				idata.src_bits_pixel=8;
-				break;
-		}
-		idata.src_modulo0=idata.src_pitch0-idata.src_line0;
-		idata.src_pitch0_al=(((ptrdiff_t)idata.src_line0+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
-		idata.src_modulo0_al=idata.src_pitch0_al-idata.src_line0;
-		idata.src_size0=(size_t)idata.src_h0*(size_t)idata.src_line0;
-		idata.src_size0_al=(size_t)idata.src_h0*(size_t)idata.src_pitch0_al;
-		idata.src_modulo1=idata.src_pitch1-idata.src_line1;
-		idata.src_pitch1_al=(((ptrdiff_t)idata.src_line1+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
-		idata.src_modulo1_al=idata.src_pitch1_al-idata.src_line1;
-		idata.src_size1=(size_t)idata.src_h1*(size_t)idata.src_line1;
-		idata.src_size1_al=(size_t)idata.src_h1*(size_t)idata.src_pitch1_al;
-		idata.src_modulo2=idata.src_pitch2-idata.src_line2;
-		idata.src_pitch2_al=(((ptrdiff_t)idata.src_line2+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
-		idata.src_modulo2_al=idata.src_pitch2_al-idata.src_line2;
-		idata.src_size2=(size_t)idata.src_h2*(size_t)idata.src_line2;
-		idata.src_size2_al=(size_t)idata.src_h2*(size_t)idata.src_pitch2_al;
-
-		switch(pxdst.format)
-		{
-			case nsVDXPixmap::kPixFormat_XRGB8888 :
-				idata.dst_video_mode=1;
-				idata.dst_line0=4*idata.dst_w0;
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_NONE;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_YUYV :
-				idata.dst_video_mode=2;
-				idata.dst_line0=4*((idata.dst_w0+1)>>1);
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_YUYV_709 :
-				idata.dst_video_mode=2;
-				idata.dst_line0=4*((idata.dst_w0+1)>>1);
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_YUYV_FR :
-				idata.dst_video_mode=2;
-				idata.dst_line0=4*((idata.dst_w0+1)>>1);
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_YUYV_709_FR :			
-				idata.dst_video_mode=2;
-				idata.dst_line0=4*((idata.dst_w0+1)>>1);
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_UYVY :
-				idata.dst_video_mode=3;
-				idata.dst_line0=4*((idata.dst_w0+1)>>1);
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_UYVY_709 :
-				idata.dst_video_mode=3;
-				idata.dst_line0=4*((idata.dst_w0+1)>>1);
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_UYVY_FR :
-				idata.dst_video_mode=3;
-				idata.dst_line0=4*((idata.dst_w0+1)>>1);
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_UYVY_709_FR :			
-				idata.dst_video_mode=3;
-				idata.dst_line0=4*((idata.dst_w0+1)>>1);
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV444_Planar :
-				idata.dst_video_mode=4;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=idata.dst_w0;
-				idata.dst_w2=idata.dst_w0;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV444_Planar_709 :
-				idata.dst_video_mode=4;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=idata.dst_w0;
-				idata.dst_w2=idata.dst_w0;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV444_Planar_FR :
-				idata.dst_video_mode=4;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=idata.dst_w0;
-				idata.dst_w2=idata.dst_w0;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV444_Planar_709_FR :			
-				idata.dst_video_mode=4;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=idata.dst_w0;
-				idata.dst_w2=idata.dst_w0;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_Planar :
-				idata.dst_video_mode=5;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_Planar_709 :
-				idata.dst_video_mode=5;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_Planar_FR :
-				idata.dst_video_mode=5;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV422_Planar_709_FR :			
-				idata.dst_video_mode=5;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420_Planar :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=PROGRESSIVE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_BFF;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_TFF;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420_Planar_709 :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=PROGRESSIVE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar_709 :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709 :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_BFF;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar_709 :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_TFF;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420_Planar_FR :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=PROGRESSIVE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar_FR :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar_FR :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_BFF;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar_FR :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_TFF;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420_Planar_709_FR :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=PROGRESSIVE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar_709_FR :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709_FR :
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_BFF;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar_709_FR :			
-				idata.dst_video_mode=6;
-				idata.dst_h1=(idata.dst_h0+1)>>1;
-				idata.dst_h2=(idata.dst_h0+1)>>1;
-				idata.dst_w1=(idata.dst_w0+1)>>1;
-				idata.dst_w2=(idata.dst_w0+1)>>1;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_TFF;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV411_Planar :
-				idata.dst_video_mode=7;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=(idata.dst_w0+3)>>2;
-				idata.dst_w2=(idata.dst_w0+3)>>2;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV411_Planar_709 :
-				idata.dst_video_mode=7;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=(idata.dst_w0+3)>>2;
-				idata.dst_w2=(idata.dst_w0+3)>>2;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV411_Planar_FR :
-				idata.dst_video_mode=7;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=(idata.dst_w0+3)>>2;
-				idata.dst_w2=(idata.dst_w0+3)>>2;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV411_Planar_709_FR :			
-				idata.dst_video_mode=7;
-				idata.dst_h1=idata.dst_h0;
-				idata.dst_h2=idata.dst_h0;
-				idata.dst_w1=(idata.dst_w0+3)>>2;
-				idata.dst_w2=(idata.dst_w0+3)>>2;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV410_Planar :
-				idata.dst_video_mode=8;
-				idata.dst_h1=(idata.dst_h0+3)>>2;
-				idata.dst_h2=(idata.dst_h0+3)>>2;
-				idata.dst_w1=(idata.dst_w0+3)>>2;
-				idata.dst_w2=(idata.dst_w0+3)>>2;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=PROGRESSIVE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV410_Planar_709 :
-				idata.dst_video_mode=8;
-				idata.dst_h1=(idata.dst_h0+3)>>2;
-				idata.dst_h2=(idata.dst_h0+3)>>2;
-				idata.dst_w1=(idata.dst_w0+3)>>2;
-				idata.dst_w2=(idata.dst_w0+3)>>2;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=PROGRESSIVE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV410_Planar_FR :
-				idata.dst_video_mode=8;
-				idata.dst_h1=(idata.dst_h0+3)>>2;
-				idata.dst_h2=(idata.dst_h0+3)>>2;
-				idata.dst_w1=(idata.dst_w0+3)>>2;
-				idata.dst_w2=(idata.dst_w0+3)>>2;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT601;
-				idata.dst_interlaced=PROGRESSIVE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_YUV410_Planar_709_FR :			
-				idata.dst_video_mode=8;
-				idata.dst_h1=(idata.dst_h0+3)>>2;
-				idata.dst_h2=(idata.dst_h0+3)>>2;
-				idata.dst_w1=(idata.dst_w0+3)>>2;
-				idata.dst_w2=(idata.dst_w0+3)>>2;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_line1=idata.dst_w1;
-				idata.dst_line2=idata.dst_w2;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_BT709;
-				idata.dst_interlaced=PROGRESSIVE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_Y8 :
-				idata.dst_video_mode=9;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=false;
-				idata.dst_color_matrix=MATRIX_NONE;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-			case nsVDXPixmap::kPixFormat_Y8_FR :						
-				idata.dst_video_mode=9;
-				idata.dst_line0=idata.dst_w0;
-				idata.dst_h1=0;
-				idata.dst_h2=0;
-				idata.dst_w1=0;
-				idata.dst_w2=0;
-				idata.dst_line1=0;
-				idata.dst_line2=0;
-				idata.dst_full_mode=true;
-				idata.dst_color_matrix=MATRIX_NONE;
-				idata.dst_interlaced=INTERLACED_NONE;
-				idata.dst_bits_pixel=8;
-				break;
-		}
-	idata.dst_modulo0=idata.dst_pitch0-idata.dst_line0;
-	idata.dst_pitch0_al=(((ptrdiff_t)idata.dst_line0+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
-	idata.dst_modulo0_al=idata.dst_pitch0_al-idata.dst_line0;
-	idata.dst_size0=(size_t)idata.dst_h0*(size_t)idata.dst_line0;
-	idata.src_size0_al=(size_t)idata.dst_h0*(size_t)idata.dst_pitch0_al;
-	idata.dst_modulo1=idata.dst_pitch1-idata.dst_line1;
-	idata.dst_pitch1_al=(((ptrdiff_t)idata.dst_line1+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
-	idata.dst_modulo1_al=idata.dst_pitch1_al-idata.dst_line1;
-	idata.dst_size1=(size_t)idata.dst_h1*(size_t)idata.dst_line1;
-	idata.src_size1_al=(size_t)idata.dst_h1*(size_t)idata.dst_pitch1_al;
-	idata.dst_modulo2=idata.dst_pitch2-idata.dst_line2;
-	idata.dst_pitch2_al=(((ptrdiff_t)idata.dst_line2+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
-	idata.dst_modulo2_al=idata.dst_pitch2_al-idata.dst_line2;
-	idata.dst_size2=(size_t)idata.dst_h2*(size_t)idata.dst_line2;
-	idata.src_size2_al=(size_t)idata.dst_h2*(size_t)idata.dst_pitch2_al;
-
-	if (idata.src_bits_pixel<=16)
+	switch (image_data.video_mode)
 	{
-		if (idata.src_full_mode)
-		{
-			idata.src_Y_Min=0;
-			idata.src_U_Min=0;
-			idata.src_V_Min=0;
-
-			idata.src_Y_Max=(uint16_t)(((int)1 << idata.src_bits_pixel)-1);
-			idata.src_U_Max=(uint16_t)(((int)1 << idata.src_bits_pixel)-1);
-			idata.src_V_Max=(uint16_t)(((int)1 << idata.src_bits_pixel)-1);
-		}
-		else
-		{
-			idata.src_Y_Min=(uint16_t)((int)16 << (idata.src_bits_pixel-8));
-			idata.src_U_Min=(uint16_t)((int)16 << (idata.src_bits_pixel-8));
-			idata.src_V_Min=(uint16_t)((int)16 << (idata.src_bits_pixel-8));
-			idata.src_Y_Max=(uint16_t)((int)235 << (idata.src_bits_pixel-8));
-			idata.src_U_Max=(uint16_t)((int)240 << (idata.src_bits_pixel-8));
-			idata.src_V_Max=(uint16_t)((int)240 << (idata.src_bits_pixel-8));
-		}
-	}
-	if (idata.dst_bits_pixel<=16)
-	{
-		if (idata.dst_full_mode)
-		{
-			idata.dst_Y_Min=0;
-			idata.dst_U_Min=0;
-			idata.dst_V_Min=0;
-
-			idata.dst_Y_Max=(uint16_t)(((int)1 << idata.dst_bits_pixel)-1);
-			idata.dst_U_Max=(uint16_t)(((int)1 << idata.dst_bits_pixel)-1);
-			idata.dst_V_Max=(uint16_t)(((int)1 << idata.dst_bits_pixel)-1);
-		}
-		else
-		{
-			idata.dst_Y_Min=(uint16_t)((int)16 << (idata.dst_bits_pixel-8));
-			idata.dst_U_Min=(uint16_t)((int)16 << (idata.dst_bits_pixel-8));
-			idata.dst_V_Min=(uint16_t)((int)16 << (idata.dst_bits_pixel-8));
-			idata.dst_Y_Max=(uint16_t)((int)235 << (idata.dst_bits_pixel-8));
-			idata.dst_U_Max=(uint16_t)((int)240 << (idata.dst_bits_pixel-8));
-			idata.dst_V_Max=(uint16_t)((int)240 << (idata.dst_bits_pixel-8));
-		}
-	}
-
-	switch(idata.src_color_matrix)
-	{
-		case MATRIX_BT601 :
-			idata.src_Kr=0.299;
-			idata.src_Kb=0.114;
-			break;
-		case MATRIX_BT709 :
-			idata.src_Kr=0.2126;
-			idata.src_Kb=0.0722;
-			break;
-		case MATRIX_BT2020 :
-			idata.src_Kr=0.2627;
-			idata.src_Kb=0.0593;
-			break;
-		default :
-			idata.src_Kr=0.299;
-			idata.src_Kb=0.114;
-			break;
-	}
-	idata.src_Kg=1.0-idata.src_Kr-idata.src_Kb;
-	if ((idata.src_full_mode) || (idata.src_bits_pixel>16))
-	{
-		idata.src_Coeff_Y=1.0;
-		idata.src_Coeff_U=1.0;
-		idata.src_Coeff_V=1.0;
-	}
-	else
-	{
-		idata.src_Coeff_Y=219.0/255.0;
-		idata.src_Coeff_U=224.0/255.0;
-		idata.src_Coeff_V=224.0/255.0;
-	}
-	idata.src_Ur=-0.5*idata.src_Kr/(1.0-idata.src_Kb);
-	idata.src_Ug=-0.5*idata.src_Kg/(1.0-idata.src_Kb);
-	idata.src_Ub=0.5;
-	idata.src_Vr=0.5;
-	idata.src_Vg=-0.5*idata.src_Kg/(1.0-idata.src_Kr);
-	idata.src_Vb=-0.5*idata.src_Kb/(1.0-idata.src_Kr);
-	idata.src_Rv=2.0*(1.0-idata.src_Kr);
-	idata.src_Gu=-2.0*idata.src_Kb*(1.0-idata.src_Kb)/idata.src_Kg;
-	idata.src_Gv=-2.0*idata.src_Kr*(1.0-idata.src_Kr)/idata.src_Kg;
-	idata.src_Bu=2.0*(1.0-idata.src_Kb);
-	if (idata.src_bits_pixel<=16)
-	{
-		idata.src_Off_Y=idata.src_Y_Min;
-		idata.src_Off_U=(uint16_t)((int)128 << (idata.dst_bits_pixel-8));
-		idata.src_Off_V=(uint16_t)((int)128 << (idata.dst_bits_pixel-8));
-		idata.src_Off_R=-((double)idata.src_Off_Y/idata.src_Coeff_Y+idata.src_Rv*(double)idata.src_Off_V/idata.src_Coeff_V);
-		idata.src_Off_G=-((double)idata.src_Off_Y/idata.src_Coeff_Y+idata.src_Gu*(double)idata.src_Off_U/idata.src_Coeff_U
-			+idata.src_Gv*(double)idata.src_Off_V/idata.src_Coeff_V);
-		idata.src_Off_B=-((double)idata.src_Off_Y/idata.src_Coeff_Y+idata.src_Bu*(double)idata.src_Off_U/idata.src_Coeff_U);
-	}
-	else
-	{
-		idata.src_Off_Y=0;
-		idata.src_Off_U=0;
-		idata.src_Off_V=0;
-		idata.src_Coeff_Y=1.0;
-		idata.src_Coeff_U=1.0;
-		idata.src_Coeff_V=1.0;
-		idata.src_Off_R=0.0;
-		idata.src_Off_G=0.0;
-		idata.src_Off_B=0.0;
-	}
-
-	switch(idata.dst_color_matrix)
-	{
-		case MATRIX_BT601 :
-			idata.dst_Kr=0.299;
-			idata.dst_Kb=0.114;
-			break;
-		case MATRIX_BT709 :
-			idata.dst_Kr=0.2126;
-			idata.dst_Kb=0.0722;
-			break;
-		case MATRIX_BT2020 :
-			idata.dst_Kr=0.2627;
-			idata.dst_Kb=0.0593;
-			break;
-		default :
-			idata.dst_Kr=0.299;
-			idata.dst_Kb=0.114;
-			break;
-	}
-	idata.dst_Kg=1.0-idata.dst_Kr-idata.dst_Kb;
-	if ((idata.dst_full_mode) || (idata.dst_bits_pixel>16))
-	{
-		idata.dst_Coeff_Y=1.0;
-		idata.dst_Coeff_U=1.0;
-		idata.dst_Coeff_V=1.0;
-	}
-	else
-	{
-		idata.dst_Coeff_Y=219.0/255.0;
-		idata.dst_Coeff_U=224.0/255.0;
-		idata.dst_Coeff_V=224.0/255.0;
-	}
-	idata.dst_Ur=-0.5*idata.dst_Kr/(1.0-idata.dst_Kb);
-	idata.dst_Ug=-0.5*idata.dst_Kg/(1.0-idata.dst_Kb);
-	idata.dst_Ub=0.5;
-	idata.dst_Vr=0.5;
-	idata.dst_Vg=-0.5*idata.dst_Kg/(1.0-idata.dst_Kr);
-	idata.dst_Vb=-0.5*idata.dst_Kb/(1.0-idata.dst_Kr);
-	idata.dst_Rv=2.0*(1.0-idata.dst_Kr);
-	idata.dst_Gu=-2.0*idata.dst_Kb*(1.0-idata.dst_Kb)/idata.dst_Kg;
-	idata.dst_Gv=-2.0*idata.dst_Kr*(1.0-idata.dst_Kr)/idata.dst_Kg;
-	idata.dst_Bu=2.0*(1.0-idata.dst_Kb);
-	if (idata.dst_bits_pixel<=16)
-	{
-		idata.dst_Off_Y=idata.dst_Y_Min;
-		idata.dst_Off_U=(uint16_t)((int)128 << (idata.dst_bits_pixel-8));
-		idata.dst_Off_V=(uint16_t)((int)128 << (idata.dst_bits_pixel-8));
-		idata.dst_Off_R=-((double)idata.dst_Off_Y/idata.dst_Coeff_Y+idata.dst_Rv*(double)idata.dst_Off_V/idata.dst_Coeff_V);
-		idata.dst_Off_G=-((double)idata.dst_Off_Y/idata.dst_Coeff_Y+idata.dst_Gu*(double)idata.dst_Off_U/idata.dst_Coeff_U
-			+idata.dst_Gv*(double)idata.dst_Off_V/idata.dst_Coeff_V);
-		idata.dst_Off_B=-((double)idata.dst_Off_Y/idata.dst_Coeff_Y+idata.dst_Bu*(double)idata.dst_Off_U/idata.dst_Coeff_U);
-	}
-	else
-	{
-		idata.dst_Off_Y=0;
-		idata.dst_Off_U=0;
-		idata.dst_Off_V=0;
-		idata.dst_Coeff_Y=1.0;
-		idata.dst_Coeff_U=1.0;
-		idata.dst_Coeff_V=1.0;
-		idata.dst_Off_R=0.0;
-		idata.dst_Off_G=0.0;
-		idata.dst_Off_B=0.0;
-	}
-	/*
-	R',G',B' : RGB value normalised between (0.0,0.0,0.0)[Black] to (1.0,1.0,1.0)[White]
-	Y' between (0.0 / +1.0) and Pb/Pr between (-0.5 / +0.5)
-
-	Y'=Kr*R'+Kg*G'+Kb*B'
-	Pb=0.5*(B'-Y')/(1-Kb)=-0.5*Kr/(1-Kb))*R'-0.5*Kg/(1-Kb)*G'+0.5*B'
-	Pr=0.5*(R'-Y')/(1-Kr)=0.5*R'-0.5*Kg/(1-Kr)*G'-0.5*Kb/(1-Kr)*B'
-
-	R'=Y'+2*(1-Kr)*Pr
-	G'=Y'-(2*Kb*(1-Kb)/Kg)*Pb-(2*Kr*(1-Kr)/Kg)*Pr
-	B'=Y'+2*(1-Kb)*Pb
-
-	(Y) Y'=Kr*R'+Kg*G'+Kb*B'
-	(U) Pb=Ur*R'+Ug*G'+Ub*B'
-	(V) Pr=Vr*R'+Vg*G'+Vb*B'
-
-	(R) R'=Y'+Rv*Pr
-	(G) G'=Y'+Gu*Pb+Gv*Pr
-	(B) B'=Y'+Bu*Pb
-
-	For 8 bits data limited range :
-	(Y',Cb,Cr) = (16,128,128) + (219*Y',224*Pb,224*Pr)
-
-	Y = Off_Y + (Kr*R+Kg*G+Kb*B)*Coeff_Y
-	(Cb) U = Off_U + (Ur*R+Ug*G+Ub*B)*Coeff_U
-	(Cr) V = Off_V + (Vr*R+Vg*G+Vb*B)*Coeff_V
-
-	R = Y/Coeff_Y + Rv*V/Coeff_V + Off_R [ Off_R = -(Off_Y/Coeff_Y+Rv*Off_V/Coeff_V) ]
-	G = Y/Coeff_Y + Gu*U/Coeff_U + Gv*V/Coeff_V + Off_G [ Off_G = -(Off_Y/Coeff_Y+Gu*Off_U/Coeff_U+Gv*Off_V/Coeff_V) ]
-	B = Y/Coeff_Y + Bu*U/Coeff_U + Off_B [ Off_B = -(Off_Y/Coeff_Y+Bu*Off_U/Coeff_U) ]
-	*/
-
-	image_data=idata;
-
-	switch (idata.video_mode)
-	{
-		case 6 :
-			if ((idata.src_h0 & 3)!=0)
+		case VMODE_PLANAR_YUV420 :
+			if ((image_data.src_h0 & 3)!=0)
 			{
 				ff->Except("Vertical size must be multiple of 4 for 4:2:0!");
 				return;
 			}
 			break;
 		default :
-			if ((idata.src_h0 & 1)!=0)
+			if ((image_data.src_h0 & 1)!=0)
 			{
 				ff->Except("Vertical size must be multiple of 2!");
 				return;
@@ -3093,26 +1379,26 @@ void JPSDR_IVTC::Start()
 			break;
 	}
 
-	if ((idata.src_h0<8) || (idata.src_w0<4))
+	if ((image_data.src_h0<8) || (image_data.src_w0<4))
 	{
 		ff->Except("Size must be at least 4x8!");
 		return;
 	}
 
-	if ((4*mData.line_removed+2)>=idata.src_h0)
+	if ((4*mData.line_removed+2)>=image_data.src_h0)
 	{
 		ff->Except("More line removed than image size!");
 		return;
 	}
 
-	if ((idata.src_w0 & 3)==0) w_map=idata.src_w0+4;
-	else w_map=(((idata.src_w0 >> 2)+1)<< 2)+4;
+	if ((image_data.src_w0 & 3)==0) w_map=image_data.src_w0+4;
+	else w_map=(((image_data.src_w0 >> 2)+1)<< 2)+4;
 	
 	manual.nbre_sequence=0;
 	offset=0;
 	line_file=0;
 
-	if ((idata.video_mode==6) && ((idata.src_h0>=600) || (idata.src_w0>=800))) resize_720x480=true;
+	if ((image_data.video_mode==6) && ((image_data.src_h0>=600) || (image_data.src_w0>=800))) resize_720x480=true;
 	else resize_720x480=false;
 
 	if (mData.manual_mode)
@@ -3216,61 +1502,60 @@ void JPSDR_IVTC::Start()
 		return;
 	}
 
-	if (mData.mt_mode && ((idata.src_h0>=32) && (idata.dst_h0>=32))) threads_number=total_cpu;
+	if (mData.mt_mode && ((image_data.src_h0>=32) && (image_data.dst_h0>=32))) threads_number=total_cpu;
 	else threads_number=1;
 
-	buffer_delta_pitch=(((idata.src_w0 << 2)+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
-	buffer_delta_modulo32=buffer_delta_pitch-(idata.src_w0 << 2);
-	buffer_delta_modulo16=buffer_delta_pitch-(((idata.src_w0+1)>>1) << 2);
-	buffer_delta_modulo8=buffer_delta_pitch-idata.src_w0;
+	buffer_delta_pitch=(((image_data.src_w0 << 2)+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
+	buffer_delta_modulo32=buffer_delta_pitch-(image_data.src_w0 << 2);
+	buffer_delta_modulo16=buffer_delta_pitch-(((image_data.src_w0+1)>>1) << 2);
+	buffer_delta_modulo8=buffer_delta_pitch-image_data.src_w0;
 	buffer_delta_moduloR32=buffer_delta_pitch-(720*4);
 	buffer_delta_moduloR16=buffer_delta_pitch-(720*2);
 	buffer_delta_moduloR8=buffer_delta_pitch-720;
-	buffer_delta_Y_pitch=idata.src_pitch0_al;
-	buffer_delta_Y_modulo=idata.src_modulo0_al;
-	buffer_delta_U_pitch=idata.src_pitch1_al;
-	buffer_delta_U_modulo=idata.src_modulo1_al;
-	buffer_delta_V_pitch=idata.src_pitch2_al;
-	buffer_delta_V_modulo=idata.src_modulo2_al;
+	buffer_delta_Y_pitch=image_data.src_pitch0_al;
+	buffer_delta_Y_modulo=image_data.src_modulo0_al;
+	buffer_delta_U_pitch=image_data.src_pitch1_al;
+	buffer_delta_U_modulo=image_data.src_modulo1_al;
+	buffer_delta_V_pitch=image_data.src_pitch2_al;
+	buffer_delta_V_modulo=image_data.src_modulo2_al;
 	buffer_map_pitch=w_map*sizeof(uint8_t);
 	buffer_map_modulo=0;
 	buffer_2_pitch=buffer_map_pitch;
 	buffer_2_modulo=buffer_map_modulo;
-	buffer_frame_pitch=idata.src_pitch0_al;
-	buffer_frame_modulo=idata.src_modulo0_al;
-	buffer_frame_Y_pitch=idata.src_pitch0_al;
-	buffer_frame_Y_modulo=idata.src_modulo0_al;
-	buffer_frame_U_pitch=idata.src_pitch1_al;
-	buffer_frame_U_modulo=idata.src_modulo1_al;
-	buffer_frame_V_pitch=idata.src_pitch2_al;
-	buffer_frame_V_modulo=idata.src_modulo2_al;
-	buffer_frameRGB32_pitch=(((idata.src_w0 << 2)+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
-	buffer_frameRGB32_modulo=buffer_frameRGB32_pitch-(idata.src_w0 << 2);
+	buffer_frame_pitch=image_data.src_pitch0_al;
+	buffer_frame_modulo=image_data.src_modulo0_al;
+	buffer_frame_Y_pitch=image_data.src_pitch0_al;
+	buffer_frame_Y_modulo=image_data.src_modulo0_al;
+	buffer_frame_U_pitch=image_data.src_pitch1_al;
+	buffer_frame_U_modulo=image_data.src_modulo1_al;
+	buffer_frame_V_pitch=image_data.src_pitch2_al;
+	buffer_frame_V_modulo=image_data.src_modulo2_al;
+	buffer_frameRGB32_pitch=(((image_data.src_w0 << 2)+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
+	buffer_frameRGB32_modulo=buffer_frameRGB32_pitch-(image_data.src_w0 << 2);
 
-	buffer_delta=(void *)_aligned_malloc((size_t)idata.src_h0*(size_t)buffer_delta_pitch,ALIGN_SIZE); // Taille RGB32
-	buffer_map=(uint8_t *)malloc((size_t)idata.src_h0*(size_t)buffer_map_pitch);
-	buffer_2=(uint8_t *)malloc((size_t)idata.src_h0*(size_t)buffer_map_pitch);
+	buffer_delta=(void *)_aligned_malloc((size_t)image_data.src_h0*(size_t)buffer_delta_pitch,ALIGN_SIZE); // Taille RGB32
+	buffer_map=(uint8_t *)malloc((size_t)image_data.src_h0*(size_t)buffer_map_pitch);
+	buffer_2=(uint8_t *)malloc((size_t)image_data.src_h0*(size_t)buffer_map_pitch);
 
 	for (i=0; i<2; i++)
 	{
-		switch(idata.video_mode)
+		switch(image_data.video_mode)
 		{
-			case 0 :
-			case 1 :
-			case 2 :
-			case 3 :
-				buffer_frame[i]=(void *)_aligned_malloc(idata.src_size0_al,ALIGN_SIZE);
+			case VMODE_BMP_RGBA :
+			case VMODE_YUYV :
+			case VMODE_UYVY :
+				buffer_frame[i]=(void *)_aligned_malloc(image_data.src_size0_al,ALIGN_SIZE);
 				break;
-			case 6 :
-				buffer_frame[i]=(void *)_aligned_malloc(idata.src_size0_al+idata.src_size1_al+idata.src_size2_al,ALIGN_SIZE);
+			case VMODE_PLANAR_YUV420 :
+				buffer_frame[i]=(void *)_aligned_malloc(image_data.src_size0_al+image_data.src_size1_al+image_data.src_size2_al,ALIGN_SIZE);
 				break;
 		}
-		switch (idata.video_mode)
+		switch (image_data.video_mode)
 		{
-			case 2 :
-			case 3 :
-			case 6 :
-				buffer_frameRGB32[i]=(void *)_aligned_malloc((size_t)idata.src_h0*(size_t)buffer_frameRGB32_pitch,ALIGN_SIZE);
+			case VMODE_YUYV :
+			case VMODE_UYVY :
+			case VMODE_PLANAR_YUV420 :
+				buffer_frameRGB32[i]=(void *)_aligned_malloc((size_t)image_data.src_h0*(size_t)buffer_frameRGB32_pitch,ALIGN_SIZE);
 				break;
 		}
 	}
@@ -3283,19 +1568,19 @@ void JPSDR_IVTC::Start()
 	}
 	else
 	{
-		error_field_pitch=(((idata.src_w0 << 2)+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
-		error_field_modulo=error_field_pitch-(idata.src_w0 << 2);
+		error_field_pitch=(((image_data.src_w0 << 2)+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
+		error_field_modulo=error_field_pitch-(image_data.src_w0 << 2);
 		for (i=0; i<Error_Fields_Size; i++)
-			error_Fields[i]=(void *)malloc((size_t)error_field_pitch*(size_t)idata.src_h0); // Taille RGB32
+			error_Fields[i]=(void *)malloc((size_t)error_field_pitch*(size_t)image_data.src_h0); // Taille RGB32
 	}
 	for (i=0; i<Data_Buffer_Size; i++)
 	{
-		switch (idata.video_mode)
+		switch (image_data.video_mode)
 		{
-			case 2 :
-			case 3 :
-			case 6 :
-				buffer[i].frameRGB32=(void *)_aligned_malloc((size_t)idata.src_h0*(size_t)buffer_frameRGB32_pitch,ALIGN_SIZE);
+			case VMODE_YUYV :
+			case VMODE_UYVY :
+			case VMODE_PLANAR_YUV420 :
+				buffer[i].frameRGB32=(void *)_aligned_malloc((size_t)image_data.src_h0*(size_t)buffer_frameRGB32_pitch,ALIGN_SIZE);
 				break;
 		}
 	}
@@ -3303,29 +1588,29 @@ void JPSDR_IVTC::Start()
 	{
 		for (i=0; i<Interlaced_Tab_Size; i++)
 		{
-			interlaced_tab_U[j][i]=(bool*)malloc(idata.src_w1*sizeof(bool));
-			interlaced_tab_V[j][i]=(bool*)malloc(idata.src_w2*sizeof(bool));
+			interlaced_tab_U[j][i]=(bool*)malloc(image_data.src_w1*sizeof(bool));
+			interlaced_tab_V[j][i]=(bool*)malloc(image_data.src_w2*sizeof(bool));
 		}
 	}
 
 	if (resize_720x480)
 	{
-		factor=720.0/(double)idata.src_w0;
+		factor=720.0/(double)image_data.src_w0;
 		for (i=0; i<720; i++)
 		{
 			resize_w0[i]=(sint32)trunc((i+0.5)/factor);
 		}
-		factor=360.0/(double)idata.src_w1;
+		factor=360.0/(double)image_data.src_w1;
 		for (i=0; i<360; i++)
 		{
 			resize_w1[i]=(sint32)trunc((i+0.5)/factor);
 		}
-		factor=240.0/(double)(idata.src_h0>>1);
+		factor=240.0/(double)(image_data.src_h0>>1);
 		for (i=0; i<240; i++)
 		{
 			resize_h0[i]=(sint32)trunc((i+0.5)/factor);
 		}
-		factor=120.0/(double)(idata.src_h1>>1);
+		factor=120.0/(double)(image_data.src_h1>>1);
 		for (i=0; i<120; i++)
 		{
 			resize_h1[i]=(sint32)trunc((i+0.5)/factor);
@@ -3352,11 +1637,11 @@ void JPSDR_IVTC::Start()
 	for (i=0; i<2; i++)
 	{
 		test=test && (buffer_frame[i]!=NULL);
-		switch (idata.video_mode)
+		switch (image_data.video_mode)
 		{
-			case 2 :
-			case 3 :
-			case 6 :
+			case VMODE_YUYV :
+			case VMODE_UYVY :
+			case VMODE_PLANAR_YUV420 :
 				test=test && (buffer_frameRGB32[i]!=NULL);
 				break;
 		}
@@ -3365,11 +1650,11 @@ void JPSDR_IVTC::Start()
 		test=test && (error_Fields[i]!=NULL);
 	for (i=0; i<Data_Buffer_Size; i++)
 	{
-		switch (idata.video_mode)
+		switch (image_data.video_mode)
 		{
-			case 2 :
-			case 3 :
-			case 6 :
+			case VMODE_YUYV :
+			case VMODE_UYVY :
+			case VMODE_PLANAR_YUV420 :
 				test=test && (buffer[i].frameRGB32!=NULL);
 				break;
 		}
@@ -3423,19 +1708,19 @@ void JPSDR_IVTC::Start()
 	manual.ivtc_index=0;
 	manual.sec_prec_ok=false;
 
-	switch(idata.video_mode)
+	switch(image_data.video_mode)
 	{
-		case 6 :
-			offset_y=idata.src_size0_al;
-			offset_u=idata.src_size1_al;
+		case VMODE_PLANAR_YUV420 :
+			offset_y=image_data.src_size0_al;
+			offset_u=image_data.src_size1_al;
 			break;
 		default : offset_y=0; offset_u=0;
 			break;
 	}
 
-	switch(idata.video_mode)
+	switch(image_data.video_mode)
 	{
-		case 6 :
+		case VMODE_PLANAR_YUV420 :
 			buffer_delta_Y=(uint8_t *)buffer_delta;
 			buffer_delta_U=buffer_delta_Y+offset_y;
 			buffer_delta_V=buffer_delta_U+offset_u;
@@ -3448,9 +1733,9 @@ void JPSDR_IVTC::Start()
 	}
 	for (i=0; i<2; i++)
 	{
-		switch (idata.video_mode)
+		switch (image_data.video_mode)
 		{
-			case 6 :
+			case VMODE_PLANAR_YUV420 :
 				buffer_frame_Y[i]=(uint8_t *)buffer_frame[i];
 				buffer_frame_U[i]=buffer_frame_Y[i]+offset_y;
 				buffer_frame_V[i]=buffer_frame_U[i]+offset_u;
@@ -3466,11 +1751,11 @@ void JPSDR_IVTC::Start()
 	{
 		for (i=0; i<Buffer_Size_Manual; i++)
 		{
-			switch (idata.video_mode)
+			switch (image_data.video_mode)
 			{
-				case 2 :
-				case 3 :
-				case 6 :
+				case VMODE_YUYV :
+				case VMODE_UYVY :
+				case VMODE_PLANAR_YUV420 :
 					manual.bufferRGB32[i]=buffer[i].frameRGB32;
 					break;
 			}
@@ -10301,12 +8586,11 @@ void JPSDR_IVTC::StaticThreadpool(void *ptr)
 
 void JPSDR_IVTC::Run()
 {
-	const VDXPixmap *tab_pxsrc[8];
+	const VDXPixmapAlpha* tab_pxsrc[8];
 
-	const VDXPixmap& pxdst = *fa->mpOutputFrames[0]->mpPixmap;
+	const VDXPixmapAlpha& pxdst = (const VDXPixmapAlpha&)*fa->mpOutputFrames[0]->mpPixmap;
 	const VDXFBitmap& pxsrc = *fa->mpSourceFrames[0];
 	
-	Image_Data idata;
 	const void *src1,*src2;
 	const void *src1_Y,*src2_Y,*src1_U,*src2_U,*src1_V,*src2_V;
 	const void *src1_RGB,*src2_RGB;
@@ -10345,9 +8629,7 @@ void JPSDR_IVTC::Run()
 	bool chg_seq;
 	bool w_Y4,w_U4,w_V4,hw_Y4;
 
-	idata=image_data;
-
-	if ((idata.src_h0==0) || (idata.src_w0==0)) return;
+	if ((image_data.src_h0==0) || (image_data.src_w0==0)) return;
 	
 	if (threads_number>1)
 	{
@@ -10359,83 +8641,83 @@ void JPSDR_IVTC::Run()
 
 	if (pxsrc.mFrameNumber==0)
 	{
-		tab_pxsrc[0]=fa->mpSourceFrames[0]->mpPixmap;
-		tab_pxsrc[1]=fa->mpSourceFrames[1]->mpPixmap;
-		tab_pxsrc[2]=fa->mpSourceFrames[2]->mpPixmap;
-		tab_pxsrc[3]=fa->mpSourceFrames[3]->mpPixmap;
-		tab_pxsrc[4]=fa->mpSourceFrames[4]->mpPixmap;
-		tab_pxsrc[5]=fa->mpSourceFrames[5]->mpPixmap;
-		tab_pxsrc[6]=fa->mpSourceFrames[6]->mpPixmap;
-		tab_pxsrc[7]=fa->mpSourceFrames[7]->mpPixmap;
+		tab_pxsrc[0]=(const VDXPixmapAlpha*)fa->mpSourceFrames[0]->mpPixmap;
+		tab_pxsrc[1]=(const VDXPixmapAlpha*)fa->mpSourceFrames[1]->mpPixmap;
+		tab_pxsrc[2]=(const VDXPixmapAlpha*)fa->mpSourceFrames[2]->mpPixmap;
+		tab_pxsrc[3]=(const VDXPixmapAlpha*)fa->mpSourceFrames[3]->mpPixmap;
+		tab_pxsrc[4]=(const VDXPixmapAlpha*)fa->mpSourceFrames[4]->mpPixmap;
+		tab_pxsrc[5]=(const VDXPixmapAlpha*)fa->mpSourceFrames[5]->mpPixmap;
+		tab_pxsrc[6]=(const VDXPixmapAlpha*)fa->mpSourceFrames[6]->mpPixmap;
+		tab_pxsrc[7]=(const VDXPixmapAlpha*)fa->mpSourceFrames[7]->mpPixmap;
 	}
 	else
 	{
-		tab_pxsrc[0]=fa->mpSourceFrames[1]->mpPixmap;
-		tab_pxsrc[1]=fa->mpSourceFrames[2]->mpPixmap;
-		tab_pxsrc[2]=fa->mpSourceFrames[0]->mpPixmap;
-		tab_pxsrc[3]=fa->mpSourceFrames[3]->mpPixmap;
-		tab_pxsrc[4]=fa->mpSourceFrames[4]->mpPixmap;
-		tab_pxsrc[5]=fa->mpSourceFrames[5]->mpPixmap;
-		tab_pxsrc[6]=fa->mpSourceFrames[5]->mpPixmap;
-		tab_pxsrc[7]=fa->mpSourceFrames[6]->mpPixmap;
+		tab_pxsrc[0]=(const VDXPixmapAlpha*)fa->mpSourceFrames[1]->mpPixmap;
+		tab_pxsrc[1]=(const VDXPixmapAlpha*)fa->mpSourceFrames[2]->mpPixmap;
+		tab_pxsrc[2]=(const VDXPixmapAlpha*)fa->mpSourceFrames[0]->mpPixmap;
+		tab_pxsrc[3]=(const VDXPixmapAlpha*)fa->mpSourceFrames[3]->mpPixmap;
+		tab_pxsrc[4]=(const VDXPixmapAlpha*)fa->mpSourceFrames[4]->mpPixmap;
+		tab_pxsrc[5]=(const VDXPixmapAlpha*)fa->mpSourceFrames[5]->mpPixmap;
+		tab_pxsrc[6]=(const VDXPixmapAlpha*)fa->mpSourceFrames[5]->mpPixmap;
+		tab_pxsrc[7]=(const VDXPixmapAlpha*)fa->mpSourceFrames[6]->mpPixmap;
 	}
 		
-	idata.dst_plane0=pxdst.data;
-	idata.dst_plane1=pxdst.data2;
-	idata.dst_plane2=pxdst.data3;
+	image_data.dst_plane0=pxdst.data;
+	image_data.dst_plane1=pxdst.data2;
+	image_data.dst_plane2=pxdst.data3;
 
-	w=idata.src_w0;
-	h=idata.src_h0;
+	w=image_data.src_w0;
+	h=image_data.src_h0;
 	w_Y=w;
 	h_Y=h;
-	w_U=idata.src_w1;
-	w_V=idata.src_w2;
-	h_U=idata.src_h1;
-	h_V=idata.src_h2;
+	w_U=image_data.src_w1;
+	w_V=image_data.src_w2;
+	h_U=image_data.src_h1;
+	h_V=image_data.src_h2;
 	h_removed=h-4*mData.line_removed;
-	h_removed_resize=480-4*round((480.0/(double)idata.src_h0)*mData.line_removed);
+	h_removed_resize=480-4*round((480.0/(double)image_data.src_h0)*mData.line_removed);
 	w_Y4=((w_Y&0x03)==0);
 	w_U4=((w_U&0x03)==0);
 	w_V4=((w_V&0x03)==0);
 	hw_Y4=(((w_Y*h_Y)&0x03)==0);
 
-	switch (idata.video_mode)
+	switch (image_data.video_mode)
 	{
-		case 1 :
-		case 2 :
-		case 3 :
-			dst1_Y=(void *)((uint8_t *)idata.dst_plane0-((idata.dst_h0-1)*idata.dst_pitch0));
-			dst2_Y=(void *)((uint8_t *)idata.dst_plane0-((idata.dst_h0-2)*idata.dst_pitch0));
+		case VMODE_BMP_RGBA :
+		case VMODE_YUYV :
+		case VMODE_UYVY :
+			dst1_Y=(void *)((uint8_t *)image_data.dst_plane0-((image_data.dst_h0-1)*image_data.dst_pitch0));
+			dst2_Y=(void *)((uint8_t *)image_data.dst_plane0-((image_data.dst_h0-2)*image_data.dst_pitch0));
 			break;
-		case 6 :
-			dst1_Y=(void *)((uint8_t *)idata.dst_plane0-((idata.dst_h0-1)*idata.dst_pitch0));
-			dst2_Y=(void *)((uint8_t *)idata.dst_plane0-((idata.dst_h0-2)*idata.dst_pitch0));
-			dst1_U=(void *)((uint8_t *)idata.dst_plane1-((idata.dst_h1-1)*idata.dst_pitch1));
-			dst2_U=(void *)((uint8_t *)idata.dst_plane1-((idata.dst_h1-2)*idata.dst_pitch1));
-			dst1_V=(void *)((uint8_t *)idata.dst_plane2-((idata.dst_h2-1)*idata.dst_pitch2));
-			dst2_V=(void *)((uint8_t *)idata.dst_plane2-((idata.dst_h2-2)*idata.dst_pitch2));
+		case VMODE_PLANAR_YUV420 :
+			dst1_Y=(void *)((uint8_t *)image_data.dst_plane0-((image_data.dst_h0-1)*image_data.dst_pitch0));
+			dst2_Y=(void *)((uint8_t *)image_data.dst_plane0-((image_data.dst_h0-2)*image_data.dst_pitch0));
+			dst1_U=(void *)((uint8_t *)image_data.dst_plane1-((image_data.dst_h1-1)*image_data.dst_pitch1));
+			dst2_U=(void *)((uint8_t *)image_data.dst_plane1-((image_data.dst_h1-2)*image_data.dst_pitch1));
+			dst1_V=(void *)((uint8_t *)image_data.dst_plane2-((image_data.dst_h2-1)*image_data.dst_pitch2));
+			dst2_V=(void *)((uint8_t *)image_data.dst_plane2-((image_data.dst_h2-2)*image_data.dst_pitch2));
 			break;
 	}
 
-	src_pitch=idata.src_pitch0;
-	src_modulo=idata.src_modulo0;
-	dst_pitch=idata.dst_pitch0;
-	dst_modulo=idata.dst_modulo0;
+	src_pitch=image_data.src_pitch0;
+	src_modulo=image_data.src_modulo0;
+	dst_pitch=image_data.dst_pitch0;
+	dst_modulo=image_data.dst_modulo0;
 	src_pitch_Y=src_pitch;
 	src_modulo_Y=src_modulo;
 	dst_pitch_Y=dst_pitch;
 	dst_modulo_Y=dst_modulo;
-	src_pitch_U=idata.src_pitch1;
-	src_modulo_U=idata.src_modulo1;
-	dst_pitch_U=idata.dst_pitch1;
-	dst_modulo_U=idata.dst_modulo1;
-	src_pitch_V=idata.src_pitch2;
-	src_modulo_V=idata.src_modulo2;
-	dst_pitch_V=idata.dst_pitch2;
-	dst_modulo_V=idata.dst_modulo2;
+	src_pitch_U=image_data.src_pitch1;
+	src_modulo_U=image_data.src_modulo1;
+	dst_pitch_U=image_data.dst_pitch1;
+	dst_modulo_U=image_data.dst_modulo1;
+	src_pitch_V=image_data.src_pitch2;
+	src_modulo_V=image_data.src_modulo2;
+	dst_pitch_V=image_data.dst_pitch2;
+	dst_modulo_V=image_data.dst_modulo2;
 	frame_removed_pitch=2*src_pitch*mData.line_removed;
 	buffer_removed_pitch=2*buffer_frameRGB32_pitch*mData.line_removed;
-	buffer_resize_removed_pitch=2*frameRGB32Resize_pitch*round((480.0/(double)idata.src_h0)*mData.line_removed);
+	buffer_resize_removed_pitch=2*frameRGB32Resize_pitch*round((480.0/(double)image_data.src_h0)*mData.line_removed);
 	thr_ivtc=mData.threshold_ivtc;
 	thr_flt=mData.threshold_filter;
 	thr_dtl=mData.threshold_deinterlace;
@@ -10489,35 +8771,35 @@ void JPSDR_IVTC::Run()
 				i_wrt_m1=write_index[Write_Index_Size-2];
 			}
 		
-			idata.src_plane0=tab_pxsrc[i]->data;
-			idata.src_plane1=tab_pxsrc[i]->data2;
-			idata.src_plane2=tab_pxsrc[i]->data3;
+			image_data.src_plane0=tab_pxsrc[i]->data;
+			image_data.src_plane1=tab_pxsrc[i]->data2;
+			image_data.src_plane2=tab_pxsrc[i]->data3;
 		
-			switch (idata.video_mode)
+			switch (image_data.video_mode)
 			{
-				case 1 :
-				case 2 :
-				case 3 :
-					src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
+				case VMODE_BMP_RGBA :
+				case VMODE_YUYV :
+				case VMODE_UYVY :
+					src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
 					break;
-				case 6 :
-					src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
-					src1_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-1)*idata.src_pitch1));
-					src1_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-1)*idata.src_pitch2));
+				case VMODE_PLANAR_YUV420 :
+					src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
+					src1_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-1)*image_data.src_pitch1));
+					src1_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-1)*image_data.src_pitch2));
 					break;
 			}	
 
-			switch(idata.video_mode)
+			switch(image_data.video_mode)
 			{
-				case 2 :
+				case VMODE_YUYV :
 					Convert_YUYV_to_RGB32(src1_Y,buffer[i_wrt].frameRGB32,w,h,src_pitch,src_modulo,buffer_frameRGB32_pitch,
 						buffer_frameRGB32_modulo);
 					break;
-				case 3 :
+				case VMODE_UYVY :
 					Convert_UYVY_to_RGB32(src1_Y,buffer[i_wrt].frameRGB32,w,h,src_pitch,src_modulo,buffer_frameRGB32_pitch,
 						buffer_frameRGB32_modulo);
 					break;
-				case 6 :
+				case VMODE_PLANAR_YUV420 :
 					Convert_Planar420_to_RGB32((uint8_t *)src1_Y,(uint8_t *)src1_U,(uint8_t *)src1_V,
 						buffer_delta,buffer[i_wrt].frameRGB32,w_Y,h_Y,src_pitch_Y,src_pitch_U,src_pitch_V,buffer_delta_pitch,
 						buffer_frameRGB32_pitch,buffer_delta_modulo16,buffer_frameRGB32_modulo);
@@ -10533,10 +8815,9 @@ void JPSDR_IVTC::Run()
 					break;
 			}
 			
-			switch (idata.video_mode)
+			switch (image_data.video_mode)
 			{
-				case 0 :
-				case 1 :
+				case VMODE_BMP_RGBA :
 					src1=(void *)((uint8_t *)src1_Y+frame_removed_pitch);
 					src2=(void *)((uint8_t *)src1+src_pitch);
 					buffer[i_wrt].error=Norme1_Histogramme_DeltaPicture_RGB32(src1,src2,
@@ -10544,9 +8825,9 @@ void JPSDR_IVTC::Run()
 						buffer[i_wrt].repartition,w,h_removed>>1,src_pitch,buffer_delta_pitch,error_field_pitch,src_modulo,
 						buffer_delta_modulo32,error_field_modulo,buffer[i_wrt].error_Motion_Map,thr_ivtc);
 					break;
-				case 2 :
-				case 3 :
-				case 6 :
+				case VMODE_YUYV :
+				case VMODE_UYVY :
+				case VMODE_PLANAR_YUV420 :
 					if (resize_720x480)
 					{
 						src1=(void *)((uint8_t *)buffer[i_wrt].frameRGB32Resize+buffer_resize_removed_pitch);
@@ -10572,28 +8853,27 @@ void JPSDR_IVTC::Run()
 			
 			if (i==0) continue;			
 		
-			idata.src_plane0=tab_pxsrc[i-1]->data;
-			idata.src_plane1=tab_pxsrc[i-1]->data2;
-			idata.src_plane2=tab_pxsrc[i-1]->data3;
+			image_data.src_plane0=tab_pxsrc[i-1]->data;
+			image_data.src_plane1=tab_pxsrc[i-1]->data2;
+			image_data.src_plane2=tab_pxsrc[i-1]->data3;
 		
-			switch (idata.video_mode)
+			switch (image_data.video_mode)
 			{
-				case 1 :
-				case 2 :
-				case 3 :
-					src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
+				case VMODE_BMP_RGBA :
+				case VMODE_YUYV :
+				case VMODE_UYVY :
+					src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
 					break;
-				case 6 :
-					src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
-					src2_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-1)*idata.src_pitch1));
-					src2_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-1)*idata.src_pitch2));
+				case VMODE_PLANAR_YUV420 :
+					src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
+					src2_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-1)*image_data.src_pitch1));
+					src2_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-1)*image_data.src_pitch2));
 					break;
 			}	
 			
-			switch (idata.video_mode)
+			switch (image_data.video_mode)
 			{
-				case 0 :
-				case 1 :
+				case VMODE_BMP_RGBA :
 					if (inv_polar)
 					{
 						src1=(void *)((uint8_t *)src1_Y+frame_removed_pitch);
@@ -10608,9 +8888,9 @@ void JPSDR_IVTC::Run()
 						buffer_map,buffer_2,w,h_removed>>1,src_pitch,buffer_delta_pitch,src_modulo,
 						buffer_delta_modulo32,buffer[i_wrt_m1].error_IVTC_P1_Motion_Map,thr_ivtc);
 					break;
-				case 2 :
-				case 3 :
-				case 6 :
+				case VMODE_YUYV :
+				case VMODE_UYVY :
+				case VMODE_PLANAR_YUV420 :
 					if (resize_720x480)
 					{
 						if (inv_polar)
@@ -10655,17 +8935,16 @@ void JPSDR_IVTC::Run()
 			buffer[i_wrt].error_IVTC_M1=buffer[i_wrt_m1].error_IVTC_P1;
 			buffer[i_wrt].error_IVTC_M1_Motion_Map=buffer[i_wrt_m1].error_IVTC_P1_Motion_Map;
 
-			switch(idata.video_mode)
+			switch(image_data.video_mode)
 			{
-				case 0 :
-				case 1 :
+				case VMODE_BMP_RGBA :
 					if (inv_polar) src2=(void *)((uint8_t *)src2_Y+src_pitch);
 					else src2=(void *)((uint8_t *)src1_Y+src_pitch);
 					buffer[i_wrt_m1].Delta_Bottom_P1=Norme1_RGB32(src1,src2,w,h_removed>>1,src_pitch,src_modulo);
 					break;
-				case 2 :
-				case 3 :
-				case 6 :
+				case VMODE_YUYV :
+				case VMODE_UYVY :
+				case VMODE_PLANAR_YUV420 :
 					if (resize_720x480)
 					{
 						if (inv_polar) src2=(void *)((uint8_t *)buffer[i_wrt_m1].frameRGB32Resize+buffer_resize_removed_pitch);
@@ -10683,17 +8962,16 @@ void JPSDR_IVTC::Run()
 					break;
 			}
 			
-			switch(idata.video_mode)
+			switch(image_data.video_mode)
 			{
-				case 0 :
-				case 1 :
+				case VMODE_BMP_RGBA :
 					src1=(void *)((uint8_t *)src2_Y+(frame_removed_pitch+src_pitch));
 					src2=(void *)((uint8_t *)src1_Y+(frame_removed_pitch+src_pitch));
 					buffer[i_wrt_m1].Delta_Top_P1=Norme1_RGB32(src1,src2,w,h_removed>>1,src_pitch,src_modulo);
 					break;
-				case 2 :
-				case 3 :
-				case 6 :
+				case VMODE_YUYV :
+				case VMODE_UYVY :
+				case VMODE_PLANAR_YUV420 :
 					if (resize_720x480)
 					{
 						src1=(void *)((uint8_t *)buffer[i_wrt_m1].frameRGB32Resize+(buffer_resize_removed_pitch+frameRGB32Resize_pitch));
@@ -11265,39 +9543,39 @@ void JPSDR_IVTC::Run()
 	/////////////////// Fin num image =0
 	
 	
-	idata.src_plane0=tab_pxsrc[7]->data;
-	idata.src_plane1=tab_pxsrc[7]->data2;
-	idata.src_plane2=tab_pxsrc[7]->data3;
+	image_data.src_plane0=tab_pxsrc[7]->data;
+	image_data.src_plane1=tab_pxsrc[7]->data2;
+	image_data.src_plane2=tab_pxsrc[7]->data3;
 
-	switch (idata.video_mode)
+	switch (image_data.video_mode)
 	{
-		case 1 :
-		case 2 :
-		case 3 :
-			src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
+		case VMODE_BMP_RGBA :
+		case VMODE_YUYV :
+		case VMODE_UYVY :
+			src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
 			break;
-		case 6 :
-			src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
-			src1_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-1)*idata.src_pitch1));
-			src1_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-1)*idata.src_pitch2));
+		case VMODE_PLANAR_YUV420 :
+			src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
+			src1_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-1)*image_data.src_pitch1));
+			src1_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-1)*image_data.src_pitch2));
 			break;
 	}	
 
-	idata.src_plane0=tab_pxsrc[6]->data;
-	idata.src_plane1=tab_pxsrc[6]->data2;
-	idata.src_plane2=tab_pxsrc[6]->data3;
+	image_data.src_plane0=tab_pxsrc[6]->data;
+	image_data.src_plane1=tab_pxsrc[6]->data2;
+	image_data.src_plane2=tab_pxsrc[6]->data3;
 
-	switch (idata.video_mode)
+	switch (image_data.video_mode)
 	{
-		case 1 :
-		case 2 :
-		case 3 :
-			src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
+		case VMODE_BMP_RGBA :
+		case VMODE_YUYV :
+		case VMODE_UYVY :
+			src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
 			break;
-		case 6 :
-			src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
-			src2_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-1)*idata.src_pitch1));
-			src2_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-1)*idata.src_pitch2));
+		case VMODE_PLANAR_YUV420 :
+			src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
+			src2_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-1)*image_data.src_pitch1));
+			src2_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-1)*image_data.src_pitch2));
 			break;
 	}	
 
@@ -11317,17 +9595,17 @@ void JPSDR_IVTC::Run()
 		i_wrt_m1=write_index[Write_Index_Size-2];
 	}
 	
-	switch(idata.video_mode)
+	switch(image_data.video_mode)
 	{
-		case 2 :
+		case VMODE_YUYV :
 			Convert_YUYV_to_RGB32(src1_Y,buffer[i_wrt].frameRGB32,w,h,src_pitch,src_modulo,buffer_frameRGB32_pitch,
 					buffer_frameRGB32_modulo);
 			break;
-		case 3 :
+		case VMODE_UYVY :
 			Convert_UYVY_to_RGB32(src1_Y,buffer[i_wrt].frameRGB32,w,h,src_pitch,src_modulo,buffer_frameRGB32_pitch,
 					buffer_frameRGB32_modulo);
 			break;
-		case 6 :
+		case VMODE_PLANAR_YUV420 :
 			Convert_Planar420_to_RGB32((uint8_t *)src1_Y,(uint8_t *)src1_U,(uint8_t *)src1_V,buffer_delta,
 				buffer[i_wrt].frameRGB32,w_Y,h_Y,src_pitch_Y,src_pitch_U,src_pitch_V,buffer_delta_pitch,buffer_frameRGB32_pitch,
 				buffer_delta_modulo16,buffer_frameRGB32_modulo);
@@ -11343,10 +9621,9 @@ void JPSDR_IVTC::Run()
 			break;
 	}
 
-	switch(idata.video_mode)
+	switch(image_data.video_mode)
 	{
-		case 0 :
-		case 1 :
+		case VMODE_BMP_RGBA :
 			src1=(void *)((uint8_t *)src1_Y+frame_removed_pitch);
 			src2=(void *)((uint8_t *)src1+src_pitch);
 			buffer[i_wrt].error=Norme1_Histogramme_DeltaPicture_RGB32(src1,src2,
@@ -11354,9 +9631,9 @@ void JPSDR_IVTC::Run()
 				buffer[i_wrt].repartition,w,h_removed>>1,src_pitch,buffer_delta_pitch,error_field_pitch,src_modulo,
 				buffer_delta_modulo32,error_field_modulo,buffer[i_wrt].error_Motion_Map,thr_ivtc);
 			break;
-		case 2 :
-		case 3 :
-		case 6 :
+		case VMODE_YUYV :
+		case VMODE_UYVY :
+		case VMODE_PLANAR_YUV420 :
 			if (resize_720x480)
 			{
 				src1=(void *)((uint8_t *)buffer[i_wrt].frameRGB32Resize+buffer_resize_removed_pitch);
@@ -11379,10 +9656,9 @@ void JPSDR_IVTC::Run()
 	}
 
 
-	switch (idata.video_mode)
+	switch (image_data.video_mode)
 	{
-		case 0 :
-		case 1 :
+		case VMODE_BMP_RGBA :
 			if (inv_polar)
 			{
 				src1=(void *)((uint8_t *)src1_Y+frame_removed_pitch);
@@ -11397,9 +9673,9 @@ void JPSDR_IVTC::Run()
 				buffer_map,buffer_2,w,h_removed>>1,src_pitch,buffer_delta_pitch,src_modulo,buffer_delta_modulo32,
 				buffer[i_wrt_m1].error_IVTC_P1_Motion_Map,thr_ivtc);
 			break;
-		case 2 :
-		case 3 :
-		case 6 :
+		case VMODE_YUYV :
+		case VMODE_UYVY :
+		case VMODE_PLANAR_YUV420 :
 			if (resize_720x480)
 			{
 				if (inv_polar)
@@ -11438,17 +9714,16 @@ void JPSDR_IVTC::Run()
 	buffer[i_wrt].error_IVTC_M1=buffer[i_wrt_m1].error_IVTC_P1;
 	buffer[i_wrt].error_IVTC_M1_Motion_Map=buffer[i_wrt_m1].error_IVTC_P1_Motion_Map;
 
-	switch(idata.video_mode)
+	switch(image_data.video_mode)
 	{
-		case 0 :
-		case 1 :
+		case VMODE_BMP_RGBA :
 			if (inv_polar) src2=(void *)((uint8_t *)src2_Y+frame_removed_pitch);
 			else src2=(void *)((uint8_t *)src1_Y+frame_removed_pitch);
 			buffer[i_wrt_m1].Delta_Bottom_P1=Norme1_RGB32(src1,src2,w,h_removed>>1,src_pitch,src_modulo);
 			break;
-		case 2 :
-		case 3 :
-		case 6 :
+		case VMODE_YUYV :
+		case VMODE_UYVY :
+		case VMODE_PLANAR_YUV420 :
 			if (resize_720x480)
 			{
 				if (inv_polar) src2=(void *)((uint8_t *)buffer[i_wrt_m1].frameRGB32Resize+buffer_resize_removed_pitch);
@@ -11465,17 +9740,16 @@ void JPSDR_IVTC::Run()
 			break;
 	}
 
-	switch(idata.video_mode)
+	switch(image_data.video_mode)
 	{
-		case 0 :
-		case 1 :
+		case VMODE_BMP_RGBA :
 			src1=(void *)((uint8_t *)src2_Y+(frame_removed_pitch+src_pitch));
 			src2=(void *)((uint8_t *)src1_Y+(frame_removed_pitch+src_pitch));
 			buffer[i_wrt_m1].Delta_Top_P1=Norme1_RGB32(src1,src2,w,h_removed>>1,src_pitch,src_modulo);
 			break;
-		case 2 :
-		case 3 :
-		case 6 :
+		case VMODE_YUYV :
+		case VMODE_UYVY :
+		case VMODE_PLANAR_YUV420 :
 			if (resize_720x480)
 			{
 				src1=(void *)((uint8_t *)buffer[i_wrt_m1].frameRGB32Resize+(buffer_resize_removed_pitch+frameRGB32Resize_pitch));
@@ -13157,36 +11431,35 @@ void JPSDR_IVTC::Run()
 					
 					if ((i_tab!=2) || swap_buffer)
 					{
-						idata.src_plane0=tab_pxsrc[i_tab]->data;
-						idata.src_plane1=tab_pxsrc[i_tab]->data2;
-						idata.src_plane2=tab_pxsrc[i_tab]->data3;
+						image_data.src_plane0=tab_pxsrc[i_tab]->data;
+						image_data.src_plane1=tab_pxsrc[i_tab]->data2;
+						image_data.src_plane2=tab_pxsrc[i_tab]->data3;
 		
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 1 :
-							case 2 :
-							case 3 :
-								src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
+							case VMODE_BMP_RGBA :
+							case VMODE_YUYV :
+							case VMODE_UYVY :
+								src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
 								break;
-							case 6 :
-								src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
-								src1_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-1)*idata.src_pitch1));
-								src1_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-1)*idata.src_pitch2));
+							case VMODE_PLANAR_YUV420 :
+								src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
+								src1_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-1)*image_data.src_pitch1));
+								src1_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-1)*image_data.src_pitch2));
 								break;
 						}	
 
-						switch(idata.video_mode)
+						switch(image_data.video_mode)
 						{
-							case 0 :
-							case 1 :
-							case 2 :
-							case 3 :
-								Move_Full(src1_Y,dst1_Y,idata.src_line0,h,src_pitch,dst_pitch);
+							case VMODE_BMP_RGBA :
+							case VMODE_YUYV :
+							case VMODE_UYVY :
+								Move_Full(src1_Y,dst1_Y,image_data.src_line0,h,src_pitch,dst_pitch);
 								break;
-							case 6 :
-								Move_Full(src1_Y,dst1_Y,idata.src_line0,h,src_pitch_Y,dst_pitch_Y);
-								Move_Full(src1_U,dst1_U,idata.src_line1,h,src_pitch_U,dst_pitch_U);
-								Move_Full(src1_V,dst1_V,idata.src_line2,h,src_pitch_V,dst_pitch_V);
+							case VMODE_PLANAR_YUV420 :
+								Move_Full(src1_Y,dst1_Y,image_data.src_line0,h,src_pitch_Y,dst_pitch_Y);
+								Move_Full(src1_U,dst1_U,image_data.src_line1,h,src_pitch_U,dst_pitch_U);
+								Move_Full(src1_V,dst1_V,image_data.src_line2,h,src_pitch_V,dst_pitch_V);
 								break;
 								
 						}
@@ -13202,21 +11475,21 @@ void JPSDR_IVTC::Run()
 					
 					src1_RGB=manual.bufferRGB32[(manual.read_index+i)%Buffer_Size_Manual];
 
-					idata.src_plane0=tab_pxsrc[i_tab]->data;
-					idata.src_plane1=tab_pxsrc[i_tab]->data2;
-					idata.src_plane2=tab_pxsrc[i_tab]->data3;
+					image_data.src_plane0=tab_pxsrc[i_tab]->data;
+					image_data.src_plane1=tab_pxsrc[i_tab]->data2;
+					image_data.src_plane2=tab_pxsrc[i_tab]->data3;
 		
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 1 :
-						case 2 :
-						case 3 :
-							src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
+						case VMODE_BMP_RGBA :
+						case VMODE_YUYV :
+						case VMODE_UYVY :
+							src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
 							break;
-						case 6 :
-							src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
-							src1_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-1)*idata.src_pitch1));
-							src1_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-1)*idata.src_pitch2));
+						case VMODE_PLANAR_YUV420 :
+							src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
+							src1_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-1)*image_data.src_pitch1));
+							src1_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-1)*image_data.src_pitch2));
 							break;
 					}	
 
@@ -13229,21 +11502,21 @@ void JPSDR_IVTC::Run()
 					src2_RGB=(void *)((uint8_t *)manual.bufferRGB32[(manual.read_index+j)%Buffer_Size_Manual]
 						+buffer_frameRGB32_pitch);
 					
-					idata.src_plane0=tab_pxsrc[j_tab]->data;
-					idata.src_plane1=tab_pxsrc[j_tab]->data2;
-					idata.src_plane2=tab_pxsrc[j_tab]->data3;
+					image_data.src_plane0=tab_pxsrc[j_tab]->data;
+					image_data.src_plane1=tab_pxsrc[j_tab]->data2;
+					image_data.src_plane2=tab_pxsrc[j_tab]->data3;
 		
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 1 :
-						case 2 :
-						case 3 :
-							src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
+						case VMODE_BMP_RGBA :
+						case VMODE_YUYV :
+						case VMODE_UYVY :
+							src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
 							break;
-						case 6 :
-							src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
-							src2_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-2)*idata.src_pitch1));
-							src2_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-2)*idata.src_pitch2));
+						case VMODE_PLANAR_YUV420 :
+							src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
+							src2_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-2)*image_data.src_pitch1));
+							src2_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-2)*image_data.src_pitch2));
 							break;
 					}	
 
@@ -13254,27 +11527,26 @@ void JPSDR_IVTC::Run()
 							switch(deinterlace_mode)
 							{
 							case 1 :
-								switch(idata.video_mode)
+								switch(image_data.video_mode)
 								{
-									case 0 :
-									case 1 :
+									case VMODE_BMP_RGBA :
 										Smart_Deinterlace_RGB32(src1_Y,src2_Y,dst1_Y,buffer_delta,buffer_map,
 											buffer_2,w,h>>1,src_pitch,dst_pitch,buffer_delta_pitch,src_modulo,dst_modulo,
 											buffer_delta_modulo32,thr_out,tri_linear,map_filter);
 										break;
-									case 2 :
+									case VMODE_YUYV :
 										Smart_Deinterlace_YUYV(src1_Y,src2_Y,dst1_Y,buffer_delta,buffer_map,
 											buffer_2,w,h>>1,src_pitch,dst_pitch,buffer_delta_pitch,src_modulo,dst_modulo,
 											buffer_delta_modulo16,thr_out,tri_linear,map_filter,src1_RGB,src2_RGB,buffer_frameRGB32_pitch,
 											Y_only);
 										break;
-									case 3 :
+									case VMODE_UYVY :
 										Smart_Deinterlace_UYVY(src1_Y,src2_Y,dst1_Y,buffer_delta,buffer_map,
 											buffer_2,w,h>>1,src_pitch,dst_pitch,buffer_delta_pitch,src_modulo,dst_modulo,
 											buffer_delta_modulo16,thr_out,tri_linear,map_filter,src1_RGB,src2_RGB,buffer_frameRGB32_pitch,
 											Y_only);
 										break;
-									case 6 :
+									case VMODE_PLANAR_YUV420 :
 										Smart_Deinterlace_Planar420((uint8_t *)src1_Y,(uint8_t *)src2_Y,
 											(uint8_t *)src1_U,(uint8_t *)src2_U,(uint8_t *)src1_V,
 											(uint8_t *)src2_V,(uint8_t *)dst1_Y,(uint8_t *)dst1_U,
@@ -13288,19 +11560,18 @@ void JPSDR_IVTC::Run()
 								}
 								break;
 							case 2 :
-								switch (idata.video_mode)
+								switch (image_data.video_mode)
 								{
-									case 0 :
-									case 1 :
+									case VMODE_BMP_RGBA :
 										Deinterlace_RGB32(src1_Y,src2_Y,dst1_Y,w,h>>1,src_pitch,dst_pitch,tri_linear,false);
 										break;
-									case 2 :
+									case VMODE_YUYV :
 										Deinterlace_YUYV(src1_Y,src2_Y,dst1_Y,w,h>>1,src_pitch,dst_pitch,tri_linear,false,Y_only);
 										break;
-									case 3 :
+									case VMODE_UYVY :
 										Deinterlace_UYVY(src1_Y,src2_Y,dst1_Y,w,h>>1,src_pitch,dst_pitch,tri_linear,false,Y_only);
 										break;
-									case 6 :
+									case VMODE_PLANAR_YUV420 :
 										Deinterlace_Planar((uint8_t *)src1_Y,(uint8_t *)src2_Y,(uint8_t *)dst1_Y,
 											w_Y,h_Y>>1,src_pitch_Y,dst_pitch_Y,tri_linear,false);
 										if (!Y_only)
@@ -13312,8 +11583,8 @@ void JPSDR_IVTC::Run()
 										}
 										else
 										{
-											Rebuild_Frame(src1_U,src2_U,dst1_U,idata.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
-											Rebuild_Frame(src1_V,src2_V,dst1_V,idata.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
+											Rebuild_Frame(src1_U,src2_U,dst1_U,image_data.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
+											Rebuild_Frame(src1_V,src2_V,dst1_V,image_data.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
 										}
 										break;
 								}
@@ -13322,43 +11593,42 @@ void JPSDR_IVTC::Run()
 						}
 						else
 						{
-							switch (idata.video_mode)
+							switch (image_data.video_mode)
 							{
-								case 0 :
-								case 1 :
-								case 2 :
-								case 3 :
+								case VMODE_BMP_RGBA :
+								case VMODE_YUYV :
+								case VMODE_UYVY :
 									if (modif_top && modif_bottom)
 									{
-										Rebuild_Frame(src1_Y,src2_Y,dst1_Y,idata.src_line0,h>>1,src_pitch,dst_pitch);
+										Rebuild_Frame(src1_Y,src2_Y,dst1_Y,image_data.src_line0,h>>1,src_pitch,dst_pitch);
 									}
 									else
 									{
-										if (modif_top) Rebuild_Frame_2(src1_Y,dst1_Y,idata.src_line0,h>>1,src_pitch,dst_pitch);
-										if (modif_bottom) Rebuild_Frame_2(src2_Y,dst2_Y,idata.src_line0,h>>1,src_pitch,dst_pitch);
+										if (modif_top) Rebuild_Frame_2(src1_Y,dst1_Y,image_data.src_line0,h>>1,src_pitch,dst_pitch);
+										if (modif_bottom) Rebuild_Frame_2(src2_Y,dst2_Y,image_data.src_line0,h>>1,src_pitch,dst_pitch);
 									}
 									break;
 									break;
-								case 6 :
+								case VMODE_PLANAR_YUV420 :
 									if (modif_top && modif_bottom)
 									{
-										Rebuild_Frame(src1_Y,src2_Y,dst1_Y,idata.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
-										Rebuild_Frame(src1_U,src2_U,dst1_U,idata.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
-										Rebuild_Frame(src1_V,src2_V,dst1_V,idata.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
+										Rebuild_Frame(src1_Y,src2_Y,dst1_Y,image_data.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
+										Rebuild_Frame(src1_U,src2_U,dst1_U,image_data.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
+										Rebuild_Frame(src1_V,src2_V,dst1_V,image_data.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
 									}
 									else
 									{
 										if (modif_top)
 										{
-											Rebuild_Frame_2(src1_Y,dst1_Y,idata.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
-											Rebuild_Frame_2(src1_U,dst1_U,idata.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
-											Rebuild_Frame_2(src1_V,dst1_V,idata.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
+											Rebuild_Frame_2(src1_Y,dst1_Y,image_data.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
+											Rebuild_Frame_2(src1_U,dst1_U,image_data.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
+											Rebuild_Frame_2(src1_V,dst1_V,image_data.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
 										}
 										if (modif_bottom)
 										{
-											Rebuild_Frame_2(src2_Y,dst2_Y,idata.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
-											Rebuild_Frame_2(src2_U,dst2_U,idata.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
-											Rebuild_Frame_2(src2_V,dst2_V,idata.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
+											Rebuild_Frame_2(src2_Y,dst2_Y,image_data.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
+											Rebuild_Frame_2(src2_U,dst2_U,image_data.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
+											Rebuild_Frame_2(src2_V,dst2_V,image_data.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
 										}
 									}
 									break;
@@ -13372,15 +11642,14 @@ void JPSDR_IVTC::Run()
 							switch(deinterlace_mode)
 							{
 							case 1 :
-								switch (idata.video_mode)
+								switch (image_data.video_mode)
 								{
-									case 0 :
-									case 1 :
+									case VMODE_BMP_RGBA :
 										Smart_Deinterlace_RGB32(src1_Y,src2_Y,buffer_frame[0],buffer_delta,
 											buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 											src_modulo,buffer_frame_modulo,buffer_delta_modulo32,thr_out,tri_linear,map_filter);
 										break;
-									case 2 :
+									case VMODE_YUYV :
 										Smart_Deinterlace_YUYV(src1_Y,src2_Y,buffer_frame[0],buffer_delta,
 											buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 											src_modulo,buffer_frame_modulo,buffer_delta_modulo16,thr_out,tri_linear,map_filter,
@@ -13388,7 +11657,7 @@ void JPSDR_IVTC::Run()
 										Convert_YUYV_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 											buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 										break;
-									case 3 :
+									case VMODE_UYVY :
 										Smart_Deinterlace_UYVY(src1_Y,src2_Y,buffer_frame[0],buffer_delta,
 											buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 											src_modulo,buffer_frame_modulo,buffer_delta_modulo16,thr_out,tri_linear,map_filter,
@@ -13396,7 +11665,7 @@ void JPSDR_IVTC::Run()
 										Convert_UYVY_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 											buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 										break;
-									case 6 :
+									case VMODE_PLANAR_YUV420 :
 										Smart_Deinterlace_Planar420((uint8_t *)src1_Y,(uint8_t *)src2_Y,
 											(uint8_t *)src1_U,(uint8_t *)src2_U,(uint8_t *)src1_V,
 											(uint8_t *)src2_V,buffer_frame_Y[0],buffer_frame_U[0],buffer_frame_V[0],
@@ -13415,26 +11684,25 @@ void JPSDR_IVTC::Run()
 								}
 								break;
 							case 2 : 
-								switch (idata.video_mode)
+								switch (image_data.video_mode)
 								{
-									case 0 :
-									case 1 :
+									case VMODE_BMP_RGBA :
 										Deinterlace_RGB32(src1_Y,src2_Y,buffer_frame[0],w,h>>1,src_pitch,buffer_frame_pitch,
 											tri_linear,true);
 										break;
-									case 2 :
+									case VMODE_YUYV :
 										Deinterlace_YUYV(src1_Y,src2_Y,buffer_frame[0],w,h>>1,src_pitch,buffer_frame_pitch,
 											tri_linear,true,Y_only);
 										Convert_YUYV_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 											buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 										break;
-									case 3 :
+									case VMODE_UYVY :
 										Deinterlace_UYVY(src1_Y,src2_Y,buffer_frame[0],w,h>>1,src_pitch,buffer_frame_pitch,
 											tri_linear,true,Y_only);
 										Convert_UYVY_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 											buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 										break;
-									case 6 :
+									case VMODE_PLANAR_YUV420 :
 										Deinterlace_Planar((uint8_t *)src1_Y,(uint8_t *)src2_Y,buffer_frame_Y[0],
 											w_Y,h_Y>>1,src_pitch_Y,buffer_frame_Y_pitch,tri_linear,true);
 										if (!Y_only)
@@ -13446,9 +11714,9 @@ void JPSDR_IVTC::Run()
 										}
 										else
 										{
-											Rebuild_Frame(src1_U,src2_U,buffer_frame_U[0],idata.src_line1,h_U>>1,src_pitch_U,
+											Rebuild_Frame(src1_U,src2_U,buffer_frame_U[0],image_data.src_line1,h_U>>1,src_pitch_U,
 												buffer_frame_U_pitch);
-											Rebuild_Frame(src1_V,src2_V,buffer_frame_V[0],idata.src_line2,h_V>>1,src_pitch_V,
+											Rebuild_Frame(src1_V,src2_V,buffer_frame_V[0],image_data.src_line2,h_V>>1,src_pitch_V,
 												buffer_frame_V_pitch);
 										}
 										Convert_Planar420_to_RGB32(buffer_frame_Y[0],buffer_frame_U[0],
@@ -13459,59 +11727,57 @@ void JPSDR_IVTC::Run()
 								}
 								break;
 							}
-							switch (idata.video_mode)
+							switch (image_data.video_mode)
 							{
-								case 0 :
-								case 1 :
-								case 2 :
-								case 3 :
-									Move_Full(buffer_frame[0],dst1_Y,idata.src_line0,h,buffer_frame_pitch,dst_pitch);
+								case VMODE_BMP_RGBA :
+								case VMODE_YUYV :
+								case VMODE_UYVY :
+									Move_Full(buffer_frame[0],dst1_Y,image_data.src_line0,h,buffer_frame_pitch,dst_pitch);
 									break;
-								case 6 :
-									Move_Full(buffer_frame_Y[0],dst1_Y,idata.src_line0,h_Y,buffer_frame_Y_pitch,dst_pitch_Y);
-									Move_Full(buffer_frame_U[0],dst1_U,idata.src_line1,h_U,buffer_frame_U_pitch,dst_pitch_U);
-									Move_Full(buffer_frame_V[0],dst1_V,idata.src_line2,h_V,buffer_frame_V_pitch,dst_pitch_V);
+								case VMODE_PLANAR_YUV420 :
+									Move_Full(buffer_frame_Y[0],dst1_Y,image_data.src_line0,h_Y,buffer_frame_Y_pitch,dst_pitch_Y);
+									Move_Full(buffer_frame_U[0],dst1_U,image_data.src_line1,h_U,buffer_frame_U_pitch,dst_pitch_U);
+									Move_Full(buffer_frame_V[0],dst1_V,image_data.src_line2,h_V,buffer_frame_V_pitch,dst_pitch_V);
 									break;
 							}
 						}
 						else
 						{
-							switch (idata.video_mode)
+							switch (image_data.video_mode)
 							{
-								case 0 :
-								case 1 :
-								case 2 :
-								case 3 :
+								case VMODE_BMP_RGBA :
+								case VMODE_YUYV :
+								case VMODE_UYVY :
 									if (modif_top && modif_bottom)
 									{
-										Rebuild_Frame(src1_Y,src2_Y,dst1_Y,idata.src_line0,h>>1,src_pitch,dst_pitch);
+										Rebuild_Frame(src1_Y,src2_Y,dst1_Y,image_data.src_line0,h>>1,src_pitch,dst_pitch);
 									}
 									else
 									{
-										if (modif_top) Rebuild_Frame_2(src1_Y,dst1_Y,idata.src_line0,h>>1,src_pitch,dst_pitch);
-										if (modif_bottom) Rebuild_Frame_2(src2_Y,dst2_Y,idata.src_line0,h>>1,src_pitch,dst_pitch);
+										if (modif_top) Rebuild_Frame_2(src1_Y,dst1_Y,image_data.src_line0,h>>1,src_pitch,dst_pitch);
+										if (modif_bottom) Rebuild_Frame_2(src2_Y,dst2_Y,image_data.src_line0,h>>1,src_pitch,dst_pitch);
 									}
 									break;
-								case 6 :
+								case VMODE_PLANAR_YUV420 :
 									if (modif_top && modif_bottom)
 									{
-										Rebuild_Frame(src1_Y,src2_Y,dst1_Y,idata.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
-										Rebuild_Frame(src1_U,src2_U,dst1_U,idata.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
-										Rebuild_Frame(src1_V,src2_V,dst1_V,idata.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
+										Rebuild_Frame(src1_Y,src2_Y,dst1_Y,image_data.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
+										Rebuild_Frame(src1_U,src2_U,dst1_U,image_data.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
+										Rebuild_Frame(src1_V,src2_V,dst1_V,image_data.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
 									}
 									else
 									{
 										if (modif_top)
 										{
-											Rebuild_Frame_2(src1_Y,dst1_Y,idata.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
-											Rebuild_Frame_2(src1_U,dst1_U,idata.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
-											Rebuild_Frame_2(src1_V,dst1_V,idata.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
+											Rebuild_Frame_2(src1_Y,dst1_Y,image_data.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
+											Rebuild_Frame_2(src1_U,dst1_U,image_data.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
+											Rebuild_Frame_2(src1_V,dst1_V,image_data.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
 										}
 										if (modif_bottom)
 										{
-											Rebuild_Frame_2(src2_Y,dst2_Y,idata.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
-											Rebuild_Frame_2(src2_U,dst2_U,idata.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
-											Rebuild_Frame_2(src2_V,dst2_V,idata.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
+											Rebuild_Frame_2(src2_Y,dst2_Y,image_data.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
+											Rebuild_Frame_2(src2_U,dst2_U,image_data.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
+											Rebuild_Frame_2(src2_V,dst2_V,image_data.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
 										}
 									}
 									break;
@@ -13556,21 +11822,21 @@ void JPSDR_IVTC::Run()
 					src2_RGB=(void *)((uint8_t *)manual.bufferRGB32[(manual.read_index+j)%Buffer_Size_Manual]
 						+buffer_frameRGB32_pitch);
 
-					idata.src_plane0=tab_pxsrc[j_tab]->data;
-					idata.src_plane1=tab_pxsrc[j_tab]->data2;
-					idata.src_plane2=tab_pxsrc[j_tab]->data3;
+					image_data.src_plane0=tab_pxsrc[j_tab]->data;
+					image_data.src_plane1=tab_pxsrc[j_tab]->data2;
+					image_data.src_plane2=tab_pxsrc[j_tab]->data3;
 		
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 1 :
-						case 2 :
-						case 3 :
-							src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
+						case VMODE_BMP_RGBA :
+						case VMODE_YUYV :
+						case VMODE_UYVY :
+							src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
 							break;
-						case 6 :
-							src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
-							src2_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-2)*idata.src_pitch1));
-							src2_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-2)*idata.src_pitch2));
+						case VMODE_PLANAR_YUV420 :
+							src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
+							src2_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-2)*image_data.src_pitch1));
+							src2_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-2)*image_data.src_pitch2));
 							break;
 					}	
 											
@@ -13582,36 +11848,35 @@ void JPSDR_IVTC::Run()
 					
 					src1_RGB=manual.bufferRGB32[(manual.read_index+j)%Buffer_Size_Manual];
 
-					idata.src_plane0=tab_pxsrc[j_tab]->data;
-					idata.src_plane1=tab_pxsrc[j_tab]->data2;
-					idata.src_plane2=tab_pxsrc[j_tab]->data3;
+					image_data.src_plane0=tab_pxsrc[j_tab]->data;
+					image_data.src_plane1=tab_pxsrc[j_tab]->data2;
+					image_data.src_plane2=tab_pxsrc[j_tab]->data3;
 		
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 1 :
-						case 2 :
-						case 3 :
-							src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
+						case VMODE_BMP_RGBA :
+						case VMODE_YUYV :
+						case VMODE_UYVY :
+							src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
 							break;
-						case 6 :
-							src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
-							src1_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-1)*idata.src_pitch1));
-							src1_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-1)*idata.src_pitch2));
+						case VMODE_PLANAR_YUV420 :
+							src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
+							src1_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-1)*image_data.src_pitch1));
+							src1_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-1)*image_data.src_pitch2));
 							break;
 					}	
 															
 					switch(deinterlace_mode)
 					{
 					case 1 :
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 0 :
-							case 1 :
+							case VMODE_BMP_RGBA :
 								Smart_Deinterlace_RGB32(src1_Y,src2_Y,buffer_frame[1],buffer_delta,
 									buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 									src_modulo,buffer_frame_modulo,buffer_delta_modulo32,thr_out,tri_linear,map_filter);
 								break;
-							case 2 :
+							case VMODE_YUYV :
 								Smart_Deinterlace_YUYV(src1_Y,src2_Y,buffer_frame[1],buffer_delta,
 									buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 									src_modulo,buffer_frame_modulo,buffer_delta_modulo16,thr_out,tri_linear,map_filter,
@@ -13619,7 +11884,7 @@ void JPSDR_IVTC::Run()
 								Convert_YUYV_to_RGB32(buffer_frame[1],buffer_frameRGB32[1],w,h,buffer_frame_pitch,
 									buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 								break;
-							case 3 :
+							case VMODE_UYVY :
 								Smart_Deinterlace_UYVY(src1_Y,src2_Y,buffer_frame[1],buffer_delta,
 									buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 									src_modulo,buffer_frame_modulo,buffer_delta_modulo16,thr_out,tri_linear,map_filter,
@@ -13627,7 +11892,7 @@ void JPSDR_IVTC::Run()
 								Convert_UYVY_to_RGB32(buffer_frame[1],buffer_frameRGB32[1],w,h,buffer_frame_pitch,
 									buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 								break;
-							case 6 :
+							case VMODE_PLANAR_YUV420 :
 								Smart_Deinterlace_Planar420((uint8_t *)src1_Y,(uint8_t *)src2_Y,(uint8_t *)src1_U,
 									(uint8_t *)src2_U,(uint8_t *)src1_V,(uint8_t *)src2_V,buffer_frame_Y[1],
 									buffer_frame_U[1],buffer_frame_V[1],buffer_delta_Y,buffer_delta_U,
@@ -13645,26 +11910,25 @@ void JPSDR_IVTC::Run()
 						}
 						break;
 					case 2 :
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 0 :
-							case 1 :
+							case VMODE_BMP_RGBA :
 								Deinterlace_RGB32(src1_Y,src2_Y,buffer_frame[1],w,h>>1,src_pitch,
 									buffer_frame_pitch,tri_linear,true);
 								break;
-							case 2 :
+							case VMODE_YUYV :
 								Deinterlace_YUYV(src1_Y,src2_Y,buffer_frame[1],w,h>>1,src_pitch,
 									buffer_frame_pitch,tri_linear,true,Y_only);
 								Convert_YUYV_to_RGB32(buffer_frame[1],buffer_frameRGB32[1],w,h,buffer_frame_pitch,
 									buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 								break;
-							case 3 :
+							case VMODE_UYVY :
 								Deinterlace_UYVY(src1_Y,src2_Y,buffer_frame[1],w,h>>1,src_pitch,
 									buffer_frame_pitch,tri_linear,true,Y_only);
 								Convert_UYVY_to_RGB32(buffer_frame[1],buffer_frameRGB32[1],w,h,buffer_frame_pitch,
 									buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 								break;
-							case 6 :
+							case VMODE_PLANAR_YUV420 :
 								Deinterlace_Planar((uint8_t *)src1_Y,(uint8_t *)src2_Y,buffer_frame_Y[1],w_Y,h_Y>>1,
 									src_pitch_Y,buffer_frame_Y_pitch,tri_linear,true);
 								if (!Y_only)
@@ -13676,8 +11940,8 @@ void JPSDR_IVTC::Run()
 								}
 								else
 								{
-									Rebuild_Frame(src1_U,src2_U,buffer_frame_U[1],idata.src_line1,h_U>>1,src_pitch_U,buffer_frame_U_pitch);
-									Rebuild_Frame(src1_V,src2_V,buffer_frame_V[1],idata.src_line2,h_V>>1,src_pitch_V,buffer_frame_V_pitch);
+									Rebuild_Frame(src1_U,src2_U,buffer_frame_U[1],image_data.src_line1,h_U>>1,src_pitch_U,buffer_frame_U_pitch);
+									Rebuild_Frame(src1_V,src2_V,buffer_frame_V[1],image_data.src_line2,h_V>>1,src_pitch_V,buffer_frame_V_pitch);
 								}
 								Convert_Planar420_to_RGB32(buffer_frame_Y[1],buffer_frame_U[1],
 									buffer_frame_V[1],buffer_delta,buffer_frameRGB32[1],w_Y,h_Y,buffer_frame_Y_pitch,
@@ -13695,24 +11959,24 @@ void JPSDR_IVTC::Run()
 					{
 						modif_bottom=(i_tab!=2) || swap_buffer;
 						
-						idata.src_plane0=tab_pxsrc[i_tab]->data;
-						idata.src_plane1=tab_pxsrc[i_tab]->data2;
-						idata.src_plane2=tab_pxsrc[i_tab]->data3;
+						image_data.src_plane0=tab_pxsrc[i_tab]->data;
+						image_data.src_plane1=tab_pxsrc[i_tab]->data2;
+						image_data.src_plane2=tab_pxsrc[i_tab]->data3;
 
 						src2_RGB=(void *)((uint8_t *)manual.bufferRGB32[(manual.read_index+i)%Buffer_Size_Manual]
 							+buffer_frameRGB32_pitch);
 						
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 1 :
-							case 2 :
-							case 3 :
-								src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
+							case VMODE_BMP_RGBA :
+							case VMODE_YUYV :
+							case VMODE_UYVY :
+								src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
 								break;
-							case 6 :
-								src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
-								src2_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-2)*idata.src_pitch1));
-								src2_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-2)*idata.src_pitch2));
+							case VMODE_PLANAR_YUV420 :
+								src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
+								src2_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-2)*image_data.src_pitch1));
+								src2_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-2)*image_data.src_pitch2));
 								break;
 						}
 						pitch2_Y=src_pitch_Y;
@@ -13728,11 +11992,11 @@ void JPSDR_IVTC::Run()
 						
 						src2_RGB=(void *)((uint8_t *)buffer_frameRGB32[0]+buffer_frameRGB32_pitch);
 						
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 1 :
-							case 2 :
-							case 3 :
+							case VMODE_BMP_RGBA :
+							case VMODE_YUYV :
+							case VMODE_UYVY :
 								src2_Y=(void *)((uint8_t *)buffer_frame[0]+buffer_frame_pitch);
 								pitch2_Y=buffer_frame_pitch;
 								pitch2_U=0;
@@ -13741,7 +12005,7 @@ void JPSDR_IVTC::Run()
 								modulo2_U=0;
 								modulo2_V=0;
 								break;
-							case 6 :
+							case VMODE_PLANAR_YUV420 :
 								src2_Y=(void *)(buffer_frame_Y[0]+buffer_frame_Y_pitch);
 								src2_U=(void *)(buffer_frame_U[0]+buffer_frame_U_pitch);
 								src2_V=(void *)(buffer_frame_V[0]+buffer_frame_V_pitch);
@@ -13762,23 +12026,23 @@ void JPSDR_IVTC::Run()
 					
 						modif_bottom=(i_tab!=2) || swap_buffer;
 						
-						idata.src_plane0=tab_pxsrc[i_tab]->data;
-						idata.src_plane1=tab_pxsrc[i_tab]->data2;
-						idata.src_plane2=tab_pxsrc[i_tab]->data3;
+						image_data.src_plane0=tab_pxsrc[i_tab]->data;
+						image_data.src_plane1=tab_pxsrc[i_tab]->data2;
+						image_data.src_plane2=tab_pxsrc[i_tab]->data3;
 						
 						src2_RGB=(void *)((uint8_t *)buffer[i].frameRGB32+buffer_frameRGB32_pitch);
 					
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 1 :
-							case 2 :
-							case 3 :
-								src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
+							case VMODE_BMP_RGBA :
+							case VMODE_YUYV :
+							case VMODE_UYVY :
+								src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
 								break;
-							case 6 :
-								src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
-								src2_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-2)*idata.src_pitch1));
-								src2_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-2)*idata.src_pitch2));
+							case VMODE_PLANAR_YUV420 :
+								src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
+								src2_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-2)*image_data.src_pitch1));
+								src2_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-2)*image_data.src_pitch2));
 								break;
 						}	
 						pitch2_Y=src_pitch_Y;
@@ -13794,11 +12058,11 @@ void JPSDR_IVTC::Run()
 						
 						src2_RGB=(void *)((uint8_t *)buffer_frameRGB32[0]+buffer_frameRGB32_pitch);
 						
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 1 :
-							case 2 :
-							case 3 :
+							case VMODE_BMP_RGBA :
+							case VMODE_YUYV :
+							case VMODE_UYVY :
 								src2_Y=(void *)((uint8_t *)buffer_frame[0]+buffer_frame_pitch);
 								pitch2_Y=buffer_frame_pitch;
 								pitch2_U=0;
@@ -13807,7 +12071,7 @@ void JPSDR_IVTC::Run()
 								modulo2_U=0;
 								modulo2_V=0;
 								break;
-							case 6 :
+							case VMODE_PLANAR_YUV420 :
 								src2_Y=(void *)(buffer_frame_Y[0]+buffer_frame_Y_pitch);
 								src2_U=(void *)(buffer_frame_U[0]+buffer_frame_U_pitch);
 								src2_V=(void *)(buffer_frame_V[0]+buffer_frame_V_pitch);
@@ -13825,23 +12089,23 @@ void JPSDR_IVTC::Run()
 				{
 					modif_top=(j_tab!=2) || swap_buffer;
 					
-					idata.src_plane0=tab_pxsrc[j_tab]->data;
-					idata.src_plane1=tab_pxsrc[j_tab]->data2;
-					idata.src_plane2=tab_pxsrc[j_tab]->data3;
+					image_data.src_plane0=tab_pxsrc[j_tab]->data;
+					image_data.src_plane1=tab_pxsrc[j_tab]->data2;
+					image_data.src_plane2=tab_pxsrc[j_tab]->data3;
 					
 					src1_RGB=manual.bufferRGB32[(manual.read_index+j)%Buffer_Size_Manual];
 					
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 1 :
-						case 2 :
-						case 3 :
-							src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
+						case VMODE_BMP_RGBA :
+						case VMODE_YUYV :
+						case VMODE_UYVY :
+							src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
 							break;
-						case 6 :
-							src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
-							src1_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-1)*idata.src_pitch1));
-							src1_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-1)*idata.src_pitch2));
+						case VMODE_PLANAR_YUV420 :
+							src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
+							src1_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-1)*image_data.src_pitch1));
+							src1_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-1)*image_data.src_pitch2));
 							break;
 					}
 					pitch1_Y=src_pitch_Y;
@@ -13857,11 +12121,11 @@ void JPSDR_IVTC::Run()
 					
 					src1_RGB=buffer_frameRGB32[1];
 					
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 1 :
-						case 2 :
-						case 3 :
+						case VMODE_BMP_RGBA :
+						case VMODE_YUYV :
+						case VMODE_UYVY :
 							src1_Y=buffer_frame[1];
 							pitch1_Y=buffer_frame_pitch;
 							pitch1_U=0;
@@ -13870,7 +12134,7 @@ void JPSDR_IVTC::Run()
 							modulo1_U=0;
 							modulo1_V=0;
 							break;
-						case 6 :
+						case VMODE_PLANAR_YUV420 :
 							src1_Y=(void *)buffer_frame_Y[1];
 							src1_U=(void *)buffer_frame_U[1];
 							src1_V=(void *)buffer_frame_V[1];
@@ -13884,27 +12148,26 @@ void JPSDR_IVTC::Run()
 					}								
 				}
 
-				switch (idata.video_mode)
+				switch (image_data.video_mode)
 				{
-					case 0 :
-					case 1 :
-					case 2 :
-					case 3 :
-						if (modif_top) Rebuild_Frame_2(src1_Y,dst1_Y,idata.src_line0,h>>1,pitch1_Y,dst_pitch);
-						if (modif_bottom) Rebuild_Frame_2(src2_Y,dst2_Y,idata.src_line0,h>>1,pitch2_Y,dst_pitch);
+					case VMODE_BMP_RGBA :
+					case VMODE_YUYV :
+					case VMODE_UYVY :
+						if (modif_top) Rebuild_Frame_2(src1_Y,dst1_Y,image_data.src_line0,h>>1,pitch1_Y,dst_pitch);
+						if (modif_bottom) Rebuild_Frame_2(src2_Y,dst2_Y,image_data.src_line0,h>>1,pitch2_Y,dst_pitch);
 						break;
-					case 6 :
+					case VMODE_PLANAR_YUV420 :
 						if (modif_top)
 						{
-							Rebuild_Frame_2(src1_Y,dst1_Y,idata.src_line0,h_Y>>1,pitch1_Y,dst_pitch_Y);
-							Rebuild_Frame_2(src1_U,dst1_U,idata.src_line1,h_U>>1,pitch1_U,dst_pitch_U);
-							Rebuild_Frame_2(src1_V,dst1_V,idata.src_line2,h_V>>1,pitch1_V,dst_pitch_V);
+							Rebuild_Frame_2(src1_Y,dst1_Y,image_data.src_line0,h_Y>>1,pitch1_Y,dst_pitch_Y);
+							Rebuild_Frame_2(src1_U,dst1_U,image_data.src_line1,h_U>>1,pitch1_U,dst_pitch_U);
+							Rebuild_Frame_2(src1_V,dst1_V,image_data.src_line2,h_V>>1,pitch1_V,dst_pitch_V);
 						}
 						if (modif_bottom)
 						{
-							Rebuild_Frame_2(src2_Y,dst2_Y,idata.src_line0,h_Y>>1,pitch1_Y,dst_pitch_Y);
-							Rebuild_Frame_2(src2_U,dst2_U,idata.src_line1,h_U>>1,pitch1_U,dst_pitch_U);
-							Rebuild_Frame_2(src2_V,dst2_V,idata.src_line2,h_V>>1,pitch1_V,dst_pitch_V);
+							Rebuild_Frame_2(src2_Y,dst2_Y,image_data.src_line0,h_Y>>1,pitch1_Y,dst_pitch_Y);
+							Rebuild_Frame_2(src2_U,dst2_U,image_data.src_line1,h_U>>1,pitch1_U,dst_pitch_U);
+							Rebuild_Frame_2(src2_V,dst2_V,image_data.src_line2,h_V>>1,pitch1_V,dst_pitch_V);
 						}
 						break;
 				}
@@ -13942,24 +12205,24 @@ void JPSDR_IVTC::Run()
 
 					modif_bottom=(j_tab!=2) || swap_buffer;
 					
-					idata.src_plane0=tab_pxsrc[j_tab]->data;
-					idata.src_plane1=tab_pxsrc[j_tab]->data2;
-					idata.src_plane2=tab_pxsrc[j_tab]->data3;
+					image_data.src_plane0=tab_pxsrc[j_tab]->data;
+					image_data.src_plane1=tab_pxsrc[j_tab]->data2;
+					image_data.src_plane2=tab_pxsrc[j_tab]->data3;
 						
 					src2_RGB=(void *)((uint8_t *)manual.bufferRGB32[(manual.read_index+j)%Buffer_Size_Manual]
 						+buffer_frameRGB32_pitch);
 					
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 1 :
-						case 2 :
-						case 3 :
-							src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
+						case VMODE_BMP_RGBA :
+						case VMODE_YUYV :
+						case VMODE_UYVY :
+							src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
 							break;
-						case 6 :
-							src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
-							src2_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-2)*idata.src_pitch1));
-							src2_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-2)*idata.src_pitch2));
+						case VMODE_PLANAR_YUV420 :
+							src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
+							src2_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-2)*image_data.src_pitch1));
+							src2_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-2)*image_data.src_pitch2));
 							break;
 					}	
 																					
@@ -13969,38 +12232,37 @@ void JPSDR_IVTC::Run()
 
 					modif_top=(j_tab!=2) || swap_buffer;
 					
-					idata.src_plane0=tab_pxsrc[j_tab]->data;
-					idata.src_plane1=tab_pxsrc[j_tab]->data2;
-					idata.src_plane2=tab_pxsrc[j_tab]->data3;
+					image_data.src_plane0=tab_pxsrc[j_tab]->data;
+					image_data.src_plane1=tab_pxsrc[j_tab]->data2;
+					image_data.src_plane2=tab_pxsrc[j_tab]->data3;
 						
 					src1_RGB=manual.bufferRGB32[(manual.read_index+j)%Buffer_Size_Manual];
 					
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 1 :
-						case 2 :
-						case 3 :
-							src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
+						case VMODE_BMP_RGBA :
+						case VMODE_YUYV :
+						case VMODE_UYVY :
+							src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
 							break;
-						case 6 :
-							src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
-							src1_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-1)*idata.src_pitch1));
-							src1_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-1)*idata.src_pitch2));
+						case VMODE_PLANAR_YUV420 :
+							src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
+							src1_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-1)*image_data.src_pitch1));
+							src1_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-1)*image_data.src_pitch2));
 							break;
 					}	
 										
 					switch(deinterlace_mode)
 					{
 					case 1 :
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 0 :
-							case 1 :
+							case VMODE_BMP_RGBA :
 								Smart_Deinterlace_RGB32(src1_Y,src2_Y,buffer_frame[0],buffer_delta,
 									buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 									src_modulo,buffer_frame_modulo,buffer_delta_modulo32,thr_out,tri_linear,map_filter);
 								break;
-							case 2 :
+							case VMODE_YUYV :
 								Smart_Deinterlace_YUYV(src1_Y,src2_Y,buffer_frame[0],buffer_delta,
 									buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 									src_modulo,buffer_frame_modulo,buffer_delta_modulo16,thr_out,tri_linear,map_filter,
@@ -14008,7 +12270,7 @@ void JPSDR_IVTC::Run()
 								Convert_YUYV_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 									buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 								break;
-							case 3 :
+							case VMODE_UYVY :
 								Smart_Deinterlace_UYVY(src1_Y,src2_Y,buffer_frame[0],buffer_delta,
 									buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 									src_modulo,buffer_frame_modulo,buffer_delta_modulo16,thr_out,tri_linear,map_filter,
@@ -14016,7 +12278,7 @@ void JPSDR_IVTC::Run()
 								Convert_UYVY_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 									buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 								break;
-							case 6 :
+							case VMODE_PLANAR_YUV420 :
 								Smart_Deinterlace_Planar420((uint8_t *)src1_Y,(uint8_t *)src2_Y,(uint8_t *)src1_U,
 									(uint8_t *)src2_U,(uint8_t *)src1_V,(uint8_t *)src2_V,buffer_frame_Y[0],
 									buffer_frame_U[0],buffer_frame_V[0],buffer_delta_Y,buffer_delta_U,
@@ -14034,26 +12296,25 @@ void JPSDR_IVTC::Run()
 						}
 						break;
 					case 2 :
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 0 :
-							case 1 :
+							case VMODE_BMP_RGBA :
 								Deinterlace_RGB32(src1_Y,src2_Y,buffer_frame[0],w,h>>1,src_pitch,
 									buffer_frame_pitch,tri_linear,true);
 								break;
-							case 2 :
+							case VMODE_YUYV :
 								Deinterlace_YUYV(src1_Y,src2_Y,buffer_frame[0],w,h>>1,src_pitch,
 									buffer_frame_pitch,tri_linear,true,Y_only);
 								Convert_YUYV_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 									buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 								break;
-							case 3 :
+							case VMODE_UYVY :
 								Deinterlace_UYVY(src1_Y,src2_Y,buffer_frame[0],w,h>>1,src_pitch,
 									buffer_frame_pitch,tri_linear,true,Y_only);
 								Convert_UYVY_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 									buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 								break;
-							case 6 :
+							case VMODE_PLANAR_YUV420 :
 								Deinterlace_Planar((uint8_t *)src1_Y,(uint8_t *)src2_Y,buffer_frame_Y[0],w_Y,h_Y>>1,
 									src_pitch_Y,buffer_frame_Y_pitch,tri_linear,true);
 								if (!Y_only)
@@ -14065,8 +12326,8 @@ void JPSDR_IVTC::Run()
 								}
 								else
 								{
-									Rebuild_Frame(src1_U,src2_U,buffer_frame_U[0],idata.src_line1,h_U>>1,src_pitch_U,buffer_frame_U_pitch);
-									Rebuild_Frame(src1_V,src2_V,buffer_frame_V[0],idata.src_line2,h_V>>1,src_pitch_V,buffer_frame_V_pitch);
+									Rebuild_Frame(src1_U,src2_U,buffer_frame_U[0],image_data.src_line1,h_U>>1,src_pitch_U,buffer_frame_U_pitch);
+									Rebuild_Frame(src1_V,src2_V,buffer_frame_V[0],image_data.src_line2,h_V>>1,src_pitch_V,buffer_frame_V_pitch);
 								}
 								Convert_Planar420_to_RGB32(buffer_frame_Y[0],buffer_frame_U[0],buffer_frame_V[0],
 									buffer_delta,buffer_frameRGB32[0],w_Y,h_Y,buffer_frame_Y_pitch,buffer_frame_U_pitch,
@@ -14085,24 +12346,24 @@ void JPSDR_IVTC::Run()
 
 						modif_bottom=(i_tab!=2) || swap_buffer;
 					
-						idata.src_plane0=tab_pxsrc[i_tab]->data;
-						idata.src_plane1=tab_pxsrc[i_tab]->data2;
-						idata.src_plane2=tab_pxsrc[i_tab]->data3;
+						image_data.src_plane0=tab_pxsrc[i_tab]->data;
+						image_data.src_plane1=tab_pxsrc[i_tab]->data2;
+						image_data.src_plane2=tab_pxsrc[i_tab]->data3;
 						
 						src2_RGB=(void *)((uint8_t *)manual.bufferRGB32[(manual.read_index+i)%Buffer_Size_Manual]
 							+buffer_frameRGB32_pitch);
 					
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 1 :
-							case 2 :
-							case 3 :
-								src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
+							case VMODE_BMP_RGBA :
+							case VMODE_YUYV :
+							case VMODE_UYVY :
+								src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
 								break;
-							case 6 :
-								src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
-								src2_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-2)*idata.src_pitch1));
-								src2_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-2)*idata.src_pitch2));
+							case VMODE_PLANAR_YUV420 :
+								src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
+								src2_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-2)*image_data.src_pitch1));
+								src2_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-2)*image_data.src_pitch2));
 								break;
 						}
 						pitch2_Y=src_pitch_Y;
@@ -14118,11 +12379,11 @@ void JPSDR_IVTC::Run()
 											
 						src2_RGB=(void *)((uint8_t *)buffer_frameRGB32[1]+buffer_frameRGB32_pitch);
 					
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 1 :
-							case 2 :
-							case 3 :
+							case VMODE_BMP_RGBA :
+							case VMODE_YUYV :
+							case VMODE_UYVY :
 								src2_Y=(void *)((uint8_t *)buffer_frame[1]+buffer_frame_pitch);
 								pitch2_Y=buffer_frame_pitch;
 								pitch2_U=0;
@@ -14131,7 +12392,7 @@ void JPSDR_IVTC::Run()
 								modulo2_U=0;
 								modulo2_V=0;
 								break;
-							case 6 :
+							case VMODE_PLANAR_YUV420 :
 								src2_Y=(void *)(buffer_frame_Y[1]+buffer_frame_Y_pitch);
 								src2_U=(void *)(buffer_frame_U[1]+buffer_frame_U_pitch);
 								src2_V=(void *)(buffer_frame_V[1]+buffer_frame_V_pitch);
@@ -14151,23 +12412,23 @@ void JPSDR_IVTC::Run()
 					{
 						modif_bottom=(i_tab!=2) || swap_buffer;
 					
-						idata.src_plane0=tab_pxsrc[i_tab]->data;
-						idata.src_plane1=tab_pxsrc[i_tab]->data2;
-						idata.src_plane2=tab_pxsrc[i_tab]->data3;
+						image_data.src_plane0=tab_pxsrc[i_tab]->data;
+						image_data.src_plane1=tab_pxsrc[i_tab]->data2;
+						image_data.src_plane2=tab_pxsrc[i_tab]->data3;
 						
 						src2_RGB=(void *)((uint8_t *)buffer[i].frameRGB32+buffer_frameRGB32_pitch);
 					
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 1 :
-							case 2 :
-							case 3 :
-								src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
+							case VMODE_BMP_RGBA :
+							case VMODE_YUYV :
+							case VMODE_UYVY :
+								src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
 								break;
-							case 6 :
-								src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
-								src2_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-2)*idata.src_pitch1));
-								src2_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-2)*idata.src_pitch2));
+							case VMODE_PLANAR_YUV420 :
+								src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
+								src2_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-2)*image_data.src_pitch1));
+								src2_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-2)*image_data.src_pitch2));
 								break;
 						}
 						pitch2_Y=src_pitch_Y;
@@ -14183,11 +12444,11 @@ void JPSDR_IVTC::Run()
 											
 						src2_RGB=(void *)((uint8_t *)buffer_frameRGB32[1]+buffer_frameRGB32_pitch);
 					
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 1 :
-							case 2 :
-							case 3 :
+							case VMODE_BMP_RGBA :
+							case VMODE_YUYV :
+							case VMODE_UYVY :
 								src2_Y=(void *)((uint8_t *)buffer_frame[1]+buffer_frame_pitch);
 								pitch2_Y=buffer_frame_pitch;
 								pitch2_U=0;
@@ -14196,7 +12457,7 @@ void JPSDR_IVTC::Run()
 								modulo2_U=0;
 								modulo2_V=0;
 								break;
-							case 6 :
+							case VMODE_PLANAR_YUV420 :
 								src2_Y=(void *)(buffer_frame_Y[1]+buffer_frame_Y_pitch);
 								src2_U=(void *)(buffer_frame_U[1]+buffer_frame_U_pitch);
 								src2_V=(void *)(buffer_frame_V[1]+buffer_frame_V_pitch);
@@ -14214,23 +12475,23 @@ void JPSDR_IVTC::Run()
 				{
 					modif_top=(j_tab!=2) || swap_buffer;
 				
-					idata.src_plane0=tab_pxsrc[j_tab]->data;
-					idata.src_plane1=tab_pxsrc[j_tab]->data2;
-					idata.src_plane2=tab_pxsrc[j_tab]->data3;
+					image_data.src_plane0=tab_pxsrc[j_tab]->data;
+					image_data.src_plane1=tab_pxsrc[j_tab]->data2;
+					image_data.src_plane2=tab_pxsrc[j_tab]->data3;
 						
 					src1_RGB=manual.bufferRGB32[(manual.read_index+j)%Buffer_Size_Manual];
 					
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 1 :
-						case 2 :
-						case 3 :
-							src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
+						case VMODE_BMP_RGBA :
+						case VMODE_YUYV :
+						case VMODE_UYVY :
+							src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
 							break;
-						case 6 :
-							src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
-							src1_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-1)*idata.src_pitch1));
-							src1_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-1)*idata.src_pitch2));
+						case VMODE_PLANAR_YUV420 :
+							src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
+							src1_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-1)*image_data.src_pitch1));
+							src1_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-1)*image_data.src_pitch2));
 							break;
 					}
 					pitch1_Y=src_pitch_Y;
@@ -14246,11 +12507,11 @@ void JPSDR_IVTC::Run()
 										
 					src1_RGB=buffer_frameRGB32[0];
 					
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 1 :
-						case 2 :
-						case 3 :
+						case VMODE_BMP_RGBA :
+						case VMODE_YUYV :
+						case VMODE_UYVY :
 							src1_Y=buffer_frame[0];
 							pitch1_Y=buffer_frame_pitch;
 							pitch1_U=0;
@@ -14259,7 +12520,7 @@ void JPSDR_IVTC::Run()
 							modulo1_U=0;
 							modulo1_V=0;
 							break;
-						case 6 :
+						case VMODE_PLANAR_YUV420 :
 							src1_Y=(void *)buffer_frame_Y[0];
 							src1_U=(void *)buffer_frame_U[0];
 							src1_V=(void *)buffer_frame_V[0];
@@ -14273,27 +12534,26 @@ void JPSDR_IVTC::Run()
 					}
 				}
 
-				switch (idata.video_mode)
+				switch (image_data.video_mode)
 				{
-					case 0 :
-					case 1 :
-					case 2 :
-					case 3 :
-						if (modif_top) Rebuild_Frame_2(src1_Y,dst1_Y,idata.src_line0,h>>1,pitch1_Y,dst_pitch);
-						if (modif_bottom) Rebuild_Frame_2(src2_Y,dst2_Y,idata.src_line0,h>>1,pitch2_Y,dst_pitch);
+					case VMODE_BMP_RGBA :
+					case VMODE_YUYV :
+					case VMODE_UYVY :
+						if (modif_top) Rebuild_Frame_2(src1_Y,dst1_Y,image_data.src_line0,h>>1,pitch1_Y,dst_pitch);
+						if (modif_bottom) Rebuild_Frame_2(src2_Y,dst2_Y,image_data.src_line0,h>>1,pitch2_Y,dst_pitch);
 						break;
-					case 6 :
+					case VMODE_PLANAR_YUV420 :
 						if (modif_top)
 						{
-							Rebuild_Frame_2(src1_Y,dst1_Y,idata.src_line0,h_Y>>1,pitch1_Y,dst_pitch_Y);
-							Rebuild_Frame_2(src1_U,dst1_U,idata.src_line1,h_U>>1,pitch1_U,dst_pitch_U);
-							Rebuild_Frame_2(src1_V,dst1_V,idata.src_line2,h_V>>1,pitch1_V,dst_pitch_V);
+							Rebuild_Frame_2(src1_Y,dst1_Y,image_data.src_line0,h_Y>>1,pitch1_Y,dst_pitch_Y);
+							Rebuild_Frame_2(src1_U,dst1_U,image_data.src_line1,h_U>>1,pitch1_U,dst_pitch_U);
+							Rebuild_Frame_2(src1_V,dst1_V,image_data.src_line2,h_V>>1,pitch1_V,dst_pitch_V);
 						}
 						if (modif_bottom)
 						{
-							Rebuild_Frame_2(src2_Y,dst2_Y,idata.src_line0,h_Y>>1,pitch1_Y,dst_pitch_Y);
-							Rebuild_Frame_2(src2_U,dst2_U,idata.src_line1,h_U>>1,pitch1_U,dst_pitch_U);
-							Rebuild_Frame_2(src2_V,dst2_V,idata.src_line2,h_V>>1,pitch1_V,dst_pitch_V);
+							Rebuild_Frame_2(src2_Y,dst2_Y,image_data.src_line0,h_Y>>1,pitch1_Y,dst_pitch_Y);
+							Rebuild_Frame_2(src2_U,dst2_U,image_data.src_line1,h_U>>1,pitch1_U,dst_pitch_U);
+							Rebuild_Frame_2(src2_V,dst2_V,image_data.src_line2,h_V>>1,pitch1_V,dst_pitch_V);
 						}
 						break;
 				}
@@ -14316,36 +12576,35 @@ void JPSDR_IVTC::Run()
 								
 				if ((i_tab!=2) || swap_buffer)
 				{
-					idata.src_plane0=tab_pxsrc[i_tab]->data;
-					idata.src_plane1=tab_pxsrc[i_tab]->data2;
-					idata.src_plane2=tab_pxsrc[i_tab]->data3;
+					image_data.src_plane0=tab_pxsrc[i_tab]->data;
+					image_data.src_plane1=tab_pxsrc[i_tab]->data2;
+					image_data.src_plane2=tab_pxsrc[i_tab]->data3;
 		
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 1 :
-						case 2 :
-						case 3 :
-							src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
+						case VMODE_BMP_RGBA :
+						case VMODE_YUYV :
+						case VMODE_UYVY :
+							src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
 							break;
-						case 6 :
-							src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
-							src1_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-1)*idata.src_pitch1));
-							src1_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-1)*idata.src_pitch2));
+						case VMODE_PLANAR_YUV420 :
+							src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
+							src1_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-1)*image_data.src_pitch1));
+							src1_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-1)*image_data.src_pitch2));
 							break;
 					}	
 								
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 0 :
-						case 1 :
-						case 2 :
-						case 3 :
-							Move_Full(src1_Y,dst1_Y,idata.src_line0,h,src_pitch,dst_pitch);
+						case VMODE_BMP_RGBA :
+						case VMODE_YUYV :
+						case VMODE_UYVY :
+							Move_Full(src1_Y,dst1_Y,image_data.src_line0,h,src_pitch,dst_pitch);
 							break;
-						case 6 :
-							Move_Full(src1_Y,dst1_Y,idata.src_line0,h_Y,src_pitch_Y,dst_pitch_Y);
-							Move_Full(src1_U,dst1_U,idata.src_line1,h_U,src_pitch_U,dst_pitch_U);
-							Move_Full(src1_V,dst1_V,idata.src_line2,h_V,src_pitch_V,dst_pitch_V);
+						case VMODE_PLANAR_YUV420 :
+							Move_Full(src1_Y,dst1_Y,image_data.src_line0,h_Y,src_pitch_Y,dst_pitch_Y);
+							Move_Full(src1_U,dst1_U,image_data.src_line1,h_U,src_pitch_U,dst_pitch_U);
+							Move_Full(src1_V,dst1_V,image_data.src_line2,h_V,src_pitch_V,dst_pitch_V);
 							break;
 					}
 				}
@@ -14358,39 +12617,39 @@ void JPSDR_IVTC::Run()
 					i_tab=(((i+Read_Index_Size-((read_index[0]+Read_Index_Size-5)%Read_Index_Size))%Read_Index_Size)+2-index_out)%Read_Index_Size;
 				else i_tab=i;
 				
-				idata.src_plane0=tab_pxsrc[i_tab]->data;
-				idata.src_plane1=tab_pxsrc[i_tab]->data2;
-				idata.src_plane2=tab_pxsrc[i_tab]->data3;
+				image_data.src_plane0=tab_pxsrc[i_tab]->data;
+				image_data.src_plane1=tab_pxsrc[i_tab]->data2;
+				image_data.src_plane2=tab_pxsrc[i_tab]->data3;
 				
 				src1_RGB=buffer[i].frameRGB32;
 				
-				switch (idata.video_mode)
+				switch (image_data.video_mode)
 				{
-					case 1 :
-					case 2 :
-					case 3 :
-						src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
+					case VMODE_BMP_RGBA :
+					case VMODE_YUYV :
+					case VMODE_UYVY :
+						src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
 						break;
-					case 6 :
-						src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
-						src1_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-1)*idata.src_pitch1));
-						src1_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-1)*idata.src_pitch2));
+					case VMODE_PLANAR_YUV420 :
+						src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
+						src1_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-1)*image_data.src_pitch1));
+						src1_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-1)*image_data.src_pitch2));
 						break;
 				}	
 
 				src2_RGB=(void *)((uint8_t *)src1_RGB+buffer_frameRGB32_pitch);
 				
-				switch (idata.video_mode)
+				switch (image_data.video_mode)
 				{
-					case 1 :
-					case 2 :
-					case 3 :
-						src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
+					case VMODE_BMP_RGBA :
+					case VMODE_YUYV :
+					case VMODE_UYVY :
+						src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
 						break;
-					case 6 :
-						src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
-						src2_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-2)*idata.src_pitch1));
-						src2_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-2)*idata.src_pitch2));
+					case VMODE_PLANAR_YUV420 :
+						src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
+						src2_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-2)*image_data.src_pitch1));
+						src2_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-2)*image_data.src_pitch2));
 						break;
 				}					
 								
@@ -14399,25 +12658,24 @@ void JPSDR_IVTC::Run()
 					switch(deinterlace_mode)
 					{
 					case 1 :
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 0 :
-							case 1 :
+							case VMODE_BMP_RGBA :
 								Smart_Deinterlace_RGB32(src1_Y,src2_Y,dst1_Y,buffer_delta,buffer_map,
 									buffer_2,w,h>>1,src_pitch,dst_pitch,buffer_delta_pitch,src_modulo,dst_modulo,buffer_delta_modulo32,
 									thr_dtl,tri_linear,map_filter);
 								break;
-							case 2 :
+							case VMODE_YUYV :
 								Smart_Deinterlace_YUYV(src1_Y,src2_Y,dst1_Y,buffer_delta,buffer_map,
 									buffer_2,w,h>>1,src_pitch,dst_pitch,buffer_delta_pitch,src_modulo,dst_modulo,buffer_delta_modulo16,
 									thr_dtl,tri_linear,map_filter,src1_RGB,src2_RGB,buffer_frameRGB32_pitch,false);
 								break;
-							case 3 :
+							case VMODE_UYVY :
 								Smart_Deinterlace_UYVY(src1_Y,src2_Y,dst1_Y,buffer_delta,buffer_map,
 									buffer_2,w,h>>1,src_pitch,dst_pitch,buffer_delta_pitch,src_modulo,dst_modulo,buffer_delta_modulo16,
 									thr_dtl,tri_linear,map_filter,src1_RGB,src2_RGB,buffer_frameRGB32_pitch,false);
 								break;
-							case 6 :
+							case VMODE_PLANAR_YUV420 :
 								Smart_Deinterlace_Planar420((uint8_t *)src1_Y,(uint8_t *)src2_Y,(uint8_t *)src1_U,
 									(uint8_t *)src2_U,(uint8_t *)src1_V,(uint8_t *)src2_V,(uint8_t *)dst1_Y,
 									(uint8_t *)dst1_U,(uint8_t *)dst1_V,buffer_delta_Y,buffer_delta_U,buffer_delta_V,buffer_map,
@@ -14430,19 +12688,18 @@ void JPSDR_IVTC::Run()
 						}
 						break;
 					case 2 :
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 0 :
-							case 1 :
+							case VMODE_BMP_RGBA :
 								Deinterlace_RGB32(src1_Y,src2_Y,dst1_Y,w,h>>1,src_pitch,dst_pitch,tri_linear,false);
 								break;
-							case 2 :
+							case VMODE_YUYV :
 								Deinterlace_YUYV(src1_Y,src2_Y,dst1_Y,w,h>>1,src_pitch,dst_pitch,tri_linear,false,false);
 								break;
-							case 3 :
+							case VMODE_UYVY :
 								Deinterlace_UYVY(src1_Y,src2_Y,dst1_Y,w,h>>1,src_pitch,dst_pitch,tri_linear,false,false);
 								break;
-							case 6 :
+							case VMODE_PLANAR_YUV420 :
 								Deinterlace_Planar((uint8_t *)src1_Y,(uint8_t *)src2_Y,(uint8_t *)dst1_Y,
 									w_Y,h_Y>>1,src_pitch_Y,dst_pitch_Y,tri_linear,false);
 								Deinterlace_Planar((uint8_t *)src1_U,(uint8_t*)src2_U,(uint8_t *)dst1_U,
@@ -14459,15 +12716,14 @@ void JPSDR_IVTC::Run()
 					switch(deinterlace_mode)
 					{
 					case 1 :
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 0 :
-							case 1 :
+							case VMODE_BMP_RGBA :
 								Smart_Deinterlace_RGB32(src1_Y,src2_Y,buffer_frame[0],buffer_delta,
 									buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 									src_modulo,buffer_frame_modulo,buffer_delta_modulo32,thr_dtl,tri_linear,map_filter);
 								break;
-							case 2 :
+							case VMODE_YUYV :
 								Smart_Deinterlace_YUYV(src1_Y,src2_Y,buffer_frame[0],buffer_delta,
 									buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 									src_modulo,buffer_frame_modulo,buffer_delta_modulo16,thr_dtl,tri_linear,map_filter,
@@ -14475,7 +12731,7 @@ void JPSDR_IVTC::Run()
 								Convert_YUYV_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 									buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 								break;
-							case 3 :
+							case VMODE_UYVY :
 								Smart_Deinterlace_UYVY(src1_Y,src2_Y,buffer_frame[0],buffer_delta,
 									buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 									src_modulo,buffer_frame_modulo,buffer_delta_modulo16,thr_dtl,tri_linear,map_filter,
@@ -14483,7 +12739,7 @@ void JPSDR_IVTC::Run()
 								Convert_UYVY_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 									buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 								break;
-							case 6 :
+							case VMODE_PLANAR_YUV420 :
 								Smart_Deinterlace_Planar420((uint8_t *)src1_Y,(uint8_t *)src2_Y,(uint8_t *)src1_U,
 									(uint8_t *)src2_U,(uint8_t *)src1_V,(uint8_t *)src2_V,buffer_frame_Y[0],
 									buffer_frame_U[0],buffer_frame_V[0],buffer_delta_Y,buffer_delta_U,
@@ -14501,26 +12757,25 @@ void JPSDR_IVTC::Run()
 						}
 						break;
 					case 2 :
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 0 :
-							case 1 :
+							case VMODE_BMP_RGBA :
 								Deinterlace_RGB32(src1_Y,src2_Y,buffer_frame[0],w,h>>1,src_pitch,
 									buffer_frame_pitch,tri_linear,true);
 								break;
-							case 2 :
+							case VMODE_YUYV :
 								Deinterlace_YUYV(src1_Y,src2_Y,buffer_frame[0],w,h>>1,src_pitch,
 									buffer_frame_pitch,tri_linear,true,false);
 								Convert_YUYV_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 									buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 								break;
-							case 3 :
+							case VMODE_UYVY :
 								Deinterlace_UYVY(src1_Y,src2_Y,buffer_frame[0],w,h>>1,src_pitch,
 									buffer_frame_pitch,tri_linear,true,false);
 								Convert_UYVY_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 									buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 								break;
-							case 6 :
+							case VMODE_PLANAR_YUV420 :
 								Deinterlace_Planar((uint8_t *)src1_Y,(uint8_t *)src2_Y,buffer_frame_Y[0],w_Y,h_Y>>1,
 									src_pitch_Y,buffer_frame_Y_pitch,tri_linear,true);
 								Deinterlace_Planar((uint8_t *)src1_U,(uint8_t *)src2_U,buffer_frame_U[0],w_U,h_U>>1,
@@ -14535,18 +12790,17 @@ void JPSDR_IVTC::Run()
 						}
 						break;
 					}
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 0 :
-						case 1 :
-						case 2 :
-						case 3 :
-							Move_Full(buffer_frame[0],dst1_Y,idata.src_line0,h,buffer_frame_pitch,dst_pitch);
+						case VMODE_BMP_RGBA :
+						case VMODE_YUYV :
+						case VMODE_UYVY :
+							Move_Full(buffer_frame[0],dst1_Y,image_data.src_line0,h,buffer_frame_pitch,dst_pitch);
 							break;
-						case 6 :
-							Move_Full(buffer_frame_Y[0],dst1_Y,idata.src_line0,h_Y,buffer_frame_Y_pitch,dst_pitch_Y);
-							Move_Full(buffer_frame_U[0],dst1_U,idata.src_line1,h_U,buffer_frame_U_pitch,dst_pitch_U);
-							Move_Full(buffer_frame_V[0],dst1_V,idata.src_line2,h_V,buffer_frame_V_pitch,dst_pitch_V);
+						case VMODE_PLANAR_YUV420 :
+							Move_Full(buffer_frame_Y[0],dst1_Y,image_data.src_line0,h_Y,buffer_frame_Y_pitch,dst_pitch_Y);
+							Move_Full(buffer_frame_U[0],dst1_U,image_data.src_line1,h_U,buffer_frame_U_pitch,dst_pitch_U);
+							Move_Full(buffer_frame_V[0],dst1_V,image_data.src_line2,h_V,buffer_frame_V_pitch,dst_pitch_V);
 							break;
 					}
 				}
@@ -14561,23 +12815,23 @@ void JPSDR_IVTC::Run()
 
 				modif_top=(i_tab!=2) || swap_buffer;
 
-				idata.src_plane0=tab_pxsrc[i_tab]->data;
-				idata.src_plane1=tab_pxsrc[i_tab]->data2;
-				idata.src_plane2=tab_pxsrc[i_tab]->data3;
+				image_data.src_plane0=tab_pxsrc[i_tab]->data;
+				image_data.src_plane1=tab_pxsrc[i_tab]->data2;
+				image_data.src_plane2=tab_pxsrc[i_tab]->data3;
 				
 				src1_RGB=buffer[i].frameRGB32;
 				
-				switch (idata.video_mode)
+				switch (image_data.video_mode)
 				{
-					case 1 :
-					case 2 :
-					case 3 :
-						src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
+					case VMODE_BMP_RGBA :
+					case VMODE_YUYV :
+					case VMODE_UYVY :
+						src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
 						break;
-					case 6 :
-						src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
-						src1_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-1)*idata.src_pitch1));
-						src1_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-1)*idata.src_pitch2));
+					case VMODE_PLANAR_YUV420 :
+						src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
+						src1_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-1)*image_data.src_pitch1));
+						src1_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-1)*image_data.src_pitch2));
 						break;
 				}	
 							
@@ -14588,23 +12842,23 @@ void JPSDR_IVTC::Run()
 							
 				modif_bottom=(i_tab!=2) || swap_buffer;
 
-				idata.src_plane0=tab_pxsrc[i_tab]->data;
-				idata.src_plane1=tab_pxsrc[i_tab]->data2;
-				idata.src_plane2=tab_pxsrc[i_tab]->data3;
+				image_data.src_plane0=tab_pxsrc[i_tab]->data;
+				image_data.src_plane1=tab_pxsrc[i_tab]->data2;
+				image_data.src_plane2=tab_pxsrc[i_tab]->data3;
 				
 				src2_RGB=(void *)((uint8_t *)buffer[i].frameRGB32+buffer_frameRGB32_pitch);
 				
-				switch (idata.video_mode)
+				switch (image_data.video_mode)
 				{
-					case 1 :
-					case 2 :
-					case 3 :
-						src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
+					case VMODE_BMP_RGBA :
+					case VMODE_YUYV :
+					case VMODE_UYVY :
+						src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
 						break;
-					case 6 :
-						src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
-						src2_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-2)*idata.src_pitch1));
-						src2_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-2)*idata.src_pitch2));
+					case VMODE_PLANAR_YUV420 :
+						src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
+						src2_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-2)*image_data.src_pitch1));
+						src2_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-2)*image_data.src_pitch2));
 						break;
 				}					
 								
@@ -14615,25 +12869,24 @@ void JPSDR_IVTC::Run()
 						switch(deinterlace_mode)
 						{
 						case 1 :
-							switch (idata.video_mode)
+							switch (image_data.video_mode)
 							{
-								case 0 :
-								case 1 :
+								case VMODE_BMP_RGBA :
 									Smart_Deinterlace_RGB32(src1_Y,src2_Y,dst1_Y,buffer_delta,buffer_map,
 										buffer_2,w,h>>1,src_pitch,dst_pitch,buffer_delta_pitch,src_modulo,dst_modulo,buffer_delta_modulo32,
 										thr_out,tri_linear,map_filter);
 									break;
-								case 2 :
+								case VMODE_YUYV :
 									Smart_Deinterlace_YUYV(src1_Y,src2_Y,dst1_Y,buffer_delta,buffer_map,
 										buffer_2,w,h>>1,src_pitch,dst_pitch,buffer_delta_pitch,src_modulo,dst_modulo,buffer_delta_modulo16,
 										thr_out,tri_linear,map_filter,src1_RGB,src2_RGB,buffer_frameRGB32_pitch,Y_only);
 									break;
-								case 3 :
+								case VMODE_UYVY :
 									Smart_Deinterlace_UYVY(src1_Y,src2_Y,dst1_Y,buffer_delta,buffer_map,
 										buffer_2,w,h>>1,src_pitch,dst_pitch,buffer_delta_pitch,src_modulo,dst_modulo,buffer_delta_modulo16,
 										thr_out,tri_linear,map_filter,src1_RGB,src2_RGB,buffer_frameRGB32_pitch,Y_only);
 									break;
-								case 6 :
+								case VMODE_PLANAR_YUV420 :
 									Smart_Deinterlace_Planar420((uint8_t *)src1_Y,(uint8_t *)src2_Y,(uint8_t *)src1_U,
 										(uint8_t *)src2_U,(uint8_t *)src1_V,(uint8_t *)src2_V,(uint8_t *)dst1_Y,
 										(uint8_t *)dst1_U,(uint8_t*)dst1_V,buffer_delta_Y,buffer_delta_U,buffer_delta_V,buffer_map,
@@ -14646,22 +12899,21 @@ void JPSDR_IVTC::Run()
 							}
 							break;
 						case 2 :
-							switch (idata.video_mode)
+							switch (image_data.video_mode)
 							{
-								case 0 :
-								case 1 :
+								case VMODE_BMP_RGBA :
 									Deinterlace_RGB32(src1_Y,src2_Y,dst1_Y,w,h>>1,src_pitch,dst_pitch,
 										tri_linear,false);
 									break;
-								case 2 :
+								case VMODE_YUYV :
 									Deinterlace_YUYV(src1_Y,src2_Y,dst1_Y,w,h>>1,src_pitch,dst_pitch,
 										tri_linear,false,Y_only);
 									break;
-								case 3 :
+								case VMODE_UYVY :
 									Deinterlace_UYVY(src1_Y,src2_Y,dst1_Y,w,h>>1,src_pitch,dst_pitch,
 										tri_linear,false,Y_only);
 									break;
-								case 6 :
+								case VMODE_PLANAR_YUV420 :
 									Deinterlace_Planar((uint8_t *)src1_Y,(uint8_t *)src2_Y,(uint8_t *)dst1_Y,
 										w_Y,h_Y>>1,src_pitch_Y,dst_pitch_Y,tri_linear,false);
 									if (!Y_only)
@@ -14673,8 +12925,8 @@ void JPSDR_IVTC::Run()
 									}
 									else
 									{
-										Rebuild_Frame(src1_U,src2_U,dst1_U,idata.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
-										Rebuild_Frame(src1_V,src2_V,dst1_V,idata.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
+										Rebuild_Frame(src1_U,src2_U,dst1_U,image_data.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
+										Rebuild_Frame(src1_V,src2_V,dst1_V,image_data.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
 									}
 									break;
 							}
@@ -14683,42 +12935,41 @@ void JPSDR_IVTC::Run()
 					}
 					else
 					{
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 0 :
-							case 1 :
-							case 2 :
-							case 3 :
+							case VMODE_BMP_RGBA :
+							case VMODE_YUYV :
+							case VMODE_UYVY :
 								if (modif_top && modif_bottom)
 								{
-									Rebuild_Frame(src1_Y,src2_Y,dst1_Y,idata.src_line0,h>>1,src_pitch,dst_pitch);
+									Rebuild_Frame(src1_Y,src2_Y,dst1_Y,image_data.src_line0,h>>1,src_pitch,dst_pitch);
 								}
 								else
 								{
-									if (modif_top) Rebuild_Frame_2(src1_Y,dst1_Y,idata.src_line0,h>>1,src_pitch,dst_pitch);
-									if (modif_bottom) Rebuild_Frame_2(src2_Y,dst2_Y,idata.src_line0,h>>1,src_pitch,dst_pitch);
+									if (modif_top) Rebuild_Frame_2(src1_Y,dst1_Y,image_data.src_line0,h>>1,src_pitch,dst_pitch);
+									if (modif_bottom) Rebuild_Frame_2(src2_Y,dst2_Y,image_data.src_line0,h>>1,src_pitch,dst_pitch);
 								}
 								break;
-							case 6 :
+							case VMODE_PLANAR_YUV420 :
 								if (modif_top && modif_bottom)
 								{
-									Rebuild_Frame(src1_Y,src2_Y,dst1_Y,idata.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
-									Rebuild_Frame(src1_U,src2_U,dst1_U,idata.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
-									Rebuild_Frame(src1_V,src2_V,dst1_V,idata.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
+									Rebuild_Frame(src1_Y,src2_Y,dst1_Y,image_data.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
+									Rebuild_Frame(src1_U,src2_U,dst1_U,image_data.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
+									Rebuild_Frame(src1_V,src2_V,dst1_V,image_data.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
 								}
 								else
 								{
 									if (modif_top)
 									{
-										Rebuild_Frame_2(src1_Y,dst1_Y,idata.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
-										Rebuild_Frame_2(src1_U,dst1_U,idata.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
-										Rebuild_Frame_2(src1_V,dst1_V,idata.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
+										Rebuild_Frame_2(src1_Y,dst1_Y,image_data.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
+										Rebuild_Frame_2(src1_U,dst1_U,image_data.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
+										Rebuild_Frame_2(src1_V,dst1_V,image_data.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
 									}
 									if (modif_bottom)
 									{
-										Rebuild_Frame_2(src2_Y,dst2_Y,idata.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
-										Rebuild_Frame_2(src2_U,dst2_U,idata.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
-										Rebuild_Frame_2(src2_V,dst2_V,idata.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
+										Rebuild_Frame_2(src2_Y,dst2_Y,image_data.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
+										Rebuild_Frame_2(src2_U,dst2_U,image_data.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
+										Rebuild_Frame_2(src2_V,dst2_V,image_data.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
 									}
 								}
 								break;
@@ -14732,15 +12983,14 @@ void JPSDR_IVTC::Run()
 						switch(deinterlace_mode)
 						{
 						case 1 :
-							switch (idata.video_mode)
+							switch (image_data.video_mode)
 							{
-								case 0 :
-								case 1 :
+								case VMODE_BMP_RGBA :
 									Smart_Deinterlace_RGB32(src1_Y,src2_Y,buffer_frame[0],buffer_delta,
 										buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 										src_modulo,buffer_frame_modulo,buffer_delta_modulo32,thr_out,tri_linear,map_filter);
 									break;
-								case 2 :
+								case VMODE_YUYV :
 									Smart_Deinterlace_YUYV(src1_Y,src2_Y,buffer_frame[0],buffer_delta,
 										buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 										src_modulo,buffer_frame_modulo,buffer_delta_modulo16,thr_out,tri_linear,map_filter,
@@ -14748,7 +12998,7 @@ void JPSDR_IVTC::Run()
 									Convert_YUYV_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 										buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 									break;
-								case 3 :
+								case VMODE_UYVY :
 									Smart_Deinterlace_UYVY(src1_Y,src2_Y,buffer_frame[0],buffer_delta,
 										buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 										src_modulo,buffer_frame_modulo,buffer_delta_modulo16,thr_out,tri_linear,map_filter,
@@ -14756,7 +13006,7 @@ void JPSDR_IVTC::Run()
 									Convert_UYVY_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 										buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 									break;
-								case 6 :
+								case VMODE_PLANAR_YUV420 :
 									Smart_Deinterlace_Planar420((uint8_t *)src1_Y,(uint8_t *)src2_Y,(uint8_t *)src1_U,
 										(uint8_t *)src2_U,(uint8_t *)src1_V,(uint8_t *)src2_V,buffer_frame_Y[0],
 										buffer_frame_U[0],buffer_frame_V[0],buffer_delta_Y,buffer_delta_U,
@@ -14774,26 +13024,25 @@ void JPSDR_IVTC::Run()
 							}
 							break;
 						case 2 :
-							switch (idata.video_mode)
+							switch (image_data.video_mode)
 							{
-								case 0 :
-								case 1 :
+								case VMODE_BMP_RGBA :
 									Deinterlace_RGB32(src1_Y,src2_Y,buffer_frame[0],w,h>>1,src_pitch,
 										buffer_frame_pitch,tri_linear,true);
 									break;
-								case 2 :
+								case VMODE_YUYV :
 									Deinterlace_YUYV(src1_Y,src2_Y,buffer_frame[0],w,h>>1,src_pitch,
 										buffer_frame_pitch,tri_linear,true,Y_only);
 									Convert_YUYV_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 										buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 									break;
-								case 3 :
+								case VMODE_UYVY :
 									Deinterlace_UYVY(src1_Y,src2_Y,buffer_frame[0],w,h>>1,src_pitch,
 										buffer_frame_pitch,tri_linear,true,Y_only);
 									Convert_UYVY_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 										buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 									break;
-								case 6 :
+								case VMODE_PLANAR_YUV420 :
 									Deinterlace_Planar((uint8_t *)src1_Y,(uint8_t *)src2_Y,buffer_frame_Y[0],w_Y,h_Y>>1,
 										src_pitch_Y,buffer_frame_Y_pitch,tri_linear,true);
 									if (!Y_only)
@@ -14805,9 +13054,9 @@ void JPSDR_IVTC::Run()
 									}
 									else
 									{
-										Rebuild_Frame(src1_U,src2_U,buffer_frame_U[0],idata.src_line1,h_U>>1,src_pitch_U,
+										Rebuild_Frame(src1_U,src2_U,buffer_frame_U[0],image_data.src_line1,h_U>>1,src_pitch_U,
 											buffer_frame_U_pitch);
-										Rebuild_Frame(src1_V,src2_V,buffer_frame_V[0],idata.src_line2,h_V>>1,src_pitch_V,
+										Rebuild_Frame(src1_V,src2_V,buffer_frame_V[0],image_data.src_line2,h_V>>1,src_pitch_V,
 											buffer_frame_V_pitch);
 									}
 									Convert_Planar420_to_RGB32(buffer_frame_Y[0],buffer_frame_U[0],buffer_frame_V[0],
@@ -14818,59 +13067,57 @@ void JPSDR_IVTC::Run()
 							}
 							break;
 						}
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 0 :
-							case 1 :
-							case 2 :
-							case 3 :
-								Move_Full(buffer_frame[0],dst1_Y,idata.src_line0,h,buffer_frame_pitch,dst_pitch);
+							case VMODE_BMP_RGBA :
+							case VMODE_YUYV :
+							case VMODE_UYVY :
+								Move_Full(buffer_frame[0],dst1_Y,image_data.src_line0,h,buffer_frame_pitch,dst_pitch);
 								break;
-							case 6 :
-								Move_Full(buffer_frame_Y[0],dst1_Y,idata.src_line0,h_Y,buffer_frame_Y_pitch,dst_pitch_Y);
-								Move_Full(buffer_frame_U[0],dst1_U,idata.src_line1,h_U,buffer_frame_U_pitch,dst_pitch_U);
-								Move_Full(buffer_frame_V[0],dst1_V,idata.src_line2,h_V,buffer_frame_V_pitch,dst_pitch_V);
+							case VMODE_PLANAR_YUV420 :
+								Move_Full(buffer_frame_Y[0],dst1_Y,image_data.src_line0,h_Y,buffer_frame_Y_pitch,dst_pitch_Y);
+								Move_Full(buffer_frame_U[0],dst1_U,image_data.src_line1,h_U,buffer_frame_U_pitch,dst_pitch_U);
+								Move_Full(buffer_frame_V[0],dst1_V,image_data.src_line2,h_V,buffer_frame_V_pitch,dst_pitch_V);
 								break;
 						}
 					}
 					else
 					{
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 0 :
-							case 1 :
-							case 2 :
-							case 3 :
+							case VMODE_BMP_RGBA :
+							case VMODE_YUYV :
+							case VMODE_UYVY :
 								if (modif_top && modif_bottom)
 								{
-									Rebuild_Frame(src1_Y,src2_Y,dst1_Y,idata.src_line0,h>>1,src_pitch,dst_pitch);
+									Rebuild_Frame(src1_Y,src2_Y,dst1_Y,image_data.src_line0,h>>1,src_pitch,dst_pitch);
 								}
 								else
 								{
-									if (modif_top)Rebuild_Frame_2(src1_Y,dst1_Y,idata.src_line0,h>>1,src_pitch,dst_pitch);
-									if (modif_bottom) Rebuild_Frame_2(src2_Y,dst2_Y,idata.src_line0,h>>1,src_pitch,dst_pitch);
+									if (modif_top)Rebuild_Frame_2(src1_Y,dst1_Y,image_data.src_line0,h>>1,src_pitch,dst_pitch);
+									if (modif_bottom) Rebuild_Frame_2(src2_Y,dst2_Y,image_data.src_line0,h>>1,src_pitch,dst_pitch);
 								}
 								break;
-							case 6 :
+							case VMODE_PLANAR_YUV420 :
 								if (modif_top && modif_bottom)
 								{
-									Rebuild_Frame(src1_Y,src2_Y,dst1_Y,idata.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
-									Rebuild_Frame(src1_U,src2_U,dst1_U,idata.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
-									Rebuild_Frame(src1_V,src2_V,dst1_V,idata.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
+									Rebuild_Frame(src1_Y,src2_Y,dst1_Y,image_data.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
+									Rebuild_Frame(src1_U,src2_U,dst1_U,image_data.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
+									Rebuild_Frame(src1_V,src2_V,dst1_V,image_data.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
 								}
 								else
 								{
 									if (modif_top)
 									{
-										Rebuild_Frame_2(src1_Y,dst1_Y,idata.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
-										Rebuild_Frame_2(src1_U,dst1_U,idata.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
-										Rebuild_Frame_2(src1_V,dst1_V,idata.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
+										Rebuild_Frame_2(src1_Y,dst1_Y,image_data.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
+										Rebuild_Frame_2(src1_U,dst1_U,image_data.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
+										Rebuild_Frame_2(src1_V,dst1_V,image_data.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
 									}
 									if (modif_bottom)
 									{
-										Rebuild_Frame_2(src2_Y,dst2_Y,idata.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
-										Rebuild_Frame_2(src2_U,dst2_U,idata.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
-										Rebuild_Frame_2(src2_V,dst2_V,idata.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
+										Rebuild_Frame_2(src2_Y,dst2_Y,image_data.src_line0,h_Y>>1,src_pitch_Y,dst_pitch_Y);
+										Rebuild_Frame_2(src2_U,dst2_U,image_data.src_line1,h_U>>1,src_pitch_U,dst_pitch_U);
+										Rebuild_Frame_2(src2_V,dst2_V,image_data.src_line2,h_V>>1,src_pitch_V,dst_pitch_V);
 									}
 								}
 								break;
@@ -14907,54 +13154,53 @@ void JPSDR_IVTC::Run()
 			
 			if ((v&0x0200)==0x0200)
 			{			
-				idata.src_plane0=tab_pxsrc[j_tab]->data;
-				idata.src_plane1=tab_pxsrc[j_tab]->data2;
-				idata.src_plane2=tab_pxsrc[j_tab]->data3;
+				image_data.src_plane0=tab_pxsrc[j_tab]->data;
+				image_data.src_plane1=tab_pxsrc[j_tab]->data2;
+				image_data.src_plane2=tab_pxsrc[j_tab]->data3;
 				
 				src1_RGB=buffer[j].frameRGB32;
 				
-				switch (idata.video_mode)
+				switch (image_data.video_mode)
 				{
-					case 1 :
-					case 2 :
-					case 3 :
-						src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
+					case VMODE_BMP_RGBA :
+					case VMODE_YUYV :
+					case VMODE_UYVY :
+						src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
 						break;
-					case 6 :
-						src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
-						src1_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-1)*idata.src_pitch1));
-						src1_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-1)*idata.src_pitch2));
+					case VMODE_PLANAR_YUV420 :
+						src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
+						src1_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-1)*image_data.src_pitch1));
+						src1_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-1)*image_data.src_pitch2));
 						break;
 				}					
 
 				src2_RGB=(void *)((uint8_t *)src1_RGB+buffer_frameRGB32_pitch);
 				
-				switch (idata.video_mode)
+				switch (image_data.video_mode)
 				{
-					case 1 :
-					case 2 :
-					case 3 :
-						src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
+					case VMODE_BMP_RGBA :
+					case VMODE_YUYV :
+					case VMODE_UYVY :
+						src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
 						break;
-					case 6 :
-						src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
-						src2_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-2)*idata.src_pitch1));
-						src2_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-2)*idata.src_pitch2));
+					case VMODE_PLANAR_YUV420 :
+						src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
+						src2_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-2)*image_data.src_pitch1));
+						src2_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-2)*image_data.src_pitch2));
 						break;
 				}					
 							
 				switch(deinterlace_mode)
 				{
 				case 1 :
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 0 :
-						case 1 :
+						case VMODE_BMP_RGBA :
 							Smart_Deinterlace_RGB32(src1_Y,src2_Y,buffer_frame[1],buffer_delta,
 								buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 								src_modulo,buffer_frame_modulo,buffer_delta_modulo32,thr_dtl,tri_linear,map_filter);
 							break;
-						case 2 :
+						case VMODE_YUYV :
 							Smart_Deinterlace_YUYV(src1_Y,src2_Y,buffer_frame[1],buffer_delta,
 								buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 								src_modulo,buffer_frame_modulo,buffer_delta_modulo16,thr_dtl,tri_linear,map_filter,
@@ -14962,7 +13208,7 @@ void JPSDR_IVTC::Run()
 							Convert_YUYV_to_RGB32(buffer_frame[1],buffer_frameRGB32[1],w,h,buffer_frame_pitch,
 								buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 							break;
-						case 3 :
+						case VMODE_UYVY :
 							Smart_Deinterlace_UYVY(src1_Y,src2_Y,buffer_frame[1],buffer_delta,
 								buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 								src_modulo,buffer_frame_modulo,buffer_delta_modulo16,thr_dtl,tri_linear,map_filter,
@@ -14970,7 +13216,7 @@ void JPSDR_IVTC::Run()
 							Convert_UYVY_to_RGB32(buffer_frame[1],buffer_frameRGB32[1],w,h,buffer_frame_pitch,
 								buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 							break;
-						case 6 :
+						case VMODE_PLANAR_YUV420 :
 							Smart_Deinterlace_Planar420((uint8_t *)src1_Y,(uint8_t *)src2_Y,(uint8_t *)src1_U,
 								(uint8_t *)src2_U,(uint8_t *)src1_V,(uint8_t *)src2_V,buffer_frame_Y[1],
 								buffer_frame_U[1],buffer_frame_V[1],buffer_delta_Y,buffer_delta_U,
@@ -14987,26 +13233,25 @@ void JPSDR_IVTC::Run()
 					}
 					break;
 				case 2 :
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 0 :
-						case 1 :
+						case VMODE_BMP_RGBA :
 							Deinterlace_RGB32(src1_Y,src2_Y,buffer_frame[1],w,h>>1,src_pitch,buffer_frame_pitch,
 								tri_linear,true);
 							break;
-						case 2 :
+						case VMODE_YUYV :
 							Deinterlace_YUYV(src1_Y,src2_Y,buffer_frame[1],w,h>>1,src_pitch,buffer_frame_pitch,
 								tri_linear,true,false);
 							Convert_YUYV_to_RGB32(buffer_frame[1],buffer_frameRGB32[1],w,h,buffer_frame_pitch,
 								buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 							break;
-						case 3 :
+						case VMODE_UYVY :
 							Deinterlace_UYVY(src1_Y,src2_Y,buffer_frame[1],w,h>>1,src_pitch,buffer_frame_pitch,
 								tri_linear,true,false);
 							Convert_UYVY_to_RGB32(buffer_frame[1],buffer_frameRGB32[1],w,h,buffer_frame_pitch,
 								buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 							break;
-						case 6 :
+						case VMODE_PLANAR_YUV420 :
 							Deinterlace_Planar((uint8_t *)src1_Y,(uint8_t *)src2_Y,buffer_frame_Y[1],w_Y,h_Y>>1,src_pitch_Y,
 								buffer_frame_Y_pitch,tri_linear,true);
 							Deinterlace_Planar((uint8_t *)src1_U,(uint8_t *)src2_U,buffer_frame_U[1],w_U,h_U>>1,src_pitch_U,
@@ -15032,23 +13277,23 @@ void JPSDR_IVTC::Run()
 				
 				modif_bottom=(j_tab!=2) || swap_buffer;
 				
-				idata.src_plane0=tab_pxsrc[j_tab]->data;
-				idata.src_plane1=tab_pxsrc[j_tab]->data2;
-				idata.src_plane2=tab_pxsrc[j_tab]->data3;
+				image_data.src_plane0=tab_pxsrc[j_tab]->data;
+				image_data.src_plane1=tab_pxsrc[j_tab]->data2;
+				image_data.src_plane2=tab_pxsrc[j_tab]->data3;
 				
 				src2_RGB=(void *)((uint8_t *)buffer[j].frameRGB32+buffer_frameRGB32_pitch);
 				
-				switch (idata.video_mode)
+				switch (image_data.video_mode)
 				{
-					case 1 :
-					case 2 :
-					case 3 :
-						src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
+					case VMODE_BMP_RGBA :
+					case VMODE_YUYV :
+					case VMODE_UYVY :
+						src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
 						break;
-					case 6 :
-						src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
-						src2_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-2)*idata.src_pitch1));
-						src2_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-2)*idata.src_pitch2));
+					case VMODE_PLANAR_YUV420 :
+						src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
+						src2_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-2)*image_data.src_pitch1));
+						src2_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-2)*image_data.src_pitch2));
 						break;
 				}					
 								
@@ -15059,23 +13304,23 @@ void JPSDR_IVTC::Run()
 				
 				modif_top=(j_tab!=2) || swap_buffer;
 				
-				idata.src_plane0=tab_pxsrc[j_tab]->data;
-				idata.src_plane1=tab_pxsrc[j_tab]->data2;
-				idata.src_plane2=tab_pxsrc[j_tab]->data3;
+				image_data.src_plane0=tab_pxsrc[j_tab]->data;
+				image_data.src_plane1=tab_pxsrc[j_tab]->data2;
+				image_data.src_plane2=tab_pxsrc[j_tab]->data3;
 				
 				src1_RGB=buffer[j].frameRGB32;
 				
-				switch (idata.video_mode)
+				switch (image_data.video_mode)
 				{
-					case 1 :
-					case 2 :
-					case 3 :
-						src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
+					case VMODE_BMP_RGBA :
+					case VMODE_YUYV :
+					case VMODE_UYVY :
+						src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
 						break;
-					case 6 :
-						src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
-						src1_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-1)*idata.src_pitch1));
-						src1_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-1)*idata.src_pitch2));
+					case VMODE_PLANAR_YUV420 :
+						src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
+						src1_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-1)*image_data.src_pitch1));
+						src1_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-1)*image_data.src_pitch2));
 						break;
 				}					
 								
@@ -15084,15 +13329,14 @@ void JPSDR_IVTC::Run()
 					switch(deinterlace_mode)
 					{
 					case 1 :
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 0 :
-							case 1 :
+							case VMODE_BMP_RGBA :
 								Smart_Deinterlace_RGB32(src1_Y,src2_Y,buffer_frame[1],buffer_delta,
 									buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 									src_modulo,buffer_frame_modulo,buffer_delta_modulo32,thr_out,tri_linear,map_filter);
 								break;
-							case 2 :
+							case VMODE_YUYV :
 								Smart_Deinterlace_YUYV(src1_Y,src2_Y,buffer_frame[1],buffer_delta,
 									buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 									src_modulo,buffer_frame_modulo,buffer_delta_modulo16,thr_out,tri_linear,map_filter,
@@ -15100,7 +13344,7 @@ void JPSDR_IVTC::Run()
 								Convert_YUYV_to_RGB32(buffer_frame[1],buffer_frameRGB32[1],w,h,buffer_frame_pitch,
 									buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 								break;
-							case 3 :
+							case VMODE_UYVY :
 								Smart_Deinterlace_UYVY(src1_Y,src2_Y,buffer_frame[1],buffer_delta,
 									buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 									src_modulo,buffer_frame_modulo,buffer_delta_modulo16,thr_out,tri_linear,map_filter,
@@ -15108,7 +13352,7 @@ void JPSDR_IVTC::Run()
 								Convert_UYVY_to_RGB32(buffer_frame[1],buffer_frameRGB32[1],w,h,buffer_frame_pitch,
 									buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 								break;
-							case 6 :
+							case VMODE_PLANAR_YUV420 :
 								Smart_Deinterlace_Planar420((uint8_t *)src1_Y,(uint8_t *)src2_Y,(uint8_t *)src1_U,
 									(uint8_t *)src2_U,(uint8_t *)src1_V,(uint8_t *)src2_V,buffer_frame_Y[1],
 									buffer_frame_U[1],buffer_frame_V[1],buffer_delta_Y,buffer_delta_U,
@@ -15126,26 +13370,25 @@ void JPSDR_IVTC::Run()
 						}
 						break;
 					case 2 :
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 0 :
-							case 1 :
+							case VMODE_BMP_RGBA :
 								Deinterlace_RGB32(src1_Y,src2_Y,buffer_frame[1],w,h>>1,src_pitch,
 									buffer_frame_pitch,tri_linear,true);
 								break;
-							case 2 :
+							case VMODE_YUYV :
 								Deinterlace_YUYV(src1_Y,src2_Y,buffer_frame[1],w,h>>1,src_pitch,
 									buffer_frame_pitch,tri_linear,true,Y_only);
 								Convert_YUYV_to_RGB32(buffer_frame[1],buffer_frameRGB32[1],w,h,buffer_frame_pitch,
 									buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 								break;
-							case 3 :
+							case VMODE_UYVY :
 								Deinterlace_UYVY(src1_Y,src2_Y,buffer_frame[1],w,h>>1,src_pitch,
 									buffer_frame_pitch,tri_linear,true,Y_only);
 								Convert_UYVY_to_RGB32(buffer_frame[1],buffer_frameRGB32[1],w,h,buffer_frame_pitch,
 									buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 								break;
-							case 6 :
+							case VMODE_PLANAR_YUV420 :
 								Deinterlace_Planar((uint8_t *)src1_Y,(uint8_t *)src2_Y,buffer_frame_Y[1],
 									w_Y,h_Y>>1,src_pitch_Y,buffer_frame_Y_pitch,tri_linear,true);
 								if (!Y_only)
@@ -15157,8 +13400,8 @@ void JPSDR_IVTC::Run()
 								}
 								else
 								{
-									Rebuild_Frame(src1_U,src2_U,buffer_frame_U[1],idata.src_line1,h_U>>1,src_pitch_U,buffer_frame_U_pitch);
-									Rebuild_Frame(src1_V,src2_V,buffer_frame_V[1],idata.src_line2,h_V>>1,src_pitch_V,buffer_frame_V_pitch);
+									Rebuild_Frame(src1_U,src2_U,buffer_frame_U[1],image_data.src_line1,h_U>>1,src_pitch_U,buffer_frame_U_pitch);
+									Rebuild_Frame(src1_V,src2_V,buffer_frame_V[1],image_data.src_line2,h_V>>1,src_pitch_V,buffer_frame_V_pitch);
 								}
 								Convert_Planar420_to_RGB32(buffer_frame_Y[1],buffer_frame_U[1],buffer_frame_V[1],
 									buffer_delta,buffer_frameRGB32[1],w_Y,h_Y,buffer_frame_Y_pitch,buffer_frame_U_pitch,
@@ -15177,23 +13420,23 @@ void JPSDR_IVTC::Run()
 				{
 					modif_bottom=(i_tab!=2) || swap_buffer;
 				
-					idata.src_plane0=tab_pxsrc[i_tab]->data;
-					idata.src_plane1=tab_pxsrc[i_tab]->data2;
-					idata.src_plane2=tab_pxsrc[i_tab]->data3;
+					image_data.src_plane0=tab_pxsrc[i_tab]->data;
+					image_data.src_plane1=tab_pxsrc[i_tab]->data2;
+					image_data.src_plane2=tab_pxsrc[i_tab]->data3;
 				
 					src2_RGB=(void *)((uint8_t *)buffer[i].frameRGB32+buffer_frameRGB32_pitch);
 				
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 1 :
-						case 2 :
-						case 3 :
-							src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
+						case VMODE_BMP_RGBA :
+						case VMODE_YUYV :
+						case VMODE_UYVY :
+							src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
 							break;
-						case 6 :
-							src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
-							src2_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-2)*idata.src_pitch1));
-							src2_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-2)*idata.src_pitch2));
+						case VMODE_PLANAR_YUV420 :
+							src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
+							src2_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-2)*image_data.src_pitch1));
+							src2_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-2)*image_data.src_pitch2));
 							break;
 					}	
 					
@@ -15227,24 +13470,24 @@ void JPSDR_IVTC::Run()
 				{
 					modif_bottom=(i_tab!=2) || swap_buffer;
 				
-					idata.src_plane0=tab_pxsrc[i_tab]->data;
-					idata.src_plane1=tab_pxsrc[i_tab]->data2;
-					idata.src_plane2=tab_pxsrc[i_tab]->data3;
+					image_data.src_plane0=tab_pxsrc[i_tab]->data;
+					image_data.src_plane1=tab_pxsrc[i_tab]->data2;
+					image_data.src_plane2=tab_pxsrc[i_tab]->data3;
 				
 					src2_RGB=(void *)((uint8_t *)manual.bufferRGB32[(manual.read_index+i)%Buffer_Size_Manual]
 						+buffer_frameRGB32_pitch);
 				
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 1 :
-						case 2 :
-						case 3 :
-							src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
+						case VMODE_BMP_RGBA :
+						case VMODE_YUYV :
+						case VMODE_UYVY :
+							src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
 							break;
-						case 6 :
-							src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
-							src2_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-2)*idata.src_pitch1));
-							src2_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-2)*idata.src_pitch2));
+						case VMODE_PLANAR_YUV420 :
+							src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
+							src2_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-2)*image_data.src_pitch1));
+							src2_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-2)*image_data.src_pitch2));
 							break;
 					}	
 					
@@ -15276,23 +13519,23 @@ void JPSDR_IVTC::Run()
 			{
 				modif_top=(j_tab!=2) || swap_buffer;
 			
-				idata.src_plane0=tab_pxsrc[j_tab]->data;
-				idata.src_plane1=tab_pxsrc[j_tab]->data2;
-				idata.src_plane2=tab_pxsrc[j_tab]->data3;
+				image_data.src_plane0=tab_pxsrc[j_tab]->data;
+				image_data.src_plane1=tab_pxsrc[j_tab]->data2;
+				image_data.src_plane2=tab_pxsrc[j_tab]->data3;
 				
 				src1_RGB=buffer[j].frameRGB32;				
 				
-				switch (idata.video_mode)
+				switch (image_data.video_mode)
 				{
-					case 1 :
-					case 2 :
-					case 3 :
-						src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
+					case VMODE_BMP_RGBA :
+					case VMODE_YUYV :
+					case VMODE_UYVY :
+						src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
 						break;
-					case 6 :
-						src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
-						src1_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-1)*idata.src_pitch1));
-						src1_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-1)*idata.src_pitch2));
+					case VMODE_PLANAR_YUV420 :
+						src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
+						src1_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-1)*image_data.src_pitch1));
+						src1_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-1)*image_data.src_pitch2));
 						break;
 				}
 				
@@ -15320,27 +13563,26 @@ void JPSDR_IVTC::Run()
 				modulo1_V=buffer_frame_V_modulo;
 			}
 
-			switch (idata.video_mode)
+			switch (image_data.video_mode)
 			{
-				case 0 :
-				case 1 :
-				case 2 :
-				case 3 :
-					if (modif_top) Rebuild_Frame_2(src1_Y,dst1_Y,idata.src_line0,h>>1,pitch1_Y,dst_pitch);
-					if (modif_bottom) Rebuild_Frame_2(src2_Y,dst2_Y,idata.src_line0,h>>1,pitch2_Y,dst_pitch);
+				case VMODE_BMP_RGBA :
+				case VMODE_YUYV :
+				case VMODE_UYVY :
+					if (modif_top) Rebuild_Frame_2(src1_Y,dst1_Y,image_data.src_line0,h>>1,pitch1_Y,dst_pitch);
+					if (modif_bottom) Rebuild_Frame_2(src2_Y,dst2_Y,image_data.src_line0,h>>1,pitch2_Y,dst_pitch);
 					break;
-				case 6 :
+				case VMODE_PLANAR_YUV420 :
 					if (modif_top)
 					{
-						Rebuild_Frame_2(src1_Y,dst1_Y,idata.src_line0,h_Y>>1,pitch1_Y,dst_pitch_Y);
-						Rebuild_Frame_2(src1_U,dst1_U,idata.src_line1,h_U>>1,pitch1_U,dst_pitch_U);
-						Rebuild_Frame_2(src1_V,dst1_V,idata.src_line2,h_V>>1,pitch1_V,dst_pitch_V);
+						Rebuild_Frame_2(src1_Y,dst1_Y,image_data.src_line0,h_Y>>1,pitch1_Y,dst_pitch_Y);
+						Rebuild_Frame_2(src1_U,dst1_U,image_data.src_line1,h_U>>1,pitch1_U,dst_pitch_U);
+						Rebuild_Frame_2(src1_V,dst1_V,image_data.src_line2,h_V>>1,pitch1_V,dst_pitch_V);
 					}
 					if (modif_bottom)
 					{
-						Rebuild_Frame_2(src2_Y,dst2_Y,idata.src_line0,h_Y>>1,pitch1_Y,dst_pitch_Y);
-						Rebuild_Frame_2(src2_U,dst2_U,idata.src_line1,h_U>>1,pitch1_U,dst_pitch_U);
-						Rebuild_Frame_2(src2_V,dst2_V,idata.src_line2,h_V>>1,pitch1_V,dst_pitch_V);
+						Rebuild_Frame_2(src2_Y,dst2_Y,image_data.src_line0,h_Y>>1,pitch1_Y,dst_pitch_Y);
+						Rebuild_Frame_2(src2_U,dst2_U,image_data.src_line1,h_U>>1,pitch1_U,dst_pitch_U);
+						Rebuild_Frame_2(src2_V,dst2_V,image_data.src_line2,h_V>>1,pitch1_V,dst_pitch_V);
 					}					
 					break;
 			}
@@ -15373,54 +13615,53 @@ void JPSDR_IVTC::Run()
 			
 			if ((v&0x0200)==0x0200)
 			{			
-				idata.src_plane0=tab_pxsrc[j_tab]->data;
-				idata.src_plane1=tab_pxsrc[j_tab]->data2;
-				idata.src_plane2=tab_pxsrc[j_tab]->data3;
+				image_data.src_plane0=tab_pxsrc[j_tab]->data;
+				image_data.src_plane1=tab_pxsrc[j_tab]->data2;
+				image_data.src_plane2=tab_pxsrc[j_tab]->data3;
 				
 				src1_RGB=buffer[j].frameRGB32;
 				
-				switch (idata.video_mode)
+				switch (image_data.video_mode)
 				{
-					case 1 :
-					case 2 :
-					case 3 :
-						src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
+					case VMODE_BMP_RGBA :
+					case VMODE_YUYV :
+					case VMODE_UYVY :
+						src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
 						break;
-					case 6 :
-						src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
-						src1_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-1)*idata.src_pitch1));
-						src1_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-1)*idata.src_pitch2));
+					case VMODE_PLANAR_YUV420 :
+						src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
+						src1_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-1)*image_data.src_pitch1));
+						src1_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-1)*image_data.src_pitch2));
 						break;
 				}					
 
 				src2_RGB=(void *)((uint8_t *)src1_RGB+buffer_frameRGB32_pitch);
 
-				switch (idata.video_mode)
+				switch (image_data.video_mode)
 				{
-					case 1 :
-					case 2 :
-					case 3 :
-						src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
+					case VMODE_BMP_RGBA :
+					case VMODE_YUYV :
+					case VMODE_UYVY :
+						src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
 						break;
-					case 6 :
-						src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
-						src2_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-2)*idata.src_pitch1));
-						src2_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-2)*idata.src_pitch2));
+					case VMODE_PLANAR_YUV420 :
+						src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
+						src2_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-2)*image_data.src_pitch1));
+						src2_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-2)*image_data.src_pitch2));
 						break;
 				}							
 							
 				switch(deinterlace_mode)
 				{
 				case 1 :
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 0 :
-						case 1 :
+						case VMODE_BMP_RGBA :
 							Smart_Deinterlace_RGB32(src1_Y,src2_Y,buffer_frame[0],buffer_delta,
 								buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 								src_modulo,buffer_frame_modulo,buffer_delta_modulo32,thr_dtl,tri_linear,map_filter);
 							break;
-						case 2 :
+						case VMODE_YUYV :
 							Smart_Deinterlace_YUYV(src1_Y,src2_Y,buffer_frame[0],buffer_delta,
 								buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 								src_modulo,buffer_frame_modulo,buffer_delta_modulo16,thr_dtl,tri_linear,map_filter,
@@ -15428,7 +13669,7 @@ void JPSDR_IVTC::Run()
 							Convert_YUYV_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 								buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 							break;
-						case 3 :
+						case VMODE_UYVY :
 							Smart_Deinterlace_UYVY(src1_Y,src2_Y,buffer_frame[0],buffer_delta,
 								buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 								src_modulo,buffer_frame_modulo,buffer_delta_modulo16,thr_dtl,tri_linear,map_filter,
@@ -15436,7 +13677,7 @@ void JPSDR_IVTC::Run()
 							Convert_UYVY_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 								buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 							break;
-						case 6 :
+						case VMODE_PLANAR_YUV420 :
 							Smart_Deinterlace_Planar420((uint8_t *)src1_Y,(uint8_t *)src2_Y,(uint8_t *)src1_U,
 								(uint8_t *)src2_U,(uint8_t *)src1_V,(uint8_t *)src2_V,buffer_frame_Y[0],
 								buffer_frame_U[0],buffer_frame_V[0],buffer_delta_Y,buffer_delta_U,
@@ -15453,26 +13694,25 @@ void JPSDR_IVTC::Run()
 					}
 					break;
 				case 2 :
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 0 :
-						case 1 :
+						case VMODE_BMP_RGBA :
 							Deinterlace_RGB32(src1_Y,src2_Y,buffer_frame[0],w,h>>1,src_pitch,buffer_frame_pitch,
 								tri_linear,true);
 							break;
-						case 2 :
+						case VMODE_YUYV :
 							Deinterlace_YUYV(src1_Y,src2_Y,buffer_frame[0],w,h>>1,src_pitch,buffer_frame_pitch,
 								tri_linear,true,false);
 							Convert_YUYV_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 								buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 							break;
-						case 3 :
+						case VMODE_UYVY :
 							Deinterlace_UYVY(src1_Y,src2_Y,buffer_frame[0],w,h>>1,src_pitch,buffer_frame_pitch,
 								tri_linear,true,false);
 							Convert_UYVY_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 								buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 							break;
-						case 6 :
+						case VMODE_PLANAR_YUV420 :
 							Deinterlace_Planar((uint8_t *)src1_Y,(uint8_t *)src2_Y,buffer_frame_Y[0],w_Y,h_Y>>1,
 								src_pitch_Y,buffer_frame_Y_pitch,tri_linear,true);
 							Deinterlace_Planar((uint8_t *)src1_U,(uint8_t *)src2_U,buffer_frame_U[0],w_U,h_U>>1,
@@ -15498,23 +13738,23 @@ void JPSDR_IVTC::Run()
 				
 				modif_bottom=(j_tab!=2) || swap_buffer;
 
-				idata.src_plane0=tab_pxsrc[j_tab]->data;
-				idata.src_plane1=tab_pxsrc[j_tab]->data2;
-				idata.src_plane2=tab_pxsrc[j_tab]->data3;
+				image_data.src_plane0=tab_pxsrc[j_tab]->data;
+				image_data.src_plane1=tab_pxsrc[j_tab]->data2;
+				image_data.src_plane2=tab_pxsrc[j_tab]->data3;
 				
 				src2_RGB=(void *)((uint8_t *)buffer[j].frameRGB32+buffer_frameRGB32_pitch);
 				
-				switch (idata.video_mode)
+				switch (image_data.video_mode)
 				{
-					case 1 :
-					case 2 :
-					case 3 :
-						src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
+					case VMODE_BMP_RGBA :
+					case VMODE_YUYV :
+					case VMODE_UYVY :
+						src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
 						break;
-					case 6 :
-						src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
-						src2_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-2)*idata.src_pitch1));
-						src2_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-2)*idata.src_pitch2));
+					case VMODE_PLANAR_YUV420 :
+						src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
+						src2_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-2)*image_data.src_pitch1));
+						src2_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-2)*image_data.src_pitch2));
 						break;
 				}					
 											
@@ -15525,23 +13765,23 @@ void JPSDR_IVTC::Run()
 
 				modif_top=(j_tab!=2) || swap_buffer;
 
-				idata.src_plane0=tab_pxsrc[j_tab]->data;
-				idata.src_plane1=tab_pxsrc[j_tab]->data2;
-				idata.src_plane2=tab_pxsrc[j_tab]->data3;
+				image_data.src_plane0=tab_pxsrc[j_tab]->data;
+				image_data.src_plane1=tab_pxsrc[j_tab]->data2;
+				image_data.src_plane2=tab_pxsrc[j_tab]->data3;
 				
 				src1_RGB=buffer[j].frameRGB32;
 				
-				switch (idata.video_mode)
+				switch (image_data.video_mode)
 				{
-					case 1 :
-					case 2 :
-					case 3 :
-						src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
+					case VMODE_BMP_RGBA :
+					case VMODE_YUYV :
+					case VMODE_UYVY :
+						src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
 						break;
-					case 6 :
-						src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
-						src1_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-1)*idata.src_pitch1));
-						src1_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-1)*idata.src_pitch2));
+					case VMODE_PLANAR_YUV420 :
+						src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
+						src1_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-1)*image_data.src_pitch1));
+						src1_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-1)*image_data.src_pitch2));
 						break;
 				}						
 								
@@ -15550,15 +13790,14 @@ void JPSDR_IVTC::Run()
 					switch(deinterlace_mode)
 					{
 					case 1 :
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 0 :
-							case 1 :
+							case VMODE_BMP_RGBA :
 								Smart_Deinterlace_RGB32(src1_Y,src2_Y,buffer_frame[0],buffer_delta,
 									buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 									src_modulo,buffer_frame_modulo,buffer_delta_modulo32,thr_out,tri_linear,map_filter);
 								break;
-							case 2 :
+							case VMODE_YUYV :
 								Smart_Deinterlace_YUYV(src1_Y,src2_Y,buffer_frame[0],buffer_delta,
 									buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 									src_modulo,buffer_frame_modulo,buffer_delta_modulo16,thr_out,tri_linear,map_filter,
@@ -15566,7 +13805,7 @@ void JPSDR_IVTC::Run()
 								Convert_YUYV_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 									buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 								break;
-							case 3 :
+							case VMODE_UYVY :
 								Smart_Deinterlace_UYVY(src1_Y,src2_Y,buffer_frame[0],buffer_delta,
 									buffer_map,buffer_2,w,h>>1,src_pitch,buffer_frame_pitch,buffer_delta_pitch,
 									src_modulo,buffer_frame_modulo,buffer_delta_modulo16,thr_out,tri_linear,map_filter,
@@ -15574,7 +13813,7 @@ void JPSDR_IVTC::Run()
 								Convert_UYVY_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 									buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 								break;
-							case 6 :
+							case VMODE_PLANAR_YUV420 :
 								Smart_Deinterlace_Planar420((uint8_t *)src1_Y,(uint8_t *)src2_Y,(uint8_t *)src1_U,
 									(uint8_t *)src2_U,(uint8_t *)src1_V,(uint8_t *)src2_V,buffer_frame_Y[0],
 									buffer_frame_U[0],buffer_frame_V[0],buffer_delta_Y,buffer_delta_U,
@@ -15592,26 +13831,25 @@ void JPSDR_IVTC::Run()
 						}
 						break;
 					case 2 :
-						switch (idata.video_mode)
+						switch (image_data.video_mode)
 						{
-							case 0 :
-							case 1 :
+							case VMODE_BMP_RGBA :
 								Deinterlace_RGB32(src1_Y,src2_Y,buffer_frame[0],w,h>>1,src_pitch,
 									buffer_frame_pitch,tri_linear,true);
 								break;
-							case 2 :
+							case VMODE_YUYV :
 								Deinterlace_YUYV(src1_Y,src2_Y,buffer_frame[0],w,h>>1,src_pitch,
 									buffer_frame_pitch,tri_linear,true,Y_only);
 								Convert_YUYV_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 									buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 								break;
-							case 3 :
+							case VMODE_UYVY :
 								Deinterlace_UYVY(src1_Y,src2_Y,buffer_frame[0],w,h>>1,src_pitch,
 									buffer_frame_pitch,tri_linear,true,Y_only);
 								Convert_UYVY_to_RGB32(buffer_frame[0],buffer_frameRGB32[0],w,h,buffer_frame_pitch,
 									buffer_frame_modulo,buffer_frameRGB32_pitch,buffer_frameRGB32_modulo);
 								break;
-							case 6 :
+							case VMODE_PLANAR_YUV420 :
 								Deinterlace_Planar((uint8_t *)src1_Y,(uint8_t *)src2_Y,buffer_frame_Y[0],w_Y,h_Y>>1,
 									src_pitch_Y,buffer_frame_Y_pitch,tri_linear,true);
 								if (!Y_only)
@@ -15623,8 +13861,8 @@ void JPSDR_IVTC::Run()
 								}
 								else
 								{
-									Rebuild_Frame(src1_U,src2_U,buffer_frame_U[0],idata.src_line1,h_U>>1,src_pitch_U,buffer_frame_U_pitch);
-									Rebuild_Frame(src1_V,src2_V,buffer_frame_V[0],idata.src_line2,h_V>>1,src_pitch_V,buffer_frame_V_pitch);
+									Rebuild_Frame(src1_U,src2_U,buffer_frame_U[0],image_data.src_line1,h_U>>1,src_pitch_U,buffer_frame_U_pitch);
+									Rebuild_Frame(src1_V,src2_V,buffer_frame_V[0],image_data.src_line2,h_V>>1,src_pitch_V,buffer_frame_V_pitch);
 								}
 								Convert_Planar420_to_RGB32(buffer_frame_Y[0],buffer_frame_U[0],buffer_frame_V[0],
 									buffer_delta,buffer_frameRGB32[0],w_Y,h_Y,buffer_frame_Y_pitch,buffer_frame_U_pitch,
@@ -15643,23 +13881,23 @@ void JPSDR_IVTC::Run()
 				{
 					modif_bottom=(i_tab!=2) || swap_buffer;
 				
-					idata.src_plane0=tab_pxsrc[i_tab]->data;
-					idata.src_plane1=tab_pxsrc[i_tab]->data2;
-					idata.src_plane2=tab_pxsrc[i_tab]->data3;
+					image_data.src_plane0=tab_pxsrc[i_tab]->data;
+					image_data.src_plane1=tab_pxsrc[i_tab]->data2;
+					image_data.src_plane2=tab_pxsrc[i_tab]->data3;
 				
 					src2_RGB=(void *)((uint8_t *)buffer[i].frameRGB32+buffer_frameRGB32_pitch);
 				
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 1 :
-						case 2 :
-						case 3 :
-							src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
+						case VMODE_BMP_RGBA :
+						case VMODE_YUYV :
+						case VMODE_UYVY :
+							src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
 							break;
-						case 6 :
-							src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
-							src2_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-2)*idata.src_pitch1));
-							src2_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-2)*idata.src_pitch2));
+						case VMODE_PLANAR_YUV420 :
+							src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
+							src2_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-2)*image_data.src_pitch1));
+							src2_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-2)*image_data.src_pitch2));
 							break;
 					}	
 					
@@ -15693,24 +13931,24 @@ void JPSDR_IVTC::Run()
 				{			
 					modif_bottom=(i_tab!=2) || swap_buffer;
 				
-					idata.src_plane0=tab_pxsrc[i_tab]->data;
-					idata.src_plane1=tab_pxsrc[i_tab]->data2;
-					idata.src_plane2=tab_pxsrc[i_tab]->data3;
+					image_data.src_plane0=tab_pxsrc[i_tab]->data;
+					image_data.src_plane1=tab_pxsrc[i_tab]->data2;
+					image_data.src_plane2=tab_pxsrc[i_tab]->data3;
 				
 					src2_RGB=(void *)((uint8_t *)manual.bufferRGB32[(manual.read_index+i)%Buffer_Size_Manual]
 						+buffer_frameRGB32_pitch);
 				
-					switch (idata.video_mode)
+					switch (image_data.video_mode)
 					{
-						case 1 :
-						case 2 :
-						case 3 :
-							src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
+						case VMODE_BMP_RGBA :
+						case VMODE_YUYV :
+						case VMODE_UYVY :
+							src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
 							break;
-						case 6 :
-							src2_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-2)*idata.src_pitch0));
-							src2_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-2)*idata.src_pitch1));
-							src2_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-2)*idata.src_pitch2));
+						case VMODE_PLANAR_YUV420 :
+							src2_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-2)*image_data.src_pitch0));
+							src2_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-2)*image_data.src_pitch1));
+							src2_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-2)*image_data.src_pitch2));
 							break;
 					}	
 					
@@ -15742,23 +13980,23 @@ void JPSDR_IVTC::Run()
 			{
 				modif_top=(j_tab!=2) || swap_buffer;
 			
-				idata.src_plane0=tab_pxsrc[j_tab]->data;
-				idata.src_plane1=tab_pxsrc[j_tab]->data2;
-				idata.src_plane2=tab_pxsrc[j_tab]->data3;
+				image_data.src_plane0=tab_pxsrc[j_tab]->data;
+				image_data.src_plane1=tab_pxsrc[j_tab]->data2;
+				image_data.src_plane2=tab_pxsrc[j_tab]->data3;
 				
 				src1_RGB=buffer[j].frameRGB32;				
 				
-				switch (idata.video_mode)
+				switch (image_data.video_mode)
 				{
-					case 1 :
-					case 2 :
-					case 3 :
-						src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
+					case VMODE_BMP_RGBA :
+					case VMODE_YUYV :
+					case VMODE_UYVY :
+						src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
 						break;
-					case 6 :
-						src1_Y=(void *)((uint8_t *)idata.src_plane0-((idata.src_h0-1)*idata.src_pitch0));
-						src1_U=(void *)((uint8_t *)idata.src_plane1-((idata.src_h1-1)*idata.src_pitch1));
-						src1_V=(void *)((uint8_t *)idata.src_plane2-((idata.src_h2-1)*idata.src_pitch2));
+					case VMODE_PLANAR_YUV420 :
+						src1_Y=(void *)((uint8_t *)image_data.src_plane0-((image_data.src_h0-1)*image_data.src_pitch0));
+						src1_U=(void *)((uint8_t *)image_data.src_plane1-((image_data.src_h1-1)*image_data.src_pitch1));
+						src1_V=(void *)((uint8_t *)image_data.src_plane2-((image_data.src_h2-1)*image_data.src_pitch2));
 						break;
 				}
 				
@@ -15786,27 +14024,26 @@ void JPSDR_IVTC::Run()
 				modulo1_V=buffer_frame_V_modulo;
 			}
 
-			switch (idata.video_mode)
+			switch (image_data.video_mode)
 			{
-				case 0 :
-				case 1 :
-				case 2 :
-				case 3 :
-					if (modif_top) Rebuild_Frame_2(src1_Y,dst1_Y,idata.src_line0,h>>1,pitch1_Y,dst_pitch);
-					if (modif_bottom) Rebuild_Frame_2(src2_Y,dst2_Y,idata.src_line0,h>>1,pitch2_Y,dst_pitch);
+				case VMODE_BMP_RGBA :
+				case VMODE_YUYV :
+				case VMODE_UYVY :
+					if (modif_top) Rebuild_Frame_2(src1_Y,dst1_Y,image_data.src_line0,h>>1,pitch1_Y,dst_pitch);
+					if (modif_bottom) Rebuild_Frame_2(src2_Y,dst2_Y,image_data.src_line0,h>>1,pitch2_Y,dst_pitch);
 					break;
-				case 6 :
+				case VMODE_PLANAR_YUV420 :
 					if (modif_top)
 					{
-						Rebuild_Frame_2(src1_Y,dst1_Y,idata.src_line0,h_Y>>1,pitch1_Y,dst_pitch_Y);
-						Rebuild_Frame_2(src1_U,dst1_U,idata.src_line1,h_U>>1,pitch1_U,dst_pitch_U);
-						Rebuild_Frame_2(src1_V,dst1_V,idata.src_line2,h_V>>1,pitch1_V,dst_pitch_V);
+						Rebuild_Frame_2(src1_Y,dst1_Y,image_data.src_line0,h_Y>>1,pitch1_Y,dst_pitch_Y);
+						Rebuild_Frame_2(src1_U,dst1_U,image_data.src_line1,h_U>>1,pitch1_U,dst_pitch_U);
+						Rebuild_Frame_2(src1_V,dst1_V,image_data.src_line2,h_V>>1,pitch1_V,dst_pitch_V);
 					}
 					if (modif_bottom)
 					{
-						Rebuild_Frame_2(src2_Y,dst2_Y,idata.src_line0,h_Y>>1,pitch1_Y,dst_pitch_Y);
-						Rebuild_Frame_2(src2_U,dst2_U,idata.src_line1,h_U>>1,pitch1_U,dst_pitch_U);
-						Rebuild_Frame_2(src2_V,dst2_V,idata.src_line2,h_V>>1,pitch1_V,dst_pitch_V);
+						Rebuild_Frame_2(src2_Y,dst2_Y,image_data.src_line0,h_Y>>1,pitch1_Y,dst_pitch_Y);
+						Rebuild_Frame_2(src2_U,dst2_U,image_data.src_line1,h_U>>1,pitch1_U,dst_pitch_U);
+						Rebuild_Frame_2(src2_V,dst2_V,image_data.src_line2,h_V>>1,pitch1_V,dst_pitch_V);
 					}
 					break;	
 			}
@@ -15942,4 +14179,4 @@ void JPSDR_IVTC::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_IVTC=
-VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.4.4","IVTC Filter. [SSE2][AVX] Optimised.");
+VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.5.0","IVTC Filter. [SSE2][AVX] Optimised.");
