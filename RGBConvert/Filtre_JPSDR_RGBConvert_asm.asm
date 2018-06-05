@@ -163,18 +163,23 @@ JPSDR_RGBConvert_Convert_Planar444_to_Planar422_8 proc src:dword,dst:dword,w:dwo
 	mov edi,dst
 	mov esi,src
 	mov ebx,src_modulo
-	mov edx,dst_modulo
+	xor edx,edx
+	xor eax,eax
 
 Convert_Planar444_to_Planar422_8_1:
 	mov ecx,w
 	
 Convert_Planar444_to_Planar422_8_2:
-	lodsw
+	lodsb
+	mov dl,al
+	lodsb
+	add ax,dx
+	shr ax,1
 	stosb
 	loop Convert_Planar444_to_Planar422_8_2
 	
 	add esi,ebx
-	add edi,edx
+	add edi,dst_modulo
 	dec h
 	jnz short Convert_Planar444_to_Planar422_8_1
 
@@ -210,10 +215,16 @@ Convert_Planar444_to_Planar422_8_SSE2_1:
 	
 Convert_Planar444_to_Planar422_8_SSE2_2:
 	movdqa xmm0,XMMWORD ptr[esi+2*eax]
-	movdqa xmm1,XMMWORD ptr[edx+2*eax]
+	movdqa xmm2,XMMWORD ptr[edx+2*eax]
+	movdqa xmm1,xmm0
+	movdqa xmm3,xmm2
+	psllw xmm1,8
+	psllw xmm3,8
+	pavgb xmm0,xmm1
+	pavgb xmm2,xmm3
 	psrlw xmm0,8
-	psrlw xmm1,8
-	packuswb xmm0,xmm1
+	psrlw xmm2,8
+	packuswb xmm0,xmm2
 	
 	movdqa XMMWORD ptr[edi+eax],xmm0
 	add eax,ebx
@@ -224,6 +235,9 @@ Convert_Planar444_to_Planar422_8_SSE2_3:
 	jz short Convert_Planar444_to_Planar422_8_SSE2_4
 	
 	movdqa xmm0,XMMWORD ptr[esi+2*eax]
+	movdqa xmm1,xmm0
+	psllw xmm1,8
+	pavgb xmm0,xmm1
 	psrlw xmm0,8
 	packuswb xmm0,xmm0
 	
@@ -268,10 +282,14 @@ Convert_Planar444_to_Planar422_8_AVX_1:
 	
 Convert_Planar444_to_Planar422_8_AVX_2:
 	vmovdqa xmm0,XMMWORD ptr[esi+2*eax]
-	vmovdqa xmm1,XMMWORD ptr[edx+2*eax]
+	vmovdqa xmm2,XMMWORD ptr[edx+2*eax]
+	vpsllw xmm1,xmm0,8
+	vpsllw xmm3,xmm2,8
+	vpavgb xmm0,xmm0,xmm1
+	vpavgb xmm2,xmm2,xmm3
 	vpsrlw xmm0,xmm0,8
-	vpsrlw xmm1,xmm1,8
-	vpackuswb xmm0,xmm0,xmm1
+	vpsrlw xmm2,xmm2,8
+	vpackuswb xmm0,xmm0,xmm2
 	
 	vmovdqa XMMWORD ptr[edi+eax],xmm0
 	add eax,ebx
@@ -282,6 +300,8 @@ Convert_Planar444_to_Planar422_8_AVX_3:
 	jz short Convert_Planar444_to_Planar422_8_AVX_4
 	
 	vmovdqa xmm0,XMMWORD ptr[esi+2*eax]
+	vpsllw xmm1,xmm0,8
+	vpavgb xmm0,xmm0,xmm1
 	vpsrlw xmm0,xmm0,8
 	vpackuswb xmm0,xmm0,xmm0
 	
