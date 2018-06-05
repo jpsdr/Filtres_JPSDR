@@ -158,6 +158,12 @@
     <MASM Include="..\CCC\Filtre_JPSDR_CCC_asm.asm">
       <Filter>Fichiers sources</Filter>
     </MASM>
+    <MASM Include="..\RGBConvert\Filtre_JPSDR_RGBConvert_AVX2_asm.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
+    <MASM Include="..\RGBConvert\Filtre_JPSDR_RGBConvert_AVX2_asm_x64.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
