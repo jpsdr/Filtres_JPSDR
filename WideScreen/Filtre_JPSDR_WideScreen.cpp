@@ -313,7 +313,7 @@ void JPSDR_WideScreen::Start()
 		return;
 	}
 	
-	SetImageData(image_data);
+	SetImageData(image_data,true);
 
 	src_offset_center=(image_data.src_h0-(mData.top+mData.bottom))*image_data.src_pitch0;
 	dst_offset_center=(image_data.dst_h0-(mData.top+mData.bottom))*image_data.dst_pitch0;

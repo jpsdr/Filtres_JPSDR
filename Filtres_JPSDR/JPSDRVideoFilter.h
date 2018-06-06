@@ -45,7 +45,7 @@ public:
 	uint8_t GetBitDepth(const VDXFBitmap* bitmap);
 	bool CheckFullRangeMode(const VDXFBitmap* bitmap);
 
-	void SetImageData(Image_Data& iData);
+	void SetImageData(Image_Data& iData,bool modeBMP=false);
 };
 
 

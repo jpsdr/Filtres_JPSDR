@@ -1359,7 +1359,7 @@ void JPSDR_IVTC::Start()
 		return;
 	}
 
-	SetImageData(image_data);
+	SetImageData(image_data,true);
 
 	switch (image_data.video_mode)
 	{
@@ -1398,7 +1398,8 @@ void JPSDR_IVTC::Start()
 	offset=0;
 	line_file=0;
 
-	if ((image_data.video_mode==6) && ((image_data.src_h0>=600) || (image_data.src_w0>=800))) resize_720x480=true;
+	if ((image_data.video_mode==VMODE_PLANAR_YUV420)
+		&& ((image_data.src_h0>=600) || (image_data.src_w0>=800))) resize_720x480=true;
 	else resize_720x480=false;
 
 	if (mData.manual_mode)
@@ -1564,14 +1565,14 @@ void JPSDR_IVTC::Start()
 		error_field_pitch=(((720 << 2)+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
 		error_field_modulo=error_field_pitch-(720 << 2);
 		for (i=0; i<Error_Fields_Size; i++)
-			error_Fields[i]=(void *)malloc((size_t)error_field_pitch*(size_t)480); // Taille RGB32
+			error_Fields[i]=(void *)_aligned_malloc((size_t)error_field_pitch*(size_t)480,ALIGN_SIZE); // Taille RGB32
 	}
 	else
 	{
 		error_field_pitch=(((image_data.src_w0 << 2)+ALIGN_SIZE-1)>>ALIGN_SHIFT)<<ALIGN_SHIFT;
 		error_field_modulo=error_field_pitch-(image_data.src_w0 << 2);
 		for (i=0; i<Error_Fields_Size; i++)
-			error_Fields[i]=(void *)malloc((size_t)error_field_pitch*(size_t)image_data.src_h0); // Taille RGB32
+			error_Fields[i]=(void *)_aligned_malloc((size_t)error_field_pitch*(size_t)image_data.src_h0,ALIGN_SIZE); // Taille RGB32
 	}
 	for (i=0; i<Data_Buffer_Size; i++)
 	{
@@ -14096,7 +14097,7 @@ void JPSDR_IVTC::End()
 		my_aligned_free(buffer[i].frameRGB32);
 	}
 	for (i=Error_Fields_Size-1; i>=0; i--)
-		myfree(error_Fields[i]);
+		my_aligned_free(error_Fields[i]);
 	for (i=1; i>=0; i--)
 	{
 		my_aligned_free(buffer_frameRGB32[i]);

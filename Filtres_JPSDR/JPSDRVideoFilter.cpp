@@ -353,7 +353,7 @@ bool JPSDRVDXVideoFilter::CheckFullRangeMode(const VDXFBitmap* bitmap)
 }
 
 
-void JPSDRVDXVideoFilter::SetImageData(Image_Data& iData)
+void JPSDRVDXVideoFilter::SetImageData(Image_Data& iData,bool modeBMP)
 {
 	const VDXPixmapLayoutAlpha& pxsrc=(VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	const VDXPixmapLayoutAlpha& pxdst=(VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
@@ -375,20 +375,45 @@ void JPSDRVDXVideoFilter::SetImageData(Image_Data& iData)
 	iData.dst_alpha_planar=CheckAlphaPlanarMode(pxdst.format);
 
 	iData.src_h0=pxsrc.h;
-	iData.src_h0=pxsrc.h;
 	iData.src_w0=pxsrc.w;
-	iData.src_pitch0=pxsrc.pitch;
-	iData.src_pitch1=pxsrc.pitch2;
-	iData.src_pitch2=pxsrc.pitch3;
+	if (modeBMP)
+	{
+		iData.src_pitch0=-pxsrc.pitch;
+		iData.src_pitch1=-pxsrc.pitch2;
+		iData.src_pitch2=-pxsrc.pitch3;
+	}
+	else
+	{
+		iData.src_pitch0=pxsrc.pitch;
+		iData.src_pitch1=pxsrc.pitch2;
+		iData.src_pitch2=pxsrc.pitch3;
+	}
 
 	iData.dst_h0=pxdst.h;
 	iData.dst_w0=pxdst.w;
-	iData.dst_pitch0=pxdst.pitch;
-	iData.dst_pitch1=pxdst.pitch2;
-	iData.dst_pitch2=pxdst.pitch3;
+	if (modeBMP)
+	{
+		iData.dst_pitch0=-pxdst.pitch;
+		iData.dst_pitch1=-pxdst.pitch2;
+		iData.dst_pitch2=-pxdst.pitch3;
+	}
+	else
+	{
+		iData.dst_pitch0=pxdst.pitch;
+		iData.dst_pitch1=pxdst.pitch2;
+		iData.dst_pitch2=pxdst.pitch3;
+	}
 
-	if (iData.src_alpha_planar) iData.src_pitch3=pxsrc.pitch4;
-	if (iData.dst_alpha_planar) iData.dst_pitch3=pxdst.pitch4;
+	if (modeBMP)
+	{
+		if (iData.src_alpha_planar) iData.src_pitch3=-pxsrc.pitch4;
+		if (iData.dst_alpha_planar) iData.dst_pitch3=-pxdst.pitch4;
+	}
+	else
+	{
+		if (iData.src_alpha_planar) iData.src_pitch3=pxsrc.pitch4;
+		if (iData.dst_alpha_planar) iData.dst_pitch3=pxdst.pitch4;
+	}
 
 	switch(iData.src_video_mode)
 	{

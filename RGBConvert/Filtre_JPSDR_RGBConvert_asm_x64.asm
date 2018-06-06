@@ -160,6 +160,7 @@ dst_modulo equ qword ptr[rbp+56]
 	.pushreg rdi
 	.endprolog
 	
+	cld
 	mov rsi,rcx
 	xor rax,rax	
 	xor rcx,rcx
