@@ -173,8 +173,8 @@ public:
 
 protected:
 	Image_Data image_data;
-	int16_t Tlookup[2304];
-	uint16_t lookup_Upscale8[256];
+	int16_t *Tlookup;
+	uint16_t *lookup_Upscale8;
 	uint8_t convertion_mode;
 	int16_t Min_U,Max_U,Min_Y,Max_Y,Min_V,Max_V;
 	int16_t Offset_Y,Offset_U,Offset_V,Offset_R,Offset_G,Offset_B;
@@ -355,6 +355,9 @@ void JPSDR_RGBConvert::InternalInit(void)
 	BufferV_444=NULL;
 	BufferU_422=NULL;
 	BufferV_422=NULL;
+
+	lookup_Upscale8=NULL;
+	Tlookup=NULL;
 
 	for(uint16_t i=0; i<256; i++)
 		lookup_Upscale8[i]=3*i+2;
@@ -2001,6 +2004,18 @@ void JPSDR_RGBConvert::Start()
 		return;
 	}
 
+	lookup_Upscale8=(uint16_t *)malloc(256*sizeof(uint16_t));
+	Tlookup=(int16_t *)malloc(9*256*sizeof(int16_t));
+
+	if ((lookup_Upscale8==NULL) || (Tlookup==NULL))
+	{
+		ff->ExceptOutOfMemory();
+		return;
+	}
+
+	for(uint16_t i=0; i<256; i++)
+		lookup_Upscale8[i]=3*i+2;
+
 	if  (mData.mt_mode && (image_data.src_h0>=32) && (image_data.dst_h0>=32))
 	{
 		for(uint8_t i=0; i<3; i++)
@@ -2117,6 +2132,8 @@ void JPSDR_RGBConvert::End()
 	my_aligned_free(BufferU_422);
 	my_aligned_free(BufferV_444);
 	my_aligned_free(BufferU_444);
+	myfree(Tlookup);
+	myfree(lookup_Upscale8);
 }
 
 
@@ -2652,7 +2669,7 @@ void JPSDR_RGBConvert::Run()
 		}
 	}
 
-	if (max_threads>1) poolInterface->ReleaseThreadPool(UserId,true);
+	if (max_threads>1) poolInterface->ReleaseThreadPool(UserId,false);
 }
 
 
@@ -2682,4 +2699,4 @@ void JPSDR_RGBConvert::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_RGBConvert=
-VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v3.0.0","RGB <-> YCbCr convertion with color matrix option.\n[ASM][SSE2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v3.0.1","RGB <-> YCbCr convertion with color matrix option.\n[ASM][SSE2] Optimised.");

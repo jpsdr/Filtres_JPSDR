@@ -14050,7 +14050,7 @@ void JPSDR_IVTC::Run()
 			}
 		}
 
-		if (threads_number>1) poolInterface->ReleaseThreadPool(UserId,true);
+		if (threads_number>1) poolInterface->ReleaseThreadPool(UserId,false);
 
 		if (mData.manual_mode)
 		{
@@ -14180,4 +14180,4 @@ void JPSDR_IVTC::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_IVTC=
-VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.5.0","IVTC Filter. [SSE2][AVX] Optimised.");
+VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.5.1","IVTC Filter. [SSE2][AVX] Optimised.");

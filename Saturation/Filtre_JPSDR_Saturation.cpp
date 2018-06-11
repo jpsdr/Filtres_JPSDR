@@ -1346,7 +1346,7 @@ void JPSDR_Saturation::Run()
 				}
 			}
 
-			poolInterface->ReleaseThreadPool(UserId,true);
+			poolInterface->ReleaseThreadPool(UserId,false);
 		}
 	}
 	else
@@ -1809,4 +1809,4 @@ void JPSDR_Saturation::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptV
 
 		
 extern VDXFilterDefinition2 filterDef_JPSDR_Saturation=
-VDXVideoFilterDefinition<JPSDR_Saturation>("JPSDR","Sat/Hue/Bright/Contr v4.4.0","[SSE2][AVX] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Saturation>("JPSDR","Sat/Hue/Bright/Contr v4.4.1","[SSE2][AVX] Optimised.");

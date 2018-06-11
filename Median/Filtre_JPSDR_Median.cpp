@@ -1783,7 +1783,7 @@ void JPSDR_Median::Run()
 						for(uint8_t j=0; j<threads_number; j++)
 							MT_Thread[j].f_process=0;
 
-						poolInterface->ReleaseThreadPool(UserId,true);
+						poolInterface->ReleaseThreadPool(UserId,false);
 					}
 				}
 				else
@@ -2211,4 +2211,4 @@ void JPSDR_Median::GetScriptString(char *buf, int maxlen)
 }
 
 extern VDXFilterDefinition2 filterDef_JPSDR_Median=
-VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v3.4.0","Median filter with threshold.");
+VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v3.4.1","Median filter with threshold.");
