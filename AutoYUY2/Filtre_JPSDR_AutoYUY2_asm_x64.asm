@@ -1843,12 +1843,13 @@ _AVX_8b_c:
 JPSDR_AutoYUY2_Convert420_to_UYVY_AVX_4b endp
 
 
-;JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_2b proc src1:dword,src2:dword,dst:dword,w:dword
+;JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_SSE2 proc src1:dword,src2:dword,dst:dword,w16:dword
 ; src1 = rcx
 ; src2 = rdx
 ; dst = r8
-; w = r9d
-JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_2b proc public frame
+; w16 = r9d
+
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_SSE2 proc public frame
 
 	.endprolog
 		
@@ -1856,40 +1857,36 @@ JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_2b proc public frame
 	
 	mov r10,rcx				; r10=src1
 	xor rcx,rcx
-	xor rax,rax
-	
-	mov ecx,r9d
-	or ecx,ecx
-	jz short SSE2_2b_d
-	
+	xor rax,rax	
+	mov ecx,r9d	
 	mov r11,16
-SSE2_2b_a:
-	movdqa xmm0,XMMWORD ptr[rdx+rax]
-	movdqa xmm1,XMMWORD ptr[r10+rax]
+	
+Convert_Planar420_to_Planar422_x3x1_8_SSE2_1:
+	movdqa xmm0,XMMWORD ptr[r10+rax]
+	movdqa xmm1,XMMWORD ptr[rdx+rax]
 	movdqa xmm2,xmm0
 	pxor xmm0,xmm3
 	pxor xmm1,xmm3
 	pavgb xmm0,xmm1
-	pavgb xmm0,xmm1
 	pxor xmm0,xmm3
 	pavgb xmm0,xmm2
-
+	
 	movdqa XMMWORD ptr[r8+rax],xmm0
 	add rax,r11
-	loop SSE2_2b_a
-		
-SSE2_2b_d:		
+	loop Convert_Planar420_to_Planar422_x3x1_8_SSE2_1
+	
 	ret
 
-JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_2b endp
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_SSE2 endp
 
 
-;JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_2b proc src1:dword,src2:dword,dst:dword,w:dword
+;JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX proc src1:dword,src2:dword,dst:dword,w16:dword
 ; src1 = rcx
 ; src2 = rdx
 ; dst = r8
-; w = r9d
-JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_2b proc public frame
+; w16 = r9d
+
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX proc public frame
 
 	.endprolog
 		
@@ -1897,55 +1894,270 @@ JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_2b proc public frame
 	
 	mov r10,rcx				; r10=src1
 	xor rcx,rcx
-	xor rax,rax
-	
-	mov ecx,r9d
-	or ecx,ecx
-	jz short AVX_2b_d
-	
+	xor rax,rax	
+	mov ecx,r9d	
 	mov r11,16
-AVX_2b_a:
-	vmovdqa xmm0,XMMWORD ptr[rdx+rax]
-	vmovdqa xmm1,XMMWORD ptr[r10+rax]
+	
+Convert_Planar420_to_Planar422_x3x1_8_AVX_1:
+	vmovdqa xmm0,XMMWORD ptr[r10+rax]
+	vmovdqa xmm1,XMMWORD ptr[rdx+rax]
+	vpxor xmm2,xmm0,xmm3
+	vpxor xmm1,xmm1,xmm3
+	vpavgb xmm2,xmm2,xmm1
+	vpxor xmm2,xmm2,xmm3
+	vpavgb xmm2,xmm2,xmm0
+	
+	vmovdqa XMMWORD ptr[r8+rax],xmm2
+	add rax,r11
+	loop Convert_Planar420_to_Planar422_x3x1_8_AVX_1
+	
+	ret
+
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX endp
+
+
+;JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_SSE2 proc src1:dword,src2:dword,dst:dword,w8:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w8 = r9d
+
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_SSE2 proc public frame
+
+	.endprolog
+		
+	pcmpeqb xmm3,xmm3
+	
+	mov r10,rcx				; r10=src1
+	xor rcx,rcx
+	xor rax,rax	
+	mov ecx,r9d	
+	mov r11,16
+	
+Convert_Planar420_to_Planar422_x3x1_16_SSE2_1:
+	movdqa xmm0,XMMWORD ptr[r10+rax]
+	movdqa xmm1,XMMWORD ptr[rdx+rax]
+	movdqa xmm2,xmm0
+	pxor xmm0,xmm3
+	pxor xmm1,xmm3
+	pavgw xmm0,xmm1
+	pxor xmm0,xmm3
+	pavgw xmm0,xmm2
+	
+	movdqa XMMWORD ptr[r8+rax],xmm0
+	add rax,r11
+	loop Convert_Planar420_to_Planar422_x3x1_16_SSE2_1
+	
+	ret
+
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_SSE2 endp
+
+
+;JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX proc src1:dword,src2:dword,dst:dword,w8:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w8 = r9d
+
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX proc public frame
+
+	.endprolog
+		
+	vpcmpeqb xmm3,xmm3,xmm3
+	
+	mov r10,rcx				; r10=src1
+	xor rcx,rcx
+	xor rax,rax	
+	mov ecx,r9d	
+	mov r11,16
+	
+Convert_Planar420_to_Planar422_x3x1_16_AVX_1:
+	vmovdqa xmm0,XMMWORD ptr[r10+rax]
+	vmovdqa xmm1,XMMWORD ptr[rdx+rax]
+	vpxor xmm2,xmm0,xmm3
+	vpxor xmm1,xmm1,xmm3
+	vpavgw xmm2,xmm2,xmm1
+	vpxor xmm2,xmm2,xmm3
+	vpavgw xmm2,xmm2,xmm0
+	
+	vmovdqa XMMWORD ptr[r8+rax],xmm2
+	add rax,r11
+	loop Convert_Planar420_to_Planar422_x3x1_16_AVX_1
+	
+	ret
+
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX endp
+
+
+;JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_SSE2 proc src1:dword,src2:dword,dst:dword,w16:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w16 = r9d
+
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_SSE2 proc public frame
+
+	.endprolog
+		
+	pcmpeqb xmm3,xmm3
+	
+	mov r10,rcx				; r10=src1
+	xor rcx,rcx
+	xor rax,rax	
+	mov ecx,r9d	
+	mov r11,16
+	
+Convert_Planar420_to_Planar422_x3x5_8_SSE2_1:
+	movdqa xmm0,XMMWORD ptr[r10+rax]
+	movdqa xmm1,XMMWORD ptr[rdx+rax]
+	movdqa xmm2,xmm0
+	pxor xmm0,xmm3
+	pxor xmm1,xmm3
+	pavgb xmm0,xmm1
+	pavgb xmm0,xmm1
+	pxor xmm0,xmm3
+	pavgb xmm0,xmm2
+	
+	movdqa XMMWORD ptr[r8+rax],xmm0
+	add rax,r11
+	loop Convert_Planar420_to_Planar422_x3x5_8_SSE2_1
+	
+	ret
+
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_SSE2 endp
+
+
+;JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX proc src1:dword,src2:dword,dst:dword,w16:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w16 = r9d
+
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX proc public frame
+
+	.endprolog
+		
+	vpcmpeqb xmm3,xmm3,xmm3
+	
+	mov r10,rcx				; r10=src1
+	xor rcx,rcx
+	xor rax,rax	
+	mov ecx,r9d	
+	mov r11,16
+	
+Convert_Planar420_to_Planar422_x3x5_8_AVX_1:
+	vmovdqa xmm0,XMMWORD ptr[r10+rax]
+	vmovdqa xmm1,XMMWORD ptr[rdx+rax]
 	vpxor xmm2,xmm0,xmm3
 	vpxor xmm1,xmm1,xmm3
 	vpavgb xmm2,xmm2,xmm1
 	vpavgb xmm2,xmm2,xmm1
 	vpxor xmm2,xmm2,xmm3
 	vpavgb xmm2,xmm2,xmm0
-
+	
 	vmovdqa XMMWORD ptr[r8+rax],xmm2
 	add rax,r11
-	loop AVX_2b_a
-		
-AVX_2b_d:		
+	loop Convert_Planar420_to_Planar422_x3x5_8_AVX_1
+	
 	ret
 
-JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_2b endp
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX endp
 
 
-;JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_3b proc src1:dword,src2:dword,dst:dword,w:dword
+;JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_SSE2 proc src1:dword,src2:dword,dst:dword,w8:dword
 ; src1 = rcx
 ; src2 = rdx
 ; dst = r8
-; w = r9d
-	
-JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_3b proc public frame	
-	
+; w8 = r9d
+
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_SSE2 proc public frame
+
 	.endprolog
-	
+		
 	pcmpeqb xmm3,xmm3
 	
 	mov r10,rcx				; r10=src1
 	xor rcx,rcx
-	xor rax,rax
-	
-	mov ecx,r9d
-	or ecx,ecx
-	jz short SSE2_3b_d
-		
+	xor rax,rax	
+	mov ecx,r9d	
 	mov r11,16
-SSE2_3b_a:
+	
+Convert_Planar420_to_Planar422_x3x5_16_SSE2_1:
+	movdqa xmm0,XMMWORD ptr[r10+rax]
+	movdqa xmm1,XMMWORD ptr[rdx+rax]
+	movdqa xmm2,xmm0
+	pxor xmm0,xmm3
+	pxor xmm1,xmm3
+	pavgw xmm0,xmm1
+	pavgw xmm0,xmm1
+	pxor xmm0,xmm3
+	pavgw xmm0,xmm2
+	
+	movdqa XMMWORD ptr[r8+rax],xmm0
+	add rax,r11
+	loop Convert_Planar420_to_Planar422_x3x5_16_SSE2_1
+	
+	ret
+
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_SSE2 endp
+
+
+;JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX proc src1:dword,src2:dword,dst:dword,w8:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w8 = r9d
+
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX proc public frame
+
+	.endprolog
+		
+	vpcmpeqb xmm3,xmm3,xmm3
+	
+	mov r10,rcx				; r10=src1
+	xor rcx,rcx
+	xor rax,rax	
+	mov ecx,r9d	
+	mov r11,16
+	
+Convert_Planar420_to_Planar422_x3x5_16_AVX_1:
+	vmovdqa xmm0,XMMWORD ptr[r10+rax]
+	vmovdqa xmm1,XMMWORD ptr[rdx+rax]
+	vpxor xmm2,xmm0,xmm3
+	vpxor xmm1,xmm1,xmm3
+	vpavgw xmm2,xmm2,xmm1
+	vpavgw xmm2,xmm2,xmm1
+	vpxor xmm2,xmm2,xmm3
+	vpavgw xmm2,xmm2,xmm0
+	
+	vmovdqa XMMWORD ptr[r8+rax],xmm2
+	add rax,r11
+	loop Convert_Planar420_to_Planar422_x3x5_16_AVX_1
+	
+	ret
+
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX endp
+
+
+;JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_SSE2 proc src1:dword,src2:dword,dst:dword,w16:dword
+; src1 = rcx
+; src2 = rdx
+; dst = r8
+; w16 = r9d
+
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_SSE2 proc public frame
+
+	.endprolog
+		
+	pcmpeqb xmm3,xmm3
+	
+	mov r10,rcx				; r10=src1
+	xor rcx,rcx
+	xor rax,rax	
+	mov ecx,r9d	
+	mov r11,16
+	
+Convert_Planar420_to_Planar422_x7x1_8_SSE2_1:
 	movdqa xmm0,XMMWORD ptr[r10+rax]
 	movdqa xmm1,XMMWORD ptr[rdx+rax]
 	movdqa xmm2,xmm0
@@ -1955,39 +2167,34 @@ SSE2_3b_a:
 	pavgb xmm1,xmm0
 	pxor xmm1,xmm3
 	pavgb xmm1,xmm2
-	
 	movdqa XMMWORD ptr[r8+rax],xmm1
 	add rax,r11
-	loop SSE2_3b_a
+	loop Convert_Planar420_to_Planar422_x7x1_8_SSE2_1
 	
-SSE2_3b_d:	
 	ret
 
-JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_3b endp
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_SSE2 endp
 
 
-;JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_3b proc src1:dword,src2:dword,dst:dword,w:dword
+;JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX proc src1:dword,src2:dword,dst:dword,w16:dword
 ; src1 = rcx
 ; src2 = rdx
 ; dst = r8
-; w = r9d
-	
-JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_3b proc public frame	
-	
+; w16 = r9d
+
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX proc public frame
+
 	.endprolog
-	
+		
 	vpcmpeqb xmm3,xmm3,xmm3
 	
 	mov r10,rcx				; r10=src1
 	xor rcx,rcx
-	xor rax,rax
-	
-	mov ecx,r9d
-	or ecx,ecx
-	jz short AVX_3b_d
-		
+	xor rax,rax	
+	mov ecx,r9d	
 	mov r11,16
-AVX_3b_a:
+	
+Convert_Planar420_to_Planar422_x7x1_8_AVX_1:
 	vmovdqa xmm0,XMMWORD ptr[r10+rax]
 	vmovdqa xmm1,XMMWORD ptr[rdx+rax]
 	vpxor xmm2,xmm0,xmm3
@@ -1996,24 +2203,22 @@ AVX_3b_a:
 	vpavgb xmm1,xmm1,xmm2
 	vpxor xmm1,xmm1,xmm3
 	vpavgb xmm1,xmm1,xmm0
-	
 	vmovdqa XMMWORD ptr[r8+rax],xmm1
 	add rax,r11
-	loop AVX_3b_a
+	loop Convert_Planar420_to_Planar422_x7x1_8_AVX_1
 	
-AVX_3b_d:	
 	ret
 
-JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_3b endp
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX endp
 
 
-;JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4b proc src1:dword,src2:dword,dst:dword,w:dword
+;JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_SSE2 proc src1:dword,src2:dword,dst:dword,w8:dword
 ; src1 = rcx
 ; src2 = rdx
 ; dst = r8
-; w = r9d
+; w8 = r9d
 
-JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4b proc public frame
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_SSE2 proc public frame
 
 	.endprolog
 		
@@ -2021,40 +2226,36 @@ JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4b proc public frame
 	
 	mov r10,rcx				; r10=src1
 	xor rcx,rcx
-	xor rax,rax
-	
-	mov ecx,r9d
-	or ecx,ecx
-	jz short SSE2_4b_b
-	
+	xor rax,rax	
+	mov ecx,r9d	
 	mov r11,16
-SSE2_4b_a:
+	
+Convert_Planar420_to_Planar422_x7x1_16_SSE2_1:
 	movdqa xmm0,XMMWORD ptr[r10+rax]
 	movdqa xmm1,XMMWORD ptr[rdx+rax]
 	movdqa xmm2,xmm0
 	pxor xmm0,xmm3
 	pxor xmm1,xmm3
-	pavgb xmm0,xmm1
-	pxor xmm0,xmm3
-	pavgb xmm0,xmm2
-	
-	movdqa XMMWORD ptr[r8+rax],xmm0
+	pavgw xmm1,xmm0
+	pavgw xmm1,xmm0
+	pxor xmm1,xmm3
+	pavgw xmm1,xmm2
+	movdqa XMMWORD ptr[r8+rax],xmm1
 	add rax,r11
-	loop SSE2_4b_a
-		
-SSE2_4b_b:		
+	loop Convert_Planar420_to_Planar422_x7x1_16_SSE2_1
+	
 	ret
 
-JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4b endp
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_SSE2 endp
 
 
-;JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_4b proc src1:dword,src2:dword,dst:dword,w:dword
+;JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX proc src1:dword,src2:dword,dst:dword,w8:dword
 ; src1 = rcx
 ; src2 = rdx
 ; dst = r8
-; w = r9d
+; w8 = r9d
 
-JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_4b proc public frame
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX proc public frame
 
 	.endprolog
 		
@@ -2062,30 +2263,26 @@ JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_4b proc public frame
 	
 	mov r10,rcx				; r10=src1
 	xor rcx,rcx
-	xor rax,rax
-	
-	mov ecx,r9d
-	or ecx,ecx
-	jz short AVX_4b_b
-	
+	xor rax,rax	
+	mov ecx,r9d	
 	mov r11,16
-AVX_4b_a:
+	
+Convert_Planar420_to_Planar422_x7x1_16_AVX_1:
 	vmovdqa xmm0,XMMWORD ptr[r10+rax]
 	vmovdqa xmm1,XMMWORD ptr[rdx+rax]
 	vpxor xmm2,xmm0,xmm3
 	vpxor xmm1,xmm1,xmm3
-	vpavgb xmm2,xmm2,xmm1
-	vpxor xmm2,xmm2,xmm3
-	vpavgb xmm2,xmm2,xmm0
-	
-	vmovdqa XMMWORD ptr[r8+rax],xmm2
+	vpavgw xmm1,xmm1,xmm2
+	vpavgw xmm1,xmm1,xmm2
+	vpxor xmm1,xmm1,xmm3
+	vpavgw xmm1,xmm1,xmm0
+	vmovdqa XMMWORD ptr[r8+rax],xmm1
 	add rax,r11
-	loop AVX_4b_a
-		
-AVX_4b_b:		
+	loop Convert_Planar420_to_Planar422_x7x1_16_AVX_1
+	
 	ret
 
-JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_4b endp
+JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX endp
 
 
 end

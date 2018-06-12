@@ -13,6 +13,11 @@ extern int g_VFVAPIVersion;
 
 extern ThreadPoolInterface *poolInterface;
 
+#if _MSC_VER >= 1900
+#define AVX2_BUILD_POSSIBLE
+#endif
+
+
 extern "C" void JPSDR_AutoYUY2_Convert420_to_YUY2_1(const void *scr_y,const void *src_u,const void *src_v,
 		void *dst,int32_t w);
 extern "C" void JPSDR_AutoYUY2_Convert420_to_YUY2_SSE2_1b(const void *scr_y,const void *src_u,const void *src_v,
@@ -54,13 +59,31 @@ extern "C" void JPSDR_AutoYUY2_Convert420_to_UYVY_AVX_4b(const void *scr_y,const
 		const void *src_v1,const void *src_v2,void *dst,int32_t w);
 
 
-extern "C" void JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_2b(const void *scr_1,const void *src_2,void *dst,int32_t w);
-extern "C" void JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_3b(const void *scr_1,const void *src_2,void *dst,int32_t w);
-extern "C" void JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4b(const void *scr_1,const void *src_2,void *dst,int32_t w);
+extern "C" void JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_SSE2(const void *scr_1,const void *src_2,void *dst,int w16);
+extern "C" void JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX(const void *scr_1,const void *src_2,void *dst,int w16);
+extern "C" void JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_SSE2(const void *scr_1,const void *src_2,void *dst,int w8);
+extern "C" void JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX(const void *scr_1,const void *src_2,void *dst,int w8);
 
-extern "C" void JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_2b(const void *scr_1,const void *src_2,void *dst,int32_t w);
-extern "C" void JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_3b(const void *scr_1,const void *src_2,void *dst,int32_t w);
-extern "C" void JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_4b(const void *scr_1,const void *src_2,void *dst,int32_t w);
+extern "C" void JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_SSE2(const void *scr_1,const void *src_2,void *dst,int w16);
+extern "C" void JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX(const void *scr_1,const void *src_2,void *dst,int w16);
+extern "C" void JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_SSE2(const void *scr_1,const void *src_2,void *dst,int w8);
+extern "C" void JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX(const void *scr_1,const void *src_2,void *dst,int w8);
+
+extern "C" void JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_SSE2(const void *scr_1,const void *src_2,void *dst,int w16);
+extern "C" void JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX(const void *scr_1,const void *src_2,void *dst,int w16);
+extern "C" void JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_SSE2(const void *scr_1,const void *src_2,void *dst,int w8);
+extern "C" void JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX(const void *scr_1,const void *src_2,void *dst,int w8);
+
+#ifdef AVX2_BUILD_POSSIBLE
+extern "C" void JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX2(const void *scr_1,const void *src_2,void *dst,int w32);
+extern "C" void JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX2(const void *scr_1,const void *src_2,void *dst,int w16);
+
+extern "C" void JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX2(const void *scr_1,const void *src_2,void *dst,int w32);
+extern "C" void JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX2(const void *scr_1,const void *src_2,void *dst,int w16);
+
+extern "C" void JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX2(const void *scr_1,const void *src_2,void *dst,int w32);
+extern "C" void JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX2(const void *scr_1,const void *src_2,void *dst,int w16);
+#endif
 
 
 #define Interlaced_Tab_Size 3
@@ -99,8 +122,6 @@ typedef struct _MT_Data_Info
 	int32_t dst_UV_h_min,dst_UV_h_max,dst_UV_w;
 	bool top,bottom;
 } MT_Data_Info;
-
-
 
 
 class JPSDR_AutoYUY2Dialog : public VDXVideoFilterDialog
@@ -145,7 +166,6 @@ INT_PTR JPSDR_AutoYUY2Dialog::DlgProc(UINT msg, WPARAM wParam, LPARAM lParam)
 }
 
 
-
 bool JPSDR_AutoYUY2Dialog::OnInit()
 {
 	bool enable_dlg;
@@ -187,6 +207,7 @@ void JPSDR_AutoYUY2Dialog::OnDestroy()
 	if (mifp) mifp->InitButton(NULL);
 }
 
+
 bool JPSDR_AutoYUY2Dialog::SaveToData()
 {
 	uint8_t thrs;
@@ -207,7 +228,6 @@ bool JPSDR_AutoYUY2Dialog::SaveToData()
 
 	return true;
 }
-
 
 
 bool JPSDR_AutoYUY2Dialog::OnCommand(int cmd)
@@ -252,7 +272,6 @@ bool JPSDR_AutoYUY2Dialog::OnCommand(int cmd)
 }
 
 
-
 class JPSDR_AutoYUY2 : public JPSDRVDXVideoFilter
 {
 public:
@@ -260,6 +279,7 @@ public:
 	JPSDR_AutoYUY2(){}
 	JPSDR_AutoYUY2(const JPSDR_AutoYUY2& a)
 	{
+		AVX2_Enable=a.AVX2_Enable;
 		AVX_Enable=a.AVX_Enable;
 		SSE2_Enable = a.SSE2_Enable;
 		VDub2_Enable = a.VDub2_Enable;
@@ -281,8 +301,9 @@ public:
 protected:
 	bool *interlaced_tab_U[MAX_MT_THREADS][Interlaced_Tab_Size],*interlaced_tab_V[MAX_MT_THREADS][Interlaced_Tab_Size];
 	Image_Data image_data;
-	uint16_t lookup_Upsc[768];
-	bool SSE2_Enable,AVX_Enable,VDub2_Enable;
+	uint16_t *lookup_Upscale8;
+	uint32_t *lookup_Upscale16;
+	bool SSE2_Enable,AVX_Enable,AVX2_Enable,VDub2_Enable;
 
 	Public_MT_Data_Thread MT_Thread[MAX_MT_THREADS];
 	MT_Data_Info MT_Data[MAX_MT_THREADS];
@@ -298,49 +319,11 @@ protected:
 
 	void InternalInit(void);
 
-	inline void Convert_Progressive_to_Planar422(uint8_t thread_num);
-	void Convert_Progressive_to_Planar422_AVX(uint8_t thread_num);
-	void Convert_Progressive_to_Planar422_SSE(uint8_t thread_num);
-	void Convert_Progressive_to_Planar422_NonSSE(uint8_t thread_num);
-
-	inline void Convert_Interlaced_to_Planar422(uint8_t thread_num);
-	void Convert_Interlaced_to_Planar422_AVX(uint8_t thread_num);
-	void Convert_Interlaced_to_Planar422_SSE(uint8_t thread_num);
-	void Convert_Interlaced_to_Planar422_NonSSE(uint8_t thread_num);
-
-	void Convert_Automatic_to_Planar422(uint8_t thread_num);
-	void Convert_Test_to_Planar422(uint8_t thread_num);
-
-	inline void Convert_Progressive_to_YUY2(uint8_t thread_num);
-	void Convert_Progressive_to_YUY2_AVX(uint8_t thread_num);
-	void Convert_Progressive_to_YUY2_SSE(uint8_t thread_num);
-	void Convert_Progressive_to_YUY2_NonSSE(uint8_t thread_num);
-
-	inline void Convert_Interlaced_to_YUY2(uint8_t thread_num);
-	void Convert_Interlaced_to_YUY2_AVX(uint8_t thread_num);
-	void Convert_Interlaced_to_YUY2_SSE(uint8_t thread_num);
-	void Convert_Interlaced_to_YUY2_NonSSE(uint8_t thread_num);
-
-	void Convert_Automatic_to_YUY2(uint8_t thread_num);
-	void Convert_Test_to_YUY2(uint8_t thread_num);
-
-	inline void Convert_Progressive_to_UYVY(uint8_t thread_num);
-	void Convert_Progressive_to_UYVY_AVX(uint8_t thread_num);
-	void Convert_Progressive_to_UYVY_SSE(uint8_t thread_num);
-	void Convert_Progressive_to_UYVY_NonSSE(uint8_t thread_num);
-
-	inline void Convert_Interlaced_to_UYVY(uint8_t thread_num);
-	void Convert_Interlaced_to_UYVY_AVX(uint8_t thread_num);
-	void Convert_Interlaced_to_UYVY_SSE(uint8_t thread_num);
-	void Convert_Interlaced_to_UYVY_NonSSE(uint8_t thread_num);
-
-	void Convert_Automatic_to_UYVY(uint8_t thread_num);
-	void Convert_Test_to_UYVY(uint8_t thread_num);
-
 	void ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptValue *argv, int argc);
 		
 	JPSDR_AutoYUY2Data mData;
 };
+
 
 VDXVF_BEGIN_SCRIPT_METHODS(JPSDR_AutoYUY2)
 VDXVF_DEFINE_SCRIPT_METHOD(JPSDR_AutoYUY2,ScriptConfig,"iiii")
@@ -349,6 +332,7 @@ VDXVF_END_SCRIPT_METHODS()
 
 bool JPSDR_AutoYUY2::Init()
 {
+	AVX2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_AVX2)!=0);
 	AVX_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_AVX)!=0);
 	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
 	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
@@ -356,6 +340,7 @@ bool JPSDR_AutoYUY2::Init()
 
 	return(true);
 }
+
 
 void JPSDR_AutoYUY2::InternalInit()
 {
@@ -370,12 +355,8 @@ void JPSDR_AutoYUY2::InternalInit()
 		}
 	}
 
-	for (i=0; i<256; i++)
-	{
-		lookup_Upsc[i]=(uint16_t)(3*i);
-		lookup_Upsc[i+256]=(uint16_t)(5*i);
-		lookup_Upsc[i+512]=(uint16_t)(7*i);
-	}
+	lookup_Upscale16=NULL;
+	lookup_Upscale8=NULL;
 
 	StaticThreadpoolF=StaticThreadpool;
 
@@ -418,15 +399,12 @@ JPSDR_AutoYUY2::~JPSDR_AutoYUY2()
 uint32 JPSDR_AutoYUY2::GetParams()
 {
 	bool full_mode,bt709;
+	uint8_t bit_pixel;
 	
 	if (g_VFVAPIVersion<12) return(FILTERPARAM_NOT_SUPPORTED);
 
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
-
-	full_mode=CheckFullRangeMode(&fa->src);
-	if (GetColorMode(&fa->src)==MATRIX_BT709) bt709=true;
-	else bt709=false;
 
 	switch(pxsrc.format)
 	{
@@ -481,9 +459,9 @@ uint32 JPSDR_AutoYUY2::GetParams()
 		// VDub2
 		case nsVDXPixmap::kPixFormat_XRGB64 :
 		case nsVDXPixmap::kPixFormat_YUV444_Planar16 :
-		case nsVDXPixmap::kPixFormat_YUV422_Planar16 :
+		case nsVDXPixmap::kPixFormat_YUV422_Planar16 :*/
 		case nsVDXPixmap::kPixFormat_YUV420_Planar16 :
-		case nsVDXPixmap::kPixFormat_Y16 :
+/*		case nsVDXPixmap::kPixFormat_Y16 :
 		case nsVDXPixmap::kPixFormat_YUV444_Y416 :
 		case nsVDXPixmap::kPixFormat_YUV444_V410 :
 		case nsVDXPixmap::kPixFormat_YUV444_Y410 :
@@ -504,7 +482,12 @@ uint32 JPSDR_AutoYUY2::GetParams()
 		default : return FILTERPARAM_NOT_SUPPORTED;
 	}
 
-	image_data.src_full_mode=CheckFullRangeMode(&fa->src);
+	full_mode=CheckFullRangeMode(&fa->src);
+	bit_pixel=GetBitDepth(&fa->src);
+	if (GetColorMode(&fa->src)==MATRIX_BT709) bt709=true;
+	else bt709=false;
+
+	image_data.src_full_mode=full_mode;
 	image_data.src_color_matrix=GetColorMode(&fa->src);
 	image_data.src_interlaced=GetInterlaceMode(&fa->src);
 
@@ -521,50 +504,106 @@ uint32 JPSDR_AutoYUY2::GetParams()
 		case 1 : pxdst.format=nsVDXPixmap::kPixFormat_YUV422_UYVY; break;
 		case 2 : pxdst.format=nsVDXPixmap::kPixFormat_YUV422_Planar; break;
 	}*/
-	switch(mData.output_format)
+	if (bit_pixel==8)
 	{
-		case 0 : 	if (full_mode)
-					{
-						if (bt709) pxdst.format=nsVDXPixmap::kPixFormat_YUV422_YUYV_709_FR;
-						else pxdst.format=nsVDXPixmap::kPixFormat_YUV422_YUYV_FR;
-					}
-					else
-					{
-						if (bt709) pxdst.format=nsVDXPixmap::kPixFormat_YUV422_YUYV_709;
-						else pxdst.format=nsVDXPixmap::kPixFormat_YUV422_YUYV;
-					}
-					break;
-		case 1 : 	if (full_mode)
-					{
-						if (bt709) pxdst.format=nsVDXPixmap::kPixFormat_YUV422_UYVY_709_FR;
-						else pxdst.format=nsVDXPixmap::kPixFormat_YUV422_UYVY_FR;
-					}
-					else
-					{
-						if (bt709) pxdst.format=nsVDXPixmap::kPixFormat_YUV422_UYVY_709;
-						else pxdst.format=nsVDXPixmap::kPixFormat_YUV422_UYVY;
-					}						
-					break;
-		case 2 : 	if (full_mode)
-					{
-						if (bt709) pxdst.format=nsVDXPixmap::kPixFormat_YUV422_Planar_709_FR;
-						else pxdst.format=nsVDXPixmap::kPixFormat_YUV422_Planar_FR;
-					}
-					else
-					{
-						if (bt709) pxdst.format=nsVDXPixmap::kPixFormat_YUV422_Planar_709;
-						else pxdst.format=nsVDXPixmap::kPixFormat_YUV422_Planar;
-					}						
-					break;
+		switch(mData.output_format)
+		{
+			case 0 : 	if (full_mode)
+						{
+							if (bt709) pxdst.format=nsVDXPixmap::kPixFormat_YUV422_YUYV_709_FR;
+							else pxdst.format=nsVDXPixmap::kPixFormat_YUV422_YUYV_FR;
+						}
+						else
+						{
+							if (bt709) pxdst.format=nsVDXPixmap::kPixFormat_YUV422_YUYV_709;
+							else pxdst.format=nsVDXPixmap::kPixFormat_YUV422_YUYV;
+						}
+						break;
+			case 1 : 	if (full_mode)
+						{
+							if (bt709) pxdst.format=nsVDXPixmap::kPixFormat_YUV422_UYVY_709_FR;
+							else pxdst.format=nsVDXPixmap::kPixFormat_YUV422_UYVY_FR;
+						}
+						else
+						{
+							if (bt709) pxdst.format=nsVDXPixmap::kPixFormat_YUV422_UYVY_709;
+							else pxdst.format=nsVDXPixmap::kPixFormat_YUV422_UYVY;
+						}						
+						break;
+			case 2 : 	if (full_mode)
+						{
+							if (bt709) pxdst.format=nsVDXPixmap::kPixFormat_YUV422_Planar_709_FR;
+							else pxdst.format=nsVDXPixmap::kPixFormat_YUV422_Planar_FR;
+						}
+						else
+						{
+							if (bt709) pxdst.format=nsVDXPixmap::kPixFormat_YUV422_Planar_709;
+							else pxdst.format=nsVDXPixmap::kPixFormat_YUV422_Planar;
+						}						
+						break;
+		}
+
 	}
+	else pxdst.format=nsVDXPixmap::kPixFormat_YUV422_Planar16;
+
+	if ((fma!=NULL) && (fma->fmpixmap!=NULL))
+	{
+		FilterModPixmapInfo* info = fma->fmpixmap->GetPixmapInfo((fa->dst).mpPixmap);
+
+		if (full_mode) info->colorRangeMode=nsVDXPixmap::kColorRangeMode_Full;
+		else info->colorRangeMode=nsVDXPixmap::kColorRangeMode_Limited;
+
+		if (bt709) info->colorSpaceMode=nsVDXPixmap::kColorSpaceMode_709;
+		else info->colorSpaceMode=nsVDXPixmap::kColorSpaceMode_601;
+
+		switch(bit_pixel)
+		{
+			case 8 :
+				info->ref_r=0xFF;
+				info->ref_g=0xFF;
+				info->ref_b=0xFF;
+				info->ref_a=0xFF;
+				break;
+			case 10 :
+				info->ref_r=0x3FF;
+				info->ref_g=0x3FF;
+				info->ref_b=0x3FF;
+				info->ref_a=0x3FF;
+				break;
+			case 12 :
+				info->ref_r=0xFFF;
+				info->ref_g=0xFFF;
+				info->ref_b=0xFFF;
+				info->ref_a=0xFFF;
+				break;
+			case 14 :
+				info->ref_r=0x3FFF;
+				info->ref_g=0x3FFF;
+				info->ref_b=0x3FFF;
+				info->ref_a=0x3FFF;
+				break;
+			default :
+				info->ref_r=0xFFFF;
+				info->ref_g=0xFFFF;
+				info->ref_b=0xFFFF;
+				info->ref_a=0xFFFF;
+				break;
+		}
+	}
+
 	pxdst.pitch=0;
 
 	image_data.dst_full_mode=CheckFullRangeMode(&fa->dst);
 	image_data.dst_color_matrix=GetColorMode(&fa->dst);
 	image_data.dst_interlaced=GetInterlaceMode(&fa->dst);
 
-	if (g_VFVAPIVersion<14) return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_SWAP_BUFFERS|FILTERPARAM_ALIGN_SCANLINES);
-	else return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_SWAP_BUFFERS|FILTERPARAM_PURE_TRANSFORM|FILTERPARAM_ALIGN_SCANLINES);
+	if (VDub2_Enable)
+		return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_SWAP_BUFFERS|FILTERPARAM_PURE_TRANSFORM|FILTERPARAM_ALIGN_SCANLINES_32);
+	else
+	{
+		if (g_VFVAPIVersion<14) return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_SWAP_BUFFERS|FILTERPARAM_ALIGN_SCANLINES);
+		else return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_SWAP_BUFFERS|FILTERPARAM_PURE_TRANSFORM|FILTERPARAM_ALIGN_SCANLINES);
+	}
 }
 
 
@@ -714,6 +753,17 @@ void JPSDR_AutoYUY2::Start()
 
 	threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0);
 
+	const uint32_t vmax=1 << image_data.src_bits_pixel;
+
+	lookup_Upscale8=(uint16_t *)malloc(3*256*sizeof(uint16_t));
+	lookup_Upscale16=(uint32_t *)malloc(3*vmax*sizeof(uint32_t));
+
+	if ((lookup_Upscale8==NULL) || (lookup_Upscale16==NULL))
+	{
+		ff->ExceptOutOfMemory();
+		return;
+	}
+
 	if (mData.convert_mode>1)
 	{
 		for (j=0; j<threads_number; j++)
@@ -742,6 +792,19 @@ void JPSDR_AutoYUY2::Start()
 		}
 	}
 
+	for (uint16_t k=0; k<256; k++)
+	{
+		lookup_Upscale8[k]=3*k;
+		lookup_Upscale8[k+256]=5*k;
+		lookup_Upscale8[k+512]=7*k;
+	}
+	for (uint32_t k=0; k<vmax; k++)
+	{
+		lookup_Upscale16[k]=3*k;
+		lookup_Upscale16[k+vmax]=5*k;
+		lookup_Upscale16[k+2*vmax]=7*k;
+	}
+
 	if (threads_number>1)
 	{
 		if (!threadpoolAllocated)
@@ -751,7 +814,6 @@ void JPSDR_AutoYUY2::Start()
 		}
 	}
 }
-
 
 
 void JPSDR_AutoYUY2::GetSettingString(char *buf, int maxlen)
@@ -814,34 +876,8 @@ static inline void Move_Full(const void *src_, void *dst_, const int32_t w,const
 }
 
 
-
-inline void JPSDR_AutoYUY2::Convert_Interlaced_to_Planar422(uint8_t thread_num)
+static void Convert_Interlaced_8_YV16_SSE2(const MT_Data_Info &mt_data_inf)
 {
-	if (AVX_Enable) Convert_Interlaced_to_Planar422_AVX(thread_num);
-	else
-	{
-		if (SSE2_Enable) Convert_Interlaced_to_Planar422_SSE(thread_num);
-		else Convert_Interlaced_to_Planar422_NonSSE(thread_num);
-	}
-}
-
-
-inline void JPSDR_AutoYUY2::Convert_Progressive_to_Planar422(uint8_t thread_num)
-{
-	if (AVX_Enable) Convert_Progressive_to_Planar422_AVX(thread_num);
-	else
-	{
-		if (SSE2_Enable) Convert_Progressive_to_Planar422_SSE(thread_num);
-		else Convert_Progressive_to_Planar422_NonSSE(thread_num);
-	}
-}
-
-
-
-void JPSDR_AutoYUY2::Convert_Interlaced_to_Planar422_SSE(uint8_t thread_num)
-{
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -895,10 +931,10 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_Planar422_SSE(uint8_t thread_num)
 			memcpy(dst_U,src_Un,w_U);
 			dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
-			JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_2b(src_Unn,src_U,dst_U,w_U4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_SSE2(src_Unn,src_U,dst_U,w_U4);
 			dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
-			JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_3b(src_Un,src_Unnn,dst_U,w_U4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_SSE2(src_Un,src_Unnn,dst_U,w_U4);
 			dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
 			src_U+=pitch_U_2;
@@ -912,16 +948,16 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_Planar422_SSE(uint8_t thread_num)
 
 	for(int32_t i=h_0; i<h_4; i+=4)
 	{
-		JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_3b(src_U,src_Upp,dst_U,w_U4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_SSE2(src_U,src_Upp,dst_U,w_U4);
 		dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
-		JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_2b(src_Up,src_Un,dst_U,w_U4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_SSE2(src_Up,src_Un,dst_U,w_U4);
 		dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
-		JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_2b(src_Unn,src_U,dst_U,w_U4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_SSE2(src_Unn,src_U,dst_U,w_U4);
 		dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
-		JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_3b(src_Un,src_Unnn,dst_U,w_U4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_SSE2(src_Un,src_Unnn,dst_U,w_U4);
 		dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
 		src_U+=pitch_U_2;
@@ -936,10 +972,10 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_Planar422_SSE(uint8_t thread_num)
 	{
 		for(int32_t i=h_4; i<h_Y_max; i+=4)
 		{
-			JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_3b(src_U,src_Upp,dst_U,w_U4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_SSE2(src_U,src_Upp,dst_U,w_U4);
 			dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
-			JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_2b(src_Up,src_Un,dst_U,w_U4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_SSE2(src_Up,src_Un,dst_U,w_U4);
 			dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
 			memcpy(dst_U,src_U,w_U);
@@ -968,10 +1004,10 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_Planar422_SSE(uint8_t thread_num)
 			memcpy(dst_V,src_Vn,w_V);
 			dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
-			JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_2b(src_Vnn,src_V,dst_V,w_V4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_SSE2(src_Vnn,src_V,dst_V,w_V4);
 			dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
-			JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_3b(src_Vn,src_Vnnn,dst_V,w_V4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_SSE2(src_Vn,src_Vnnn,dst_V,w_V4);
 			dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
 			src_V+=pitch_V_2;
@@ -985,16 +1021,16 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_Planar422_SSE(uint8_t thread_num)
 
 	for(int32_t i=h_0; i<h_4; i+=4)
 	{
-		JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_3b(src_V,src_Vpp,dst_V,w_V4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_SSE2(src_V,src_Vpp,dst_V,w_V4);
 		dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
-		JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_2b(src_Vp,src_Vn,dst_V,w_V4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_SSE2(src_Vp,src_Vn,dst_V,w_V4);
 		dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
-		JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_2b(src_Vnn,src_V,dst_V,w_V4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_SSE2(src_Vnn,src_V,dst_V,w_V4);
 		dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
-		JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_3b(src_Vn,src_Vnnn,dst_V,w_V4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_SSE2(src_Vn,src_Vnnn,dst_V,w_V4);
 		dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
 		src_V+=pitch_V_2;
@@ -1009,10 +1045,10 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_Planar422_SSE(uint8_t thread_num)
 	{
 		for(int32_t i=h_4; i<h_Y_max; i+=4)
 		{
-			JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_3b(src_V,src_Vpp,dst_V,w_V4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_SSE2(src_V,src_Vpp,dst_V,w_V4);
 			dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
-			JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_2b(src_Vp,src_Vn,dst_V,w_V4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_SSE2(src_Vp,src_Vn,dst_V,w_V4);
 			dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
 			memcpy(dst_V,src_V,w_V);
@@ -1032,10 +1068,8 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_Planar422_SSE(uint8_t thread_num)
 }
 
 
-void JPSDR_AutoYUY2::Convert_Interlaced_to_Planar422_AVX(uint8_t thread_num)
+static void Convert_Interlaced_8_YV16_AVX(const MT_Data_Info &mt_data_inf)
 {
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -1089,10 +1123,10 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_Planar422_AVX(uint8_t thread_num)
 			memcpy(dst_U,src_Un,w_U);
 			dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
-			JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_2b(src_Unn,src_U,dst_U,w_U4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX(src_Unn,src_U,dst_U,w_U4);
 			dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
-			JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_3b(src_Un,src_Unnn,dst_U,w_U4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX(src_Un,src_Unnn,dst_U,w_U4);
 			dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
 			src_U+=pitch_U_2;
@@ -1106,16 +1140,16 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_Planar422_AVX(uint8_t thread_num)
 
 	for(int32_t i=h_0; i<h_4; i+=4)
 	{
-		JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_3b(src_U,src_Upp,dst_U,w_U4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX(src_U,src_Upp,dst_U,w_U4);
 		dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
-		JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_2b(src_Up,src_Un,dst_U,w_U4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX(src_Up,src_Un,dst_U,w_U4);
 		dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
-		JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_2b(src_Unn,src_U,dst_U,w_U4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX(src_Unn,src_U,dst_U,w_U4);
 		dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
-		JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_3b(src_Un,src_Unnn,dst_U,w_U4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX(src_Un,src_Unnn,dst_U,w_U4);
 		dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
 		src_U+=pitch_U_2;
@@ -1130,10 +1164,10 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_Planar422_AVX(uint8_t thread_num)
 	{
 		for(int32_t i=h_4; i<h_Y_max; i+=4)
 		{
-			JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_3b(src_U,src_Upp,dst_U,w_U4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX(src_U,src_Upp,dst_U,w_U4);
 			dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
-			JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_2b(src_Up,src_Un,dst_U,w_U4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX(src_Up,src_Un,dst_U,w_U4);
 			dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
 			memcpy(dst_U,src_U,w_U);
@@ -1162,10 +1196,10 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_Planar422_AVX(uint8_t thread_num)
 			memcpy(dst_V,src_Vn,w_V);
 			dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
-			JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_2b(src_Vnn,src_V,dst_V,w_V4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX(src_Vnn,src_V,dst_V,w_V4);
 			dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
-			JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_3b(src_Vn,src_Vnnn,dst_V,w_V4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX(src_Vn,src_Vnnn,dst_V,w_V4);
 			dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
 			src_V+=pitch_V_2;
@@ -1179,16 +1213,16 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_Planar422_AVX(uint8_t thread_num)
 
 	for(int32_t i=h_0; i<h_4; i+=4)
 	{
-		JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_3b(src_V,src_Vpp,dst_V,w_V4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX(src_V,src_Vpp,dst_V,w_V4);
 		dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
-		JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_2b(src_Vp,src_Vn,dst_V,w_V4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX(src_Vp,src_Vn,dst_V,w_V4);
 		dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
-		JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_2b(src_Vnn,src_V,dst_V,w_V4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX(src_Vnn,src_V,dst_V,w_V4);
 		dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
-		JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_3b(src_Vn,src_Vnnn,dst_V,w_V4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX(src_Vn,src_Vnnn,dst_V,w_V4);
 		dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
 		src_V+=pitch_V_2;
@@ -1203,10 +1237,10 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_Planar422_AVX(uint8_t thread_num)
 	{
 		for(int32_t i=h_4; i<h_Y_max; i+=4)
 		{
-			JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_3b(src_V,src_Vpp,dst_V,w_V4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX(src_V,src_Vpp,dst_V,w_V4);
 			dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
-			JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_2b(src_Vp,src_Vn,dst_V,w_V4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX(src_Vp,src_Vn,dst_V,w_V4);
 			dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
 			memcpy(dst_V,src_V,w_V);
@@ -1226,11 +1260,8 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_Planar422_AVX(uint8_t thread_num)
 }
 
 
-
-void JPSDR_AutoYUY2::Convert_Interlaced_to_Planar422_NonSSE(uint8_t thread_num)
+static void Convert_Interlaced_8_YV16(const MT_Data_Info &mt_data_inf,const uint16_t *lookup)
 {
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -1253,7 +1284,6 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_Planar422_NonSSE(uint8_t thread_num)
 	const uint8_t *src_V,*src_Vp,*src_Vpp,*src_Vn,*src_Vnn,*src_Vnnn;
 	uint8_t *dst_V,*dst_U;
 	ptrdiff_t pitch_U_2,pitch_V_2;
-	const uint16_t *lookup=lookup_Upsc;
 	const int32_t h_4 = mt_data_inf.bottom ? h_Y_max-4:h_Y_max;
 	const int32_t h_0 = mt_data_inf.top ? 4:h_Y_min;
 
@@ -1440,11 +1470,8 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_Planar422_NonSSE(uint8_t thread_num)
 }
 
 
-
-void JPSDR_AutoYUY2::Convert_Progressive_to_Planar422_SSE(uint8_t thread_num)
+static void Convert_Progressive_8_YV16_SSE2(const MT_Data_Info &mt_data_inf)
 {
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -1486,7 +1513,7 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_Planar422_SSE(uint8_t thread_num)
 			memcpy(dst_U,src_U,w_U);
 			dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
-			JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4b(src_U,src_Un,dst_U,w_U4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_SSE2(src_U,src_Un,dst_U,w_U4);
 			dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
 			src_U+=src_pitch_U;
@@ -1497,10 +1524,10 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_Planar422_SSE(uint8_t thread_num)
 
 	for(int32_t i=h_0; i<h_2; i+=2)
 	{
-		JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4b(src_U,src_Up,dst_U,w_U4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_SSE2(src_U,src_Up,dst_U,w_U4);
 		dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
-		JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4b(src_U,src_Un,dst_U,w_U4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_SSE2(src_U,src_Un,dst_U,w_U4);
 		dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
 		src_U+=src_pitch_U;
@@ -1512,7 +1539,7 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_Planar422_SSE(uint8_t thread_num)
 	{
 		for(int32_t i=h_2; i<h_Y_max; i+=2)
 		{
-			JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4b(src_U,src_Up,dst_U,w_U4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_SSE2(src_U,src_Up,dst_U,w_U4);
 			dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
 
@@ -1533,7 +1560,7 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_Planar422_SSE(uint8_t thread_num)
 			memcpy(dst_V,src_V,w_V);
 			dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
-			JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4b(src_V,src_Vn,dst_V,w_V4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_SSE2(src_V,src_Vn,dst_V,w_V4);
 			dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
 			src_V+=src_pitch_V;
@@ -1544,10 +1571,10 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_Planar422_SSE(uint8_t thread_num)
 
 	for(int32_t i=h_0; i<h_2; i+=2)
 	{
-		JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4b(src_V,src_Vp,dst_V,w_V4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_SSE2(src_V,src_Vp,dst_V,w_V4);
 		dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
-		JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4b(src_V,src_Vn,dst_V,w_V4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_SSE2(src_V,src_Vn,dst_V,w_V4);
 		dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
 		src_V+=src_pitch_V;
@@ -1559,7 +1586,7 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_Planar422_SSE(uint8_t thread_num)
 	{
 		for(int32_t i=h_2; i<h_Y_max; i+=2)
 		{
-			JPSDR_AutoYUY2_Convert420_to_Planar422_SSE2_4b(src_V,src_Vp,dst_V,w_V4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_SSE2(src_V,src_Vp,dst_V,w_V4);
 			dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
 
@@ -1574,10 +1601,8 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_Planar422_SSE(uint8_t thread_num)
 }
 
 
-void JPSDR_AutoYUY2::Convert_Progressive_to_Planar422_AVX(uint8_t thread_num)
+static void Convert_Progressive_8_YV16_AVX(const MT_Data_Info &mt_data_inf)
 {
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -1619,7 +1644,7 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_Planar422_AVX(uint8_t thread_num)
 			memcpy(dst_U,src_U,w_U);
 			dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
-			JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_4b(src_U,src_Un,dst_U,w_U4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX(src_U,src_Un,dst_U,w_U4);
 			dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
 			src_U+=src_pitch_U;
@@ -1630,10 +1655,10 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_Planar422_AVX(uint8_t thread_num)
 
 	for(int32_t i=h_0; i<h_2; i+=2)
 	{
-		JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_4b(src_U,src_Up,dst_U,w_U4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX(src_U,src_Up,dst_U,w_U4);
 		dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
-		JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_4b(src_U,src_Un,dst_U,w_U4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX(src_U,src_Un,dst_U,w_U4);
 		dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
 		src_U+=src_pitch_U;
@@ -1645,7 +1670,7 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_Planar422_AVX(uint8_t thread_num)
 	{
 		for(int32_t i=h_2; i<h_Y_max; i+=2)
 		{
-			JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_4b(src_U,src_Up,dst_U,w_U4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX(src_U,src_Up,dst_U,w_U4);
 			dst_U=(void *)((uint8_t *)dst_U+dst_pitch_U);
 
 
@@ -1666,7 +1691,7 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_Planar422_AVX(uint8_t thread_num)
 			memcpy(dst_V,src_V,w_V);
 			dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
-			JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_4b(src_V,src_Vn,dst_V,w_V4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX(src_V,src_Vn,dst_V,w_V4);
 			dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
 			src_V+=src_pitch_V;
@@ -1677,10 +1702,10 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_Planar422_AVX(uint8_t thread_num)
 
 	for(int32_t i=h_0; i<h_2; i+=2)
 	{
-		JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_4b(src_V,src_Vp,dst_V,w_V4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX(src_V,src_Vp,dst_V,w_V4);
 		dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
-		JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_4b(src_V,src_Vn,dst_V,w_V4);
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX(src_V,src_Vn,dst_V,w_V4);
 		dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
 		src_V+=src_pitch_V;
@@ -1692,7 +1717,7 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_Planar422_AVX(uint8_t thread_num)
 	{
 		for(int32_t i=h_2; i<h_Y_max; i+=2)
 		{
-			JPSDR_AutoYUY2_Convert420_to_Planar422_AVX_4b(src_V,src_Vp,dst_V,w_V4);
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX(src_V,src_Vp,dst_V,w_V4);
 			dst_V=(void *)((uint8_t *)dst_V+dst_pitch_V);
 
 
@@ -1707,11 +1732,8 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_Planar422_AVX(uint8_t thread_num)
 }
 
 
-
-void JPSDR_AutoYUY2::Convert_Progressive_to_Planar422_NonSSE(uint8_t thread_num)
+static void Convert_Progressive_8_YV16(const MT_Data_Info &mt_data_inf,const uint16_t *lookup)
 {
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -1733,7 +1755,6 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_Planar422_NonSSE(uint8_t thread_num)
 	const uint8_t *src_U,*src_Up,*src_Un;
 	const uint8_t *src_V,*src_Vp,*src_Vn;
 	uint8_t *dst_U,*dst_V;
-	const uint16_t *lookup=lookup_Upsc;
 	const int32_t h_2 = mt_data_inf.bottom ? h_Y_max-2:h_Y_max;
 	const int32_t h_0 = mt_data_inf.top ? 2:h_Y_min;
 
@@ -1850,24 +1871,1696 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_Planar422_NonSSE(uint8_t thread_num)
 }
 
 
-
-inline void JPSDR_AutoYUY2::Convert_Progressive_to_YUY2(uint8_t thread_num)
+void Convert_Interlaced_16_YV16_SSE2(const MT_Data_Info &mt_data_inf)
 {
-	if (AVX_Enable) Convert_Progressive_to_YUY2_AVX(thread_num);
-	else
+
+	const uint8_t *srcYp=(const uint8_t *)mt_data_inf.src1;
+	const uint8_t *srcUp=(const uint8_t *)mt_data_inf.src2;
+	const uint8_t *srcVp=(const uint8_t *)mt_data_inf.src3;
+	uint8_t *dstYp=(uint8_t *)mt_data_inf.dst1;
+	uint8_t *dstUp=(uint8_t *)mt_data_inf.dst2;
+	uint8_t *dstVp=(uint8_t *)mt_data_inf.dst3;
+	const int32_t dst_w=mt_data_inf.dst_Y_w;
+	const int32_t h_Y_min=mt_data_inf.src_Y_h_min;
+	const int32_t h_Y_max=mt_data_inf.src_Y_h_max;
+	const ptrdiff_t src_pitch_Y=mt_data_inf.src_pitch1;
+	const ptrdiff_t src_pitchU=mt_data_inf.src_pitch2;
+	const ptrdiff_t src_pitchV=mt_data_inf.src_pitch3;
+	const ptrdiff_t dst_pitch_Y=mt_data_inf.dst_pitch1;
+	const ptrdiff_t dst_pitch_U=mt_data_inf.dst_pitch2;
+	const ptrdiff_t dst_pitch_V=mt_data_inf.dst_pitch3;
+
+	const uint8_t *src_U,*src_Up,*src_Upp,*src_Un,*src_Unn,*src_Unnn;
+	const uint8_t *src_V,*src_Vp,*src_Vpp,*src_Vn,*src_Vnn,*src_Vnnn;
+	const int32_t w_U=dst_w>>1,w_V=dst_w>>1;
+	const int32_t w_U2=w_U<<1,w_V2=w_V<<1;
+	const int32_t w_U8=(w_U+7)>>3,w_V8=(w_V+7)>>3;
+	const int32_t h_4 = mt_data_inf.bottom ? h_Y_max-4:h_Y_max;
+	const int32_t h_0 = mt_data_inf.top ? 4:h_Y_min;
+
+	const ptrdiff_t pitch_U_2=2*src_pitchU;
+	const ptrdiff_t pitch_V_2=2*src_pitchV;
+
+	src_U=srcUp;
+	src_V=srcVp;
+	src_Up=src_U-src_pitchU;
+	src_Upp=src_U-2*src_pitchU;
+	src_Un=src_U+src_pitchU;
+	src_Unn=src_U+2*src_pitchU;
+	src_Unnn=src_U+3*src_pitchU;
+	src_Vp=src_V-src_pitchV;
+	src_Vpp=src_V-2*src_pitchV;
+	src_Vn=src_V+src_pitchV;
+	src_Vnn=src_V+2*src_pitchV;
+	src_Vnnn=src_V+3*src_pitchV;
+
+	Move_Full(srcYp,dstYp,dst_w << 1,h_Y_max-h_Y_min,src_pitch_Y,dst_pitch_Y);
+
+// U Planar
+	if (mt_data_inf.top)
 	{
-		if (SSE2_Enable) Convert_Progressive_to_YUY2_SSE(thread_num);
-		else Convert_Progressive_to_YUY2_NonSSE(thread_num);
+		for(int32_t i=0; i<4; i+=4)
+		{
+			memcpy(dstUp,src_U,w_U2);
+			dstUp+=dst_pitch_U;
+
+			memcpy(dstUp,src_Un,w_U2);
+			dstUp+=dst_pitch_U;
+
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_SSE2(src_Unn,src_U,dstUp,w_U8);
+			dstUp+=dst_pitch_U;
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_SSE2(src_Un,src_Unnn,dstUp,w_U8);
+			dstUp+=dst_pitch_U;
+
+			src_U+=pitch_U_2;
+			src_Up+=pitch_U_2;
+			src_Upp+=pitch_U_2;
+			src_Un+=pitch_U_2;
+			src_Unn+=pitch_U_2;
+			src_Unnn+=pitch_U_2;
+		}
+	}
+
+	for(int32_t i=h_0; i<h_4; i+=4)
+	{
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_SSE2(src_U,src_Upp,dstUp,w_U8);
+		dstUp+=dst_pitch_U;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_SSE2(src_Up,src_Un,dstUp,w_U8);
+		dstUp+=dst_pitch_U;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_SSE2(src_Unn,src_U,dstUp,w_U8);
+		dstUp+=dst_pitch_U;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_SSE2(src_Un,src_Unnn,dstUp,w_U8);
+		dstUp+=dst_pitch_U;
+
+		src_U+=pitch_U_2;
+		src_Up+=pitch_U_2;
+		src_Upp+=pitch_U_2;
+		src_Un+=pitch_U_2;
+		src_Unn+=pitch_U_2;
+		src_Unnn+=pitch_U_2;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_4; i<h_Y_max; i+=4)
+		{
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_SSE2(src_U,src_Upp,dstUp,w_U8);
+			dstUp+=dst_pitch_U;
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_SSE2(src_Up,src_Un,dstUp,w_U8);
+			dstUp+=dst_pitch_U;
+
+			memcpy(dstUp,src_U,w_U2);
+			dstUp+=dst_pitch_U;
+
+			memcpy(dstUp,src_Un,w_U2);
+			dstUp+=dst_pitch_U;
+
+			src_U+=pitch_U_2;
+			src_Up+=pitch_U_2;
+			src_Upp+=pitch_U_2;
+			src_Un+=pitch_U_2;
+			src_Unn+=pitch_U_2;
+			src_Unnn+=pitch_U_2;
+		}
+	}
+
+// V Planar
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<4; i+=4)
+		{
+			memcpy(dstVp,src_V,w_V2);
+			dstVp+=dst_pitch_V;
+
+			memcpy(dstVp,src_Vn,w_V2);
+			dstVp+=dst_pitch_V;
+
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_SSE2(src_Vnn,src_V,dstVp,w_V8);
+			dstVp+=dst_pitch_V;
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_SSE2(src_Vn,src_Vnnn,dstVp,w_V8);
+			dstVp+=dst_pitch_V;
+
+			src_V+=pitch_V_2;
+			src_Vp+=pitch_V_2;
+			src_Vpp+=pitch_V_2;
+			src_Vn+=pitch_V_2;
+			src_Vnn+=pitch_V_2;
+			src_Vnnn+=pitch_V_2;
+		}
+	}
+
+	for(int32_t i=h_0; i<h_4; i+=4)
+	{
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_SSE2(src_V,src_Vpp,dstVp,w_V8);
+		dstVp+=dst_pitch_V;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_SSE2(src_Vp,src_Vn,dstVp,w_V8);
+		dstVp+=dst_pitch_V;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_SSE2(src_Vnn,src_V,dstVp,w_V8);
+		dstVp+=dst_pitch_V;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_SSE2(src_Vn,src_Vnnn,dstVp,w_V8);
+		dstVp+=dst_pitch_V;
+
+		src_V+=pitch_V_2;
+		src_Vp+=pitch_V_2;
+		src_Vpp+=pitch_V_2;
+		src_Vn+=pitch_V_2;
+		src_Vnn+=pitch_V_2;
+		src_Vnnn+=pitch_V_2;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_4; i<h_Y_max; i+=4)
+		{
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_SSE2(src_V,src_Vpp,dstVp,w_V8);
+			dstVp+=dst_pitch_V;
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_SSE2(src_Vp,src_Vn,dstVp,w_V8);
+			dstVp+=dst_pitch_V;
+
+			memcpy(dstVp,src_V,w_V2);
+			dstVp+=dst_pitch_V;
+
+			memcpy(dstVp,src_Vn,w_V2);
+			dstVp+=dst_pitch_V;
+
+			src_V+=pitch_V_2;
+			src_Vp+=pitch_V_2;
+			src_Vpp+=pitch_V_2;
+			src_Vn+=pitch_V_2;
+			src_Vnn+=pitch_V_2;
+			src_Vnnn+=pitch_V_2;
+		}
 	}
 }
 
 
+void Convert_Interlaced_16_YV16_AVX(const MT_Data_Info &mt_data_inf)
+{
 
-void JPSDR_AutoYUY2::Convert_Progressive_to_YUY2_SSE(uint8_t thread_num)
+	const uint8_t *srcYp=(const uint8_t *)mt_data_inf.src1;
+	const uint8_t *srcUp=(const uint8_t *)mt_data_inf.src2;
+	const uint8_t *srcVp=(const uint8_t *)mt_data_inf.src3;
+	uint8_t *dstYp=(uint8_t *)mt_data_inf.dst1;
+	uint8_t *dstUp=(uint8_t *)mt_data_inf.dst2;
+	uint8_t *dstVp=(uint8_t *)mt_data_inf.dst3;
+	const int32_t dst_w=mt_data_inf.dst_Y_w;
+	const int32_t h_Y_min=mt_data_inf.src_Y_h_min;
+	const int32_t h_Y_max=mt_data_inf.src_Y_h_max;
+	const ptrdiff_t src_pitch_Y=mt_data_inf.src_pitch1;
+	const ptrdiff_t src_pitchU=mt_data_inf.src_pitch2;
+	const ptrdiff_t src_pitchV=mt_data_inf.src_pitch3;
+	const ptrdiff_t dst_pitch_Y=mt_data_inf.dst_pitch1;
+	const ptrdiff_t dst_pitch_U=mt_data_inf.dst_pitch2;
+	const ptrdiff_t dst_pitch_V=mt_data_inf.dst_pitch3;
+
+	const uint8_t *src_U,*src_Up,*src_Upp,*src_Un,*src_Unn,*src_Unnn;
+	const uint8_t *src_V,*src_Vp,*src_Vpp,*src_Vn,*src_Vnn,*src_Vnnn;
+	const int32_t w_U=dst_w>>1,w_V=dst_w>>1;
+	const int32_t w_U2=w_U<<1,w_V2=w_V<<1;
+	const int32_t w_U8=(w_U+7)>>3,w_V8=(w_V+7)>>3;
+	const int32_t h_4 = mt_data_inf.bottom ? h_Y_max-4:h_Y_max;
+	const int32_t h_0 = mt_data_inf.top ? 4:h_Y_min;
+
+	const ptrdiff_t pitch_U_2=2*src_pitchU;
+	const ptrdiff_t pitch_V_2=2*src_pitchV;
+
+	src_U=srcUp;
+	src_V=srcVp;
+	src_Up=src_U-src_pitchU;
+	src_Upp=src_U-2*src_pitchU;
+	src_Un=src_U+src_pitchU;
+	src_Unn=src_U+2*src_pitchU;
+	src_Unnn=src_U+3*src_pitchU;
+	src_Vp=src_V-src_pitchV;
+	src_Vpp=src_V-2*src_pitchV;
+	src_Vn=src_V+src_pitchV;
+	src_Vnn=src_V+2*src_pitchV;
+	src_Vnnn=src_V+3*src_pitchV;
+
+	Move_Full(srcYp,dstYp,dst_w << 1,h_Y_max-h_Y_min,src_pitch_Y,dst_pitch_Y);
+
+// U Planar
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<4; i+=4)
+		{
+			memcpy(dstUp,src_U,w_U2);
+			dstUp+=dst_pitch_U;
+
+			memcpy(dstUp,src_Un,w_U2);
+			dstUp+=dst_pitch_U;
+
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX(src_Unn,src_U,dstUp,w_U8);
+			dstUp+=dst_pitch_U;
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX(src_Un,src_Unnn,dstUp,w_U8);
+			dstUp+=dst_pitch_U;
+
+			src_U+=pitch_U_2;
+			src_Up+=pitch_U_2;
+			src_Upp+=pitch_U_2;
+			src_Un+=pitch_U_2;
+			src_Unn+=pitch_U_2;
+			src_Unnn+=pitch_U_2;
+		}
+	}
+
+	for(int32_t i=h_0; i<h_4; i+=4)
+	{
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX(src_U,src_Upp,dstUp,w_U8);
+		dstUp+=dst_pitch_U;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX(src_Up,src_Un,dstUp,w_U8);
+		dstUp+=dst_pitch_U;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX(src_Unn,src_U,dstUp,w_U8);
+		dstUp+=dst_pitch_U;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX(src_Un,src_Unnn,dstUp,w_U8);
+		dstUp+=dst_pitch_U;
+
+		src_U+=pitch_U_2;
+		src_Up+=pitch_U_2;
+		src_Upp+=pitch_U_2;
+		src_Un+=pitch_U_2;
+		src_Unn+=pitch_U_2;
+		src_Unnn+=pitch_U_2;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_4; i<h_Y_max; i+=4)
+		{
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX(src_U,src_Upp,dstUp,w_U8);
+			dstUp+=dst_pitch_U;
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX(src_Up,src_Un,dstUp,w_U8);
+			dstUp+=dst_pitch_U;
+
+			memcpy(dstUp,src_U,w_U2);
+			dstUp+=dst_pitch_U;
+
+			memcpy(dstUp,src_Un,w_U2);
+			dstUp+=dst_pitch_U;
+
+			src_U+=pitch_U_2;
+			src_Up+=pitch_U_2;
+			src_Upp+=pitch_U_2;
+			src_Un+=pitch_U_2;
+			src_Unn+=pitch_U_2;
+			src_Unnn+=pitch_U_2;
+		}
+	}
+
+// V Planar
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<4; i+=4)
+		{
+			memcpy(dstVp,src_V,w_V2);
+			dstVp+=dst_pitch_V;
+
+			memcpy(dstVp,src_Vn,w_V2);
+			dstVp+=dst_pitch_V;
+
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX(src_Vnn,src_V,dstVp,w_V8);
+			dstVp+=dst_pitch_V;
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX(src_Vn,src_Vnnn,dstVp,w_V8);
+			dstVp+=dst_pitch_V;
+
+			src_V+=pitch_V_2;
+			src_Vp+=pitch_V_2;
+			src_Vpp+=pitch_V_2;
+			src_Vn+=pitch_V_2;
+			src_Vnn+=pitch_V_2;
+			src_Vnnn+=pitch_V_2;
+		}
+	}
+
+	for(int32_t i=h_0; i<h_4; i+=4)
+	{
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX(src_V,src_Vpp,dstVp,w_V8);
+		dstVp+=dst_pitch_V;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX(src_Vp,src_Vn,dstVp,w_V8);
+		dstVp+=dst_pitch_V;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX(src_Vnn,src_V,dstVp,w_V8);
+		dstVp+=dst_pitch_V;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX(src_Vn,src_Vnnn,dstVp,w_V8);
+		dstVp+=dst_pitch_V;
+
+		src_V+=pitch_V_2;
+		src_Vp+=pitch_V_2;
+		src_Vpp+=pitch_V_2;
+		src_Vn+=pitch_V_2;
+		src_Vnn+=pitch_V_2;
+		src_Vnnn+=pitch_V_2;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_4; i<h_Y_max; i+=4)
+		{
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX(src_V,src_Vpp,dstVp,w_V8);
+			dstVp+=dst_pitch_V;
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX(src_Vp,src_Vn,dstVp,w_V8);
+			dstVp+=dst_pitch_V;
+
+			memcpy(dstVp,src_V,w_V2);
+			dstVp+=dst_pitch_V;
+
+			memcpy(dstVp,src_Vn,w_V2);
+			dstVp+=dst_pitch_V;
+
+			src_V+=pitch_V_2;
+			src_Vp+=pitch_V_2;
+			src_Vpp+=pitch_V_2;
+			src_Vn+=pitch_V_2;
+			src_Vnn+=pitch_V_2;
+			src_Vnnn+=pitch_V_2;
+		}
+	}
+}
+
+
+static void Convert_Progressive_16_YV16_SSE2(const MT_Data_Info &mt_data_inf)
+{
+	const uint8_t *srcYp=(const uint8_t *)mt_data_inf.src1;
+	const uint8_t *srcUp=(const uint8_t *)mt_data_inf.src2;
+	const uint8_t *srcVp=(const uint8_t *)mt_data_inf.src3;
+	uint8_t *dstYp=(uint8_t *)mt_data_inf.dst1;
+	uint8_t *dstUp=(uint8_t *)mt_data_inf.dst2;
+	uint8_t *dstVp=(uint8_t *)mt_data_inf.dst3;
+	const int32_t dst_w=mt_data_inf.dst_Y_w;
+	const int32_t h_Y_min=mt_data_inf.src_Y_h_min;
+	const int32_t h_Y_max=mt_data_inf.src_Y_h_max;
+	const ptrdiff_t src_pitch_Y=mt_data_inf.src_pitch1;
+	const ptrdiff_t src_pitchU=mt_data_inf.src_pitch2;
+	const ptrdiff_t src_pitchV=mt_data_inf.src_pitch3;
+	const ptrdiff_t dst_pitch_Y=mt_data_inf.dst_pitch1;
+	const ptrdiff_t dst_pitch_U=mt_data_inf.dst_pitch2;
+	const ptrdiff_t dst_pitch_V=mt_data_inf.dst_pitch3;
+
+	const uint8_t *src_U,*src_Up,*src_Un;
+	const uint8_t *src_V,*src_Vp,*src_Vn;
+	const int32_t w_U=dst_w>>1,w_V=dst_w>>1;
+	const int32_t w_U2=w_U<<1,w_V2=w_V<<1;
+	const int32_t w_U8=(w_U+7)>>3,w_V8=(w_V+7)>>3;
+	const int32_t h_2 = mt_data_inf.bottom ? h_Y_max-2:h_Y_max;
+	const int32_t h_0 = mt_data_inf.top ? 2:h_Y_min;
+
+	src_U=srcUp;
+	src_V=srcVp;
+	src_Up=src_U-src_pitchU;
+	src_Un=src_U+src_pitchU;
+	src_Vp=src_V-src_pitchV;
+	src_Vn=src_V+src_pitchV;
+
+	Move_Full(srcYp,dstYp,dst_w << 1,h_Y_max-h_Y_min,src_pitch_Y,dst_pitch_Y);
+
+// Planar U
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<2; i+=2)
+		{
+			memcpy(dstUp,src_U,w_U2);
+			dstUp+=dst_pitch_U;
+
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_SSE2(src_U,src_Un,dstUp,w_U8);
+			dstUp+=dst_pitch_U;
+
+			src_U+=src_pitchU;
+			src_Up+=src_pitchU;
+			src_Un+=src_pitchU;
+		}
+	}
+
+	for(int32_t i=h_0; i<h_2; i+=2)
+	{
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_SSE2(src_U,src_Up,dstUp,w_U8);
+		dstUp+=dst_pitch_U;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_SSE2(src_U,src_Un,dstUp,w_U8);
+		dstUp+=dst_pitch_U;
+
+		src_U+=src_pitchU;
+		src_Up+=src_pitchU;
+		src_Un+=src_pitchU;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_2; i<h_Y_max; i+=2)
+		{
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_SSE2(src_U,src_Up,dstUp,w_U8);
+			dstUp+=dst_pitch_U;
+
+			memcpy(dstUp,src_U,w_U2);
+			dstUp+=dst_pitch_U;
+
+			src_U+=src_pitchU;
+			src_Up+=src_pitchU;
+			src_Un+=src_pitchU;
+		}
+	}
+
+// Planar V
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<2; i+=2)
+		{
+			memcpy(dstVp,src_V,w_V2);
+			dstVp+=dst_pitch_V;
+
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_SSE2(src_V,src_Vn,dstVp,w_V8);
+			dstVp+=dst_pitch_V;
+
+			src_V+=src_pitchV;
+			src_Vp+=src_pitchV;
+			src_Vn+=src_pitchV;
+		}
+	}
+
+	for(int32_t i=h_0; i<h_2; i+=2)
+	{
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_SSE2(src_V,src_Vp,dstVp,w_V8);
+		dstVp+=dst_pitch_V;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_SSE2(src_V,src_Vn,dstVp,w_V8);
+		dstVp+=dst_pitch_V;
+
+		src_V+=src_pitchV;
+		src_Vp+=src_pitchV;
+		src_Vn+=src_pitchV;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_2; i<h_Y_max; i+=2)
+		{
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_SSE2(src_V,src_Vp,dstVp,w_V8);
+			dstVp+=dst_pitch_V;
+
+			memcpy(dstVp,src_V,w_V2);
+			dstVp+=dst_pitch_V;
+
+			src_V+=src_pitchV;
+			src_Vp+=src_pitchV;
+			src_Vn+=src_pitchV;
+		}
+	}
+}
+
+
+static void Convert_Progressive_16_YV16_AVX(const MT_Data_Info &mt_data_inf)
+{
+	const uint8_t *srcYp=(const uint8_t *)mt_data_inf.src1;
+	const uint8_t *srcUp=(const uint8_t *)mt_data_inf.src2;
+	const uint8_t *srcVp=(const uint8_t *)mt_data_inf.src3;
+	uint8_t *dstYp=(uint8_t *)mt_data_inf.dst1;
+	uint8_t *dstUp=(uint8_t *)mt_data_inf.dst2;
+	uint8_t *dstVp=(uint8_t *)mt_data_inf.dst3;
+	const int32_t dst_w=mt_data_inf.dst_Y_w;
+	const int32_t h_Y_min=mt_data_inf.src_Y_h_min;
+	const int32_t h_Y_max=mt_data_inf.src_Y_h_max;
+	const ptrdiff_t src_pitch_Y=mt_data_inf.src_pitch1;
+	const ptrdiff_t src_pitchU=mt_data_inf.src_pitch2;
+	const ptrdiff_t src_pitchV=mt_data_inf.src_pitch3;
+	const ptrdiff_t dst_pitch_Y=mt_data_inf.dst_pitch1;
+	const ptrdiff_t dst_pitch_U=mt_data_inf.dst_pitch2;
+	const ptrdiff_t dst_pitch_V=mt_data_inf.dst_pitch3;
+
+	const uint8_t *src_U,*src_Up,*src_Un;
+	const uint8_t *src_V,*src_Vp,*src_Vn;
+	const int32_t w_U=dst_w>>1,w_V=dst_w>>1;
+	const int32_t w_U2=w_U<<1,w_V2=w_V<<1;
+	const int32_t w_U8=(w_U+7)>>3,w_V8=(w_V+7)>>3;
+	const int32_t h_2 = mt_data_inf.bottom ? h_Y_max-2:h_Y_max;
+	const int32_t h_0 = mt_data_inf.top ? 2:h_Y_min;
+
+	src_U=srcUp;
+	src_V=srcVp;
+	src_Up=src_U-src_pitchU;
+	src_Un=src_U+src_pitchU;
+	src_Vp=src_V-src_pitchV;
+	src_Vn=src_V+src_pitchV;
+
+	Move_Full(srcYp,dstYp,dst_w << 1,h_Y_max-h_Y_min,src_pitch_Y,dst_pitch_Y);
+
+// Planar U
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<2; i+=2)
+		{
+			memcpy(dstUp,src_U,w_U2);
+			dstUp+=dst_pitch_U;
+
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX(src_U,src_Un,dstUp,w_U8);
+			dstUp+=dst_pitch_U;
+
+			src_U+=src_pitchU;
+			src_Up+=src_pitchU;
+			src_Un+=src_pitchU;
+		}
+	}
+
+	for(int32_t i=h_0; i<h_2; i+=2)
+	{
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX(src_U,src_Up,dstUp,w_U8);
+		dstUp+=dst_pitch_U;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX(src_U,src_Un,dstUp,w_U8);
+		dstUp+=dst_pitch_U;
+
+		src_U+=src_pitchU;
+		src_Up+=src_pitchU;
+		src_Un+=src_pitchU;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_2; i<h_Y_max; i+=2)
+		{
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX(src_U,src_Up,dstUp,w_U8);
+			dstUp+=dst_pitch_U;
+
+			memcpy(dstUp,src_U,w_U2);
+			dstUp+=dst_pitch_U;
+
+			src_U+=src_pitchU;
+			src_Up+=src_pitchU;
+			src_Un+=src_pitchU;
+		}
+	}
+
+// Planar V
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<2; i+=2)
+		{
+			memcpy(dstVp,src_V,w_V2);
+			dstVp+=dst_pitch_V;
+
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX(src_V,src_Vn,dstVp,w_V8);
+			dstVp+=dst_pitch_V;
+
+			src_V+=src_pitchV;
+			src_Vp+=src_pitchV;
+			src_Vn+=src_pitchV;
+		}
+	}
+
+	for(int32_t i=h_0; i<h_2; i+=2)
+	{
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX(src_V,src_Vp,dstVp,w_V8);
+		dstVp+=dst_pitch_V;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX(src_V,src_Vn,dstVp,w_V8);
+		dstVp+=dst_pitch_V;
+
+		src_V+=src_pitchV;
+		src_Vp+=src_pitchV;
+		src_Vn+=src_pitchV;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_2; i<h_Y_max; i+=2)
+		{
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX(src_V,src_Vp,dstVp,w_V8);
+			dstVp+=dst_pitch_V;
+
+			memcpy(dstVp,src_V,w_V2);
+			dstVp+=dst_pitch_V;
+
+			src_V+=src_pitchV;
+			src_Vp+=src_pitchV;
+			src_Vn+=src_pitchV;
+		}
+	}
+}
+
+
+static void Convert_Interlaced_16_YV16(const MT_Data_Info &mt_data_inf,const uint32_t *lookup,const uint8_t bits_per_pixel)
+{
+	const uint8_t *srcYp=(const uint8_t *)mt_data_inf.src1;
+	const uint8_t *srcUp=(const uint8_t *)mt_data_inf.src2;
+	const uint8_t *srcVp=(const uint8_t *)mt_data_inf.src3;
+	uint8_t *dstYp=(uint8_t *)mt_data_inf.dst1;
+	uint8_t *dstUp=(uint8_t *)mt_data_inf.dst2;
+	uint8_t *dstVp=(uint8_t *)mt_data_inf.dst3;
+	const int32_t dst_w=mt_data_inf.dst_Y_w;
+	const int32_t h_Y_min=mt_data_inf.src_Y_h_min;
+	const int32_t h_Y_max=mt_data_inf.src_Y_h_max;
+	const ptrdiff_t src_pitch_Y=mt_data_inf.src_pitch1;
+	const ptrdiff_t src_pitchU=mt_data_inf.src_pitch2;
+	const ptrdiff_t src_pitchV=mt_data_inf.src_pitch3;
+	const ptrdiff_t dst_pitch_Y=mt_data_inf.dst_pitch1;
+	const ptrdiff_t dst_pitch_U=mt_data_inf.dst_pitch2;
+	const ptrdiff_t dst_pitch_V=mt_data_inf.dst_pitch3;
+
+	const uint8_t *src_U,*src_Up,*src_Upp,*src_Un,*src_Unn,*src_Unnn;
+	const uint8_t *src_V,*src_Vp,*src_Vpp,*src_Vn,*src_Vnn,*src_Vnnn;
+	uint8_t *dst_V,*dst_U;
+	const int32_t w_U=dst_w>>1,w_V=dst_w>>1;
+	const int32_t w_U2=w_U<<1,w_V2=w_V<<1;
+	const int32_t h_4 = mt_data_inf.bottom ? h_Y_max-4:h_Y_max;
+	const int32_t h_0 = mt_data_inf.top ? 4:h_Y_min;
+
+	const uint32_t vmax=(uint32_t)1 << bits_per_pixel;
+	const uint32_t vmax2= vmax << 1;
+
+	const ptrdiff_t pitch_U_2=2*src_pitchU;
+	const ptrdiff_t pitch_V_2=2*src_pitchV;
+
+	src_U=srcUp;
+	src_V=srcVp;
+	src_Up=src_U-src_pitchU;
+	src_Upp=src_U-2*src_pitchU;
+	src_Un=src_U+src_pitchU;
+	src_Unn=src_U+2*src_pitchU;
+	src_Unnn=src_U+3*src_pitchU;
+	src_Vp=src_V-src_pitchV;
+	src_Vpp=src_V-2*src_pitchV;
+	src_Vn=src_V+src_pitchV;
+	src_Vnn=src_V+2*src_pitchV;
+	src_Vnnn=src_V+3*src_pitchV;
+	dst_U=dstUp;
+	dst_V=dstVp;
+
+	Move_Full(srcYp,dstYp,dst_w << 1,h_Y_max-h_Y_min,src_pitch_Y,dst_pitch_Y);
+
+// Planar U
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<4; i+=4)
+		{
+			memcpy(dst_U,src_U,w_U2);
+			dst_U+=dst_pitch_U;
+
+			memcpy(dst_U,src_Un,w_U2);
+			dst_U+=dst_pitch_U;
+
+			const uint16_t *src1=(uint16_t *)src_Unn;
+			const uint16_t *src2=(uint16_t *)src_U;
+			uint16_t *dst=(uint16_t *)dst_U;
+
+			for(int32_t j=0; j<w_U; j++)
+				dst[j]=(uint16_t)((lookup[src1[j]]+lookup[(uint32_t)src2[j]+vmax]+4)>>3);
+			dst_U+=dst_pitch_U;
+
+			src1=(uint16_t *)src_Un;
+			src2=(uint16_t *)src_Unnn;
+			dst=(uint16_t *)dst_U;
+
+			for(int32_t j=0; j<w_U; j++)
+				dst[j]=(uint16_t)((lookup[(uint32_t)src1[j]+vmax2]+(uint32_t)src2[j]+4)>>3);
+			dst_U+=dst_pitch_U;
+
+			src_U+=pitch_U_2;
+			src_Up+=pitch_U_2;
+			src_Upp+=pitch_U_2;
+			src_Un+=pitch_U_2;
+			src_Unn+=pitch_U_2;
+			src_Unnn+=pitch_U_2;
+		}
+	}
+
+	for(int32_t i=h_0; i<h_4; i+=4)
+	{
+		const uint16_t *src1=(uint16_t *)src_U;
+		const uint16_t *src2=(uint16_t *)src_Upp;
+		uint16_t *dst=(uint16_t *)dst_U;
+
+		for(int32_t j=0; j<w_U; j++)
+			dst[j]=(uint16_t)((lookup[(uint32_t)src1[j]+vmax2]+(uint32_t)src2[j]+4)>>3);
+		dst_U+=dst_pitch_U;
+
+		src1=(uint16_t *)src_Up;
+		src2=(uint16_t *)src_Un;
+		dst=(uint16_t *)dst_U;
+
+		for(int32_t j=0; j<w_U; j++)
+			dst[j]=(uint16_t)((lookup[src1[j]]+lookup[(uint32_t)src2[j]+vmax]+4)>>3);
+		dst_U+=dst_pitch_U;
+
+		src1=(uint16_t *)src_Unn;
+		src2=(uint16_t *)src_U;
+		dst=(uint16_t *)dst_U;
+
+		for(int32_t j=0; j<w_U; j++)
+			dst[j]=(uint16_t)((lookup[src1[j]]+lookup[(uint32_t)src2[j]+vmax]+4)>>3);
+		dst_U+=dst_pitch_U;
+
+		src1=(uint16_t *)src_Un;
+		src2=(uint16_t *)src_Unnn;
+		dst=(uint16_t *)dst_U;
+
+		for(int32_t j=0; j<w_U; j++)
+			dst[j]=(uint16_t)((lookup[(uint32_t)src1[j]+vmax2]+(uint32_t)src2[j]+4)>>3);
+		dst_U+=dst_pitch_U;
+
+		src_U+=pitch_U_2;
+		src_Up+=pitch_U_2;
+		src_Upp+=pitch_U_2;
+		src_Un+=pitch_U_2;
+		src_Unn+=pitch_U_2;
+		src_Unnn+=pitch_U_2;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_4; i<h_Y_max; i+=4)
+		{
+			const uint16_t *src1=(uint16_t *)src_U;
+			const uint16_t *src2=(uint16_t *)src_Upp;
+			uint16_t *dst=(uint16_t *)dst_U;
+
+			for(int32_t j=0; j<w_U; j++)
+				dst[j]=(uint16_t)((lookup[(uint32_t)src1[j]+vmax2]+(uint32_t)src2[j]+4)>>3);
+			dst_U+=dst_pitch_U;
+
+			src1=(uint16_t *)src_Up;
+			src2=(uint16_t *)src_Un;
+			dst=(uint16_t *)dst_U;
+
+			for(int32_t j=0; j<w_U; j++)
+				dst[j]=(uint16_t)((lookup[src1[j]]+lookup[(uint32_t)src2[j]+vmax]+4)>>3);
+			dst_U+=dst_pitch_U;
+
+			memcpy(dst_U,src_U,w_U2);
+			dst_U+=dst_pitch_U;
+
+			memcpy(dst_U,src_Un,w_U2);
+			dst_U+=dst_pitch_U;
+
+			src_U+=pitch_U_2;
+			src_Up+=pitch_U_2;
+			src_Upp+=pitch_U_2;
+			src_Un+=pitch_U_2;
+			src_Unn+=pitch_U_2;
+			src_Unnn+=pitch_U_2;
+		}
+	}
+
+// Planar V
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<4; i+=4)
+		{
+			memcpy(dst_V,src_V,w_V2);
+			dst_V+=dst_pitch_V;
+
+			memcpy(dst_V,src_Vn,w_V2);
+			dst_V+=dst_pitch_V;
+
+			const uint16_t *src1=(uint16_t *)src_Vnn;
+			const uint16_t *src2=(uint16_t *)src_V;
+			uint16_t *dst=(uint16_t *)dst_V;
+
+			for(int32_t j=0; j<w_V; j++)
+				dst[j]=(uint16_t)((lookup[src1[j]]+lookup[(uint32_t)src2[j]+vmax]+4)>>3);
+			dst_V+=dst_pitch_V;
+
+			src1=(uint16_t *)src_Vn;
+			src2=(uint16_t *)src_Vnnn;
+			dst=(uint16_t *)dst_V;
+
+			for(int32_t j=0; j<w_V; j++)
+				dst[j]=(uint16_t)((lookup[(uint32_t)src1[j]+vmax2]+(uint32_t)src2[j]+4)>>3);
+			dst_V+=dst_pitch_V;
+
+			src_V+=pitch_V_2;
+			src_Vp+=pitch_V_2;
+			src_Vpp+=pitch_V_2;
+			src_Vn+=pitch_V_2;
+			src_Vnn+=pitch_V_2;
+			src_Vnnn+=pitch_V_2;
+		}
+	}
+
+	for(int32_t i=h_0; i<h_4; i+=4)
+	{
+		const uint16_t *src1=(uint16_t *)src_V;
+		const uint16_t *src2=(uint16_t *)src_Vpp;
+		uint16_t *dst=(uint16_t *)dst_V;
+
+		for(int32_t j=0; j<w_V; j++)
+			dst[j]=(uint16_t)((lookup[(uint32_t)src1[j]+vmax2]+(uint32_t)src2[j]+4)>>3);
+		dst_V+=dst_pitch_V;
+
+		src1=(uint16_t *)src_Vp;
+		src2=(uint16_t *)src_Vn;
+		dst=(uint16_t *)dst_V;
+
+		for(int32_t j=0; j<w_V; j++)
+			dst[j]=(uint16_t)((lookup[src1[j]]+lookup[(uint32_t)src2[j]+vmax]+4)>>3);
+		dst_V+=dst_pitch_V;
+
+		src1=(uint16_t *)src_Vnn;
+		src2=(uint16_t *)src_V;
+		dst=(uint16_t *)dst_V;
+
+		for(int32_t j=0; j<w_V; j++)
+			dst[j]=(uint16_t)((lookup[src1[j]]+lookup[(uint32_t)src2[j]+vmax]+4)>>3);
+		dst_V+=dst_pitch_V;
+
+		src1=(uint16_t *)src_Vn;
+		src2=(uint16_t *)src_Vnnn;
+		dst=(uint16_t *)dst_V;
+
+		for(int32_t j=0; j<w_V; j++)
+			dst[j]=(uint16_t)((lookup[(uint32_t)src1[j]+vmax2]+(uint32_t)src2[j]+4)>>3);
+		dst_V+=dst_pitch_V;
+
+		src_V+=pitch_V_2;
+		src_Vp+=pitch_V_2;
+		src_Vpp+=pitch_V_2;
+		src_Vn+=pitch_V_2;
+		src_Vnn+=pitch_V_2;
+		src_Vnnn+=pitch_V_2;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_4; i<h_Y_max; i+=4)
+		{
+			const uint16_t *src1=(uint16_t *)src_V;
+			const uint16_t *src2=(uint16_t *)src_Vpp;
+			uint16_t *dst=(uint16_t *)dst_V;
+
+			for(int32_t j=0; j<w_V; j++)
+				dst[j]=(uint16_t)((lookup[(uint32_t)src1[j]+vmax2]+(uint32_t)src2[j]+4)>>3);
+			dst_V+=dst_pitch_V;
+
+			src1=(uint16_t *)src_Vp;
+			src2=(uint16_t *)src_Vn;
+			dst=(uint16_t *)dst_V;
+		
+			for(int32_t j=0; j<w_V; j++)
+				dst[j]=(uint16_t)((lookup[src1[j]]+lookup[(uint32_t)src2[j]+vmax]+4)>>3);
+			dst_V+=dst_pitch_V;
+
+			memcpy(dst_V,src_V,w_V2);
+			dst_V+=dst_pitch_V;
+
+			memcpy(dst_V,src_Vn,w_V2);
+			dst_V+=dst_pitch_V;
+
+			src_V+=pitch_V_2;
+			src_Vp+=pitch_V_2;
+			src_Vpp+=pitch_V_2;
+			src_Vn+=pitch_V_2;
+			src_Vnn+=pitch_V_2;
+			src_Vnnn+=pitch_V_2;
+		}
+	}
+}
+
+
+static void Convert_Progressive_16_YV16(const MT_Data_Info &mt_data_inf,const uint32_t *lookup,const uint8_t bits_per_pixel)
+{
+	const uint8_t *srcYp=(const uint8_t *)mt_data_inf.src1;
+	const uint8_t *srcUp=(const uint8_t *)mt_data_inf.src2;
+	const uint8_t *srcVp=(const uint8_t *)mt_data_inf.src3;
+	uint8_t *dstYp=(uint8_t *)mt_data_inf.dst1;
+	uint8_t *dstUp=(uint8_t *)mt_data_inf.dst2;
+	uint8_t *dstVp=(uint8_t *)mt_data_inf.dst3;
+	const int32_t dst_w=mt_data_inf.dst_Y_w;
+	const int32_t h_Y_min=mt_data_inf.src_Y_h_min;
+	const int32_t h_Y_max=mt_data_inf.src_Y_h_max;
+	const ptrdiff_t src_pitch_Y=mt_data_inf.src_pitch1;
+	const ptrdiff_t src_pitchU=mt_data_inf.src_pitch2;
+	const ptrdiff_t src_pitchV=mt_data_inf.src_pitch3;
+	const ptrdiff_t dst_pitch_Y=mt_data_inf.dst_pitch1;
+	const ptrdiff_t dst_pitch_U=mt_data_inf.dst_pitch2;
+	const ptrdiff_t dst_pitch_V=mt_data_inf.dst_pitch3;
+
+	const uint8_t *src_U,*src_Up,*src_Un;
+	const uint8_t *src_V,*src_Vp,*src_Vn;
+	uint8_t *dst_U,*dst_V;
+	const int32_t w_U=dst_w>>1,w_V=dst_w>>1;
+	const int32_t w_U2=w_U<<1,w_V2=w_V<<1;
+	const int32_t h_2 = mt_data_inf.bottom ? h_Y_max-2:h_Y_max;
+	const int32_t h_0 = mt_data_inf.top ? 2:h_Y_min;
+
+	src_U=srcUp;
+	src_V=srcVp;
+	src_Up=src_U-src_pitchU;
+	src_Un=src_U+src_pitchU;
+	src_Vp=src_V-src_pitchV;
+	src_Vn=src_V+src_pitchV;
+	dst_U=dstUp;
+	dst_V=dstVp;
+
+	Move_Full(srcYp,dstYp,dst_w << 1,h_Y_max-h_Y_min,src_pitch_Y,dst_pitch_Y);
+
+// Planar U
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<2; i+=2)
+		{
+			memcpy(dst_U,src_U,w_U2);
+			dst_U+=dst_pitch_U;
+
+			const uint16_t *src1=(uint16_t *)src_U;
+			const uint16_t *src2=(uint16_t *)src_Un;
+			uint16_t *dst=(uint16_t *)dst_U;
+
+			for(int32_t j=0; j<w_U; j++)
+				dst[j]=(uint16_t)((lookup[src1[j]]+(uint32_t)src2[j]+2)>>2);
+			dst_U+=dst_pitch_U;
+
+			src_U+=src_pitchU;
+			src_Up+=src_pitchU;
+			src_Un+=src_pitchU;
+		}
+	}
+
+	for(int32_t i=h_0; i<h_2; i+=2)
+	{
+		const uint16_t *src1=(uint16_t *)src_U;
+		const uint16_t *src2=(uint16_t *)src_Up;
+		uint16_t *dst=(uint16_t *)dst_U;
+
+		for(int32_t j=0; j<w_U; j++)
+			dst[j]=(uint16_t)((lookup[src1[j]]+(uint32_t)src2[j]+2)>>2);
+		dst_U+=dst_pitch_U;
+
+		src2=(uint16_t *)src_Un;
+		dst=(uint16_t *)dst_U;
+
+		for(int32_t j=0; j<w_U; j++)
+			dst[j]=(uint16_t)((lookup[src1[j]]+(uint32_t)src2[j]+2)>>2);
+		dst_U+=dst_pitch_U;
+
+		src_U+=src_pitchU;
+		src_Up+=src_pitchU;
+		src_Un+=src_pitchU;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_2; i<h_Y_max; i+=2)
+		{
+			const uint16_t *src1=(uint16_t *)src_U;
+			const uint16_t *src2=(uint16_t *)src_Up;
+			uint16_t *dst=(uint16_t *)dst_U;
+
+			for(int32_t j=0; j<w_U; j++)
+				dst[j]=(uint16_t)((lookup[src1[j]]+(uint32_t)src2[j]+2)>>2);
+			dst_U+=dst_pitch_U;
+
+			memcpy(dst_U,src_U,w_U2);
+			dst_U+=dst_pitch_U;
+
+			src_U+=src_pitchU;
+			src_Up+=src_pitchU;
+			src_Un+=src_pitchU;
+		}
+	}
+
+// Planar V
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<2; i+=2)
+		{
+			memcpy(dst_V,src_V,w_V2);
+			dst_V+=dst_pitch_V;
+
+			const uint16_t *src1=(uint16_t *)src_V;
+			const uint16_t *src2=(uint16_t *)src_Vn;
+			uint16_t *dst=(uint16_t *)dst_V;
+
+			for(int32_t j=0; j<w_V; j++)
+				dst[j]=(uint16_t)((lookup[src1[j]]+(uint32_t)src2[j]+2)>>2);
+			dst_V+=dst_pitch_V;
+
+			src_V+=src_pitchV;
+			src_Vp+=src_pitchV;
+			src_Vn+=src_pitchV;
+		}
+	}
+
+	for(int32_t i=h_0; i<h_2; i+=2)
+	{
+		const uint16_t *src1=(uint16_t *)src_V;
+		const uint16_t *src2=(uint16_t *)src_Vp;
+		uint16_t *dst=(uint16_t *)dst_V;
+
+		for(int32_t j=0; j<w_V; j++)
+			dst[j]=(uint16_t)((lookup[src1[j]]+(uint32_t)src2[j]+2)>>2);
+		dst_V+=dst_pitch_V;
+
+		src2=(uint16_t *)src_Vn;
+		dst=(uint16_t *)dst_V;
+
+		for(int32_t j=0; j<w_V; j++)
+			dst[j]=(uint16_t)((lookup[src1[j]]+(uint32_t)src2[j]+2)>>2);
+		dst_V+=dst_pitch_V;
+
+		src_V+=src_pitchV;
+		src_Vp+=src_pitchV;
+		src_Vn+=src_pitchV;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_2; i<h_Y_max; i+=2)
+		{
+			const uint16_t *src1=(uint16_t *)src_V;
+			const uint16_t *src2=(uint16_t *)src_Vp;
+			uint16_t *dst=(uint16_t *)dst_V;
+
+			for(int32_t j=0; j<w_V; j++)
+				dst[j]=(uint16_t)((lookup[src1[j]]+(uint32_t)src2[j]+2)>>2);
+			dst_V+=dst_pitch_V;
+
+			memcpy(dst_V,src_V,w_V2);
+			dst_V+=dst_pitch_V;
+
+			src_V+=src_pitchV;
+			src_Vp+=src_pitchV;
+			src_Vn+=src_pitchV;
+		}
+	}
+
+}
+
+
+#ifdef AVX2_BUILD_POSSIBLE
+void Convert_Interlaced_8_YV16_AVX2(const MT_Data_Info &mt_data_inf)
+{
+
+	const uint8_t *srcYp=(const uint8_t *)mt_data_inf.src1;
+	const uint8_t *srcUp=(const uint8_t *)mt_data_inf.src2;
+	const uint8_t *srcVp=(const uint8_t *)mt_data_inf.src3;
+	uint8_t *dstYp=(uint8_t *)mt_data_inf.dst1;
+	uint8_t *dstUp=(uint8_t *)mt_data_inf.dst2;
+	uint8_t *dstVp=(uint8_t *)mt_data_inf.dst3;
+	const int32_t dst_w=mt_data_inf.dst_Y_w;
+	const int32_t h_Y_min=mt_data_inf.src_Y_h_min;
+	const int32_t h_Y_max=mt_data_inf.src_Y_h_max;
+	const ptrdiff_t src_pitch_Y=mt_data_inf.src_pitch1;
+	const ptrdiff_t src_pitchU=mt_data_inf.src_pitch2;
+	const ptrdiff_t src_pitchV=mt_data_inf.src_pitch3;
+	const ptrdiff_t dst_pitch_Y=mt_data_inf.dst_pitch1;
+	const ptrdiff_t dst_pitch_U=mt_data_inf.dst_pitch2;
+	const ptrdiff_t dst_pitch_V=mt_data_inf.dst_pitch3;
+
+	const uint8_t *src_U,*src_Up,*src_Upp,*src_Un,*src_Unn,*src_Unnn;
+	const uint8_t *src_V,*src_Vp,*src_Vpp,*src_Vn,*src_Vnn,*src_Vnnn;
+	const int32_t w_U=dst_w>>1,w_V=dst_w>>1;
+	const int32_t w_U32=(w_U+31)>>5,w_V32=(w_V+31)>>5;
+	const int32_t h_4 = mt_data_inf.bottom ? h_Y_max-4:h_Y_max;
+	const int32_t h_0 = mt_data_inf.top ? 4:h_Y_min;
+
+	const ptrdiff_t pitch_U_2=2*src_pitchU;
+	const ptrdiff_t pitch_V_2=2*src_pitchV;
+
+	src_U=srcUp;
+	src_V=srcVp;
+	src_Up=src_U-src_pitchU;
+	src_Upp=src_U-2*src_pitchU;
+	src_Un=src_U+src_pitchU;
+	src_Unn=src_U+2*src_pitchU;
+	src_Unnn=src_U+3*src_pitchU;
+	src_Vp=src_V-src_pitchV;
+	src_Vpp=src_V-2*src_pitchV;
+	src_Vn=src_V+src_pitchV;
+	src_Vnn=src_V+2*src_pitchV;
+	src_Vnnn=src_V+3*src_pitchV;
+
+	Move_Full(srcYp,dstYp,dst_w,h_Y_max-h_Y_min,src_pitch_Y,dst_pitch_Y);
+
+// U Planar
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<4; i+=4)
+		{
+			memcpy(dstUp,src_U,w_U);
+			dstUp+=dst_pitch_U;
+
+			memcpy(dstUp,src_Un,w_U);
+			dstUp+=dst_pitch_U;
+
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX2(src_Unn,src_U,dstUp,w_U32);
+			dstUp+=dst_pitch_U;
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX2(src_Un,src_Unnn,dstUp,w_U32);
+			dstUp+=dst_pitch_U;
+
+			src_U+=pitch_U_2;
+			src_Up+=pitch_U_2;
+			src_Upp+=pitch_U_2;
+			src_Un+=pitch_U_2;
+			src_Unn+=pitch_U_2;
+			src_Unnn+=pitch_U_2;
+		}
+	}
+
+	for(int32_t i=h_0; i<h_4; i+=4)
+	{
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX2(src_U,src_Upp,dstUp,w_U32);
+		dstUp+=dst_pitch_U;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX2(src_Up,src_Un,dstUp,w_U32);
+		dstUp+=dst_pitch_U;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX2(src_Unn,src_U,dstUp,w_U32);
+		dstUp+=dst_pitch_U;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX2(src_Un,src_Unnn,dstUp,w_U32);
+		dstUp+=dst_pitch_U;
+
+		src_U+=pitch_U_2;
+		src_Up+=pitch_U_2;
+		src_Upp+=pitch_U_2;
+		src_Un+=pitch_U_2;
+		src_Unn+=pitch_U_2;
+		src_Unnn+=pitch_U_2;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_4; i<h_Y_max; i+=4)
+		{
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX2(src_U,src_Upp,dstUp,w_U32);
+			dstUp+=dst_pitch_U;
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX2(src_Up,src_Un,dstUp,w_U32);
+			dstUp+=dst_pitch_U;
+
+			memcpy(dstUp,src_U,w_U);
+			dstUp+=dst_pitch_U;
+
+			memcpy(dstUp,src_Un,w_U);
+			dstUp+=dst_pitch_U;
+
+			src_U+=pitch_U_2;
+			src_Up+=pitch_U_2;
+			src_Upp+=pitch_U_2;
+			src_Un+=pitch_U_2;
+			src_Unn+=pitch_U_2;
+			src_Unnn+=pitch_U_2;
+		}
+	}
+
+// V Planar
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<4; i+=4)
+		{
+			memcpy(dstVp,src_V,w_V);
+			dstVp+=dst_pitch_V;
+
+			memcpy(dstVp,src_Vn,w_V);
+			dstVp+=dst_pitch_V;
+
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX2(src_Vnn,src_V,dstVp,w_V32);
+			dstVp+=dst_pitch_V;
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX2(src_Vn,src_Vnnn,dstVp,w_V32);
+			dstVp+=dst_pitch_V;
+
+			src_V+=pitch_V_2;
+			src_Vp+=pitch_V_2;
+			src_Vpp+=pitch_V_2;
+			src_Vn+=pitch_V_2;
+			src_Vnn+=pitch_V_2;
+			src_Vnnn+=pitch_V_2;
+		}
+	}
+
+	for(int32_t i=h_0; i<h_4; i+=4)
+	{
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX2(src_V,src_Vpp,dstVp,w_V32);
+		dstVp+=dst_pitch_V;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX2(src_Vp,src_Vn,dstVp,w_V32);
+		dstVp+=dst_pitch_V;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX2(src_Vnn,src_V,dstVp,w_V32);
+		dstVp+=dst_pitch_V;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX2(src_Vn,src_Vnnn,dstVp,w_V32);
+		dstVp+=dst_pitch_V;
+
+		src_V+=pitch_V_2;
+		src_Vp+=pitch_V_2;
+		src_Vpp+=pitch_V_2;
+		src_Vn+=pitch_V_2;
+		src_Vnn+=pitch_V_2;
+		src_Vnnn+=pitch_V_2;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_4; i<h_Y_max; i+=4)
+		{
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_8_AVX2(src_V,src_Vpp,dstVp,w_V32);
+			dstVp+=dst_pitch_V;
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_8_AVX2(src_Vp,src_Vn,dstVp,w_V32);
+			dstVp+=dst_pitch_V;
+
+			memcpy(dstVp,src_V,w_V);
+			dstVp+=dst_pitch_V;
+
+			memcpy(dstVp,src_Vn,w_V);
+			dstVp+=dst_pitch_V;
+
+			src_V+=pitch_V_2;
+			src_Vp+=pitch_V_2;
+			src_Vpp+=pitch_V_2;
+			src_Vn+=pitch_V_2;
+			src_Vnn+=pitch_V_2;
+			src_Vnnn+=pitch_V_2;
+		}
+	}
+}
+
+
+void Convert_Interlaced_16_YV16_AVX2(const MT_Data_Info &mt_data_inf)
+{
+
+	const uint8_t *srcYp=(const uint8_t *)mt_data_inf.src1;
+	const uint8_t *srcUp=(const uint8_t *)mt_data_inf.src2;
+	const uint8_t *srcVp=(const uint8_t *)mt_data_inf.src3;
+	uint8_t *dstYp=(uint8_t *)mt_data_inf.dst1;
+	uint8_t *dstUp=(uint8_t *)mt_data_inf.dst2;
+	uint8_t *dstVp=(uint8_t *)mt_data_inf.dst3;
+	const int32_t dst_w=mt_data_inf.dst_Y_w;
+	const int32_t h_Y_min=mt_data_inf.src_Y_h_min;
+	const int32_t h_Y_max=mt_data_inf.src_Y_h_max;
+	const ptrdiff_t src_pitch_Y=mt_data_inf.src_pitch1;
+	const ptrdiff_t src_pitchU=mt_data_inf.src_pitch2;
+	const ptrdiff_t src_pitchV=mt_data_inf.src_pitch3;
+	const ptrdiff_t dst_pitch_Y=mt_data_inf.dst_pitch1;
+	const ptrdiff_t dst_pitch_U=mt_data_inf.dst_pitch2;
+	const ptrdiff_t dst_pitch_V=mt_data_inf.dst_pitch3;
+
+	const uint8_t *src_U,*src_Up,*src_Upp,*src_Un,*src_Unn,*src_Unnn;
+	const uint8_t *src_V,*src_Vp,*src_Vpp,*src_Vn,*src_Vnn,*src_Vnnn;
+	const int32_t w_U=dst_w>>1,w_V=dst_w>>1;
+	const int32_t w_U2=w_U<<1,w_V2=w_V<<1;
+	const int32_t w_U16=(w_U+15)>>4,w_V16=(w_V+15)>>4;
+	const int32_t h_4 = mt_data_inf.bottom ? h_Y_max-4:h_Y_max;
+	const int32_t h_0 = mt_data_inf.top ? 4:h_Y_min;
+
+	const ptrdiff_t pitch_U_2=2*src_pitchU;
+	const ptrdiff_t pitch_V_2=2*src_pitchV;
+
+	src_U=srcUp;
+	src_V=srcVp;
+	src_Up=src_U-src_pitchU;
+	src_Upp=src_U-2*src_pitchU;
+	src_Un=src_U+src_pitchU;
+	src_Unn=src_U+2*src_pitchU;
+	src_Unnn=src_U+3*src_pitchU;
+	src_Vp=src_V-src_pitchV;
+	src_Vpp=src_V-2*src_pitchV;
+	src_Vn=src_V+src_pitchV;
+	src_Vnn=src_V+2*src_pitchV;
+	src_Vnnn=src_V+3*src_pitchV;
+
+	Move_Full(srcYp,dstYp,dst_w << 1,h_Y_max-h_Y_min,src_pitch_Y,dst_pitch_Y);
+
+// U Planar
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<4; i+=4)
+		{
+			memcpy(dstUp,src_U,w_U2);
+			dstUp+=dst_pitch_U;
+
+			memcpy(dstUp,src_Un,w_U2);
+			dstUp+=dst_pitch_U;
+
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX2(src_Unn,src_U,dstUp,w_U16);
+			dstUp+=dst_pitch_U;
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX2(src_Un,src_Unnn,dstUp,w_U16);
+			dstUp+=dst_pitch_U;
+
+			src_U+=pitch_U_2;
+			src_Up+=pitch_U_2;
+			src_Upp+=pitch_U_2;
+			src_Un+=pitch_U_2;
+			src_Unn+=pitch_U_2;
+			src_Unnn+=pitch_U_2;
+		}
+	}
+
+	for(int32_t i=h_0; i<h_4; i+=4)
+	{
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX2(src_U,src_Upp,dstUp,w_U16);
+		dstUp+=dst_pitch_U;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX2(src_Up,src_Un,dstUp,w_U16);
+		dstUp+=dst_pitch_U;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX2(src_Unn,src_U,dstUp,w_U16);
+		dstUp+=dst_pitch_U;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX2(src_Un,src_Unnn,dstUp,w_U16);
+		dstUp+=dst_pitch_U;
+
+		src_U+=pitch_U_2;
+		src_Up+=pitch_U_2;
+		src_Upp+=pitch_U_2;
+		src_Un+=pitch_U_2;
+		src_Unn+=pitch_U_2;
+		src_Unnn+=pitch_U_2;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_4; i<h_Y_max; i+=4)
+		{
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX2(src_U,src_Upp,dstUp,w_U16);
+			dstUp+=dst_pitch_U;
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX2(src_Up,src_Un,dstUp,w_U16);
+			dstUp+=dst_pitch_U;
+
+			memcpy(dstUp,src_U,w_U2);
+			dstUp+=dst_pitch_U;
+
+			memcpy(dstUp,src_Un,w_U2);
+			dstUp+=dst_pitch_U;
+
+			src_U+=pitch_U_2;
+			src_Up+=pitch_U_2;
+			src_Upp+=pitch_U_2;
+			src_Un+=pitch_U_2;
+			src_Unn+=pitch_U_2;
+			src_Unnn+=pitch_U_2;
+		}
+	}
+
+// V Planar
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<4; i+=4)
+		{
+			memcpy(dstVp,src_V,w_V2);
+			dstVp+=dst_pitch_V;
+
+			memcpy(dstVp,src_Vn,w_V2);
+			dstVp+=dst_pitch_V;
+
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX2(src_Vnn,src_V,dstVp,w_V16);
+			dstVp+=dst_pitch_V;
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX2(src_Vn,src_Vnnn,dstVp,w_V16);
+			dstVp+=dst_pitch_V;
+
+			src_V+=pitch_V_2;
+			src_Vp+=pitch_V_2;
+			src_Vpp+=pitch_V_2;
+			src_Vn+=pitch_V_2;
+			src_Vnn+=pitch_V_2;
+			src_Vnnn+=pitch_V_2;
+		}
+	}
+
+	for(int32_t i=h_0; i<h_4; i+=4)
+	{
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX2(src_V,src_Vpp,dstVp,w_V16);
+		dstVp+=dst_pitch_V;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX2(src_Vp,src_Vn,dstVp,w_V16);
+		dstVp+=dst_pitch_V;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX2(src_Vnn,src_V,dstVp,w_V16);
+		dstVp+=dst_pitch_V;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX2(src_Vn,src_Vnnn,dstVp,w_V16);
+		dstVp+=dst_pitch_V;
+
+		src_V+=pitch_V_2;
+		src_Vp+=pitch_V_2;
+		src_Vpp+=pitch_V_2;
+		src_Vn+=pitch_V_2;
+		src_Vnn+=pitch_V_2;
+		src_Vnnn+=pitch_V_2;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_4; i<h_Y_max; i+=4)
+		{
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x7x1_16_AVX2(src_V,src_Vpp,dstVp,w_V16);
+			dstVp+=dst_pitch_V;
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x5_16_AVX2(src_Vp,src_Vn,dstVp,w_V16);
+			dstVp+=dst_pitch_V;
+
+			memcpy(dstVp,src_V,w_V2);
+			dstVp+=dst_pitch_V;
+
+			memcpy(dstVp,src_Vn,w_V2);
+			dstVp+=dst_pitch_V;
+
+			src_V+=pitch_V_2;
+			src_Vp+=pitch_V_2;
+			src_Vpp+=pitch_V_2;
+			src_Vn+=pitch_V_2;
+			src_Vnn+=pitch_V_2;
+			src_Vnnn+=pitch_V_2;
+		}
+	}
+}
+
+
+static void Convert_Progressive_8_YV16_AVX2(const MT_Data_Info &mt_data_inf)
+{
+	const uint8_t *srcYp=(const uint8_t *)mt_data_inf.src1;
+	const uint8_t *srcUp=(const uint8_t *)mt_data_inf.src2;
+	const uint8_t *srcVp=(const uint8_t *)mt_data_inf.src3;
+	uint8_t *dstYp=(uint8_t *)mt_data_inf.dst1;
+	uint8_t *dstUp=(uint8_t *)mt_data_inf.dst2;
+	uint8_t *dstVp=(uint8_t *)mt_data_inf.dst3;
+	const int32_t dst_w=mt_data_inf.dst_Y_w;
+	const int32_t h_Y_min=mt_data_inf.src_Y_h_min;
+	const int32_t h_Y_max=mt_data_inf.src_Y_h_max;
+	const ptrdiff_t src_pitch_Y=mt_data_inf.src_pitch1;
+	const ptrdiff_t src_pitchU=mt_data_inf.src_pitch2;
+	const ptrdiff_t src_pitchV=mt_data_inf.src_pitch3;
+	const ptrdiff_t dst_pitch_Y=mt_data_inf.dst_pitch1;
+	const ptrdiff_t dst_pitch_U=mt_data_inf.dst_pitch2;
+	const ptrdiff_t dst_pitch_V=mt_data_inf.dst_pitch3;
+
+	const uint8_t *src_U,*src_Up,*src_Un;
+	const uint8_t *src_V,*src_Vp,*src_Vn;
+	const int32_t w_U=dst_w>>1,w_V=dst_w>>1;
+	const int32_t w_U32=(w_U+31)>>5,w_V32=(w_V+31)>>5;
+	const int32_t h_2 = mt_data_inf.bottom ? h_Y_max-2:h_Y_max;
+	const int32_t h_0 = mt_data_inf.top ? 2:h_Y_min;
+
+	src_U=srcUp;
+	src_V=srcVp;
+	src_Up=src_U-src_pitchU;
+	src_Un=src_U+src_pitchU;
+	src_Vp=src_V-src_pitchV;
+	src_Vn=src_V+src_pitchV;
+
+	Move_Full(srcYp,dstYp,dst_w,h_Y_max-h_Y_min,src_pitch_Y,dst_pitch_Y);
+
+// Planar U
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<2; i+=2)
+		{
+			memcpy(dstUp,src_U,w_U);
+			dstUp+=dst_pitch_U;
+
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX2(src_U,src_Un,dstUp,w_U32);
+			dstUp+=dst_pitch_U;
+
+			src_U+=src_pitchU;
+			src_Up+=src_pitchU;
+			src_Un+=src_pitchU;
+		}
+	}
+
+	for(int32_t i=h_0; i<h_2; i+=2)
+	{
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX2(src_U,src_Up,dstUp,w_U32);
+		dstUp+=dst_pitch_U;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX2(src_U,src_Un,dstUp,w_U32);
+		dstUp+=dst_pitch_U;
+
+		src_U+=src_pitchU;
+		src_Up+=src_pitchU;
+		src_Un+=src_pitchU;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_2; i<h_Y_max; i+=2)
+		{
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX2(src_U,src_Up,dstUp,w_U32);
+			dstUp+=dst_pitch_U;
+
+			memcpy(dstUp,src_U,w_U);
+			dstUp+=dst_pitch_U;
+
+			src_U+=src_pitchU;
+			src_Up+=src_pitchU;
+			src_Un+=src_pitchU;
+		}
+	}
+
+// Planar V
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<2; i+=2)
+		{
+			memcpy(dstVp,src_V,w_V);
+			dstVp+=dst_pitch_V;
+
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX2(src_V,src_Vn,dstVp,w_V32);
+			dstVp+=dst_pitch_V;
+
+			src_V+=src_pitchV;
+			src_Vp+=src_pitchV;
+			src_Vn+=src_pitchV;
+		}
+	}
+
+	for(int32_t i=h_0; i<h_2; i+=2)
+	{
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX2(src_V,src_Vp,dstVp,w_V32);
+		dstVp+=dst_pitch_V;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX2(src_V,src_Vn,dstVp,w_V32);
+		dstVp+=dst_pitch_V;
+
+		src_V+=src_pitchV;
+		src_Vp+=src_pitchV;
+		src_Vn+=src_pitchV;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_2; i<h_Y_max; i+=2)
+		{
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_8_AVX2(src_V,src_Vp,dstVp,w_V32);
+			dstVp+=dst_pitch_V;
+
+			memcpy(dstVp,src_V,w_V);
+			dstVp+=dst_pitch_V;
+
+			src_V+=src_pitchV;
+			src_Vp+=src_pitchV;
+			src_Vn+=src_pitchV;
+		}
+	}
+}
+
+
+static void Convert_Progressive_16_YV16_AVX2(const MT_Data_Info &mt_data_inf)
+{
+	const uint8_t *srcYp=(const uint8_t *)mt_data_inf.src1;
+	const uint8_t *srcUp=(const uint8_t *)mt_data_inf.src2;
+	const uint8_t *srcVp=(const uint8_t *)mt_data_inf.src3;
+	uint8_t *dstYp=(uint8_t *)mt_data_inf.dst1;
+	uint8_t *dstUp=(uint8_t *)mt_data_inf.dst2;
+	uint8_t *dstVp=(uint8_t *)mt_data_inf.dst3;
+	const int32_t dst_w=mt_data_inf.dst_Y_w;
+	const int32_t h_Y_min=mt_data_inf.src_Y_h_min;
+	const int32_t h_Y_max=mt_data_inf.src_Y_h_max;
+	const ptrdiff_t src_pitch_Y=mt_data_inf.src_pitch1;
+	const ptrdiff_t src_pitchU=mt_data_inf.src_pitch2;
+	const ptrdiff_t src_pitchV=mt_data_inf.src_pitch3;
+	const ptrdiff_t dst_pitch_Y=mt_data_inf.dst_pitch1;
+	const ptrdiff_t dst_pitch_U=mt_data_inf.dst_pitch2;
+	const ptrdiff_t dst_pitch_V=mt_data_inf.dst_pitch3;
+
+	const uint8_t *src_U,*src_Up,*src_Un;
+	const uint8_t *src_V,*src_Vp,*src_Vn;
+	const int32_t w_U=dst_w>>1,w_V=dst_w>>1;
+	const int32_t w_U2=w_U<<1,w_V2=w_V<<1;
+	const int32_t w_U16=(w_U+15)>>4,w_V16=(w_V+15)>>4;
+	const int32_t h_2 = mt_data_inf.bottom ? h_Y_max-2:h_Y_max;
+	const int32_t h_0 = mt_data_inf.top ? 2:h_Y_min;
+
+	src_U=srcUp;
+	src_V=srcVp;
+	src_Up=src_U-src_pitchU;
+	src_Un=src_U+src_pitchU;
+	src_Vp=src_V-src_pitchV;
+	src_Vn=src_V+src_pitchV;
+
+	Move_Full(srcYp,dstYp,dst_w << 1,h_Y_max-h_Y_min,src_pitch_Y,dst_pitch_Y);
+
+// Planar U
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<2; i+=2)
+		{
+			memcpy(dstUp,src_U,w_U2);
+			dstUp+=dst_pitch_U;
+
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX2(src_U,src_Un,dstUp,w_U16);
+			dstUp+=dst_pitch_U;
+
+			src_U+=src_pitchU;
+			src_Up+=src_pitchU;
+			src_Un+=src_pitchU;
+		}
+	}
+
+	for(int32_t i=h_0; i<h_2; i+=2)
+	{
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX2(src_U,src_Up,dstUp,w_U16);
+		dstUp+=dst_pitch_U;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX2(src_U,src_Un,dstUp,w_U16);
+		dstUp+=dst_pitch_U;
+
+		src_U+=src_pitchU;
+		src_Up+=src_pitchU;
+		src_Un+=src_pitchU;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_2; i<h_Y_max; i+=2)
+		{
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX2(src_U,src_Up,dstUp,w_U16);
+			dstUp+=dst_pitch_U;
+
+			memcpy(dstUp,src_U,w_U2);
+			dstUp+=dst_pitch_U;
+
+			src_U+=src_pitchU;
+			src_Up+=src_pitchU;
+			src_Un+=src_pitchU;
+		}
+	}
+
+// Planar V
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<2; i+=2)
+		{
+			memcpy(dstVp,src_V,w_V2);
+			dstVp+=dst_pitch_V;
+
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX2(src_V,src_Vn,dstVp,w_V16);
+			dstVp+=dst_pitch_V;
+
+			src_V+=src_pitchV;
+			src_Vp+=src_pitchV;
+			src_Vn+=src_pitchV;
+		}
+	}
+
+	for(int32_t i=h_0; i<h_2; i+=2)
+	{
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX2(src_V,src_Vp,dstVp,w_V16);
+		dstVp+=dst_pitch_V;
+		JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX2(src_V,src_Vn,dstVp,w_V16);
+		dstVp+=dst_pitch_V;
+
+		src_V+=src_pitchV;
+		src_Vp+=src_pitchV;
+		src_Vn+=src_pitchV;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_2; i<h_Y_max; i+=2)
+		{
+			JPSDR_AutoYUY2_Convert_Planar420_to_Planar422_x3x1_16_AVX2(src_V,src_Vp,dstVp,w_V16);
+			dstVp+=dst_pitch_V;
+
+			memcpy(dstVp,src_V,w_V2);
+			dstVp+=dst_pitch_V;
+
+			src_V+=src_pitchV;
+			src_Vp+=src_pitchV;
+			src_Vn+=src_pitchV;
+		}
+	}
+}
+#endif
+
+
+static void Convert_Progressive_to_YUY2_SSE2(const MT_Data_Info &mt_data_inf)
 
 {
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -1958,11 +3651,9 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_YUY2_SSE(uint8_t thread_num)
 }
 
 
-void JPSDR_AutoYUY2::Convert_Progressive_to_YUY2_AVX(uint8_t thread_num)
+static void Convert_Progressive_to_YUY2_AVX(const MT_Data_Info &mt_data_inf)
 
 {
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -2053,10 +3744,8 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_YUY2_AVX(uint8_t thread_num)
 }
 
 
-void JPSDR_AutoYUY2::Convert_Progressive_to_YUY2_NonSSE(uint8_t thread_num)
+static void Convert_Progressive_to_YUY2(const MT_Data_Info &mt_data_inf,const uint16_t *lookup)
 {
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *_src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -2074,7 +3763,6 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_YUY2_NonSSE(uint8_t thread_num)
 	const uint8_t *src_V,*src_Vp,*src_Vn;
 	YUYV *dst;
 	const int32_t w_Y2=(w_Y+1)>>1;
-	const uint16_t *lookup=lookup_Upsc;
 	const int32_t h_2=mt_data_inf.bottom ? h_Y_max-2:h_Y_max;
 	const int32_t h_0=mt_data_inf.top ? 2:h_Y_min;
 
@@ -2197,24 +3885,8 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_YUY2_NonSSE(uint8_t thread_num)
 }
 
 
-
-
-inline void JPSDR_AutoYUY2::Convert_Interlaced_to_YUY2(uint8_t thread_num)
+static void Convert_Interlaced_to_YUY2_SSE2(const MT_Data_Info &mt_data_inf)
 {
-	if (AVX_Enable) Convert_Interlaced_to_YUY2_AVX(thread_num);
-	else
-	{
-		if (SSE2_Enable) Convert_Interlaced_to_YUY2_SSE(thread_num);
-		else Convert_Interlaced_to_YUY2_NonSSE(thread_num);
-	}
-}
-
-
-
-void JPSDR_AutoYUY2::Convert_Interlaced_to_YUY2_SSE(uint8_t thread_num)
-{
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -2356,10 +4028,8 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_YUY2_SSE(uint8_t thread_num)
 }
 
 
-void JPSDR_AutoYUY2::Convert_Interlaced_to_YUY2_AVX(uint8_t thread_num)
+static void Convert_Interlaced_to_YUY2_AVX(const MT_Data_Info &mt_data_inf)
 {
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -2501,10 +4171,8 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_YUY2_AVX(uint8_t thread_num)
 }
 
 
-void JPSDR_AutoYUY2::Convert_Interlaced_to_YUY2_NonSSE(uint8_t thread_num)
+static void Convert_Interlaced_to_YUY2(const MT_Data_Info &mt_data_inf,const uint16_t *lookup)
 {
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *_src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -2523,7 +4191,6 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_YUY2_NonSSE(uint8_t thread_num)
 	ptrdiff_t pitch_U_2,pitch_V_2;
 	YUYV *dst;
 	const int32_t w_Y2=(w_Y+1)>>1;
-	const uint16_t *lookup=lookup_Upsc;
 	const int32_t h_4=mt_data_inf.bottom ? h_Y_max-4:h_Y_max;
 	const int32_t h_0=mt_data_inf.top ? 4:h_Y_min;
 
@@ -2739,23 +4406,8 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_YUY2_NonSSE(uint8_t thread_num)
 }
 
 
-
-
-inline void JPSDR_AutoYUY2::Convert_Progressive_to_UYVY(uint8_t thread_num)
+static void Convert_Progressive_to_UYVY_SSE2(const MT_Data_Info &mt_data_inf)
 {
-	if (AVX_Enable) Convert_Progressive_to_UYVY_AVX(thread_num);
-	{
-		if (SSE2_Enable) Convert_Progressive_to_UYVY_SSE(thread_num);
-		else Convert_Progressive_to_UYVY_NonSSE(thread_num);
-	}
-}
-
-
-
-void JPSDR_AutoYUY2::Convert_Progressive_to_UYVY_SSE(uint8_t thread_num)
-{
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -2846,10 +4498,8 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_UYVY_SSE(uint8_t thread_num)
 }
 
 
-void JPSDR_AutoYUY2::Convert_Progressive_to_UYVY_AVX(uint8_t thread_num)
+static void Convert_Progressive_to_UYVY_AVX(const MT_Data_Info &mt_data_inf)
 {
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -2940,10 +4590,8 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_UYVY_AVX(uint8_t thread_num)
 }
 
 
-void JPSDR_AutoYUY2::Convert_Progressive_to_UYVY_NonSSE(uint8_t thread_num)
+static void Convert_Progressive_to_UYVY(const MT_Data_Info &mt_data_inf,const uint16_t *lookup)
 {
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *_src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -2961,7 +4609,6 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_UYVY_NonSSE(uint8_t thread_num)
 	const uint8_t *src_V,*src_Vp,*src_Vn;
 	UYVY *dst;
 	const int32_t w_Y2=(w_Y+1)>>1;
-	const uint16_t *lookup=lookup_Upsc;
 	const int32_t h_2=mt_data_inf.bottom ? h_Y_max-2:h_Y_max;
 	const int32_t h_0=mt_data_inf.top ? 2:h_Y_min;
 
@@ -3084,23 +4731,8 @@ void JPSDR_AutoYUY2::Convert_Progressive_to_UYVY_NonSSE(uint8_t thread_num)
 }
 
 
-
-inline void JPSDR_AutoYUY2::Convert_Interlaced_to_UYVY(uint8_t thread_num)
+static void Convert_Interlaced_to_UYVY_SSE2(const MT_Data_Info &mt_data_inf)
 {
-	if (AVX_Enable) Convert_Interlaced_to_UYVY_AVX(thread_num);
-	{
-		if (SSE2_Enable) Convert_Interlaced_to_UYVY_SSE(thread_num);
-		else Convert_Interlaced_to_UYVY_NonSSE(thread_num);
-	}
-}
-
-
-
-
-void JPSDR_AutoYUY2::Convert_Interlaced_to_UYVY_SSE(uint8_t thread_num)
-{
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -3242,10 +4874,8 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_UYVY_SSE(uint8_t thread_num)
 }
 
 
-void JPSDR_AutoYUY2::Convert_Interlaced_to_UYVY_AVX(uint8_t thread_num)
+static void Convert_Interlaced_to_UYVY_AVX(const MT_Data_Info &mt_data_inf)
 {
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -3387,10 +5017,8 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_UYVY_AVX(uint8_t thread_num)
 }
 
 
-void JPSDR_AutoYUY2::Convert_Interlaced_to_UYVY_NonSSE(uint8_t thread_num)
+static void Convert_Interlaced_to_UYVY(const MT_Data_Info &mt_data_inf,const uint16_t *lookup)
 {
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *_src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -3409,7 +5037,6 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_UYVY_NonSSE(uint8_t thread_num)
 	ptrdiff_t pitch_U_2,pitch_V_2;
 	UYVY *dst;
 	const int32_t w_Y2=(w_Y+1)>>1;
-	const uint16_t *lookup=lookup_Upsc;
 	const int32_t h_4=mt_data_inf.bottom ? h_Y_max-4:h_Y_max;
 	const int32_t h_0=mt_data_inf.top ? 4:h_Y_min;
 
@@ -3625,11 +5252,9 @@ void JPSDR_AutoYUY2::Convert_Interlaced_to_UYVY_NonSSE(uint8_t thread_num)
 }
 
 
-
-void JPSDR_AutoYUY2::Convert_Automatic_to_YUY2(uint8_t thread_num)
+static void Convert_Automatic_to_YUY2(const MT_Data_Info &mt_data_inf,const uint16_t *lookup,const int16_t threshold,
+	bool *interlaced_tab_U[],bool *interlaced_tab_V[])
 {
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *_src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -3649,8 +5274,6 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_YUY2(uint8_t thread_num)
 	uint8_t index_tab_0,index_tab_1,index_tab_2;
 	YUYV *dst;
 	const int32_t w_Y2=(w_Y+1)>>1;
-	const int16_t threshold=mData.threshold;
-	const uint16_t *lookup=lookup_Upsc;
 	const int32_t h_4 = mt_data_inf.bottom ? h_Y_max-4:h_Y_max;
 	const int32_t h_0 = mt_data_inf.top ? 4:h_Y_min;
 
@@ -3700,8 +5323,8 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_YUY2(uint8_t thread_num)
 
 			{
 				int32_t i=0;
-				bool *itabu0=interlaced_tab_U[thread_num][0],*itabu1=interlaced_tab_U[thread_num][1];
-				bool *itabv0=interlaced_tab_V[thread_num][0],*itabv1=interlaced_tab_V[thread_num][1];
+				bool *itabu0=interlaced_tab_U[0],*itabu1=interlaced_tab_U[1];
+				bool *itabv0=interlaced_tab_V[0],*itabv1=interlaced_tab_V[1];
 
 				for (int32_t j=0; j<w_Y2; j++)
 				{
@@ -3760,8 +5383,8 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_YUY2(uint8_t thread_num)
 	}
 	else
 	{
-		bool *itabu0=interlaced_tab_U[thread_num][0],*itabu1=interlaced_tab_U[thread_num][1];
-		bool *itabv0=interlaced_tab_V[thread_num][0],*itabv1=interlaced_tab_V[thread_num][1];
+		bool *itabu0=interlaced_tab_U[0],*itabu1=interlaced_tab_U[1];
+		bool *itabv0=interlaced_tab_V[0],*itabv1=interlaced_tab_V[1];
 
 		for (int32_t j=0; j<w_Y2; j++)
 		{
@@ -3801,8 +5424,8 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_YUY2(uint8_t thread_num)
 	{
 		{
 			int32_t i=0;
-			const bool *itabu0=interlaced_tab_U[thread_num][index_tab_0],*itabu1=interlaced_tab_U[thread_num][index_tab_1];
-			const bool *itabv0=interlaced_tab_V[thread_num][index_tab_0],*itabv1=interlaced_tab_V[thread_num][index_tab_1];
+			const bool *itabu0=interlaced_tab_U[index_tab_0],*itabu1=interlaced_tab_U[index_tab_1];
+			const bool *itabv0=interlaced_tab_V[index_tab_0],*itabv1=interlaced_tab_V[index_tab_1];
 
 			for (int32_t j=0; j<w_Y2; j++)
 			{
@@ -3836,8 +5459,8 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_YUY2(uint8_t thread_num)
 
 		{
 			int32_t i=0;
-			const bool *itabu1=interlaced_tab_U[thread_num][index_tab_1],*itabv1=interlaced_tab_V[thread_num][index_tab_1];
-			bool *itabu2=interlaced_tab_U[thread_num][index_tab_2],*itabv2=interlaced_tab_V[thread_num][index_tab_2];
+			const bool *itabu1=interlaced_tab_U[index_tab_1],*itabv1=interlaced_tab_V[index_tab_1];
+			bool *itabu2=interlaced_tab_U[index_tab_2],*itabv2=interlaced_tab_V[index_tab_2];
 
 			for (int32_t j=0; j<w_Y2; j++)
 			{
@@ -3885,8 +5508,8 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_YUY2(uint8_t thread_num)
 
 		{
 			int32_t i=0;
-			const bool *itabu1=interlaced_tab_U[thread_num][index_tab_1],*itabu2=interlaced_tab_U[thread_num][index_tab_2];
-			const bool *itabv1=interlaced_tab_V[thread_num][index_tab_1],*itabv2=interlaced_tab_V[thread_num][index_tab_2];
+			const bool *itabu1=interlaced_tab_U[index_tab_1],*itabu2=interlaced_tab_U[index_tab_2];
+			const bool *itabv1=interlaced_tab_V[index_tab_1],*itabv2=interlaced_tab_V[index_tab_2];
 
 			for (int32_t j=0; j<w_Y2; j++)
 			{
@@ -3920,8 +5543,8 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_YUY2(uint8_t thread_num)
 
 		{
 			int32_t i=0;
-			bool *itabu0=interlaced_tab_U[thread_num][index_tab_0],*itabv0=interlaced_tab_V[thread_num][index_tab_0];
-			const bool *itabu2=interlaced_tab_U[thread_num][index_tab_2],*itabv2=interlaced_tab_V[thread_num][index_tab_2];
+			bool *itabu0=interlaced_tab_U[index_tab_0],*itabv0=interlaced_tab_V[index_tab_0];
+			const bool *itabu2=interlaced_tab_U[index_tab_2],*itabv2=interlaced_tab_V[index_tab_2];
 
 			for (int32_t j=0; j<w_Y2; j++)
 			{
@@ -4046,11 +5669,9 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_YUY2(uint8_t thread_num)
 }
 
 
-
-void JPSDR_AutoYUY2::Convert_Test_to_YUY2(uint8_t thread_num)
+static void Convert_Test_to_YUY2(const MT_Data_Info &mt_data_inf,const uint16_t *lookup,const int16_t threshold,
+	bool *interlaced_tab_U[],bool *interlaced_tab_V[])
 {
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *_src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -4070,8 +5691,6 @@ void JPSDR_AutoYUY2::Convert_Test_to_YUY2(uint8_t thread_num)
 	uint8_t index_tab_0,index_tab_1,index_tab_2;
 	YUYV *dst;
 	const int32_t w_Y2=(w_Y+1)>>1;
-	const int16_t threshold=mData.threshold;
-	const uint16_t *lookup=lookup_Upsc;
 	const int32_t h_4 = mt_data_inf.bottom ? h_Y_max-4:h_Y_max;
 	const int32_t h_0 = mt_data_inf.top ? 4:h_Y_min;
 
@@ -4121,8 +5740,8 @@ void JPSDR_AutoYUY2::Convert_Test_to_YUY2(uint8_t thread_num)
 
 			{
 				int32_t i=0;
-				bool *itabu0=interlaced_tab_U[thread_num][0],*itabu1=interlaced_tab_U[thread_num][1];
-				bool *itabv0=interlaced_tab_V[thread_num][0],*itabv1=interlaced_tab_V[thread_num][1];
+				bool *itabu0=interlaced_tab_U[0],*itabu1=interlaced_tab_U[1];
+				bool *itabv0=interlaced_tab_V[0],*itabv1=interlaced_tab_V[1];
 
 				for (int32_t j=0; j<w_Y2; j++)
 				{
@@ -4181,8 +5800,8 @@ void JPSDR_AutoYUY2::Convert_Test_to_YUY2(uint8_t thread_num)
 	}
 	else
 	{
-		bool *itabu0=interlaced_tab_U[thread_num][0],*itabu1=interlaced_tab_U[thread_num][1];
-		bool *itabv0=interlaced_tab_V[thread_num][0],*itabv1=interlaced_tab_V[thread_num][1];
+		bool *itabu0=interlaced_tab_U[0],*itabu1=interlaced_tab_U[1];
+		bool *itabv0=interlaced_tab_V[0],*itabv1=interlaced_tab_V[1];
 
 		for (int32_t j=0; j<w_Y2; j++)
 		{
@@ -4222,8 +5841,8 @@ void JPSDR_AutoYUY2::Convert_Test_to_YUY2(uint8_t thread_num)
 	{
 		{
 			int32_t i=0;
-			const bool *itabu0=interlaced_tab_U[thread_num][index_tab_0],*itabu1=interlaced_tab_U[thread_num][index_tab_1];
-			const bool *itabv0=interlaced_tab_V[thread_num][index_tab_0],*itabv1=interlaced_tab_V[thread_num][index_tab_1];
+			const bool *itabu0=interlaced_tab_U[index_tab_0],*itabu1=interlaced_tab_U[index_tab_1];
+			const bool *itabv0=interlaced_tab_V[index_tab_0],*itabv1=interlaced_tab_V[index_tab_1];
 
 			for (int32_t j=0; j<w_Y2; j++)
 			{
@@ -4257,8 +5876,8 @@ void JPSDR_AutoYUY2::Convert_Test_to_YUY2(uint8_t thread_num)
 
 		{
 			int32_t i=0;
-			const bool *itabu1=interlaced_tab_U[thread_num][index_tab_1],*itabv1=interlaced_tab_V[thread_num][index_tab_1];
-			bool *itabu2=interlaced_tab_U[thread_num][index_tab_2],*itabv2=interlaced_tab_V[thread_num][index_tab_2];
+			const bool *itabu1=interlaced_tab_U[index_tab_1],*itabv1=interlaced_tab_V[index_tab_1];
+			bool *itabu2=interlaced_tab_U[index_tab_2],*itabv2=interlaced_tab_V[index_tab_2];
 
 			for (int32_t j=0; j<w_Y2; j++)
 			{
@@ -4306,8 +5925,8 @@ void JPSDR_AutoYUY2::Convert_Test_to_YUY2(uint8_t thread_num)
 
 		{
 			int32_t i=0;
-			const bool *itabu1=interlaced_tab_U[thread_num][index_tab_1],*itabu2=interlaced_tab_U[thread_num][index_tab_2];
-			const bool *itabv1=interlaced_tab_V[thread_num][index_tab_1],*itabv2=interlaced_tab_V[thread_num][index_tab_2];
+			const bool *itabu1=interlaced_tab_U[index_tab_1],*itabu2=interlaced_tab_U[index_tab_2];
+			const bool *itabv1=interlaced_tab_V[index_tab_1],*itabv2=interlaced_tab_V[index_tab_2];
 
 			for (int32_t j=0; j<w_Y2; j++)
 			{
@@ -4341,8 +5960,8 @@ void JPSDR_AutoYUY2::Convert_Test_to_YUY2(uint8_t thread_num)
 
 		{
 			int32_t i=0;
-			bool *itabu0=interlaced_tab_U[thread_num][index_tab_0],*itabv0=interlaced_tab_V[thread_num][index_tab_0];
-			const bool *itabu2=interlaced_tab_U[thread_num][index_tab_2],*itabv2=interlaced_tab_V[thread_num][index_tab_2];
+			bool *itabu0=interlaced_tab_U[index_tab_0],*itabv0=interlaced_tab_V[index_tab_0];
+			const bool *itabu2=interlaced_tab_U[index_tab_2],*itabv2=interlaced_tab_V[index_tab_2];
 
 			for (int32_t j=0; j<w_Y2; j++)
 			{
@@ -4467,10 +6086,9 @@ void JPSDR_AutoYUY2::Convert_Test_to_YUY2(uint8_t thread_num)
 }
 
 
-void JPSDR_AutoYUY2::Convert_Automatic_to_UYVY(uint8_t thread_num)
+static void Convert_Automatic_to_UYVY(const MT_Data_Info &mt_data_inf,const uint16_t *lookup,const int16_t threshold,
+	bool *interlaced_tab_U[],bool *interlaced_tab_V[])
 {
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *_src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -4490,8 +6108,6 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_UYVY(uint8_t thread_num)
 	uint8_t index_tab_0,index_tab_1,index_tab_2;
 	UYVY *dst;
 	const int32_t w_Y2=(w_Y+1)>>1;
-	const int16_t threshold=mData.threshold;
-	const uint16_t *lookup=lookup_Upsc;
 	const int32_t h_4 = mt_data_inf.bottom ? h_Y_max-4:h_Y_max;
 	const int32_t h_0 = mt_data_inf.top ? 4:h_Y_min;
 
@@ -4541,8 +6157,8 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_UYVY(uint8_t thread_num)
 
 			{
 				int32_t i=0;
-				bool *itabu0=interlaced_tab_U[thread_num][0],*itabu1=interlaced_tab_U[thread_num][1];
-				bool *itabv0=interlaced_tab_V[thread_num][0],*itabv1=interlaced_tab_V[thread_num][1];
+				bool *itabu0=interlaced_tab_U[0],*itabu1=interlaced_tab_U[1];
+				bool *itabv0=interlaced_tab_V[0],*itabv1=interlaced_tab_V[1];
 
 				for (int32_t j=0; j<w_Y2; j++)
 				{
@@ -4601,8 +6217,8 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_UYVY(uint8_t thread_num)
 	}
 	else
 	{
-		bool *itabu0=interlaced_tab_U[thread_num][0],*itabu1=interlaced_tab_U[thread_num][1];
-		bool *itabv0=interlaced_tab_V[thread_num][0],*itabv1=interlaced_tab_V[thread_num][1];
+		bool *itabu0=interlaced_tab_U[0],*itabu1=interlaced_tab_U[1];
+		bool *itabv0=interlaced_tab_V[0],*itabv1=interlaced_tab_V[1];
 
 		for (int32_t j=0; j<w_Y2; j++)
 		{
@@ -4643,8 +6259,8 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_UYVY(uint8_t thread_num)
 	{
 		{
 			int32_t i=0;
-			const bool *itabu0=interlaced_tab_U[thread_num][index_tab_0],*itabu1=interlaced_tab_U[thread_num][index_tab_1];
-			const bool *itabv0=interlaced_tab_V[thread_num][index_tab_0],*itabv1=interlaced_tab_V[thread_num][index_tab_1];
+			const bool *itabu0=interlaced_tab_U[index_tab_0],*itabu1=interlaced_tab_U[index_tab_1];
+			const bool *itabv0=interlaced_tab_V[index_tab_0],*itabv1=interlaced_tab_V[index_tab_1];
 
 			for (int32_t j=0; j<w_Y2; j++)
 			{
@@ -4678,8 +6294,8 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_UYVY(uint8_t thread_num)
 
 		{
 			int32_t i=0;
-			const bool *itabu1=interlaced_tab_U[thread_num][index_tab_1],*itabv1=interlaced_tab_V[thread_num][index_tab_1];
-			bool *itabu2=interlaced_tab_U[thread_num][index_tab_2],*itabv2=interlaced_tab_V[thread_num][index_tab_2];
+			const bool *itabu1=interlaced_tab_U[index_tab_1],*itabv1=interlaced_tab_V[index_tab_1];
+			bool *itabu2=interlaced_tab_U[index_tab_2],*itabv2=interlaced_tab_V[index_tab_2];
 
 			for (int32_t j=0; j<w_Y2; j++)
 			{
@@ -4727,8 +6343,8 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_UYVY(uint8_t thread_num)
 
 		{
 			int32_t i=0;
-			const bool *itabu1=interlaced_tab_U[thread_num][index_tab_1],*itabu2=interlaced_tab_U[thread_num][index_tab_2];
-			const bool *itabv1=interlaced_tab_V[thread_num][index_tab_1],*itabv2=interlaced_tab_V[thread_num][index_tab_2];
+			const bool *itabu1=interlaced_tab_U[index_tab_1],*itabu2=interlaced_tab_U[index_tab_2];
+			const bool *itabv1=interlaced_tab_V[index_tab_1],*itabv2=interlaced_tab_V[index_tab_2];
 
 			for (int32_t j=0; j<w_Y2; j++)
 			{
@@ -4762,8 +6378,8 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_UYVY(uint8_t thread_num)
 
 		{
 			int32_t i=0;
-			bool *itabu0=interlaced_tab_U[thread_num][index_tab_0],*itabv0=interlaced_tab_V[thread_num][index_tab_0];
-			const bool *itabu2=interlaced_tab_U[thread_num][index_tab_2],*itabv2=interlaced_tab_V[thread_num][index_tab_2];
+			bool *itabu0=interlaced_tab_U[index_tab_0],*itabv0=interlaced_tab_V[index_tab_0];
+			const bool *itabu2=interlaced_tab_U[index_tab_2],*itabv2=interlaced_tab_V[index_tab_2];
 
 			for (int32_t j=0; j<w_Y2; j++)
 			{
@@ -4888,10 +6504,9 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_UYVY(uint8_t thread_num)
 }
 
 
-void JPSDR_AutoYUY2::Convert_Test_to_UYVY(uint8_t thread_num)
+static void Convert_Test_to_UYVY(const MT_Data_Info &mt_data_inf,const uint16_t *lookup,const int16_t threshold,
+	bool *interlaced_tab_U[],bool *interlaced_tab_V[])
 {
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
 	const void *_src_Y=mt_data_inf.src1;
 	const void *_src_U=mt_data_inf.src2;
 	const void *_src_V=mt_data_inf.src3;
@@ -4911,8 +6526,6 @@ void JPSDR_AutoYUY2::Convert_Test_to_UYVY(uint8_t thread_num)
 	uint8_t index_tab_0,index_tab_1,index_tab_2;
 	UYVY *dst;
 	const int32_t w_Y2=(w_Y+1)>>1;
-	const int16_t threshold=mData.threshold;
-	const uint16_t *lookup=lookup_Upsc;
 	const int32_t h_4 = mt_data_inf.bottom ? h_Y_max-4:h_Y_max;
 	const int32_t h_0 = mt_data_inf.top ? 4:h_Y_min;
 
@@ -4962,8 +6575,8 @@ void JPSDR_AutoYUY2::Convert_Test_to_UYVY(uint8_t thread_num)
 
 			{
 				int32_t i=0;
-				bool *itabu0=interlaced_tab_U[thread_num][0],*itabu1=interlaced_tab_U[thread_num][1];
-				bool *itabv0=interlaced_tab_V[thread_num][0],*itabv1=interlaced_tab_V[thread_num][1];
+				bool *itabu0=interlaced_tab_U[0],*itabu1=interlaced_tab_U[1];
+				bool *itabv0=interlaced_tab_V[0],*itabv1=interlaced_tab_V[1];
 
 				for (int32_t j=0; j<w_Y2; j++)
 				{
@@ -5022,8 +6635,8 @@ void JPSDR_AutoYUY2::Convert_Test_to_UYVY(uint8_t thread_num)
 	}
 	else
 	{
-		bool *itabu0=interlaced_tab_U[thread_num][0],*itabu1=interlaced_tab_U[thread_num][1];
-		bool *itabv0=interlaced_tab_V[thread_num][0],*itabv1=interlaced_tab_V[thread_num][1];
+		bool *itabu0=interlaced_tab_U[0],*itabu1=interlaced_tab_U[1];
+		bool *itabv0=interlaced_tab_V[0],*itabv1=interlaced_tab_V[1];
 
 		for (int32_t j=0; j<w_Y2; j++)
 		{
@@ -5064,8 +6677,8 @@ void JPSDR_AutoYUY2::Convert_Test_to_UYVY(uint8_t thread_num)
 	{
 		{
 			int32_t i=0;
-			const bool *itabu0=interlaced_tab_U[thread_num][index_tab_0],*itabu1=interlaced_tab_U[thread_num][index_tab_1];
-			const bool *itabv0=interlaced_tab_V[thread_num][index_tab_0],*itabv1=interlaced_tab_V[thread_num][index_tab_1];
+			const bool *itabu0=interlaced_tab_U[index_tab_0],*itabu1=interlaced_tab_U[index_tab_1];
+			const bool *itabv0=interlaced_tab_V[index_tab_0],*itabv1=interlaced_tab_V[index_tab_1];
 
 			for (int32_t j=0; j<w_Y2; j++)
 			{
@@ -5099,8 +6712,8 @@ void JPSDR_AutoYUY2::Convert_Test_to_UYVY(uint8_t thread_num)
 
 		{
 			int32_t i=0;
-			const bool *itabu1=interlaced_tab_U[thread_num][index_tab_1],*itabv1=interlaced_tab_V[thread_num][index_tab_1];
-			bool *itabu2=interlaced_tab_U[thread_num][index_tab_2],*itabv2=interlaced_tab_V[thread_num][index_tab_2];
+			const bool *itabu1=interlaced_tab_U[index_tab_1],*itabv1=interlaced_tab_V[index_tab_1];
+			bool *itabu2=interlaced_tab_U[index_tab_2],*itabv2=interlaced_tab_V[index_tab_2];
 
 			for (int32_t j=0; j<w_Y2; j++)
 			{
@@ -5148,8 +6761,8 @@ void JPSDR_AutoYUY2::Convert_Test_to_UYVY(uint8_t thread_num)
 
 		{
 			int32_t i=0;
-			const bool *itabu1=interlaced_tab_U[thread_num][index_tab_1],*itabu2=interlaced_tab_U[thread_num][index_tab_2];
-			const bool *itabv1=interlaced_tab_V[thread_num][index_tab_1],*itabv2=interlaced_tab_V[thread_num][index_tab_2];
+			const bool *itabu1=interlaced_tab_U[index_tab_1],*itabu2=interlaced_tab_U[index_tab_2];
+			const bool *itabv1=interlaced_tab_V[index_tab_1],*itabv2=interlaced_tab_V[index_tab_2];
 
 			for (int32_t j=0; j<w_Y2; j++)
 			{
@@ -5183,8 +6796,8 @@ void JPSDR_AutoYUY2::Convert_Test_to_UYVY(uint8_t thread_num)
 
 		{
 			int32_t i=0;
-			bool *itabu0=interlaced_tab_U[thread_num][index_tab_0],*itabv0=interlaced_tab_V[thread_num][index_tab_0];
-			const bool *itabu2=interlaced_tab_U[thread_num][index_tab_2],*itabv2=interlaced_tab_V[thread_num][index_tab_2];
+			bool *itabu0=interlaced_tab_U[index_tab_0],*itabv0=interlaced_tab_V[index_tab_0];
+			const bool *itabu2=interlaced_tab_U[index_tab_2],*itabv2=interlaced_tab_V[index_tab_2];
 
 			for (int32_t j=0; j<w_Y2; j++)
 			{
@@ -5309,25 +6922,21 @@ void JPSDR_AutoYUY2::Convert_Test_to_UYVY(uint8_t thread_num)
 }
 
 
-
-
-void JPSDR_AutoYUY2::Convert_Automatic_to_Planar422(uint8_t thread_num)
+static void Convert_Automatic_8_YV16(const MT_Data_Info &mt_data_inf,const uint16_t *lookup,const int16_t threshold_,
+	bool *interlaced_tab_U[],bool *interlaced_tab_V[])
 {
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
-	const void *src_Y=mt_data_inf.src1;
-	const void *_src_U=mt_data_inf.src2;
-	const void *_src_V=mt_data_inf.src3;
-	void *dst_Y=mt_data_inf.dst1;
-	void *_dst_U=mt_data_inf.dst2;
-	void *_dst_V=mt_data_inf.dst3;
-	const int32_t w_Y=mt_data_inf.src_Y_w;
-	const int32_t w_UV=mt_data_inf.src_UV_w;
+	const uint8_t *srcYp=(const uint8_t *)mt_data_inf.src1;
+	const uint8_t *srcUp=(const uint8_t *)mt_data_inf.src2;
+	const uint8_t *srcVp=(const uint8_t *)mt_data_inf.src3;
+	uint8_t *dstYp=(uint8_t *)mt_data_inf.dst1;
+	uint8_t *dstUp=(uint8_t *)mt_data_inf.dst2;
+	uint8_t *dstVp=(uint8_t *)mt_data_inf.dst3;
+	const int32_t dst_w=mt_data_inf.dst_Y_w;
 	const int32_t h_Y_min=mt_data_inf.src_Y_h_min;
 	const int32_t h_Y_max=mt_data_inf.src_Y_h_max;
 	const ptrdiff_t src_pitch_Y=mt_data_inf.src_pitch1;
-	const ptrdiff_t src_pitch_U=mt_data_inf.src_pitch2;
-	const ptrdiff_t src_pitch_V=mt_data_inf.src_pitch3;
+	const ptrdiff_t src_pitchU=mt_data_inf.src_pitch2;
+	const ptrdiff_t src_pitchV=mt_data_inf.src_pitch3;
 	const ptrdiff_t dst_pitch_Y=mt_data_inf.dst_pitch1;
 	const ptrdiff_t dst_pitch_U=mt_data_inf.dst_pitch2;
 	const ptrdiff_t dst_pitch_V=mt_data_inf.dst_pitch3;
@@ -5335,33 +6944,32 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_Planar422(uint8_t thread_num)
 	const uint8_t *src_U,*src_Up,*src_Upp,*src_Un,*src_Unn,*src_Unnn;
 	const uint8_t *src_V,*src_Vp,*src_Vpp,*src_Vn,*src_Vnn,*src_Vnnn;
 	uint8_t *dst_U,*dst_V;
-	ptrdiff_t pitch_U_2,pitch_V_2;
 	uint8_t index_tab_0,index_tab_1,index_tab_2;
-	const int16_t threshold=mData.threshold;
-	const uint16_t *lookup=lookup_Upsc;
+	const int32_t w_UV=dst_w>>1;
 	const int32_t h_4 = mt_data_inf.bottom ? h_Y_max-4:h_Y_max;
 	const int32_t h_0 = mt_data_inf.top ? 4:h_Y_min;
 
-	pitch_U_2=2*src_pitch_U;
-	pitch_V_2=2*src_pitch_V;
-	src_U=(uint8_t *)_src_U;
-	src_V=(uint8_t *)_src_V;
-	src_Up=src_U-src_pitch_U;
-	src_Upp=src_U-2*src_pitch_U;
-	src_Un=src_U+src_pitch_U;
-	src_Unn=src_U+2*src_pitch_U;
-	src_Unnn=src_U+3*src_pitch_U;
-	src_Vp=src_V-src_pitch_V;
-	src_Vpp=src_V-2*src_pitch_V;
-	src_Vn=src_V+src_pitch_V;
-	src_Vnn=src_V+2*src_pitch_V;
-	src_Vnnn=src_V+3*src_pitch_V;
-	dst_U=(uint8_t *)_dst_U;
-	dst_V=(uint8_t *)_dst_V;
+	const ptrdiff_t pitch_U_2=2*src_pitchU;
+	const ptrdiff_t pitch_V_2=2*src_pitchV;
 
-	Move_Full(src_Y,dst_Y,w_Y,h_Y_max-h_Y_min,src_pitch_Y,dst_pitch_Y);
+	src_U=srcUp;
+	src_V=srcVp;
+	src_Up=src_U-src_pitchU;
+	src_Upp=src_U-2*src_pitchU;
+	src_Un=src_U+src_pitchU;
+	src_Unn=src_U+2*src_pitchU;
+	src_Unnn=src_U+3*src_pitchU;
+	src_Vp=src_V-src_pitchV;
+	src_Vpp=src_V-2*src_pitchV;
+	src_Vn=src_V+src_pitchV;
+	src_Vnn=src_V+2*src_pitchV;
+	src_Vnnn=src_V+3*src_pitchV;
+	dst_U=dstUp;
+	dst_V=dstVp;
 
-// Planar U
+	Move_Full(srcYp,dstYp,dst_w,h_Y_max-h_Y_min,src_pitch_Y,dst_pitch_Y);
+
+// Planar U	
 	if (mt_data_inf.top)
 	{
 		for(int32_t i=0; i<4; i+=4)
@@ -5377,23 +6985,23 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_Planar422(uint8_t thread_num)
 			dst_U+=dst_pitch_U;
 
 			{
-				bool *itabu0=interlaced_tab_U[thread_num][0],*itabu1=interlaced_tab_U[thread_num][1];
-
+				bool *itabu0=interlaced_tab_U[0],*itabu1=interlaced_tab_U[1];
+				
 				for(int32_t j=0; j<w_UV; j++)
 				{
-					if (((abs((int16_t)src_U[j]-(int16_t)src_Un[j])>=threshold) &&
-						(abs((int16_t)src_Unn[j]-(int16_t)src_Un[j])>=threshold) &&
+					if (((abs((int16_t)src_U[j]-(int16_t)src_Un[j])>=threshold_) &&
+						(abs((int16_t)src_Unn[j]-(int16_t)src_Un[j])>=threshold_) &&
 						(((src_U[j]>src_Un[j]) && (src_Unn[j]>src_Un[j])) ||
 						((src_U[j]<src_Un[j]) && (src_Unn[j]<src_Un[j])))))
 						itabu0[j]=true;
 					else itabu0[j]=false;
-					if (((abs((int16_t)src_Un[j]-(int16_t)src_Unn[j])>=threshold) &&
-						(abs((int16_t)src_Unnn[j]-(int16_t)src_Unn[j])>=threshold) &&
+					if (((abs((int16_t)src_Un[j]-(int16_t)src_Unn[j])>=threshold_) &&
+						(abs((int16_t)src_Unnn[j]-(int16_t)src_Unn[j])>=threshold_) &&
 						(((src_Un[j]>src_Unn[j]) && (src_Unnn[j]>src_Unn[j])) ||
 						((src_Un[j]<src_Unn[j]) && (src_Unnn[j]<src_Unn[j])))))
 						itabu1[j]=true;
 					else itabu1[j]=false;
-
+					
 					dst_U[j]=(uint8_t)((lookup[(uint16_t)src_Un[j]+512]+(uint16_t)src_Unnn[j]+4)>>3);
 				}
 			}
@@ -5409,18 +7017,18 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_Planar422(uint8_t thread_num)
 	}
 	else
 	{
-		bool *itabu0=interlaced_tab_U[thread_num][0],*itabu1=interlaced_tab_U[thread_num][1];
-
+		bool *itabu0=interlaced_tab_U[0],*itabu1=interlaced_tab_U[1];
+				
 		for(int32_t j=0; j<w_UV; j++)
 		{
-			if (((abs((int16_t)src_Upp[j]-(int16_t)src_Up[j])>=threshold) &&
-				(abs((int16_t)src_U[j]-(int16_t)src_Up[j])>=threshold) &&
+			if (((abs((int16_t)src_Upp[j]-(int16_t)src_Up[j])>=threshold_) &&
+				(abs((int16_t)src_U[j]-(int16_t)src_Up[j])>=threshold_) &&
 				(((src_Upp[j]>src_Up[j]) && (src_U[j]>src_Up[j])) ||
 				((src_Upp[j]<src_Up[j]) && (src_U[j]<src_Up[j])))))
 				itabu0[j]=true;
 			else itabu0[j]=false;
-			if (((abs((int16_t)src_Up[j]-(int16_t)src_U[j])>=threshold) &&
-				(abs((int16_t)src_Un[j]-(int16_t)src_U[j])>=threshold) &&
+			if (((abs((int16_t)src_Up[j]-(int16_t)src_U[j])>=threshold_) &&
+				(abs((int16_t)src_Un[j]-(int16_t)src_U[j])>=threshold_) &&
 				(((src_Up[j]>src_U[j]) && (src_Un[j]>src_U[j])) ||
 				((src_Up[j]<src_U[j]) && (src_Un[j]<src_U[j])))))
 				itabu1[j]=true;
@@ -5436,11 +7044,11 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_Planar422(uint8_t thread_num)
 	for(int32_t i=h_0; i<h_4; i+=4)
 	{
 		{
-			const bool *itabu0=interlaced_tab_U[thread_num][index_tab_0],*itabu1=interlaced_tab_U[thread_num][index_tab_1];
+			const bool *itabu0=interlaced_tab_U[index_tab_0],*itabu1=interlaced_tab_U[index_tab_1];
 
+			// Upsample as needed.
 			for(int32_t j=0; j<w_UV; j++)
 			{
-				// Upsample as needed.
 				if ((itabu0[j]) || (itabu1[j]))
 				{
 					dst_U[j]=(uint8_t)((lookup[(uint16_t)src_U[j]+512]+(uint16_t)src_Upp[j]+4)>>3);
@@ -5454,13 +7062,13 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_Planar422(uint8_t thread_num)
 		dst_U+=dst_pitch_U;
 
 		{
-			const bool *itabu1=interlaced_tab_U[thread_num][index_tab_1];
-			bool *itabu2=interlaced_tab_U[thread_num][index_tab_2];
+			const bool *itabu1=interlaced_tab_U[index_tab_1];
+			bool *itabu2=interlaced_tab_U[index_tab_2];
 
 			for(int32_t j=0; j<w_UV; j++)
 			{
-				if (((abs((int16_t)src_U[j]-(int16_t)src_Un[j])>=threshold) &&
-					(abs((int16_t)src_Unn[j]-(int16_t)src_Un[j])>=threshold) &&
+				if (((abs((int16_t)src_U[j]-(int16_t)src_Un[j])>=threshold_) &&
+					(abs((int16_t)src_Unn[j]-(int16_t)src_Un[j])>=threshold_) &&
 					(((src_U[j]>src_Un[j]) && (src_Unn[j]>src_Un[j])) ||
 					((src_U[j]<src_Un[j]) && (src_Unn[j]<src_Un[j])))))
 					itabu2[j]=true;
@@ -5480,7 +7088,7 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_Planar422(uint8_t thread_num)
 		dst_U+=dst_pitch_U;
 
 		{
-			const bool *itabu1=interlaced_tab_U[thread_num][index_tab_1],*itabu2=interlaced_tab_U[thread_num][index_tab_2];
+			const bool *itabu1=interlaced_tab_U[index_tab_1],*itabu2=interlaced_tab_U[index_tab_2];
 
 			for(int32_t j=0; j<w_UV; j++)
 			{
@@ -5498,13 +7106,13 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_Planar422(uint8_t thread_num)
 		dst_U+=dst_pitch_U;
 
 		{
-			const bool *itabu2=interlaced_tab_U[thread_num][index_tab_2];
-			bool *itabu0=interlaced_tab_U[thread_num][index_tab_0];
+			bool *itabu0=interlaced_tab_U[index_tab_0];
+			const bool *itabu2=interlaced_tab_U[index_tab_2];
 
 			for(int32_t j=0; j<w_UV; j++)
 			{
-				if (((abs((int16_t)src_Un[j]-(int16_t)src_Unn[j])>=threshold) &&
-					(abs((int16_t)src_Unnn[j]-(int16_t)src_Unn[j])>=threshold) &&
+				if (((abs((int16_t)src_Un[j]-(int16_t)src_Unn[j])>=threshold_) &&
+					(abs((int16_t)src_Unnn[j]-(int16_t)src_Unn[j])>=threshold_) &&
 					(((src_Un[j]>src_Unn[j]) && (src_Unnn[j]>src_Unn[j])) ||
 					((src_Un[j]<src_Unn[j]) && (src_Unnn[j]<src_Unn[j])))))
 					itabu0[j]=true;
@@ -5578,23 +7186,23 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_Planar422(uint8_t thread_num)
 			dst_V+=dst_pitch_V;
 
 			{
-				bool *itabv0=interlaced_tab_V[thread_num][0],*itabv1=interlaced_tab_V[thread_num][1];
+				bool *itabv0=interlaced_tab_V[0],*itabv1=interlaced_tab_V[1];
 
 				for(int32_t j=0; j<w_UV; j++)
 				{
-					if (((abs((int16_t)src_V[j]-(int16_t)src_Vn[j])>=threshold) &&
-						(abs((int16_t)src_Vnn[j]-(int16_t)src_Vn[j])>=threshold) &&
+					if (((abs((int16_t)src_V[j]-(int16_t)src_Vn[j])>=threshold_) &&
+						(abs((int16_t)src_Vnn[j]-(int16_t)src_Vn[j])>=threshold_) &&
 						(((src_V[j]>src_Vn[j]) && (src_Vnn[j]>src_Vn[j])) ||
 						((src_V[j]<src_Vn[j]) && (src_Vnn[j]<src_Vn[j])))))
 						itabv0[j]=true;
 					else itabv0[j]=false;
-					if (((abs((int16_t)src_Vn[j]-(int16_t)src_Vnn[j])>=threshold) &&
-						(abs((int16_t)src_Vnnn[j]-(int16_t)src_Vnn[j])>=threshold) &&
+					if (((abs((int16_t)src_Vn[j]-(int16_t)src_Vnn[j])>=threshold_) &&
+						(abs((int16_t)src_Vnnn[j]-(int16_t)src_Vnn[j])>=threshold_) &&
 						(((src_Vn[j]>src_Vnn[j]) && (src_Vnnn[j]>src_Vnn[j])) ||
 						((src_Vn[j]<src_Vnn[j]) && (src_Vnnn[j]<src_Vnn[j])))))
 						itabv1[j]=true;
 					else itabv1[j]=false;
-
+					
 					dst_V[j]=(uint8_t)((lookup[(uint16_t)src_Vn[j]+512]+(uint16_t)src_Vnnn[j]+4)>>3);
 				}
 			}
@@ -5610,25 +7218,25 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_Planar422(uint8_t thread_num)
 	}
 	else
 	{
-		bool *itabv0=interlaced_tab_V[thread_num][0],*itabv1=interlaced_tab_V[thread_num][1];
+		bool *itabv0=interlaced_tab_V[0],*itabv1=interlaced_tab_V[1];
 
 		for(int32_t j=0; j<w_UV; j++)
 		{
-			if (((abs((int16_t)src_Vpp[j]-(int16_t)src_Vp[j])>=threshold) &&
-				(abs((int16_t)src_V[j]-(int16_t)src_Vp[j])>=threshold) &&
+			if (((abs((int16_t)src_Vpp[j]-(int16_t)src_Vp[j])>=threshold_) &&
+				(abs((int16_t)src_V[j]-(int16_t)src_Vp[j])>=threshold_) &&
 				(((src_Vpp[j]>src_Vp[j]) && (src_V[j]>src_Vp[j])) ||
 				((src_Vpp[j]<src_Vp[j]) && (src_V[j]<src_Vp[j])))))
 				itabv0[j]=true;
 			else itabv0[j]=false;
-			if (((abs((int16_t)src_Vp[j]-(int16_t)src_V[j])>=threshold) &&
-				(abs((int16_t)src_Vn[j]-(int16_t)src_V[j])>=threshold) &&
+			if (((abs((int16_t)src_Vp[j]-(int16_t)src_V[j])>=threshold_) &&
+				(abs((int16_t)src_Vn[j]-(int16_t)src_V[j])>=threshold_) &&
 				(((src_Vp[j]>src_V[j]) && (src_Vn[j]>src_V[j])) ||
 				((src_Vp[j]<src_V[j]) && (src_Vn[j]<src_V[j])))))
 				itabv1[j]=true;
 			else itabv1[j]=false;
 		}
 	}
-
+	
 	index_tab_0=0;
 	index_tab_1=1;
 	index_tab_2=2;
@@ -5636,11 +7244,11 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_Planar422(uint8_t thread_num)
 	for(int32_t i=h_0; i<h_4; i+=4)
 	{
 		{
-			const bool *itabv0=interlaced_tab_V[thread_num][index_tab_0],*itabv1=interlaced_tab_V[thread_num][index_tab_1];
+			const bool *itabv0=interlaced_tab_V[index_tab_0],*itabv1=interlaced_tab_V[index_tab_1];
 
-			// Upsample as needed.
 			for(int32_t j=0; j<w_UV; j++)
 			{
+				// Upsample as needed.
 				if ((itabv0[j]) || (itabv1[j]))
 				{
 					dst_V[j]=(uint8_t)((lookup[(uint16_t)src_V[j]+512]+(uint16_t)src_Vpp[j]+4)>>3);
@@ -5654,13 +7262,13 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_Planar422(uint8_t thread_num)
 		dst_V+=dst_pitch_V;
 
 		{
-			const bool *itabv1=interlaced_tab_V[thread_num][index_tab_1];
-			bool *itabv2=interlaced_tab_V[thread_num][index_tab_2];
+			const bool *itabv1=interlaced_tab_V[index_tab_1];
+			bool *itabv2=interlaced_tab_V[index_tab_2];
 
 			for(int32_t j=0; j<w_UV; j++)
 			{
-				if (((abs((int16_t)src_V[j]-(int16_t)src_Vn[j])>=threshold) &&
-					(abs((int16_t)src_Vnn[j]-(int16_t)src_Vn[j])>=threshold) &&
+				if (((abs((int16_t)src_V[j]-(int16_t)src_Vn[j])>=threshold_) &&
+					(abs((int16_t)src_Vnn[j]-(int16_t)src_Vn[j])>=threshold_) &&
 					(((src_V[j]>src_Vn[j]) && (src_Vnn[j]>src_Vn[j])) ||
 					((src_V[j]<src_Vn[j]) && (src_Vnn[j]<src_Vn[j])))))
 					itabv2[j]=true;
@@ -5680,7 +7288,7 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_Planar422(uint8_t thread_num)
 		dst_V+=dst_pitch_V;
 
 		{
-			const bool *itabv1=interlaced_tab_V[thread_num][index_tab_1],*itabv2=interlaced_tab_V[thread_num][index_tab_2];
+			const bool *itabv1=interlaced_tab_V[index_tab_1],*itabv2=interlaced_tab_V[index_tab_2];
 
 			for(int32_t j=0; j<w_UV; j++)
 			{
@@ -5698,13 +7306,13 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_Planar422(uint8_t thread_num)
 		dst_V+=dst_pitch_V;
 
 		{
-			const bool *itabv2=interlaced_tab_V[thread_num][index_tab_2];
-			bool *itabv0=interlaced_tab_V[thread_num][index_tab_0];
+			bool *itabv0=interlaced_tab_V[index_tab_0];
+			const bool *itabv2=interlaced_tab_V[index_tab_2];
 
 			for(int32_t j=0; j<w_UV; j++)
 			{
-				if (((abs((int16_t)src_Vn[j]-(int16_t)src_Vnn[j])>=threshold) &&
-					(abs((int16_t)src_Vnnn[j]-(int16_t)src_Vnn[j])>=threshold) &&
+				if (((abs((int16_t)src_Vn[j]-(int16_t)src_Vnn[j])>=threshold_) &&
+					(abs((int16_t)src_Vnnn[j]-(int16_t)src_Vnn[j])>=threshold_) &&
 					(((src_Vn[j]>src_Vnn[j]) && (src_Vnnn[j]>src_Vnn[j])) ||
 					((src_Vn[j]<src_Vnn[j]) && (src_Vnnn[j]<src_Vnn[j])))))
 					itabv0[j]=true;
@@ -5764,24 +7372,21 @@ void JPSDR_AutoYUY2::Convert_Automatic_to_Planar422(uint8_t thread_num)
 }
 
 
-
-void JPSDR_AutoYUY2::Convert_Test_to_Planar422(uint8_t thread_num)
+static void Convert_Test_8_YV16(const MT_Data_Info &mt_data_inf,const uint16_t *lookup,const int16_t threshold_,
+	bool *interlaced_tab_U[],bool *interlaced_tab_V[])
 {
-	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
-
-	const void *src_Y=mt_data_inf.src1;
-	const void *_src_U=mt_data_inf.src2;
-	const void *_src_V=mt_data_inf.src3;
-	void *dst_Y=mt_data_inf.dst1;
-	void *_dst_U=mt_data_inf.dst2;
-	void *_dst_V=mt_data_inf.dst3;
-	const int32_t w_Y=mt_data_inf.src_Y_w;
-	const int32_t w_UV=mt_data_inf.src_UV_w;
+	const uint8_t *srcYp=(const uint8_t *)mt_data_inf.src1;
+	const uint8_t *srcUp=(const uint8_t *)mt_data_inf.src2;
+	const uint8_t *srcVp=(const uint8_t *)mt_data_inf.src3;
+	uint8_t *dstYp=(uint8_t *)mt_data_inf.dst1;
+	uint8_t *dstUp=(uint8_t *)mt_data_inf.dst2;
+	uint8_t *dstVp=(uint8_t *)mt_data_inf.dst3;
+	const int32_t dst_w=mt_data_inf.dst_Y_w;
 	const int32_t h_Y_min=mt_data_inf.src_Y_h_min;
 	const int32_t h_Y_max=mt_data_inf.src_Y_h_max;
 	const ptrdiff_t src_pitch_Y=mt_data_inf.src_pitch1;
-	const ptrdiff_t src_pitch_U=mt_data_inf.src_pitch2;
-	const ptrdiff_t src_pitch_V=mt_data_inf.src_pitch3;
+	const ptrdiff_t src_pitchU=mt_data_inf.src_pitch2;
+	const ptrdiff_t src_pitchV=mt_data_inf.src_pitch3;
 	const ptrdiff_t dst_pitch_Y=mt_data_inf.dst_pitch1;
 	const ptrdiff_t dst_pitch_U=mt_data_inf.dst_pitch2;
 	const ptrdiff_t dst_pitch_V=mt_data_inf.dst_pitch3;
@@ -5789,33 +7394,32 @@ void JPSDR_AutoYUY2::Convert_Test_to_Planar422(uint8_t thread_num)
 	const uint8_t *src_U,*src_Up,*src_Upp,*src_Un,*src_Unn,*src_Unnn;
 	const uint8_t *src_V,*src_Vp,*src_Vpp,*src_Vn,*src_Vnn,*src_Vnnn;
 	uint8_t *dst_U,*dst_V;
-	ptrdiff_t pitch_U_2,pitch_V_2;
 	uint8_t index_tab_0,index_tab_1,index_tab_2;
-	const int16_t threshold=mData.threshold;
-	const uint16_t *lookup=lookup_Upsc;
+	const int32_t w_UV=dst_w>>1;
 	const int32_t h_4 = mt_data_inf.bottom ? h_Y_max-4:h_Y_max;
 	const int32_t h_0 = mt_data_inf.top ? 4:h_Y_min;
 
-	pitch_U_2=2*src_pitch_U;
-	pitch_V_2=2*src_pitch_V;
-	src_U=(uint8_t *)_src_U;
-	src_V=(uint8_t *)_src_V;
-	src_Up=src_U-src_pitch_U;
-	src_Upp=src_U-2*src_pitch_U;
-	src_Un=src_U+src_pitch_U;
-	src_Unn=src_U+2*src_pitch_U;
-	src_Unnn=src_U+3*src_pitch_U;
-	src_Vp=src_V-src_pitch_V;
-	src_Vpp=src_V-2*src_pitch_V;
-	src_Vn=src_V+src_pitch_V;
-	src_Vnn=src_V+2*src_pitch_V;
-	src_Vnnn=src_V+3*src_pitch_V;
-	dst_U=(uint8_t *)_dst_U;
-	dst_V=(uint8_t *)_dst_V;
+	const ptrdiff_t pitch_U_2=2*src_pitchU;
+	const ptrdiff_t pitch_V_2=2*src_pitchV;
 
-	Move_Full(src_Y,dst_Y,w_Y,h_Y_max-h_Y_min,src_pitch_Y,dst_pitch_Y);
+	src_U=srcUp;
+	src_V=srcVp;
+	src_Up=src_U-src_pitchU;
+	src_Upp=src_U-2*src_pitchU;
+	src_Un=src_U+src_pitchU;
+	src_Unn=src_U+2*src_pitchU;
+	src_Unnn=src_U+3*src_pitchU;
+	src_Vp=src_V-src_pitchV;
+	src_Vpp=src_V-2*src_pitchV;
+	src_Vn=src_V+src_pitchV;
+	src_Vnn=src_V+2*src_pitchV;
+	src_Vnnn=src_V+3*src_pitchV;
+	dst_U=dstUp;
+	dst_V=dstVp;
 
-// Planar U
+	Move_Full(srcYp,dstYp,dst_w,h_Y_max-h_Y_min,src_pitch_Y,dst_pitch_Y);
+
+// Planar U	
 	if (mt_data_inf.top)
 	{
 		for(int32_t i=0; i<4; i+=4)
@@ -5831,23 +7435,23 @@ void JPSDR_AutoYUY2::Convert_Test_to_Planar422(uint8_t thread_num)
 			dst_U+=dst_pitch_U;
 
 			{
-				bool *itabu0=interlaced_tab_U[thread_num][0],*itabu1=interlaced_tab_U[thread_num][1];
-
+				bool *itabu0=interlaced_tab_U[0],*itabu1=interlaced_tab_U[1];
+				
 				for(int32_t j=0; j<w_UV; j++)
 				{
-					if (((abs((int16_t)src_U[j]-(int16_t)src_Un[j])>=threshold) &&
-						(abs((int16_t)src_Unn[j]-(int16_t)src_Un[j])>=threshold) &&
+					if (((abs((int16_t)src_U[j]-(int16_t)src_Un[j])>=threshold_) &&
+						(abs((int16_t)src_Unn[j]-(int16_t)src_Un[j])>=threshold_) &&
 						(((src_U[j]>src_Un[j]) && (src_Unn[j]>src_Un[j])) ||
 						((src_U[j]<src_Un[j]) && (src_Unn[j]<src_Un[j])))))
 						itabu0[j]=true;
 					else itabu0[j]=false;
-					if (((abs((int16_t)src_Un[j]-(int16_t)src_Unn[j])>=threshold) &&
-						(abs((int16_t)src_Unnn[j]-(int16_t)src_Unn[j])>=threshold) &&
+					if (((abs((int16_t)src_Un[j]-(int16_t)src_Unn[j])>=threshold_) &&
+						(abs((int16_t)src_Unnn[j]-(int16_t)src_Unn[j])>=threshold_) &&
 						(((src_Un[j]>src_Unn[j]) && (src_Unnn[j]>src_Unn[j])) ||
 						((src_Un[j]<src_Unn[j]) && (src_Unnn[j]<src_Unn[j])))))
 						itabu1[j]=true;
 					else itabu1[j]=false;
-
+					
 					dst_U[j]=(uint8_t)((lookup[(uint16_t)src_Un[j]+512]+(uint16_t)src_Unnn[j]+4)>>3);
 				}
 			}
@@ -5863,18 +7467,18 @@ void JPSDR_AutoYUY2::Convert_Test_to_Planar422(uint8_t thread_num)
 	}
 	else
 	{
-		bool *itabu0=interlaced_tab_U[thread_num][0],*itabu1=interlaced_tab_U[thread_num][1];
-
+		bool *itabu0=interlaced_tab_U[0],*itabu1=interlaced_tab_U[1];
+				
 		for(int32_t j=0; j<w_UV; j++)
 		{
-			if (((abs((int16_t)src_Upp[j]-(int16_t)src_Up[j])>=threshold) &&
-				(abs((int16_t)src_U[j]-(int16_t)src_Up[j])>=threshold) &&
+			if (((abs((int16_t)src_Upp[j]-(int16_t)src_Up[j])>=threshold_) &&
+				(abs((int16_t)src_U[j]-(int16_t)src_Up[j])>=threshold_) &&
 				(((src_Upp[j]>src_Up[j]) && (src_U[j]>src_Up[j])) ||
 				((src_Upp[j]<src_Up[j]) && (src_U[j]<src_Up[j])))))
 				itabu0[j]=true;
 			else itabu0[j]=false;
-			if (((abs((int16_t)src_Up[j]-(int16_t)src_U[j])>=threshold) &&
-				(abs((int16_t)src_Un[j]-(int16_t)src_U[j])>=threshold) &&
+			if (((abs((int16_t)src_Up[j]-(int16_t)src_U[j])>=threshold_) &&
+				(abs((int16_t)src_Un[j]-(int16_t)src_U[j])>=threshold_) &&
 				(((src_Up[j]>src_U[j]) && (src_Un[j]>src_U[j])) ||
 				((src_Up[j]<src_U[j]) && (src_Un[j]<src_U[j])))))
 				itabu1[j]=true;
@@ -5890,11 +7494,11 @@ void JPSDR_AutoYUY2::Convert_Test_to_Planar422(uint8_t thread_num)
 	for(int32_t i=h_0; i<h_4; i+=4)
 	{
 		{
-			const bool *itabu0=interlaced_tab_U[thread_num][index_tab_0],*itabu1=interlaced_tab_U[thread_num][index_tab_1];
+			const bool *itabu0=interlaced_tab_U[index_tab_0],*itabu1=interlaced_tab_U[index_tab_1];
 
+			// Upsample as needed.
 			for(int32_t j=0; j<w_UV; j++)
 			{
-				// Upsample as needed.
 				if ((itabu0[j]) || (itabu1[j]))
 				{
 					dst_U[j]=239;
@@ -5908,13 +7512,13 @@ void JPSDR_AutoYUY2::Convert_Test_to_Planar422(uint8_t thread_num)
 		dst_U+=dst_pitch_U;
 
 		{
-			const bool *itabu1=interlaced_tab_U[thread_num][index_tab_1];
-			bool *itabu2=interlaced_tab_U[thread_num][index_tab_2];
+			const bool *itabu1=interlaced_tab_U[index_tab_1];
+			bool *itabu2=interlaced_tab_U[index_tab_2];
 
 			for(int32_t j=0; j<w_UV; j++)
 			{
-				if (((abs((int16_t)src_U[j]-(int16_t)src_Un[j])>=threshold) &&
-					(abs((int16_t)src_Unn[j]-(int16_t)src_Un[j])>=threshold) &&
+				if (((abs((int16_t)src_U[j]-(int16_t)src_Un[j])>=threshold_) &&
+					(abs((int16_t)src_Unn[j]-(int16_t)src_Un[j])>=threshold_) &&
 					(((src_U[j]>src_Un[j]) && (src_Unn[j]>src_Un[j])) ||
 					((src_U[j]<src_Un[j]) && (src_Unn[j]<src_Un[j])))))
 					itabu2[j]=true;
@@ -5934,7 +7538,7 @@ void JPSDR_AutoYUY2::Convert_Test_to_Planar422(uint8_t thread_num)
 		dst_U+=dst_pitch_U;
 
 		{
-			const bool *itabu1=interlaced_tab_U[thread_num][index_tab_1],*itabu2=interlaced_tab_U[thread_num][index_tab_2];
+			const bool *itabu1=interlaced_tab_U[index_tab_1],*itabu2=interlaced_tab_U[index_tab_2];
 
 			for(int32_t j=0; j<w_UV; j++)
 			{
@@ -5952,13 +7556,13 @@ void JPSDR_AutoYUY2::Convert_Test_to_Planar422(uint8_t thread_num)
 		dst_U+=dst_pitch_U;
 
 		{
-			const bool *itabu2=interlaced_tab_U[thread_num][index_tab_2];
-			bool *itabu0=interlaced_tab_U[thread_num][index_tab_0];
+			bool *itabu0=interlaced_tab_U[index_tab_0];
+			const bool *itabu2=interlaced_tab_U[index_tab_2];
 
 			for(int32_t j=0; j<w_UV; j++)
 			{
-				if (((abs((int16_t)src_Un[j]-(int16_t)src_Unn[j])>=threshold) &&
-					(abs((int16_t)src_Unnn[j]-(int16_t)src_Unn[j])>=threshold) &&
+				if (((abs((int16_t)src_Un[j]-(int16_t)src_Unn[j])>=threshold_) &&
+					(abs((int16_t)src_Unnn[j]-(int16_t)src_Unn[j])>=threshold_) &&
 					(((src_Un[j]>src_Unn[j]) && (src_Unnn[j]>src_Unn[j])) ||
 					((src_Un[j]<src_Unn[j]) && (src_Unnn[j]<src_Unn[j])))))
 					itabu0[j]=true;
@@ -6032,23 +7636,23 @@ void JPSDR_AutoYUY2::Convert_Test_to_Planar422(uint8_t thread_num)
 			dst_V+=dst_pitch_V;
 
 			{
-				bool *itabv0=interlaced_tab_V[thread_num][0],*itabv1=interlaced_tab_V[thread_num][1];
+				bool *itabv0=interlaced_tab_V[0],*itabv1=interlaced_tab_V[1];
 
 				for(int32_t j=0; j<w_UV; j++)
 				{
-					if (((abs((int16_t)src_V[j]-(int16_t)src_Vn[j])>=threshold) &&
-						(abs((int16_t)src_Vnn[j]-(int16_t)src_Vn[j])>=threshold) &&
+					if (((abs((int16_t)src_V[j]-(int16_t)src_Vn[j])>=threshold_) &&
+						(abs((int16_t)src_Vnn[j]-(int16_t)src_Vn[j])>=threshold_) &&
 						(((src_V[j]>src_Vn[j]) && (src_Vnn[j]>src_Vn[j])) ||
 						((src_V[j]<src_Vn[j]) && (src_Vnn[j]<src_Vn[j])))))
 						itabv0[j]=true;
 					else itabv0[j]=false;
-					if (((abs((int16_t)src_Vn[j]-(int16_t)src_Vnn[j])>=threshold) &&
-						(abs((int16_t)src_Vnnn[j]-(int16_t)src_Vnn[j])>=threshold) &&
+					if (((abs((int16_t)src_Vn[j]-(int16_t)src_Vnn[j])>=threshold_) &&
+						(abs((int16_t)src_Vnnn[j]-(int16_t)src_Vnn[j])>=threshold_) &&
 						(((src_Vn[j]>src_Vnn[j]) && (src_Vnnn[j]>src_Vnn[j])) ||
 						((src_Vn[j]<src_Vnn[j]) && (src_Vnnn[j]<src_Vnn[j])))))
 						itabv1[j]=true;
 					else itabv1[j]=false;
-
+					
 					dst_V[j]=(uint8_t)((lookup[(uint16_t)src_Vn[j]+512]+(uint16_t)src_Vnnn[j]+4)>>3);
 				}
 			}
@@ -6064,25 +7668,25 @@ void JPSDR_AutoYUY2::Convert_Test_to_Planar422(uint8_t thread_num)
 	}
 	else
 	{
-		bool *itabv0=interlaced_tab_V[thread_num][0],*itabv1=interlaced_tab_V[thread_num][1];
+		bool *itabv0=interlaced_tab_V[0],*itabv1=interlaced_tab_V[1];
 
 		for(int32_t j=0; j<w_UV; j++)
 		{
-			if (((abs((int16_t)src_Vpp[j]-(int16_t)src_Vp[j])>=threshold) &&
-				(abs((int16_t)src_V[j]-(int16_t)src_Vp[j])>=threshold) &&
+			if (((abs((int16_t)src_Vpp[j]-(int16_t)src_Vp[j])>=threshold_) &&
+				(abs((int16_t)src_V[j]-(int16_t)src_Vp[j])>=threshold_) &&
 				(((src_Vpp[j]>src_Vp[j]) && (src_V[j]>src_Vp[j])) ||
 				((src_Vpp[j]<src_Vp[j]) && (src_V[j]<src_Vp[j])))))
 				itabv0[j]=true;
 			else itabv0[j]=false;
-			if (((abs((int16_t)src_Vp[j]-(int16_t)src_V[j])>=threshold) &&
-				(abs((int16_t)src_Vn[j]-(int16_t)src_V[j])>=threshold) &&
+			if (((abs((int16_t)src_Vp[j]-(int16_t)src_V[j])>=threshold_) &&
+				(abs((int16_t)src_Vn[j]-(int16_t)src_V[j])>=threshold_) &&
 				(((src_Vp[j]>src_V[j]) && (src_Vn[j]>src_V[j])) ||
 				((src_Vp[j]<src_V[j]) && (src_Vn[j]<src_V[j])))))
 				itabv1[j]=true;
 			else itabv1[j]=false;
 		}
 	}
-
+	
 	index_tab_0=0;
 	index_tab_1=1;
 	index_tab_2=2;
@@ -6090,11 +7694,11 @@ void JPSDR_AutoYUY2::Convert_Test_to_Planar422(uint8_t thread_num)
 	for(int32_t i=h_0; i<h_4; i+=4)
 	{
 		{
-			const bool *itabv0=interlaced_tab_V[thread_num][index_tab_0],*itabv1=interlaced_tab_V[thread_num][index_tab_1];
+			const bool *itabv0=interlaced_tab_V[index_tab_0],*itabv1=interlaced_tab_V[index_tab_1];
 
-			// Upsample as needed.
 			for(int32_t j=0; j<w_UV; j++)
 			{
+				// Upsample as needed.
 				if ((itabv0[j]) || (itabv1[j]))
 				{
 					dst_V[j]=239;
@@ -6108,13 +7712,13 @@ void JPSDR_AutoYUY2::Convert_Test_to_Planar422(uint8_t thread_num)
 		dst_V+=dst_pitch_V;
 
 		{
-			const bool *itabv1=interlaced_tab_V[thread_num][index_tab_1];
-			bool *itabv2=interlaced_tab_V[thread_num][index_tab_2];
+			const bool *itabv1=interlaced_tab_V[index_tab_1];
+			bool *itabv2=interlaced_tab_V[index_tab_2];
 
 			for(int32_t j=0; j<w_UV; j++)
 			{
-				if (((abs((int16_t)src_V[j]-(int16_t)src_Vn[j])>=threshold) &&
-					(abs((int16_t)src_Vnn[j]-(int16_t)src_Vn[j])>=threshold) &&
+				if (((abs((int16_t)src_V[j]-(int16_t)src_Vn[j])>=threshold_) &&
+					(abs((int16_t)src_Vnn[j]-(int16_t)src_Vn[j])>=threshold_) &&
 					(((src_V[j]>src_Vn[j]) && (src_Vnn[j]>src_Vn[j])) ||
 					((src_V[j]<src_Vn[j]) && (src_Vnn[j]<src_Vn[j])))))
 					itabv2[j]=true;
@@ -6134,7 +7738,7 @@ void JPSDR_AutoYUY2::Convert_Test_to_Planar422(uint8_t thread_num)
 		dst_V+=dst_pitch_V;
 
 		{
-			const bool *itabv1=interlaced_tab_V[thread_num][index_tab_1],*itabv2=interlaced_tab_V[thread_num][index_tab_2];
+			const bool *itabv1=interlaced_tab_V[index_tab_1],*itabv2=interlaced_tab_V[index_tab_2];
 
 			for(int32_t j=0; j<w_UV; j++)
 			{
@@ -6152,13 +7756,13 @@ void JPSDR_AutoYUY2::Convert_Test_to_Planar422(uint8_t thread_num)
 		dst_V+=dst_pitch_V;
 
 		{
-			const bool *itabv2=interlaced_tab_V[thread_num][index_tab_2];
-			bool *itabv0=interlaced_tab_V[thread_num][index_tab_0];
+			bool *itabv0=interlaced_tab_V[index_tab_0];
+			const bool *itabv2=interlaced_tab_V[index_tab_2];
 
 			for(int32_t j=0; j<w_UV; j++)
 			{
-				if (((abs((int16_t)src_Vn[j]-(int16_t)src_Vnn[j])>=threshold) &&
-					(abs((int16_t)src_Vnnn[j]-(int16_t)src_Vnn[j])>=threshold) &&
+				if (((abs((int16_t)src_Vn[j]-(int16_t)src_Vnn[j])>=threshold_) &&
+					(abs((int16_t)src_Vnnn[j]-(int16_t)src_Vnn[j])>=threshold_) &&
 					(((src_Vn[j]>src_Vnn[j]) && (src_Vnnn[j]>src_Vnn[j])) ||
 					((src_Vn[j]<src_Vnn[j]) && (src_Vnnn[j]<src_Vnn[j])))))
 					itabv0[j]=true;
@@ -6218,6 +7822,1060 @@ void JPSDR_AutoYUY2::Convert_Test_to_Planar422(uint8_t thread_num)
 }
 
 
+static void Convert_Automatic_16_YV16(const MT_Data_Info &mt_data_inf,const uint32_t *lookup,const int16_t threshold,
+	bool *interlaced_tab_U[],bool *interlaced_tab_V[],uint8_t bits_per_pixel)
+{
+	const uint8_t *srcYp=(const uint8_t *)mt_data_inf.src1;
+	const uint8_t *srcUp=(const uint8_t *)mt_data_inf.src2;
+	const uint8_t *srcVp=(const uint8_t *)mt_data_inf.src3;
+	uint8_t *dstYp=(uint8_t *)mt_data_inf.dst1;
+	uint8_t *dstUp=(uint8_t *)mt_data_inf.dst2;
+	uint8_t *dstVp=(uint8_t *)mt_data_inf.dst3;
+	const int32_t dst_w=mt_data_inf.dst_Y_w;
+	const int32_t h_Y_min=mt_data_inf.src_Y_h_min;
+	const int32_t h_Y_max=mt_data_inf.src_Y_h_max;
+	const ptrdiff_t src_pitch_Y=mt_data_inf.src_pitch1;
+	const ptrdiff_t src_pitchU=mt_data_inf.src_pitch2;
+	const ptrdiff_t src_pitchV=mt_data_inf.src_pitch3;
+	const ptrdiff_t dst_pitch_Y=mt_data_inf.dst_pitch1;
+	const ptrdiff_t dst_pitch_U=mt_data_inf.dst_pitch2;
+	const ptrdiff_t dst_pitch_V=mt_data_inf.dst_pitch3;
+
+	const uint8_t *src_U,*src_Up,*src_Upp,*src_Un,*src_Unn,*src_Unnn;
+	const uint8_t *src_V,*src_Vp,*src_Vpp,*src_Vn,*src_Vnn,*src_Vnnn;
+	uint8_t *dst_U,*dst_V;
+	uint8_t index_tab_0,index_tab_1,index_tab_2;
+	const int32_t w_UV=dst_w >> 1;
+	const int32_t w_UV2=w_UV << 1;
+	const int32_t h_4 = mt_data_inf.bottom ? h_Y_max-4:h_Y_max;
+	const int32_t h_0 = mt_data_inf.top ? 4:h_Y_min;
+
+	const ptrdiff_t pitch_U_2=2*src_pitchU;
+	const ptrdiff_t pitch_V_2=2*src_pitchV;
+	const int32_t threshold_=(int32_t)threshold << (bits_per_pixel-8);
+	const uint32_t vmax=(uint32_t)1 << bits_per_pixel;
+	const uint32_t vmax2=vmax << 1;
+
+	src_U=srcUp;
+	src_V=srcVp;
+	src_Up=src_U-src_pitchU;
+	src_Upp=src_U-2*src_pitchU;
+	src_Un=src_U+src_pitchU;
+	src_Unn=src_U+2*src_pitchU;
+	src_Unnn=src_U+3*src_pitchU;
+	src_Vp=src_V-src_pitchV;
+	src_Vpp=src_V-2*src_pitchV;
+	src_Vn=src_V+src_pitchV;
+	src_Vnn=src_V+2*src_pitchV;
+	src_Vnnn=src_V+3*src_pitchV;
+	dst_U=dstUp;
+	dst_V=dstVp;
+
+	Move_Full(srcYp,dstYp,dst_w << 1,h_Y_max-h_Y_min,src_pitch_Y,dst_pitch_Y);
+
+// Planar U	
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<4; i+=4)
+		{
+			memcpy(dst_U,src_U,w_UV2);
+			dst_U+=dst_pitch_U;
+
+			memcpy(dst_U,src_Un,w_UV2);
+			dst_U+=dst_pitch_U;
+
+			const uint16_t *src1=(uint16_t *)src_Unn;
+			const uint16_t *src2=(uint16_t *)src_U;
+			uint16_t *dst=(uint16_t *)dst_U;
+
+			for(int32_t j=0; j<w_UV; j++)
+				dst[j]=(uint16_t)((lookup[src1[j]]+lookup[(uint32_t)src2[j]+vmax]+4)>>3);
+			dst_U+=dst_pitch_U;
+
+			{
+				bool *itabu0=interlaced_tab_U[0],*itabu1=interlaced_tab_U[1];
+				const uint16_t *src3=(uint16_t *)src_Un;
+				const uint16_t *src4=(uint16_t *)src_Unnn;
+				dst=(uint16_t *)dst_U;
+
+				for(int32_t j=0; j<w_UV; j++)
+				{
+					if (((abs((int32_t)src2[j]-(int32_t)src3[j])>=threshold_) &&
+						(abs((int32_t)src_Unn[j]-(int32_t)src3[j])>=threshold_) &&
+						(((src2[j]>src3[j]) && (src1[j]>src3[j])) ||
+						((src2[j]<src3[j]) && (src1[j]<src3[j])))))
+						itabu0[j]=true;
+					else itabu0[j]=false;
+					if (((abs((int32_t)src3[j]-(int32_t)src1[j])>=threshold_) &&
+						(abs((int32_t)src_Unnn[j]-(int32_t)src1[j])>=threshold_) &&
+						(((src3[j]>src1[j]) && (src4[j]>src1[j])) ||
+						((src3[j]<src1[j]) && (src4[j]<src1[j])))))
+						itabu1[j]=true;
+					else itabu1[j]=false;
+					
+					dst[j]=(uint16_t)((lookup[(uint32_t)src3[j]+vmax2]+(uint32_t)src4[j]+4)>>3);
+				}
+			}
+			dst_U+=dst_pitch_U;
+
+			src_U+=pitch_U_2;
+			src_Up+=pitch_U_2;
+			src_Upp+=pitch_U_2;
+			src_Un+=pitch_U_2;
+			src_Unn+=pitch_U_2;
+			src_Unnn+=pitch_U_2;
+		}
+	}
+	else
+	{
+		const uint16_t *src1=(uint16_t *)src_Upp;
+		const uint16_t *src2=(uint16_t *)src_Up;
+		const uint16_t *src3=(uint16_t *)src_U;
+		const uint16_t *src4=(uint16_t *)src_Un;
+
+		bool *itabu0=interlaced_tab_U[0],*itabu1=interlaced_tab_U[1];
+				
+		for(int32_t j=0; j<w_UV; j++)
+		{
+			if (((abs((int32_t)src1[j]-(int32_t)src2[j])>=threshold_) &&
+				(abs((int32_t)src_U[j]-(int32_t)src2[j])>=threshold_) &&
+				(((src1[j]>src2[j]) && (src3[j]>src2[j])) ||
+				((src1[j]<src2[j]) && (src3[j]<src2[j])))))
+				itabu0[j]=true;
+			else itabu0[j]=false;
+			if (((abs((int32_t)src2[j]-(int32_t)src3[j])>=threshold_) &&
+				(abs((int32_t)src4[j]-(int32_t)src3[j])>=threshold_) &&
+				(((src2[j]>src3[j]) && (src4[j]>src3[j])) ||
+				((src2[j]<src3[j]) && (src4[j]<src3[j])))))
+				itabu1[j]=true;
+			else itabu1[j]=false;
+		}
+
+	}
+
+	index_tab_0=0;
+	index_tab_1=1;
+	index_tab_2=2;
+
+	for(int32_t i=h_0; i<h_4; i+=4)
+	{
+		{
+			const bool *itabu0=interlaced_tab_U[index_tab_0],*itabu1=interlaced_tab_U[index_tab_1];
+			const uint16_t *src1=(uint16_t *)src_U;
+			const uint16_t *src2=(uint16_t *)src_Upp;
+			const uint16_t *src3=(uint16_t *)src_Up;
+			uint16_t *dst=(uint16_t *)dst_U;
+
+			// Upsample as needed.
+			for(int32_t j=0; j<w_UV; j++)
+			{
+				if ((itabu0[j]) || (itabu1[j]))
+				{
+					dst[j]=(uint16_t)((lookup[(uint32_t)src1[j]+vmax2]+(uint32_t)src2[j]+4)>>3);
+				}
+				else
+				{
+					dst[j]=(uint16_t)((lookup[src1[j]]+(uint32_t)src3[j]+2) >> 2);
+				}
+			}
+		}
+		dst_U+=dst_pitch_U;
+
+		{
+			const bool *itabu1=interlaced_tab_U[index_tab_1];
+			bool *itabu2=interlaced_tab_U[index_tab_2];
+			const uint16_t *src1=(uint16_t *)src_U;
+			const uint16_t *src2=(uint16_t *)src_Un;
+			const uint16_t *src3=(uint16_t *)src_Unn;
+			const uint16_t *src4=(uint16_t *)src_Up;
+			uint16_t *dst=(uint16_t *)dst_U;
+
+			for(int32_t j=0; j<w_UV; j++)
+			{
+				if (((abs((int32_t)src1[j]-(int32_t)src2[j])>=threshold_) &&
+					(abs((int32_t)src3[j]-(int32_t)src2[j])>=threshold_) &&
+					(((src1[j]>src2[j]) && (src3[j]>src2[j])) ||
+					((src1[j]<src2[j]) && (src3[j]<src2[j])))))
+					itabu2[j]=true;
+				else itabu2[j]=false;			
+
+				// Upsample as needed.
+				if ((itabu2[j]) || (itabu1[j]))
+				{
+					dst[j]=(uint16_t)((lookup[src4[j]]+lookup[(uint32_t)src2[j]+vmax]+4)>>3);
+				}
+				else
+				{
+					dst[j]=(uint16_t)((lookup[src1[j]]+(uint32_t)src2[j]+2)>>2);
+				}
+			}
+		}
+		dst_U+=dst_pitch_U;
+
+		{
+			const bool *itabu1=interlaced_tab_U[index_tab_1],*itabu2=interlaced_tab_U[index_tab_2];
+			const uint16_t *src1=(uint16_t *)src_Unn;
+			const uint16_t *src2=(uint16_t *)src_U;
+			const uint16_t *src3=(uint16_t *)src_Un;
+			uint16_t *dst=(uint16_t *)dst_U;
+
+			for(int32_t j=0; j<w_UV; j++)
+			{
+				// Upsample as needed.
+				if ((itabu1[j]) || (itabu2[j]))
+				{
+					dst[j]=(uint16_t)((lookup[src1[j]]+lookup[(uint32_t)src2[j]+vmax]+4)>>3);
+				}
+				else
+				{
+					dst[j]=(uint16_t)((lookup[src3[j]]+(uint32_t)src2[j]+2)>>2);
+				}
+			}
+		}
+		dst_U+=dst_pitch_U;
+
+		{
+			bool *itabu0=interlaced_tab_U[index_tab_0];
+			const bool *itabu2=interlaced_tab_U[index_tab_2];
+			const uint16_t *src1=(uint16_t *)src_Un;
+			const uint16_t *src2=(uint16_t *)src_Unn;
+			const uint16_t *src3=(uint16_t *)src_Unnn;
+			uint16_t *dst=(uint16_t *)dst_U;
+
+			for(int32_t j=0; j<w_UV; j++)
+			{
+				if (((abs((int32_t)src1[j]-(int32_t)src2[j])>=threshold_) &&
+					(abs((int32_t)src3[j]-(int32_t)src2[j])>=threshold_) &&
+					(((src1[j]>src2[j]) && (src3[j]>src2[j])) ||
+					((src1[j]<src2[j]) && (src3[j]<src2[j])))))
+					itabu0[j]=true;
+				else itabu0[j]=false;
+
+				// Upsample as needed.
+				if ((itabu0[j]) || (itabu2[j]))
+				{
+					dst[j]=(uint16_t)((lookup[(uint32_t)src1[j]+vmax2]+(uint32_t)src3[j]+4)>>3);
+				}
+				else
+				{
+					dst[j]=(uint16_t)((lookup[src1[j]]+(uint32_t)src2[j]+2)>>2);
+				}
+			}
+		}
+		dst_U+=dst_pitch_U;
+
+		index_tab_0=(index_tab_0+2)%Interlaced_Tab_Size;
+		index_tab_1=(index_tab_1+2)%Interlaced_Tab_Size;
+		index_tab_2=(index_tab_2+2)%Interlaced_Tab_Size;
+
+		src_U+=pitch_U_2;
+		src_Up+=pitch_U_2;
+		src_Upp+=pitch_U_2;
+		src_Un+=pitch_U_2;
+		src_Unn+=pitch_U_2;
+		src_Unnn+=pitch_U_2;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_4; i<h_Y_max; i+=4)
+		{
+			const uint16_t *src1=(uint16_t *)src_U;
+			const uint16_t *src2=(uint16_t *)src_Upp;
+			uint16_t *dst=(uint16_t *)dst_U;
+
+			for(int32_t j=0; j<w_UV; j++)
+				dst[j]=(uint16_t)((lookup[(uint32_t)src1[j]+vmax2]+(uint32_t)src2[j]+4)>>3);
+			dst_U+=dst_pitch_U;
+
+			src1=(uint16_t *)src_Up;
+			src2=(uint16_t *)src_Un;
+			dst=(uint16_t *)dst_U;
+
+			for(int32_t j=0; j<w_UV; j++)
+				dst[j]=(uint16_t)((lookup[src1[j]]+lookup[(uint32_t)src2[j]+vmax]+4)>>3);
+			dst_U+=dst_pitch_U;
+
+			memcpy(dst_U,src_U,w_UV2);
+			dst_U+=dst_pitch_U;
+
+			memcpy(dst_U,src_Un,w_UV2);
+			dst_U+=dst_pitch_U;
+
+			src_U+=pitch_U_2;
+			src_Up+=pitch_U_2;
+			src_Upp+=pitch_U_2;
+			src_Un+=pitch_U_2;
+			src_Unn+=pitch_U_2;
+			src_Unnn+=pitch_U_2;
+		}
+	}
+
+// Planar V
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<4; i+=4)
+		{
+			memcpy(dst_V,src_V,w_UV2);
+			dst_V+=dst_pitch_V;
+
+			memcpy(dst_V,src_Vn,w_UV2);
+			dst_V+=dst_pitch_V;
+
+			const uint16_t *src1=(uint16_t *)src_Vnn;
+			const uint16_t *src2=(uint16_t *)src_V;
+			uint16_t *dst=(uint16_t *)dst_V;
+
+			for(int32_t j=0; j<w_UV; j++)
+				dst[j]=(uint16_t)((lookup[src1[j]]+lookup[(uint32_t)src2[j]+vmax]+4)>>3);
+			dst_V+=dst_pitch_V;
+
+			{
+				bool *itabv0=interlaced_tab_V[0],*itabv1=interlaced_tab_V[1];
+				const uint16_t *src3=(uint16_t *)src_Vn;
+				const uint16_t *src4=(uint16_t *)src_Vnnn;
+				dst=(uint16_t *)dst_V;
+
+				for(int32_t j=0; j<w_UV; j++)
+				{
+					if (((abs((int32_t)src2[j]-(int32_t)src3[j])>=threshold_) &&
+						(abs((int32_t)src1[j]-(int32_t)src3[j])>=threshold_) &&
+						(((src2[j]>src3[j]) && (src1[j]>src3[j])) ||
+						((src2[j]<src3[j]) && (src1[j]<src3[j])))))
+						itabv0[j]=true;
+					else itabv0[j]=false;
+					if (((abs((int32_t)src3[j]-(int32_t)src1[j])>=threshold_) &&
+						(abs((int32_t)src4[j]-(int32_t)src1[j])>=threshold_) &&
+						(((src3[j]>src1[j]) && (src4[j]>src1[j])) ||
+						((src3[j]<src1[j]) && (src4[j]<src1[j])))))
+						itabv1[j]=true;
+					else itabv1[j]=false;
+					
+					dst[j]=(uint16_t)((lookup[(uint32_t)src3[j]+vmax2]+(uint32_t)src4[j]+4)>>3);
+				}
+			}
+			dst_V+=dst_pitch_V;
+
+			src_V+=pitch_V_2;
+			src_Vp+=pitch_V_2;
+			src_Vpp+=pitch_V_2;
+			src_Vn+=pitch_V_2;
+			src_Vnn+=pitch_V_2;
+			src_Vnnn+=pitch_V_2;
+		}
+	}
+	else
+	{
+		bool *itabv0=interlaced_tab_V[0],*itabv1=interlaced_tab_V[1];
+		const uint16_t *src1=(uint16_t *)src_Vpp;
+		const uint16_t *src2=(uint16_t *)src_Vp;
+		const uint16_t *src3=(uint16_t *)src_V;
+		const uint16_t *src4=(uint16_t *)src_Vn;
+
+		for(int32_t j=0; j<w_UV; j++)
+		{
+			if (((abs((int32_t)src1[j]-(int32_t)src2[j])>=threshold_) &&
+				(abs((int32_t)src3[j]-(int32_t)src2[j])>=threshold_) &&
+				(((src1[j]>src2[j]) && (src3[j]>src2[j])) ||
+				((src1[j]<src2[j]) && (src3[j]<src2[j])))))
+				itabv0[j]=true;
+			else itabv0[j]=false;
+			if (((abs((int32_t)src2[j]-(int32_t)src3[j])>=threshold_) &&
+				(abs((int32_t)src4[j]-(int32_t)src3[j])>=threshold_) &&
+				(((src2[j]>src3[j]) && (src4[j]>src3[j])) ||
+				((src2[j]<src3[j]) && (src4[j]<src3[j])))))
+				itabv1[j]=true;
+			else itabv1[j]=false;
+		}
+	}
+	
+	index_tab_0=0;
+	index_tab_1=1;
+	index_tab_2=2;
+
+	for(int32_t i=h_0; i<h_4; i+=4)
+	{
+		{
+			const bool *itabv0=interlaced_tab_V[index_tab_0],*itabv1=interlaced_tab_V[index_tab_1];
+			const uint16_t *src1=(uint16_t *)src_V;
+			const uint16_t *src2=(uint16_t *)src_Vpp;
+			const uint16_t *src3=(uint16_t *)src_Vp;
+			uint16_t *dst=(uint16_t *)dst_V;
+
+			for(int32_t j=0; j<w_UV; j++)
+			{
+				// Upsample as needed.
+				if ((itabv0[j]) || (itabv1[j]))
+				{
+					dst[j]=(uint16_t)((lookup[(uint32_t)src1[j]+vmax2]+(uint32_t)src2[j]+4)>>3);
+				}
+				else
+				{
+					dst[j]=(uint16_t)((lookup[src1[j]]+(uint32_t)src3[j]+2) >> 2);
+				}
+			}
+		}
+		dst_V+=dst_pitch_V;
+
+		{
+			const bool *itabv1=interlaced_tab_V[index_tab_1];
+			bool *itabv2=interlaced_tab_V[index_tab_2];
+			const uint16_t *src1=(uint16_t *)src_V;
+			const uint16_t *src2=(uint16_t *)src_Vn;
+			const uint16_t *src3=(uint16_t *)src_Vnn;
+			const uint16_t *src4=(uint16_t *)src_Vp;
+			uint16_t *dst=(uint16_t *)dst_V;
+
+			for(int32_t j=0; j<w_UV; j++)
+			{
+				if (((abs((int32_t)src1[j]-(int32_t)src2[j])>=threshold_) &&
+					(abs((int32_t)src3[j]-(int32_t)src2[j])>=threshold_) &&
+					(((src1[j]>src2[j]) && (src3[j]>src2[j])) ||
+					((src1[j]<src2[j]) && (src3[j]<src2[j])))))
+					itabv2[j]=true;
+				else itabv2[j]=false;			
+
+				// Upsample as needed.
+				if ((itabv2[j]) || (itabv1[j]))
+				{
+					dst[j]=(uint16_t)((lookup[src4[j]]+lookup[(uint32_t)src2[j]+vmax]+4)>>3);
+				}
+				else
+				{
+					dst[j]=(uint16_t)((lookup[src1[j]]+(uint32_t)src2[j]+2)>>2);
+				}
+			}
+		}
+		dst_V+=dst_pitch_V;
+
+		{
+			const bool *itabv1=interlaced_tab_V[index_tab_1],*itabv2=interlaced_tab_V[index_tab_2];
+			const uint16_t *src1=(uint16_t *)src_Vnn;
+			const uint16_t *src2=(uint16_t *)src_V;
+			const uint16_t *src3=(uint16_t *)src_Vn;
+			uint16_t *dst=(uint16_t *)dst_V;
+
+			for(int32_t j=0; j<w_UV; j++)
+			{
+				// Upsample as needed.
+				if ((itabv1[j]) || (itabv2[j]))
+				{
+					dst[j]=(uint16_t)((lookup[src1[j]]+lookup[(uint32_t)src2[j]+vmax]+4)>>3);
+				}
+				else
+				{
+					dst[j]=(uint16_t)((lookup[src3[j]]+(uint32_t)src2[j]+2)>>2);
+				}
+			}
+		}
+		dst_V+=dst_pitch_V;
+
+		{
+			bool *itabv0=interlaced_tab_V[index_tab_0];
+			const bool *itabv2=interlaced_tab_V[index_tab_2];
+			const uint16_t *src1=(uint16_t *)src_Vn;
+			const uint16_t *src2=(uint16_t *)src_Vnn;
+			const uint16_t *src3=(uint16_t *)src_Vnnn;
+			uint16_t *dst=(uint16_t *)dst_V;
+
+			for(int32_t j=0; j<w_UV; j++)
+			{
+				if (((abs((int32_t)src1[j]-(int32_t)src2[j])>=threshold_) &&
+					(abs((int32_t)src3[j]-(int32_t)src2[j])>=threshold_) &&
+					(((src1[j]>src2[j]) && (src3[j]>src2[j])) ||
+					((src1[j]<src2[j]) && (src3[j]<src2[j])))))
+					itabv0[j]=true;
+				else itabv0[j]=false;
+
+				// Upsample as needed.
+				if ((itabv0[j]) || (itabv2[j]))
+				{
+					dst[j]=(uint16_t)((lookup[(uint32_t)src1[j]+vmax2]+(uint32_t)src3[j]+4)>>3);
+				}
+				else
+				{
+					dst[j]=(uint16_t)((lookup[src1[j]]+(uint32_t)src2[j]+2)>>2);
+				}
+			}
+		}
+		dst_V+=dst_pitch_V;
+
+		index_tab_0=(index_tab_0+2)%Interlaced_Tab_Size;
+		index_tab_1=(index_tab_1+2)%Interlaced_Tab_Size;
+		index_tab_2=(index_tab_2+2)%Interlaced_Tab_Size;
+
+		src_V+=pitch_V_2;
+		src_Vp+=pitch_V_2;
+		src_Vpp+=pitch_V_2;
+		src_Vn+=pitch_V_2;
+		src_Vnn+=pitch_V_2;
+		src_Vnnn+=pitch_V_2;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_4; i<h_Y_max; i+=4)
+		{
+			const uint16_t *src1=(uint16_t *)src_V;
+			const uint16_t *src2=(uint16_t *)src_Vpp;
+			uint16_t *dst=(uint16_t *)dst_V;
+
+			for(int32_t j=0; j<w_UV; j++)
+				dst[j]=(uint16_t)((lookup[(uint32_t)src1[j]+vmax2]+(uint32_t)src2[j]+4)>>3);
+			dst_V+=dst_pitch_V;
+
+			src1=(uint16_t *)src_Vp;
+			src2=(uint16_t *)src_Vn;
+			dst=(uint16_t *)dst_V;
+
+			for(int32_t j=0; j<w_UV; j++)
+				dst[j]=(uint16_t)((lookup[src1[j]]+lookup[(uint32_t)src2[j]+vmax]+4)>>3);
+			dst_V+=dst_pitch_V;
+
+			memcpy(dst_V,src_V,w_UV2);
+			dst_V+=dst_pitch_V;
+
+			memcpy(dst_V,src_Vn,w_UV2);
+			dst_V+=dst_pitch_V;
+
+			src_V+=pitch_V_2;
+			src_Vp+=pitch_V_2;
+			src_Vpp+=pitch_V_2;
+			src_Vn+=pitch_V_2;
+			src_Vnn+=pitch_V_2;
+			src_Vnnn+=pitch_V_2;
+		}
+	}
+}
+
+
+static void Convert_Test_16_YV16(const MT_Data_Info &mt_data_inf,const uint32_t *lookup,const int16_t threshold,
+	bool *interlaced_tab_U[],bool *interlaced_tab_V[],uint8_t bits_per_pixel)
+{
+	const uint8_t *srcYp=(const uint8_t *)mt_data_inf.src1;
+	const uint8_t *srcUp=(const uint8_t *)mt_data_inf.src2;
+	const uint8_t *srcVp=(const uint8_t *)mt_data_inf.src3;
+	uint8_t *dstYp=(uint8_t *)mt_data_inf.dst1;
+	uint8_t *dstUp=(uint8_t *)mt_data_inf.dst2;
+	uint8_t *dstVp=(uint8_t *)mt_data_inf.dst3;
+	const int32_t dst_w=mt_data_inf.dst_Y_w;
+	const int32_t h_Y_min=mt_data_inf.src_Y_h_min;
+	const int32_t h_Y_max=mt_data_inf.src_Y_h_max;
+	const ptrdiff_t src_pitch_Y=mt_data_inf.src_pitch1;
+	const ptrdiff_t src_pitchU=mt_data_inf.src_pitch2;
+	const ptrdiff_t src_pitchV=mt_data_inf.src_pitch3;
+	const ptrdiff_t dst_pitch_Y=mt_data_inf.dst_pitch1;
+	const ptrdiff_t dst_pitch_U=mt_data_inf.dst_pitch2;
+	const ptrdiff_t dst_pitch_V=mt_data_inf.dst_pitch3;
+
+	const uint8_t *src_U,*src_Up,*src_Upp,*src_Un,*src_Unn,*src_Unnn;
+	const uint8_t *src_V,*src_Vp,*src_Vpp,*src_Vn,*src_Vnn,*src_Vnnn;
+	uint8_t *dst_U,*dst_V;
+	uint8_t index_tab_0,index_tab_1,index_tab_2;
+	const int32_t w_UV=dst_w >> 1;
+	const int32_t w_UV2=w_UV << 1;
+	const int32_t h_4 = mt_data_inf.bottom ? h_Y_max-4:h_Y_max;
+	const int32_t h_0 = mt_data_inf.top ? 4:h_Y_min;
+
+	const ptrdiff_t pitch_U_2=2*src_pitchU;
+	const ptrdiff_t pitch_V_2=2*src_pitchV;
+	const int32_t threshold_=(int32_t)threshold << (bits_per_pixel-8);
+	const uint32_t vmax=(uint32_t)1 << bits_per_pixel;
+	const uint32_t vmax2=vmax << 1;
+	const uint16_t valUV=239 << (bits_per_pixel-8);
+
+	src_U=srcUp;
+	src_V=srcVp;
+	src_Up=src_U-src_pitchU;
+	src_Upp=src_U-2*src_pitchU;
+	src_Un=src_U+src_pitchU;
+	src_Unn=src_U+2*src_pitchU;
+	src_Unnn=src_U+3*src_pitchU;
+	src_Vp=src_V-src_pitchV;
+	src_Vpp=src_V-2*src_pitchV;
+	src_Vn=src_V+src_pitchV;
+	src_Vnn=src_V+2*src_pitchV;
+	src_Vnnn=src_V+3*src_pitchV;
+	dst_U=dstUp;
+	dst_V=dstVp;
+
+	Move_Full(srcYp,dstYp,dst_w << 1,h_Y_max-h_Y_min,src_pitch_Y,dst_pitch_Y);
+
+// Planar U	
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<4; i+=4)
+		{
+			memcpy(dst_U,src_U,w_UV2);
+			dst_U+=dst_pitch_U;
+
+			memcpy(dst_U,src_Un,w_UV2);
+			dst_U+=dst_pitch_U;
+
+			const uint16_t *src1=(uint16_t *)src_Unn;
+			const uint16_t *src2=(uint16_t *)src_U;
+			uint16_t *dst=(uint16_t *)dst_U;
+
+			for(int32_t j=0; j<w_UV; j++)
+				dst[j]=(uint16_t)((lookup[src1[j]]+lookup[(uint32_t)src2[j]+vmax]+4)>>3);
+			dst_U+=dst_pitch_U;
+
+			{
+				bool *itabu0=interlaced_tab_U[0],*itabu1=interlaced_tab_U[1];
+				const uint16_t *src3=(uint16_t *)src_Un;
+				const uint16_t *src4=(uint16_t *)src_Unnn;
+				dst=(uint16_t *)dst_U;
+
+				for(int32_t j=0; j<w_UV; j++)
+				{
+					if (((abs((int32_t)src2[j]-(int32_t)src3[j])>=threshold_) &&
+						(abs((int32_t)src_Unn[j]-(int32_t)src3[j])>=threshold_) &&
+						(((src2[j]>src3[j]) && (src1[j]>src3[j])) ||
+						((src2[j]<src3[j]) && (src1[j]<src3[j])))))
+						itabu0[j]=true;
+					else itabu0[j]=false;
+					if (((abs((int32_t)src3[j]-(int32_t)src1[j])>=threshold_) &&
+						(abs((int32_t)src_Unnn[j]-(int32_t)src1[j])>=threshold_) &&
+						(((src3[j]>src1[j]) && (src4[j]>src1[j])) ||
+						((src3[j]<src1[j]) && (src4[j]<src1[j])))))
+						itabu1[j]=true;
+					else itabu1[j]=false;
+					
+					dst[j]=(uint16_t)((lookup[(uint32_t)src3[j]+vmax2]+(uint32_t)src4[j]+4)>>3);
+				}
+			}
+			dst_U+=dst_pitch_U;
+
+			src_U+=pitch_U_2;
+			src_Up+=pitch_U_2;
+			src_Upp+=pitch_U_2;
+			src_Un+=pitch_U_2;
+			src_Unn+=pitch_U_2;
+			src_Unnn+=pitch_U_2;
+		}
+	}
+	else
+	{
+		const uint16_t *src1=(uint16_t *)src_Upp;
+		const uint16_t *src2=(uint16_t *)src_Up;
+		const uint16_t *src3=(uint16_t *)src_U;
+		const uint16_t *src4=(uint16_t *)src_Un;
+
+		bool *itabu0=interlaced_tab_U[0],*itabu1=interlaced_tab_U[1];
+				
+		for(int32_t j=0; j<w_UV; j++)
+		{
+			if (((abs((int32_t)src1[j]-(int32_t)src2[j])>=threshold_) &&
+				(abs((int32_t)src_U[j]-(int32_t)src2[j])>=threshold_) &&
+				(((src1[j]>src2[j]) && (src3[j]>src2[j])) ||
+				((src1[j]<src2[j]) && (src3[j]<src2[j])))))
+				itabu0[j]=true;
+			else itabu0[j]=false;
+			if (((abs((int32_t)src2[j]-(int32_t)src3[j])>=threshold_) &&
+				(abs((int32_t)src4[j]-(int32_t)src3[j])>=threshold_) &&
+				(((src2[j]>src3[j]) && (src4[j]>src3[j])) ||
+				((src2[j]<src3[j]) && (src4[j]<src3[j])))))
+				itabu1[j]=true;
+			else itabu1[j]=false;
+		}
+
+	}
+
+	index_tab_0=0;
+	index_tab_1=1;
+	index_tab_2=2;
+
+	for(int32_t i=h_0; i<h_4; i+=4)
+	{
+		{
+			const bool *itabu0=interlaced_tab_U[index_tab_0],*itabu1=interlaced_tab_U[index_tab_1];
+			const uint16_t *src1=(uint16_t *)src_U;
+			const uint16_t *src2=(uint16_t *)src_Upp;
+			const uint16_t *src3=(uint16_t *)src_Up;
+			uint16_t *dst=(uint16_t *)dst_U;
+
+			// Upsample as needed.
+			for(int32_t j=0; j<w_UV; j++)
+			{
+				if ((itabu0[j]) || (itabu1[j]))
+				{
+					dst[j]=valUV;
+				}
+				else
+				{
+					dst[j]=(uint16_t)((lookup[src1[j]]+(uint32_t)src3[j]+2) >> 2);
+				}
+			}
+		}
+		dst_U+=dst_pitch_U;
+
+		{
+			const bool *itabu1=interlaced_tab_U[index_tab_1];
+			bool *itabu2=interlaced_tab_U[index_tab_2];
+			const uint16_t *src1=(uint16_t *)src_U;
+			const uint16_t *src2=(uint16_t *)src_Un;
+			const uint16_t *src3=(uint16_t *)src_Unn;
+			const uint16_t *src4=(uint16_t *)src_Up;
+			uint16_t *dst=(uint16_t *)dst_U;
+
+			for(int32_t j=0; j<w_UV; j++)
+			{
+				if (((abs((int32_t)src1[j]-(int32_t)src2[j])>=threshold_) &&
+					(abs((int32_t)src3[j]-(int32_t)src2[j])>=threshold_) &&
+					(((src1[j]>src2[j]) && (src3[j]>src2[j])) ||
+					((src1[j]<src2[j]) && (src3[j]<src2[j])))))
+					itabu2[j]=true;
+				else itabu2[j]=false;			
+
+				// Upsample as needed.
+				if ((itabu2[j]) || (itabu1[j]))
+				{
+					dst[j]=valUV;
+				}
+				else
+				{
+					dst[j]=(uint16_t)((lookup[src1[j]]+(uint32_t)src2[j]+2)>>2);
+				}
+			}
+		}
+		dst_U+=dst_pitch_U;
+
+		{
+			const bool *itabu1=interlaced_tab_U[index_tab_1],*itabu2=interlaced_tab_U[index_tab_2];
+			const uint16_t *src1=(uint16_t *)src_Unn;
+			const uint16_t *src2=(uint16_t *)src_U;
+			const uint16_t *src3=(uint16_t *)src_Un;
+			uint16_t *dst=(uint16_t *)dst_U;
+
+			for(int32_t j=0; j<w_UV; j++)
+			{
+				// Upsample as needed.
+				if ((itabu1[j]) || (itabu2[j]))
+				{
+					dst[j]=valUV;
+				}
+				else
+				{
+					dst[j]=(uint16_t)((lookup[src3[j]]+(uint32_t)src2[j]+2)>>2);
+				}
+			}
+		}
+		dst_U+=dst_pitch_U;
+
+		{
+			bool *itabu0=interlaced_tab_U[index_tab_0];
+			const bool *itabu2=interlaced_tab_U[index_tab_2];
+			const uint16_t *src1=(uint16_t *)src_Un;
+			const uint16_t *src2=(uint16_t *)src_Unn;
+			const uint16_t *src3=(uint16_t *)src_Unnn;
+			uint16_t *dst=(uint16_t *)dst_U;
+
+			for(int32_t j=0; j<w_UV; j++)
+			{
+				if (((abs((int32_t)src1[j]-(int32_t)src2[j])>=threshold_) &&
+					(abs((int32_t)src3[j]-(int32_t)src2[j])>=threshold_) &&
+					(((src1[j]>src2[j]) && (src3[j]>src2[j])) ||
+					((src1[j]<src2[j]) && (src3[j]<src2[j])))))
+					itabu0[j]=true;
+				else itabu0[j]=false;
+
+				// Upsample as needed.
+				if ((itabu0[j]) || (itabu2[j]))
+				{
+					dst[j]=valUV;
+				}
+				else
+				{
+					dst[j]=(uint16_t)((lookup[src1[j]]+(uint32_t)src2[j]+2)>>2);
+				}
+			}
+		}
+		dst_U+=dst_pitch_U;
+
+		index_tab_0=(index_tab_0+2)%Interlaced_Tab_Size;
+		index_tab_1=(index_tab_1+2)%Interlaced_Tab_Size;
+		index_tab_2=(index_tab_2+2)%Interlaced_Tab_Size;
+
+		src_U+=pitch_U_2;
+		src_Up+=pitch_U_2;
+		src_Upp+=pitch_U_2;
+		src_Un+=pitch_U_2;
+		src_Unn+=pitch_U_2;
+		src_Unnn+=pitch_U_2;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_4; i<h_Y_max; i+=4)
+		{
+			const uint16_t *src1=(uint16_t *)src_U;
+			const uint16_t *src2=(uint16_t *)src_Upp;
+			uint16_t *dst=(uint16_t *)dst_U;
+
+			for(int32_t j=0; j<w_UV; j++)
+				dst[j]=(uint16_t)((lookup[(uint32_t)src1[j]+vmax2]+(uint32_t)src2[j]+4)>>3);
+			dst_U+=dst_pitch_U;
+
+			src1=(uint16_t *)src_Up;
+			src2=(uint16_t *)src_Un;
+			dst=(uint16_t *)dst_U;
+
+			for(int32_t j=0; j<w_UV; j++)
+				dst[j]=(uint16_t)((lookup[src1[j]]+lookup[(uint32_t)src2[j]+vmax]+4)>>3);
+			dst_U+=dst_pitch_U;
+
+			memcpy(dst_U,src_U,w_UV2);
+			dst_U+=dst_pitch_U;
+
+			memcpy(dst_U,src_Un,w_UV2);
+			dst_U+=dst_pitch_U;
+
+			src_U+=pitch_U_2;
+			src_Up+=pitch_U_2;
+			src_Upp+=pitch_U_2;
+			src_Un+=pitch_U_2;
+			src_Unn+=pitch_U_2;
+			src_Unnn+=pitch_U_2;
+		}
+	}
+
+// Planar V
+	if (mt_data_inf.top)
+	{
+		for(int32_t i=0; i<4; i+=4)
+		{
+			memcpy(dst_V,src_V,w_UV2);
+			dst_V+=dst_pitch_V;
+
+			memcpy(dst_V,src_Vn,w_UV2);
+			dst_V+=dst_pitch_V;
+
+			const uint16_t *src1=(uint16_t *)src_Vnn;
+			const uint16_t *src2=(uint16_t *)src_V;
+			uint16_t *dst=(uint16_t *)dst_V;
+
+			for(int32_t j=0; j<w_UV; j++)
+				dst[j]=(uint16_t)((lookup[src1[j]]+lookup[(uint32_t)src2[j]+vmax]+4)>>3);
+			dst_V+=dst_pitch_V;
+
+			{
+				bool *itabv0=interlaced_tab_V[0],*itabv1=interlaced_tab_V[1];
+				const uint16_t *src3=(uint16_t *)src_Vn;
+				const uint16_t *src4=(uint16_t *)src_Vnnn;
+				dst=(uint16_t *)dst_V;
+
+				for(int32_t j=0; j<w_UV; j++)
+				{
+					if (((abs((int32_t)src2[j]-(int32_t)src3[j])>=threshold_) &&
+						(abs((int32_t)src1[j]-(int32_t)src3[j])>=threshold_) &&
+						(((src2[j]>src3[j]) && (src1[j]>src3[j])) ||
+						((src2[j]<src3[j]) && (src1[j]<src3[j])))))
+						itabv0[j]=true;
+					else itabv0[j]=false;
+					if (((abs((int32_t)src3[j]-(int32_t)src1[j])>=threshold_) &&
+						(abs((int32_t)src4[j]-(int32_t)src1[j])>=threshold_) &&
+						(((src3[j]>src1[j]) && (src4[j]>src1[j])) ||
+						((src3[j]<src1[j]) && (src4[j]<src1[j])))))
+						itabv1[j]=true;
+					else itabv1[j]=false;
+					
+					dst[j]=(uint16_t)((lookup[(uint32_t)src3[j]+vmax2]+(uint32_t)src4[j]+4)>>3);
+				}
+			}
+			dst_V+=dst_pitch_V;
+
+			src_V+=pitch_V_2;
+			src_Vp+=pitch_V_2;
+			src_Vpp+=pitch_V_2;
+			src_Vn+=pitch_V_2;
+			src_Vnn+=pitch_V_2;
+			src_Vnnn+=pitch_V_2;
+		}
+	}
+	else
+	{
+		bool *itabv0=interlaced_tab_V[0],*itabv1=interlaced_tab_V[1];
+		const uint16_t *src1=(uint16_t *)src_Vpp;
+		const uint16_t *src2=(uint16_t *)src_Vp;
+		const uint16_t *src3=(uint16_t *)src_V;
+		const uint16_t *src4=(uint16_t *)src_Vn;
+
+		for(int32_t j=0; j<w_UV; j++)
+		{
+			if (((abs((int32_t)src1[j]-(int32_t)src2[j])>=threshold_) &&
+				(abs((int32_t)src3[j]-(int32_t)src2[j])>=threshold_) &&
+				(((src1[j]>src2[j]) && (src3[j]>src2[j])) ||
+				((src1[j]<src2[j]) && (src3[j]<src2[j])))))
+				itabv0[j]=true;
+			else itabv0[j]=false;
+			if (((abs((int32_t)src2[j]-(int32_t)src3[j])>=threshold_) &&
+				(abs((int32_t)src4[j]-(int32_t)src3[j])>=threshold_) &&
+				(((src2[j]>src3[j]) && (src4[j]>src3[j])) ||
+				((src2[j]<src3[j]) && (src4[j]<src3[j])))))
+				itabv1[j]=true;
+			else itabv1[j]=false;
+		}
+	}
+	
+	index_tab_0=0;
+	index_tab_1=1;
+	index_tab_2=2;
+
+	for(int32_t i=h_0; i<h_4; i+=4)
+	{
+		{
+			const bool *itabv0=interlaced_tab_V[index_tab_0],*itabv1=interlaced_tab_V[index_tab_1];
+			const uint16_t *src1=(uint16_t *)src_V;
+			const uint16_t *src2=(uint16_t *)src_Vpp;
+			const uint16_t *src3=(uint16_t *)src_Vp;
+			uint16_t *dst=(uint16_t *)dst_V;
+
+			for(int32_t j=0; j<w_UV; j++)
+			{
+				// Upsample as needed.
+				if ((itabv0[j]) || (itabv1[j]))
+				{
+					dst[j]=valUV;
+				}
+				else
+				{
+					dst[j]=(uint16_t)((lookup[src1[j]]+(uint32_t)src3[j]+2) >> 2);
+				}
+			}
+		}
+		dst_V+=dst_pitch_V;
+
+		{
+			const bool *itabv1=interlaced_tab_V[index_tab_1];
+			bool *itabv2=interlaced_tab_V[index_tab_2];
+			const uint16_t *src1=(uint16_t *)src_V;
+			const uint16_t *src2=(uint16_t *)src_Vn;
+			const uint16_t *src3=(uint16_t *)src_Vnn;
+			const uint16_t *src4=(uint16_t *)src_Vp;
+			uint16_t *dst=(uint16_t *)dst_V;
+
+			for(int32_t j=0; j<w_UV; j++)
+			{
+				if (((abs((int32_t)src1[j]-(int32_t)src2[j])>=threshold_) &&
+					(abs((int32_t)src3[j]-(int32_t)src2[j])>=threshold_) &&
+					(((src1[j]>src2[j]) && (src3[j]>src2[j])) ||
+					((src1[j]<src2[j]) && (src3[j]<src2[j])))))
+					itabv2[j]=true;
+				else itabv2[j]=false;			
+
+				// Upsample as needed.
+				if ((itabv2[j]) || (itabv1[j]))
+				{
+					dst[j]=valUV;
+				}
+				else
+				{
+					dst[j]=(uint16_t)((lookup[src1[j]]+(uint32_t)src2[j]+2)>>2);
+				}
+			}
+		}
+		dst_V+=dst_pitch_V;
+
+		{
+			const bool *itabv1=interlaced_tab_V[index_tab_1],*itabv2=interlaced_tab_V[index_tab_2];
+			const uint16_t *src1=(uint16_t *)src_Vnn;
+			const uint16_t *src2=(uint16_t *)src_V;
+			const uint16_t *src3=(uint16_t *)src_Vn;
+			uint16_t *dst=(uint16_t *)dst_V;
+
+			for(int32_t j=0; j<w_UV; j++)
+			{
+				// Upsample as needed.
+				if ((itabv1[j]) || (itabv2[j]))
+				{
+					dst[j]=valUV;
+				}
+				else
+				{
+					dst[j]=(uint16_t)((lookup[src3[j]]+(uint32_t)src2[j]+2)>>2);
+				}
+			}
+		}
+		dst_V+=dst_pitch_V;
+
+		{
+			bool *itabv0=interlaced_tab_V[index_tab_0];
+			const bool *itabv2=interlaced_tab_V[index_tab_2];
+			const uint16_t *src1=(uint16_t *)src_Vn;
+			const uint16_t *src2=(uint16_t *)src_Vnn;
+			const uint16_t *src3=(uint16_t *)src_Vnnn;
+			uint16_t *dst=(uint16_t *)dst_V;
+
+			for(int32_t j=0; j<w_UV; j++)
+			{
+				if (((abs((int32_t)src1[j]-(int32_t)src2[j])>=threshold_) &&
+					(abs((int32_t)src3[j]-(int32_t)src2[j])>=threshold_) &&
+					(((src1[j]>src2[j]) && (src3[j]>src2[j])) ||
+					((src1[j]<src2[j]) && (src3[j]<src2[j])))))
+					itabv0[j]=true;
+				else itabv0[j]=false;
+
+				// Upsample as needed.
+				if ((itabv0[j]) || (itabv2[j]))
+				{
+					dst[j]=valUV;
+				}
+				else
+				{
+					dst[j]=(uint16_t)((lookup[src1[j]]+(uint32_t)src2[j]+2)>>2);
+				}
+			}
+		}
+		dst_V+=dst_pitch_V;
+
+		index_tab_0=(index_tab_0+2)%Interlaced_Tab_Size;
+		index_tab_1=(index_tab_1+2)%Interlaced_Tab_Size;
+		index_tab_2=(index_tab_2+2)%Interlaced_Tab_Size;
+
+		src_V+=pitch_V_2;
+		src_Vp+=pitch_V_2;
+		src_Vpp+=pitch_V_2;
+		src_Vn+=pitch_V_2;
+		src_Vnn+=pitch_V_2;
+		src_Vnnn+=pitch_V_2;
+	}
+
+	if (mt_data_inf.bottom)
+	{
+		for(int32_t i=h_4; i<h_Y_max; i+=4)
+		{
+			const uint16_t *src1=(uint16_t *)src_V;
+			const uint16_t *src2=(uint16_t *)src_Vpp;
+			uint16_t *dst=(uint16_t *)dst_V;
+
+			for(int32_t j=0; j<w_UV; j++)
+				dst[j]=(uint16_t)((lookup[(uint32_t)src1[j]+vmax2]+(uint32_t)src2[j]+4)>>3);
+			dst_V+=dst_pitch_V;
+
+			src1=(uint16_t *)src_Vp;
+			src2=(uint16_t *)src_Vn;
+			dst=(uint16_t *)dst_V;
+
+			for(int32_t j=0; j<w_UV; j++)
+				dst[j]=(uint16_t)((lookup[src1[j]]+lookup[(uint32_t)src2[j]+vmax]+4)>>3);
+			dst_V+=dst_pitch_V;
+
+			memcpy(dst_V,src_V,w_UV2);
+			dst_V+=dst_pitch_V;
+
+			memcpy(dst_V,src_Vn,w_UV2);
+			dst_V+=dst_pitch_V;
+
+			src_V+=pitch_V_2;
+			src_Vp+=pitch_V_2;
+			src_Vpp+=pitch_V_2;
+			src_Vn+=pitch_V_2;
+			src_Vnn+=pitch_V_2;
+			src_Vnnn+=pitch_V_2;
+		}
+	}
+}
+
 
 void JPSDR_AutoYUY2::StaticThreadpool(void *ptr)
 {
@@ -6226,31 +8884,67 @@ void JPSDR_AutoYUY2::StaticThreadpool(void *ptr)
 	
 	switch(data->f_process)
 	{
-		case 1 : ptrClass->Convert_Automatic_to_YUY2(data->thread_Id);
-			break;
-		case 2 : ptrClass->Convert_Test_to_YUY2(data->thread_Id);
-			break;
-		case 3 : ptrClass->Convert_Automatic_to_UYVY(data->thread_Id);
-			break;
-		case 4 : ptrClass->Convert_Test_to_UYVY(data->thread_Id);
-			break;
-		case 5 : ptrClass->Convert_Automatic_to_Planar422(data->thread_Id);
-			break;
-		case 6 : ptrClass->Convert_Test_to_Planar422(data->thread_Id);
-			break;
-		case 7 : ptrClass->Convert_Progressive_to_Planar422(data->thread_Id);
-			break;
-		case 8 : ptrClass->Convert_Interlaced_to_Planar422(data->thread_Id);
-			break;
-		case 9 : ptrClass->Convert_Progressive_to_YUY2(data->thread_Id);
-			break;
-		case 10 : ptrClass->Convert_Interlaced_to_YUY2(data->thread_Id);
-			break;
-		case 11 : ptrClass->Convert_Progressive_to_UYVY(data->thread_Id);
-			break;
-		case 12 : ptrClass->Convert_Interlaced_to_UYVY(data->thread_Id);
-			break;
-		default : ;
+			case 1 : Convert_Automatic_to_YUY2(ptrClass->MT_Data[data->thread_Id],ptrClass->lookup_Upscale8,ptrClass->mData.threshold,
+						 ptrClass->interlaced_tab_U[data->thread_Id],ptrClass->interlaced_tab_V[data->thread_Id]);
+				break;
+			case 2 : Convert_Test_to_YUY2(ptrClass->MT_Data[data->thread_Id],ptrClass->lookup_Upscale8,ptrClass->mData.threshold,
+						 ptrClass->interlaced_tab_U[data->thread_Id],ptrClass->interlaced_tab_V[data->thread_Id]);
+				break;
+			case 3 : Convert_Automatic_to_UYVY(ptrClass->MT_Data[data->thread_Id],ptrClass->lookup_Upscale8,ptrClass->mData.threshold,
+						 ptrClass->interlaced_tab_U[data->thread_Id],ptrClass->interlaced_tab_V[data->thread_Id]);
+				break;
+			case 4 : Convert_Test_to_UYVY(ptrClass->MT_Data[data->thread_Id],ptrClass->lookup_Upscale8,ptrClass->mData.threshold,
+						 ptrClass->interlaced_tab_U[data->thread_Id],ptrClass->interlaced_tab_V[data->thread_Id]);
+				break;
+			case 5 : Convert_Automatic_8_YV16(ptrClass->MT_Data[data->thread_Id],ptrClass->lookup_Upscale8,ptrClass->mData.threshold,
+						 ptrClass->interlaced_tab_U[data->thread_Id],ptrClass->interlaced_tab_V[data->thread_Id]);
+				break;
+			case 6 : Convert_Test_8_YV16(ptrClass->MT_Data[data->thread_Id],ptrClass->lookup_Upscale8,ptrClass->mData.threshold,
+						 ptrClass->interlaced_tab_U[data->thread_Id],ptrClass->interlaced_tab_V[data->thread_Id]);
+				break;
+			case 8 : Convert_Progressive_8_YV16_AVX(ptrClass->MT_Data[data->thread_Id]); break;
+			case 9 : Convert_Progressive_8_YV16_SSE2(ptrClass->MT_Data[data->thread_Id]); break;
+			case 10 : Convert_Progressive_8_YV16(ptrClass->MT_Data[data->thread_Id],ptrClass->lookup_Upscale8); break;
+			case 12 : Convert_Interlaced_8_YV16_AVX(ptrClass->MT_Data[data->thread_Id]); break;
+			case 13 : Convert_Interlaced_8_YV16_SSE2(ptrClass->MT_Data[data->thread_Id]); break;
+			case 14 : Convert_Interlaced_8_YV16(ptrClass->MT_Data[data->thread_Id],ptrClass->lookup_Upscale8); break;
+			case 15 : Convert_Progressive_to_YUY2_AVX(ptrClass->MT_Data[data->thread_Id]); break;
+			case 16 : Convert_Progressive_to_YUY2_SSE2(ptrClass->MT_Data[data->thread_Id]); break;
+			case 17 : Convert_Progressive_to_YUY2(ptrClass->MT_Data[data->thread_Id],ptrClass->lookup_Upscale8); break;
+			case 18 : Convert_Interlaced_to_YUY2_AVX(ptrClass->MT_Data[data->thread_Id]); break;
+			case 19 : Convert_Interlaced_to_YUY2_SSE2(ptrClass->MT_Data[data->thread_Id]); break;
+			case 20 : Convert_Interlaced_to_YUY2(ptrClass->MT_Data[data->thread_Id],ptrClass->lookup_Upscale8); break;
+			case 21 : Convert_Progressive_to_UYVY_AVX(ptrClass->MT_Data[data->thread_Id]); break;
+			case 22 : Convert_Progressive_to_UYVY_SSE2(ptrClass->MT_Data[data->thread_Id]); break;
+			case 23 : Convert_Progressive_to_UYVY(ptrClass->MT_Data[data->thread_Id],ptrClass->lookup_Upscale8); break;
+			case 24 : Convert_Interlaced_to_UYVY_AVX(ptrClass->MT_Data[data->thread_Id]); break;
+			case 25 : Convert_Interlaced_to_UYVY_SSE2(ptrClass->MT_Data[data->thread_Id]); break;
+			case 26 : Convert_Interlaced_to_UYVY(ptrClass->MT_Data[data->thread_Id],ptrClass->lookup_Upscale8); break;
+			case 27 : Convert_Automatic_16_YV16(ptrClass->MT_Data[data->thread_Id],ptrClass->lookup_Upscale16,ptrClass->mData.threshold,
+						  ptrClass->interlaced_tab_U[data->thread_Id],ptrClass->interlaced_tab_V[data->thread_Id],
+						  ptrClass->image_data.src_bits_pixel);
+				break;
+			case 28 : Convert_Test_16_YV16(ptrClass->MT_Data[data->thread_Id],ptrClass->lookup_Upscale16,ptrClass->mData.threshold,
+						  ptrClass->interlaced_tab_U[data->thread_Id],ptrClass->interlaced_tab_V[data->thread_Id],
+						  ptrClass->image_data.src_bits_pixel);
+				break;
+			case 30 : Convert_Progressive_16_YV16_AVX(ptrClass->MT_Data[data->thread_Id]); break;
+			case 31 : Convert_Progressive_16_YV16_SSE2(ptrClass->MT_Data[data->thread_Id]); break;
+			case 32 : Convert_Progressive_16_YV16(ptrClass->MT_Data[data->thread_Id],ptrClass->lookup_Upscale16,
+						  ptrClass->image_data.src_bits_pixel);
+				break;
+			case 34 : Convert_Interlaced_16_YV16_AVX(ptrClass->MT_Data[data->thread_Id]); break;
+			case 35 : Convert_Interlaced_16_YV16_SSE2(ptrClass->MT_Data[data->thread_Id]); break;
+			case 36 : Convert_Interlaced_16_YV16(ptrClass->MT_Data[data->thread_Id],ptrClass->lookup_Upscale16,
+						  ptrClass->image_data.src_bits_pixel);
+				break;
+#ifdef AVX2_BUILD_POSSIBLE
+			case 7 : Convert_Progressive_8_YV16_AVX2(ptrClass->MT_Data[data->thread_Id]); break;
+			case 11 : Convert_Interlaced_8_YV16_AVX2(ptrClass->MT_Data[data->thread_Id]); break;
+			case 29 : Convert_Progressive_16_YV16_AVX2(ptrClass->MT_Data[data->thread_Id]); break;
+			case 33 : Convert_Interlaced_16_YV16_AVX2(ptrClass->MT_Data[data->thread_Id]); break;
+#endif
+		default : break;
 	}
 }
 
@@ -6292,34 +8986,128 @@ void JPSDR_AutoYUY2::Run()
 		case VMODE_YUYV :
 			switch(mData.convert_mode)
 			{
-				case 0 : f_proc=9; break;
-				case 1 : f_proc=10; break;
+				case 0 :
+					if (AVX_Enable) f_proc=15;
+					else
+					{
+						if (SSE2_Enable) f_proc=16;
+						else f_proc=17;
+					}
+					break;
+				case 1 :
+					if (AVX_Enable) f_proc=18;
+					else
+					{
+						if (SSE2_Enable) f_proc=19;
+						else f_proc=20;
+					}
+					break;
 				case 2 : f_proc=1; break;
 				case 3 : f_proc=2; break;
-				default : ;
+				default : break;
 			}
 			break;
 		case VMODE_UYVY :
 			switch(mData.convert_mode)
 			{
-				case 0 : f_proc=11; break;
-				case 1 : f_proc=12; break;
+				case 0 :
+					if (AVX_Enable) f_proc=21;
+					else
+					{
+						if (SSE2_Enable) f_proc=22;
+						else f_proc=23;
+					}
+					break;
+				case 1 :
+					if (AVX_Enable) f_proc=24;
+					else
+					{
+						if (SSE2_Enable) f_proc=25;
+						else f_proc=26;
+					}
+					break;
 				case 2 : f_proc=3; break;
 				case 3 : f_proc=4; break;
-				default : ;
+				default : break ;
 			}
 			break;
 		case VMODE_PLANAR_YUV422 :
-			switch(mData.convert_mode)
+			if (image_data.src_bits_pixel==8)
 			{
-				case 0 : f_proc=7; break;
-				case 1 : f_proc=8; break;
-				case 2 : f_proc=5; break;
-				case 3 : f_proc=6; break;
-				default : ;
+				switch(mData.convert_mode)
+				{
+					case 0 :
+#ifdef AVX2_BUILD_POSSIBLE
+						if (AVX2_Enable) f_proc=7;
+						else
+#endif
+						{
+							if (AVX_Enable) f_proc=8;
+							else
+							{
+								if (SSE2_Enable) f_proc=9;
+								else f_proc=10;
+							}
+						}
+						break;
+					case 1 :
+#ifdef AVX2_BUILD_POSSIBLE
+						if (AVX2_Enable) f_proc=11;
+						else
+#endif
+						{
+							if (AVX_Enable) f_proc=12;
+							else
+							{
+								if (SSE2_Enable) f_proc=13;
+								else f_proc=14;
+							}
+						}
+						break;
+					case 2 : f_proc=5; break;
+					case 3 : f_proc=6; break;
+					default : break;
+				}
+			}
+			else
+			{
+				switch(mData.convert_mode)
+				{
+					case 0 :
+#ifdef AVX2_BUILD_POSSIBLE
+						if (AVX2_Enable) f_proc=29;
+						else
+#endif
+						{
+							if (AVX_Enable) f_proc=30;
+							else
+							{
+								if (SSE2_Enable) f_proc=31;
+								else f_proc=32;
+							}
+						}
+						break;
+					case 1 :
+#ifdef AVX2_BUILD_POSSIBLE
+						if (AVX2_Enable) f_proc=33;
+						else
+#endif
+						{
+							if (AVX_Enable) f_proc=34;
+							else
+							{
+								if (SSE2_Enable) f_proc=35;
+								else f_proc=36;
+							}
+						}
+						break;
+					case 2 : f_proc=27; break;
+					case 3 : f_proc=28; break;
+					default : break;
+				}
 			}
 			break;
-		default : ;
+		default : break;
 	}
 
 	if (threads_number>1)
@@ -6334,26 +9122,68 @@ void JPSDR_AutoYUY2::Run()
 			for(uint8_t i=0; i<threads_number; i++)
 				MT_Thread[i].f_process=0;
 
-			poolInterface->ReleaseThreadPool(UserId,true);
+			poolInterface->ReleaseThreadPool(UserId,false);
 		}
 	}
 	else
 	{
 		switch(f_proc)
 		{
-			case 1 : Convert_Automatic_to_YUY2(0); break;
-			case 2 : Convert_Test_to_YUY2(0); break;
-			case 3 : Convert_Automatic_to_UYVY(0); break;
-			case 4 : Convert_Test_to_UYVY(0); break;
-			case 5 : Convert_Automatic_to_Planar422(0); break;
-			case 6 : Convert_Test_to_Planar422(0); break;
-			case 7 : Convert_Progressive_to_Planar422(0); break;
-			case 8 : Convert_Interlaced_to_Planar422(0); break;
-			case 9 : Convert_Progressive_to_YUY2(0); break;
-			case 10 : Convert_Interlaced_to_YUY2(0); break;
-			case 11 : Convert_Progressive_to_UYVY(0); break;
-			case 12 : Convert_Interlaced_to_UYVY(0); break;
-			default : ;
+			case 1 : Convert_Automatic_to_YUY2(MT_Data[0],lookup_Upscale8,mData.threshold,
+						 interlaced_tab_U[0],interlaced_tab_V[0]);
+				break;
+			case 2 : Convert_Test_to_YUY2(MT_Data[0],lookup_Upscale8,mData.threshold,
+						 interlaced_tab_U[0],interlaced_tab_V[0]);
+				break;
+			case 3 : Convert_Automatic_to_UYVY(MT_Data[0],lookup_Upscale8,mData.threshold,
+						 interlaced_tab_U[0],interlaced_tab_V[0]);
+				break;
+			case 4 : Convert_Test_to_UYVY(MT_Data[0],lookup_Upscale8,mData.threshold,
+						 interlaced_tab_U[0],interlaced_tab_V[0]);
+				break;
+			case 5 : Convert_Automatic_8_YV16(MT_Data[0],lookup_Upscale8,mData.threshold,
+						 interlaced_tab_U[0],interlaced_tab_V[0]);
+				break;
+			case 6 : Convert_Test_8_YV16(MT_Data[0],lookup_Upscale8,mData.threshold,
+						 interlaced_tab_U[0],interlaced_tab_V[0]);
+				break;
+			case 8 : Convert_Progressive_8_YV16_AVX(MT_Data[0]); break;
+			case 9 : Convert_Progressive_8_YV16_SSE2(MT_Data[0]); break;
+			case 10 : Convert_Progressive_8_YV16(MT_Data[0],lookup_Upscale8); break;
+			case 12 : Convert_Interlaced_8_YV16_AVX(MT_Data[0]); break;
+			case 13 : Convert_Interlaced_8_YV16_SSE2(MT_Data[0]); break;
+			case 14 : Convert_Interlaced_8_YV16(MT_Data[0],lookup_Upscale8); break;
+			case 15 : Convert_Progressive_to_YUY2_AVX(MT_Data[0]); break;
+			case 16 : Convert_Progressive_to_YUY2_SSE2(MT_Data[0]); break;
+			case 17 : Convert_Progressive_to_YUY2(MT_Data[0],lookup_Upscale8); break;
+			case 18 : Convert_Interlaced_to_YUY2_AVX(MT_Data[0]); break;
+			case 19 : Convert_Interlaced_to_YUY2_SSE2(MT_Data[0]); break;
+			case 20 : Convert_Interlaced_to_YUY2(MT_Data[0],lookup_Upscale8); break;
+			case 21 : Convert_Progressive_to_UYVY_AVX(MT_Data[0]); break;
+			case 22 : Convert_Progressive_to_UYVY_SSE2(MT_Data[0]); break;
+			case 23 : Convert_Progressive_to_UYVY(MT_Data[0],lookup_Upscale8); break;
+			case 24 : Convert_Interlaced_to_UYVY_AVX(MT_Data[0]); break;
+			case 25 : Convert_Interlaced_to_UYVY_SSE2(MT_Data[0]); break;
+			case 26 : Convert_Interlaced_to_UYVY(MT_Data[0],lookup_Upscale8); break;
+			case 27 : Convert_Automatic_16_YV16(MT_Data[0],lookup_Upscale16,mData.threshold,
+						  interlaced_tab_U[0],interlaced_tab_V[0],image_data.src_bits_pixel);
+				break;
+			case 28 : Convert_Test_16_YV16(MT_Data[0],lookup_Upscale16,mData.threshold,
+						  interlaced_tab_U[0],interlaced_tab_V[0],image_data.src_bits_pixel);
+				break;
+			case 30 : Convert_Progressive_16_YV16_AVX(MT_Data[0]); break;
+			case 31 : Convert_Progressive_16_YV16_SSE2(MT_Data[0]); break;
+			case 32 : Convert_Progressive_16_YV16(MT_Data[0],lookup_Upscale16,image_data.src_bits_pixel); break;
+			case 34 : Convert_Interlaced_16_YV16_AVX(MT_Data[0]); break;
+			case 35 : Convert_Interlaced_16_YV16_SSE2(MT_Data[0]); break;
+			case 36 : Convert_Interlaced_16_YV16(MT_Data[0],lookup_Upscale16,image_data.src_bits_pixel); break;
+#ifdef AVX2_BUILD_POSSIBLE
+			case 7 : Convert_Progressive_8_YV16_AVX2(MT_Data[0]); break;
+			case 11 : Convert_Interlaced_8_YV16_AVX2(MT_Data[0]); break;
+			case 29 : Convert_Progressive_16_YV16_AVX2(MT_Data[0]); break;
+			case 33 : Convert_Interlaced_16_YV16_AVX2(MT_Data[0]); break;
+#endif
+			default : break;
 		}
 	}
 }
@@ -6373,6 +9203,8 @@ void JPSDR_AutoYUY2::End()
 			myfree(interlaced_tab_U[j][i]);
 		}
 	}
+	myfree(lookup_Upscale16);
+	myfree(lookup_Upscale8);
 }
 
 
@@ -6404,5 +9236,5 @@ void JPSDR_AutoYUY2::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_AutoYUY2=
-VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","AutoYUY2 v3.4.0","Convert Planar4:2:0 to severals 4:2:2 modes. [SSE2][AVX] Optimised.");
+VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","AutoYUY2 v4.0.0","Convert Planar4:2:0 to severals 4:2:2 modes. [SSE2][AVX] Optimised.");
 
