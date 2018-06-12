@@ -279,7 +279,7 @@ uint8_t JPSDRVDXVideoFilter::GetColorMode(const VDXFBitmap* bitmap)
 	{
 		FilterModPixmapInfo* info = fma->fmpixmap->GetPixmapInfo(bitmap->mpPixmap);
 
-		switch(info->colorRangeMode)
+		switch(info->colorSpaceMode)
 		{
 			case nsVDXPixmap::kColorSpaceMode_601 : return(MATRIX_BT601); break;
 			case nsVDXPixmap::kColorSpaceMode_709 : return(MATRIX_BT709); break;
