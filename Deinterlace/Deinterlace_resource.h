@@ -10,13 +10,13 @@
 #define IDC_FILE_MODE                   2004
 #define IDC_BLEND_TRI                   2005
 #define IDC_STATIC_MODE                 2006
-#define IDC_YADIF                       2007
+//#define IDC_YADIF                       2007
 #define IDC_TOP                         2008
 #define IDC_BOTTOM                      2009
-#define IDC_TFF                         2010
-#define IDC_BFF                         2011
+//#define IDC_TFF                         2010
+//#define IDC_BFF                         2011
 #define IDC_DISCARD                     2012
-#define IDC_FIELD_ORDER                 2013
+//#define IDC_FIELD_ORDER                 2013
 #define IDC_PREVIEW                     2014
 #define IDC_ENABLE_MT                   2015
 

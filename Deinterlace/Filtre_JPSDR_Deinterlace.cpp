@@ -15,65 +15,105 @@ extern ThreadPoolInterface *poolInterface;
 
 extern int g_VFVAPIVersion;
 
-extern "C" void JPSDR_Deinterlace_Blend_Non_MMX_8(const void *src1,const void *src2, void *dst,
+#if _MSC_VER >= 1900
+#define AVX2_BUILD_POSSIBLE
+#endif
+
+
+extern "C" void JPSDR_Deinterlace_Blend_8(const void *src1,const void *src2, void *dst,
 		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-extern "C" void JPSDR_Deinterlace_Blend_Non_MMX_24(const void *src1,const void *src2, void *dst,
+extern "C" void JPSDR_Deinterlace_Blend_24(const void *src1,const void *src2, void *dst,
 		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-extern "C" void JPSDR_Deinterlace_Blend_Non_MMX_32(const void *src1,const void *src2, void *dst,
+extern "C" void JPSDR_Deinterlace_Blend_32(const void *src1,const void *src2, void *dst,
+		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);	
+extern "C" void JPSDR_Deinterlace_Blend_16(const void *src1,const void *src2, void *dst,
+		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);	
+extern "C" void JPSDR_Deinterlace_Blend_48(const void *src1,const void *src2, void *dst,
+		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Deinterlace_Blend_64(const void *src1,const void *src2, void *dst,
 		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);	
 
-extern "C" void JPSDR_Deinterlace_Blend_SSE_3_A(const void *src1,const void *src2, void *dst,
+
+extern "C" void JPSDR_Deinterlace_Blend_8_SSE2(const void *src1,const void *src2, void *dst,
+		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);		
+extern "C" void JPSDR_Deinterlace_Blend_8_AVX(const void *src1,const void *src2, void *dst,
 		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);		
 
-extern "C" void JPSDR_Deinterlace_Blend_AVX_3_A(const void *src1,const void *src2, void *dst,
+extern "C" void JPSDR_Deinterlace_Blend_8_Tri_SSE2(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Deinterlace_Blend_8_Tri_SSE2_a(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Deinterlace_Blend_8_Tri_SSE2_b(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Deinterlace_Blend_8_Tri_SSE2_c(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+
+extern "C" void JPSDR_Deinterlace_Blend_8_Tri_AVX(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Deinterlace_Blend_8_Tri_AVX_a(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Deinterlace_Blend_8_Tri_AVX_b(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Deinterlace_Blend_8_Tri_AVX_c(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+
+
+extern "C" void JPSDR_Deinterlace_Blend_16_SSE2(const void *src1,const void *src2, void *dst,
+		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);		
+extern "C" void JPSDR_Deinterlace_Blend_16_AVX(const void *src1,const void *src2, void *dst,
 		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);		
 
-extern "C" void JPSDR_Deinterlace_Blend_Tri_SSE_3_A(const void *src,void *dst,int32_t w,
+extern "C" void JPSDR_Deinterlace_Blend_16_Tri_SSE2(const void *src,void *dst,int32_t w,
 		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-extern "C" void JPSDR_Deinterlace_Blend_Tri_SSE_3_A_a(const void *src,void *dst,int32_t w,
+extern "C" void JPSDR_Deinterlace_Blend_16_Tri_SSE2_a(const void *src,void *dst,int32_t w,
 		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-extern "C" void JPSDR_Deinterlace_Blend_Tri_SSE_3_A_b(const void *src,void *dst,int32_t w,
+extern "C" void JPSDR_Deinterlace_Blend_16_Tri_SSE2_b(const void *src,void *dst,int32_t w,
 		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-extern "C" void JPSDR_Deinterlace_Blend_Tri_SSE_3_A_c(const void *src,void *dst,int32_t w,
-		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-
-extern "C" void JPSDR_Deinterlace_Blend_Tri_AVX_3_A(const void *src,void *dst,int32_t w,
-		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-extern "C" void JPSDR_Deinterlace_Blend_Tri_AVX_3_A_a(const void *src,void *dst,int32_t w,
-		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-extern "C" void JPSDR_Deinterlace_Blend_Tri_AVX_3_A_b(const void *src,void *dst,int32_t w,
-		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-extern "C" void JPSDR_Deinterlace_Blend_Tri_AVX_3_A_c(const void *src,void *dst,int32_t w,
+extern "C" void JPSDR_Deinterlace_Blend_16_Tri_SSE2_c(const void *src,void *dst,int32_t w,
 		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
 
+extern "C" void JPSDR_Deinterlace_Blend_16_Tri_AVX(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Deinterlace_Blend_16_Tri_AVX_a(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Deinterlace_Blend_16_Tri_AVX_b(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Deinterlace_Blend_16_Tri_AVX_c(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
 
-extern "C" void JPSDR_Deinterlace_YadifAbsDiffAvg_SSE(const void *src_a, const void *scr_b, void *dst_abs, void *dst_avg,
-		ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w, int32_t h);
-extern "C" void JPSDR_Deinterlace_YadifAbsDiff_SSE(const void *src_a, const void *scr_b, void *dst,ptrdiff_t src_pitch,
-		ptrdiff_t dst_pitch, int32_t w, int32_t h);
-extern "C" void JPSDR_Deinterlace_YadifAvg_SSE(const void *src_a, const void *scr_b, void *dst,ptrdiff_t src_pitch,
-		ptrdiff_t dst_pitch, int32_t w, int32_t h);
+#ifdef AVX2_BUILD_POSSIBLE
+extern "C" void JPSDR_Deinterlace_Blend_8_AVX2(const void *src1,const void *src2, void *dst,
+		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Deinterlace_Blend_16_AVX2(const void *src1,const void *src2, void *dst,
+		int32_t w,int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
 
-extern "C" void JPSDR_Deinterlace_YadifAbsDiffAvg_AVX(const void *src_a, const void *scr_b, void *dst_abs, void *dst_avg,
-		ptrdiff_t src_pitch, ptrdiff_t dst_pitch, int32_t w, int32_t h);
-extern "C" void JPSDR_Deinterlace_YadifAbsDiff_AVX(const void *src_a, const void *scr_b, void *dst,ptrdiff_t src_pitch,
-		ptrdiff_t dst_pitch, int32_t w, int32_t h);
-extern "C" void JPSDR_Deinterlace_YadifAvg_AVX(const void *src_a, const void *scr_b, void *dst,ptrdiff_t src_pitch,
-		ptrdiff_t dst_pitch, int32_t w, int32_t h);
+extern "C" void JPSDR_Deinterlace_Blend_8_Tri_AVX2(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Deinterlace_Blend_16_Tri_AVX2(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
 
+extern "C" void JPSDR_Deinterlace_Blend_8_Tri_AVX2_a(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Deinterlace_Blend_8_Tri_AVX2_b(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Deinterlace_Blend_8_Tri_AVX2_c(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
 
-typedef struct _Yadif_Buffer
-{
-	void *data[3];
-	void *absdiff[3];
-} Yadif_Buffer;
+extern "C" void JPSDR_Deinterlace_Blend_16_Tri_AVX2_a(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Deinterlace_Blend_16_Tri_AVX2_b(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+extern "C" void JPSDR_Deinterlace_Blend_16_Tri_AVX2_c(const void *src,void *dst,int32_t w,
+		int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+#endif
 
 
 class JPSDR_DeinterlaceData
 {
 public:
 	uint8_t mode;
-	bool keepTop,TFF;
+	//bool keepTop,TFF;
+	bool keepTop;
 	bool file_mode;
 	char filename[1024];
 	bool mt_mode;
@@ -87,7 +127,7 @@ JPSDR_DeinterlaceData::JPSDR_DeinterlaceData(void)
 {
 	mode=1;
 	keepTop=true;
-	TFF=true;
+//	TFF=true;
 	strcpy_s(filename,1024,"");
 	file_mode=false;
 	mt_mode=true;
@@ -166,13 +206,13 @@ void JPSDR_DeinterlaceDialog::SetDisplay(void)
 		case 4 :
 			CheckDlgButton(mhdlg,IDC_INTERPOLATE,BST_CHECKED);
 			break;
-		case 5 :
+/*		case 5 :
 		case 6 :
 			CheckDlgButton(mhdlg,IDC_YADIF,BST_CHECKED);
-			break;
+			break;*/
 	}
-	if (mData.TFF) CheckDlgButton(mhdlg,IDC_TFF,BST_CHECKED);
-	else CheckDlgButton(mhdlg,IDC_BFF,BST_CHECKED);
+/*	if (mData.TFF) CheckDlgButton(mhdlg,IDC_TFF,BST_CHECKED);
+	else CheckDlgButton(mhdlg,IDC_BFF,BST_CHECKED);*/
 	if (mData.keepTop) CheckDlgButton(mhdlg,IDC_BOTTOM,BST_CHECKED);
 	else CheckDlgButton(mhdlg,IDC_TOP,BST_CHECKED);
 }
@@ -188,14 +228,14 @@ void JPSDR_DeinterlaceDialog::RefreshDisplay(void)
 		EnableWindow(GetDlgItem(mhdlg,IDC_BLEND),false);
 		EnableWindow(GetDlgItem(mhdlg,IDC_BLEND_TRI),false);
 		EnableWindow(GetDlgItem(mhdlg,IDC_INTERPOLATE),false);
-		EnableWindow(GetDlgItem(mhdlg,IDC_YADIF),false);
+		//EnableWindow(GetDlgItem(mhdlg,IDC_YADIF),false);
 		EnableWindow(GetDlgItem(mhdlg,IDC_STATIC_MODE),false);
 		EnableWindow(GetDlgItem(mhdlg,IDC_DISCARD),false);
-		EnableWindow(GetDlgItem(mhdlg,IDC_FIELD_ORDER),false);
+//		EnableWindow(GetDlgItem(mhdlg,IDC_FIELD_ORDER),false);
 		EnableWindow(GetDlgItem(mhdlg,IDC_TOP),false);
 		EnableWindow(GetDlgItem(mhdlg,IDC_BOTTOM),false);
-		EnableWindow(GetDlgItem(mhdlg,IDC_TFF),false);
-		EnableWindow(GetDlgItem(mhdlg,IDC_BFF),false);
+/*		EnableWindow(GetDlgItem(mhdlg,IDC_TFF),false);
+		EnableWindow(GetDlgItem(mhdlg,IDC_BFF),false);*/
 		EnableWindow(GetDlgItem(mhdlg,IDC_ENABLE_MT),false);
 //		EnableWindow(GetDlgItem(mhdlg,IDC_PREVIEW),false);
 	}
@@ -206,7 +246,7 @@ void JPSDR_DeinterlaceDialog::RefreshDisplay(void)
 		EnableWindow(GetDlgItem(mhdlg,IDC_BLEND),true);
 		EnableWindow(GetDlgItem(mhdlg,IDC_BLEND_TRI),true);
 		EnableWindow(GetDlgItem(mhdlg,IDC_INTERPOLATE),true);
-		EnableWindow(GetDlgItem(mhdlg,IDC_YADIF),true);
+		//EnableWindow(GetDlgItem(mhdlg,IDC_YADIF),true);
 		EnableWindow(GetDlgItem(mhdlg,IDC_STATIC_MODE),true);
 //		EnableWindow(GetDlgItem(mhdlg,IDC_PREVIEW),true);
 		switch(mData.mode)
@@ -217,11 +257,11 @@ void JPSDR_DeinterlaceDialog::RefreshDisplay(void)
 				EnableWindow(GetDlgItem(mhdlg,IDC_TOP),true);
 				EnableWindow(GetDlgItem(mhdlg,IDC_BOTTOM),true);
 				EnableWindow(GetDlgItem(mhdlg,IDC_DISCARD),true);
-				EnableWindow(GetDlgItem(mhdlg,IDC_TFF),false);
+/*				EnableWindow(GetDlgItem(mhdlg,IDC_TFF),false);
 				EnableWindow(GetDlgItem(mhdlg,IDC_BFF),false);
-				EnableWindow(GetDlgItem(mhdlg,IDC_FIELD_ORDER),false);
+				EnableWindow(GetDlgItem(mhdlg,IDC_FIELD_ORDER),false);*/
 				break;
-			case 5 :
+/*			case 5 :
 			case 6 :
 				EnableWindow(GetDlgItem(mhdlg,IDC_ENABLE_MT),false);
 				EnableWindow(GetDlgItem(mhdlg,IDC_TOP),true);
@@ -230,15 +270,15 @@ void JPSDR_DeinterlaceDialog::RefreshDisplay(void)
 				EnableWindow(GetDlgItem(mhdlg,IDC_TFF),true);
 				EnableWindow(GetDlgItem(mhdlg,IDC_BFF),true);
 				EnableWindow(GetDlgItem(mhdlg,IDC_FIELD_ORDER),true);
-				break;
+				break;*/
 			default :
 				EnableWindow(GetDlgItem(mhdlg,IDC_ENABLE_MT),true);
 				EnableWindow(GetDlgItem(mhdlg,IDC_TOP),false);
 				EnableWindow(GetDlgItem(mhdlg,IDC_BOTTOM),false);
 				EnableWindow(GetDlgItem(mhdlg,IDC_DISCARD),false);
-				EnableWindow(GetDlgItem(mhdlg,IDC_TFF),false);
+/*				EnableWindow(GetDlgItem(mhdlg,IDC_TFF),false);
 				EnableWindow(GetDlgItem(mhdlg,IDC_BFF),false);
-				EnableWindow(GetDlgItem(mhdlg,IDC_FIELD_ORDER),false);
+				EnableWindow(GetDlgItem(mhdlg,IDC_FIELD_ORDER),false);*/
 				break;
 		}
 	}
@@ -279,11 +319,11 @@ bool JPSDR_DeinterlaceDialog::SaveToData()
 {
 	mData.mt_mode=!!IsDlgButtonChecked(mhdlg,IDC_ENABLE_MT);
 	mData.keepTop=!!IsDlgButtonChecked(mhdlg,IDC_BOTTOM);
-	mData.TFF=!!IsDlgButtonChecked(mhdlg,IDC_TFF);
+//	mData.TFF=!!IsDlgButtonChecked(mhdlg,IDC_TFF);
 	if ((mData.mode==3) && (mData.keepTop)) mData.mode=4;
 	if ((mData.mode==4) && (!mData.keepTop)) mData.mode=3;
-	if ((mData.mode==5) && (!mData.keepTop)) mData.mode=6;
-	if ((mData.mode==6) && (mData.keepTop)) mData.mode=5;
+/*	if ((mData.mode==5) && (!mData.keepTop)) mData.mode=6;
+	if ((mData.mode==6) && (mData.keepTop)) mData.mode=5;*/
 	mData.file_mode=!!IsDlgButtonChecked(mhdlg,IDC_FILE_MODE);
 	if (mData.file_mode) GetWindowText(GetDlgItem(mhdlg, IDC_FILENAME), mData.filename, 1024);
 	else strcpy_s(mData.filename,1024,"");
@@ -320,18 +360,18 @@ bool JPSDR_DeinterlaceDialog::OnCommand(int cmd)
 			if (mifp && SaveToData()) mifp->RedoSystem();
 			RefreshDisplay();
 			return true;
-		case IDC_YADIF :
+/*		case IDC_YADIF :
 			mData.mode=5;
 			if (mifp && SaveToData()) mifp->RedoSystem();
 			RefreshDisplay();
-			return true;
+			return true;*/
 		case IDC_ENABLE_MT :
 			if (mifp && SaveToData()) mifp->RedoSystem();
 			return true;
 		case IDC_BOTTOM :
 		case IDC_TOP :
-		case IDC_TFF :
-		case IDC_BFF :
+/*		case IDC_TFF :
+		case IDC_BFF :*/
 			if (mifp && SaveToData()) mifp->RedoFrame();
 			return true;
 		case IDC_FILE_MODE :
@@ -389,9 +429,9 @@ public:
 	JPSDR_Deinterlace(){}
 	JPSDR_Deinterlace(const JPSDR_Deinterlace& a)
 	{
+		AVX2_Enable=a.AVX2_Enable;
 		AVX_Enable=a.AVX_Enable;
 		SSE2_Enable = a.SSE2_Enable;
-		VDub2_Enable = a.VDub2_Enable;
 		mData=a.mData;
 		InternalInit();
 	}
@@ -404,17 +444,11 @@ public:
 	virtual bool Configure(VDXHWND hwnd);
 	virtual void GetSettingString(char *buf, int maxlen);
 	virtual void GetScriptString(char *buf, int maxlen);
-	virtual bool Prefetch2(sint64 frame, IVDXVideoPrefetcher *prefetcher);
 	
 	VDXVF_DECLARE_SCRIPT_METHODS();
 
 protected:
 	Image_Data image_data;
-	Yadif_Buffer tab_Yadif[3];
-	ptrdiff_t Yadif_pitch[3],Yadif_modulo[3];
-	void *spatial_Yadif_buffer;
-	void *avg1[3],*avg2[3],*avg3[3],*abs1[3];
-	uint8_t write_index_Yadif,current_frame_Yadif,previous_frame_Yadif,next_frame_Yadif;
 	void *buffer0,*buffer1,*buffer2;
 	ptrdiff_t buffer0_pitch,buffer0_modulo;
 	ptrdiff_t buffer1_pitch,buffer1_modulo;
@@ -423,7 +457,7 @@ protected:
 	uint32_t debut[Number_Max_Lines],fin[Number_Max_Lines];
 	uint8_t tab_mode[Number_Max_Lines];
 	uint16_t nbre_file_mode;
-	bool SSE2_Enable,AVX_Enable,VDub2_Enable;
+	bool SSE2_Enable,AVX_Enable,AVX2_Enable,VDub2_Enable;
 
 	Public_MT_Data_Thread MT_Thread[MAX_MT_THREADS];
 	MT_Data_Info MT_Data[MAX_MT_THREADS];
@@ -437,82 +471,32 @@ protected:
 
 	void InternalInit(void);
 
-	uint8_t CreateMTData(uint8_t max_threads,int32_t size_x,int32_t size_y,uint8_t div_x,uint8_t div_y,uint8_t _32bits);
+	uint8_t CreateMTData(uint8_t max_threads,int32_t size_x,int32_t size_y,uint8_t div_x,uint8_t div_y,
+		uint8_t _32bits,uint8_t nBits_data);
 
-	void Deinterlace_Blend_MT_1(uint8_t thread_num);
-	void Deinterlace_Blend_MT_2(uint8_t thread_num);
-	void Deinterlace_Blend_MT_3(uint8_t thread_num);
-	void Deinterlace_Blend_MT_4(uint8_t thread_num);
-	void Deinterlace_Blend_MT_5(uint8_t thread_num);
+	void Deinterlace_Blend_8_MT_1(uint8_t thread_num);
+	void Deinterlace_Blend_8_MT_2(uint8_t thread_num);
+	void Deinterlace_Blend_8_MT_3(uint8_t thread_num);
+	void Deinterlace_Blend_8_MT_4(uint8_t thread_num);
+	void Deinterlace_Blend_8_MT_5(uint8_t thread_num);
 
-	void Deinterlace_Tri_MT_1(uint8_t thread_num);
-	void Deinterlace_Tri_MT_2(uint8_t thread_num);
-	void Deinterlace_Tri_MT_3(uint8_t thread_num);
-	void Deinterlace_Tri_MT_4(uint8_t thread_num);
-	void Deinterlace_Tri_MT_5(uint8_t thread_num);
+	void Deinterlace_Blend_16_MT_1(uint8_t thread_num);
+	void Deinterlace_Blend_16_MT_2(uint8_t thread_num);
+	void Deinterlace_Blend_16_MT_3(uint8_t thread_num);
+	void Deinterlace_Blend_16_MT_4(uint8_t thread_num);
+	void Deinterlace_Blend_16_MT_5(uint8_t thread_num);
 
-	void Blend_Tri_RGB32(const void *src, void *dst,const int32_t w,const int32_t h,
-		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-	void Blend_Tri_RGB32a(const void *src, void *dst,const int32_t w,const int32_t h,
-		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-	void Blend_Tri_RGB32b(const void *src, void *dst,const int32_t w,const int32_t h,
-		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-	void Blend_Tri_RGB32c(const void *src, void *dst,const int32_t w,const int32_t h,
-		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
+	void Deinterlace_8_Tri_MT_1(uint8_t thread_num);
+	void Deinterlace_8_Tri_MT_2(uint8_t thread_num);
+	void Deinterlace_8_Tri_MT_3(uint8_t thread_num);
+	void Deinterlace_8_Tri_MT_4(uint8_t thread_num);
+	void Deinterlace_8_Tri_MT_5(uint8_t thread_num);
 
-	void Blend_Tri_RGB32(const void *src, void *dst,void *buffer[],const int32_t w,const int32_t h,
-		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-
-	void Blend_Tri_YUV32(const void *src, void *dst,const int32_t w,const int32_t h,
-		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-	void Blend_Tri_YUV32a(const void *src, void *dst,const int32_t w,const int32_t h,
-		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-	void Blend_Tri_YUV32b(const void *src, void *dst,const int32_t w,const int32_t h,
-		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-	void Blend_Tri_YUV32c(const void *src, void *dst,const int32_t w,const int32_t h,
-		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-
-	void Blend_Tri_YUV32(const void *src, void *dst,void *buffer[],const int32_t w,const int32_t h,
-		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-
-	void Blend_Tri_Planar8(const void *src, void *dst,const int32_t w,const int32_t h,
-		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-	void Blend_Tri_Planar8a(const void *src, void *dst,const int32_t w,const int32_t h,
-		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-	void Blend_Tri_Planar8b(const void *src, void *dst,const int32_t w,const int32_t h,
-		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-	void Blend_Tri_Planar8c(const void *src, void *dst,const int32_t w,const int32_t h,
-		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-
-	void Blend_Tri_Planar8(const void *src, void *dst,void *buffer[],const int32_t w,const int32_t h,
-		ptrdiff_t src_pitch,ptrdiff_t dst_pitch);
-
-	void YadifAbsDiff(const void *src_a, const void *scr_b, void *dst, ptrdiff_t src_pitch, ptrdiff_t src_modulo,
-		ptrdiff_t dst_pitch, ptrdiff_t dst_modulo, const int32_t w, const int32_t h);
-	void YadifAbsDiffAvg(const void *src_a, const void *scr_b, void *dst_abs, void *dst_avg, ptrdiff_t src_pitch,
-		ptrdiff_t src_modulo, ptrdiff_t dst_pitch, ptrdiff_t dst_modulo, const int32_t w, const int32_t h);
-	void YadifAvgKeepTop(const void *src, void *dst, ptrdiff_t src_pitch, ptrdiff_t src_modulo,
-		ptrdiff_t dst_pitch, ptrdiff_t dst_modulo, const int32_t w, const int32_t h);
-	void YadifAvgKeepBottom(const void *src, void *dst, ptrdiff_t src_pitch, ptrdiff_t src_modulo,
-		ptrdiff_t dst_pitch, ptrdiff_t dst_modulo, const int32_t w, const int32_t h);
-	void YadifSpatialPlanarKeepTop(void *buffer, void *dst, ptrdiff_t buffer_pitch, ptrdiff_t buffer_modulo,
-		ptrdiff_t dst_pitch, ptrdiff_t dst_modulo, const int32_t w, const int32_t h);
-	void YadifSpatialPlanarKeepBottom(void *buffer, void *dst, ptrdiff_t buffer_pitch, ptrdiff_t buffer_modulo,
-		ptrdiff_t dst_pitch, ptrdiff_t dst_modulo, const int32_t w, const int32_t h);
-	void YadifTemporalPlanarKeepBottom(const void *src, void *avg1, void *avg2, void *avg3, void *abs1, void *dst, ptrdiff_t src_pitch,
-		ptrdiff_t src_modulo, ptrdiff_t buffer_pitch, ptrdiff_t buffer_modulo, ptrdiff_t dst_pitch, ptrdiff_t dst_modulo,
-		int32_t w, int32_t h);
-	void YadifTemporalPlanarKeepTop(const void *src, void *avg1, void *avg2, void *avg3, void *abs1, void *dst, ptrdiff_t src_pitch,
-		ptrdiff_t src_modulo, ptrdiff_t buffer_pitch, ptrdiff_t buffer_modulo, ptrdiff_t dst_pitch, ptrdiff_t dst_modulo,
-		const int32_t w, const int32_t h);
-	void YadifSpatiafBufferPlanarKeepTop(const void *src, void *dst, ptrdiff_t src_pitch, ptrdiff_t src_modulo,
-		ptrdiff_t dst_pitch, ptrdiff_t dst_modulo, const int32_t w, const int32_t h);
-	void YadifSpatiafBufferPlanarKeepBottom(const void *src, void *dst, ptrdiff_t src_pitch, ptrdiff_t src_modulo,
-		ptrdiff_t dst_pitch, ptrdiff_t dst_modulo, const int32_t w, const int32_t h);
-	void AddBorderRGB(void *dst,ptrdiff_t dst_pitch, const int32_t w, const int32_t h);
-	void AddBorderYUYV(void *dst,ptrdiff_t dst_pitch, const int32_t w, const int32_t h);
-	void AddBorderUYVY(void *dst,ptrdiff_t dst_pitch, const int32_t w, const int32_t h);
-	void AddBorderPlanar(void *dst,ptrdiff_t dst_pitch, const int32_t w, const int32_t h);
+	void Deinterlace_16_Tri_MT_1(uint8_t thread_num);
+	void Deinterlace_16_Tri_MT_2(uint8_t thread_num);
+	void Deinterlace_16_Tri_MT_3(uint8_t thread_num);
+	void Deinterlace_16_Tri_MT_4(uint8_t thread_num);
+	void Deinterlace_16_Tri_MT_5(uint8_t thread_num);
 
 	void ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptValue *argv, int argc);
 		
@@ -527,9 +511,9 @@ VDXVF_END_SCRIPT_METHODS()
 
 bool JPSDR_Deinterlace::Init()
 {
+	AVX2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_AVX2)!=0);
 	AVX_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_AVX)!=0);
 	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
 	InternalInit();
 
 	return(true);
@@ -556,21 +540,6 @@ void JPSDR_Deinterlace::InternalInit(void)
 			buffer[i][j]=NULL;
 		}
 	}
-	for (i=0; i<3; i++)
-	{
-		Yadif_pitch[i]=0;
-		Yadif_modulo[i]=0;
-		avg1[i]=NULL;
-		avg2[i]=NULL;
-		avg3[i]=NULL;
-		abs1[i]=NULL;
-		for (j=0; j<3; j++)
-		{
-			tab_Yadif[i].data[j]=NULL;
-			tab_Yadif[i].absdiff[j]=NULL;
-		}
-	}
-	spatial_Yadif_buffer=NULL;
 
 	StaticThreadpoolF=StaticThreadpool;
 
@@ -610,8 +579,18 @@ JPSDR_Deinterlace::~JPSDR_Deinterlace()
 }
 
 
-uint8_t JPSDR_Deinterlace::CreateMTData(uint8_t max_threads,int32_t size_x,int32_t size_y,uint8_t div_x,uint8_t div_y,uint8_t _32bits)
+uint8_t JPSDR_Deinterlace::CreateMTData(uint8_t max_threads,int32_t size_x,int32_t size_y,uint8_t div_x,uint8_t div_y,
+	uint8_t _32bits,uint8_t nBits_data)
 {
+	int32_t Coeff_size;
+
+	if (nBits_data==8) Coeff_size=1;
+	else
+	{
+		if (nBits_data<=16) Coeff_size=2;
+		else Coeff_size=4;
+	}
+
 	if ((max_threads<=1) || (max_threads>threads_number))
 	{
 		MT_Data[0].top=true;
@@ -665,28 +644,28 @@ uint8_t JPSDR_Deinterlace::CreateMTData(uint8_t max_threads,int32_t size_x,int32
 		switch (_32bits)
 		{
 			case 0 :
-				MT_Data[0].src_Y_w_32=MT_Data[0].src_Y_w;
-				MT_Data[0].dst_Y_w_32=MT_Data[0].dst_Y_w;
-				MT_Data[0].src_UV_w_32=MT_Data[0].src_UV_w;
-				MT_Data[0].dst_UV_w_32=MT_Data[0].dst_UV_w;
+				MT_Data[0].src_Y_w_32=MT_Data[0].src_Y_w*Coeff_size;
+				MT_Data[0].dst_Y_w_32=MT_Data[0].dst_Y_w*Coeff_size;
+				MT_Data[0].src_UV_w_32=MT_Data[0].src_UV_w*Coeff_size;
+				MT_Data[0].dst_UV_w_32=MT_Data[0].dst_UV_w*Coeff_size;
 				break;
 			case 1 :
-				MT_Data[0].src_Y_w_32=(MT_Data[0].src_Y_w+1)>>1;
-				MT_Data[0].dst_Y_w_32=(MT_Data[0].dst_Y_w+1)>>1;
-				MT_Data[0].src_UV_w_32=(MT_Data[0].src_UV_w+1)>>1;
-				MT_Data[0].dst_UV_w_32=(MT_Data[0].dst_UV_w+1)>>1;
+				MT_Data[0].src_Y_w_32=(MT_Data[0].src_Y_w*Coeff_size+1)>>1;
+				MT_Data[0].dst_Y_w_32=(MT_Data[0].dst_Y_w*Coeff_size+1)>>1;
+				MT_Data[0].src_UV_w_32=(MT_Data[0].src_UV_w*Coeff_size+1)>>1;
+				MT_Data[0].dst_UV_w_32=(MT_Data[0].dst_UV_w*Coeff_size+1)>>1;
 				break;
 			case 2 :
-				MT_Data[0].src_Y_w_32=(MT_Data[0].src_Y_w+3)>>2;
-				MT_Data[0].dst_Y_w_32=(MT_Data[0].dst_Y_w+3)>>2;
-				MT_Data[0].src_UV_w_32=(MT_Data[0].src_UV_w+3)>>2;
-				MT_Data[0].dst_UV_w_32=(MT_Data[0].dst_UV_w+3)>>2;
+				MT_Data[0].src_Y_w_32=(MT_Data[0].src_Y_w*Coeff_size+3)>>2;
+				MT_Data[0].dst_Y_w_32=(MT_Data[0].dst_Y_w*Coeff_size+3)>>2;
+				MT_Data[0].src_UV_w_32=(MT_Data[0].src_UV_w*Coeff_size+3)>>2;
+				MT_Data[0].dst_UV_w_32=(MT_Data[0].dst_UV_w*Coeff_size+3)>>2;
 				break;
 			default :
-				MT_Data[0].src_Y_w_32=MT_Data[0].src_Y_w;
-				MT_Data[0].dst_Y_w_32=MT_Data[0].dst_Y_w;
-				MT_Data[0].src_UV_w_32=MT_Data[0].src_UV_w;
-				MT_Data[0].dst_UV_w_32=MT_Data[0].dst_UV_w;
+				MT_Data[0].src_Y_w_32=MT_Data[0].src_Y_w*Coeff_size;
+				MT_Data[0].dst_Y_w_32=MT_Data[0].dst_Y_w*Coeff_size;
+				MT_Data[0].src_UV_w_32=MT_Data[0].src_UV_w*Coeff_size;
+				MT_Data[0].dst_UV_w_32=MT_Data[0].dst_UV_w*Coeff_size;
 				break;
 		}
 		return(1);
@@ -759,28 +738,28 @@ uint8_t JPSDR_Deinterlace::CreateMTData(uint8_t max_threads,int32_t size_x,int32
 		switch (_32bits)
 		{
 			case 0 :
-				MT_Data[0].src_Y_w_32=MT_Data[0].src_Y_w;
-				MT_Data[0].dst_Y_w_32=MT_Data[0].dst_Y_w;
-				MT_Data[0].src_UV_w_32=MT_Data[0].src_UV_w;
-				MT_Data[0].dst_UV_w_32=MT_Data[0].dst_UV_w;
+				MT_Data[0].src_Y_w_32=MT_Data[0].src_Y_w*Coeff_size;
+				MT_Data[0].dst_Y_w_32=MT_Data[0].dst_Y_w*Coeff_size;
+				MT_Data[0].src_UV_w_32=MT_Data[0].src_UV_w*Coeff_size;
+				MT_Data[0].dst_UV_w_32=MT_Data[0].dst_UV_w*Coeff_size;
 				break;
 			case 1 :
-				MT_Data[0].src_Y_w_32=(MT_Data[0].src_Y_w+1)>>1;
-				MT_Data[0].dst_Y_w_32=(MT_Data[0].dst_Y_w+1)>>1;
-				MT_Data[0].src_UV_w_32=(MT_Data[0].src_UV_w+1)>>1;
-				MT_Data[0].dst_UV_w_32=(MT_Data[0].dst_UV_w+1)>>1;
+				MT_Data[0].src_Y_w_32=(MT_Data[0].src_Y_w*Coeff_size+1)>>1;
+				MT_Data[0].dst_Y_w_32=(MT_Data[0].dst_Y_w*Coeff_size+1)>>1;
+				MT_Data[0].src_UV_w_32=(MT_Data[0].src_UV_w*Coeff_size+1)>>1;
+				MT_Data[0].dst_UV_w_32=(MT_Data[0].dst_UV_w*Coeff_size+1)>>1;
 				break;
 			case 2 :
-				MT_Data[0].src_Y_w_32=(MT_Data[0].src_Y_w+3)>>2;
-				MT_Data[0].dst_Y_w_32=(MT_Data[0].dst_Y_w+3)>>2;
-				MT_Data[0].src_UV_w_32=(MT_Data[0].src_UV_w+3)>>2;
-				MT_Data[0].dst_UV_w_32=(MT_Data[0].dst_UV_w+3)>>2;
+				MT_Data[0].src_Y_w_32=(MT_Data[0].src_Y_w*Coeff_size+3)>>2;
+				MT_Data[0].dst_Y_w_32=(MT_Data[0].dst_Y_w*Coeff_size+3)>>2;
+				MT_Data[0].src_UV_w_32=(MT_Data[0].src_UV_w*Coeff_size+3)>>2;
+				MT_Data[0].dst_UV_w_32=(MT_Data[0].dst_UV_w*Coeff_size+3)>>2;
 				break;
 			default :
-				MT_Data[0].src_Y_w_32=MT_Data[0].src_Y_w;
-				MT_Data[0].dst_Y_w_32=MT_Data[0].dst_Y_w;
-				MT_Data[0].src_UV_w_32=MT_Data[0].src_UV_w;
-				MT_Data[0].dst_UV_w_32=MT_Data[0].dst_UV_w;
+				MT_Data[0].src_Y_w_32=MT_Data[0].src_Y_w*Coeff_size;
+				MT_Data[0].dst_Y_w_32=MT_Data[0].dst_Y_w*Coeff_size;
+				MT_Data[0].src_UV_w_32=MT_Data[0].src_UV_w*Coeff_size;
+				MT_Data[0].dst_UV_w_32=MT_Data[0].dst_UV_w*Coeff_size;
 				break;
 		}
 		return(1);
@@ -868,28 +847,28 @@ uint8_t JPSDR_Deinterlace::CreateMTData(uint8_t max_threads,int32_t size_x,int32
 		switch (_32bits)
 		{
 			case 0 :
-				MT_Data[i].src_Y_w_32=MT_Data[i].src_Y_w;
-				MT_Data[i].dst_Y_w_32=MT_Data[i].dst_Y_w;
-				MT_Data[i].src_UV_w_32=MT_Data[i].src_UV_w;
-				MT_Data[i].dst_UV_w_32=MT_Data[i].dst_UV_w;
+				MT_Data[i].src_Y_w_32=MT_Data[i].src_Y_w*Coeff_size;
+				MT_Data[i].dst_Y_w_32=MT_Data[i].dst_Y_w*Coeff_size;
+				MT_Data[i].src_UV_w_32=MT_Data[i].src_UV_w*Coeff_size;
+				MT_Data[i].dst_UV_w_32=MT_Data[i].dst_UV_w*Coeff_size;
 				break;
 			case 1 :
-				MT_Data[i].src_Y_w_32=(MT_Data[i].src_Y_w+1)>>1;
-				MT_Data[i].dst_Y_w_32=(MT_Data[i].dst_Y_w+1)>>1;
-				MT_Data[i].src_UV_w_32=(MT_Data[i].src_UV_w+1)>>1;
-				MT_Data[i].dst_UV_w_32=(MT_Data[i].dst_UV_w+1)>>1;
+				MT_Data[i].src_Y_w_32=(MT_Data[i].src_Y_w*Coeff_size+1)>>1;
+				MT_Data[i].dst_Y_w_32=(MT_Data[i].dst_Y_w*Coeff_size+1)>>1;
+				MT_Data[i].src_UV_w_32=(MT_Data[i].src_UV_w*Coeff_size+1)>>1;
+				MT_Data[i].dst_UV_w_32=(MT_Data[i].dst_UV_w*Coeff_size+1)>>1;
 				break;
 			case 2 :
-				MT_Data[i].src_Y_w_32=(MT_Data[i].src_Y_w+3)>>2;
-				MT_Data[i].dst_Y_w_32=(MT_Data[i].dst_Y_w+3)>>2;
-				MT_Data[i].src_UV_w_32=(MT_Data[i].src_UV_w+3)>>2;
-				MT_Data[i].dst_UV_w_32=(MT_Data[i].dst_UV_w+3)>>2;
+				MT_Data[i].src_Y_w_32=(MT_Data[i].src_Y_w*Coeff_size+3)>>2;
+				MT_Data[i].dst_Y_w_32=(MT_Data[i].dst_Y_w*Coeff_size+3)>>2;
+				MT_Data[i].src_UV_w_32=(MT_Data[i].src_UV_w*Coeff_size+3)>>2;
+				MT_Data[i].dst_UV_w_32=(MT_Data[i].dst_UV_w*Coeff_size+3)>>2;
 				break;
 			default :
-				MT_Data[i].src_Y_w_32=MT_Data[i].src_Y_w;
-				MT_Data[i].dst_Y_w_32=MT_Data[i].dst_Y_w;
-				MT_Data[i].src_UV_w_32=MT_Data[i].src_UV_w;
-				MT_Data[i].dst_UV_w_32=MT_Data[i].dst_UV_w;
+				MT_Data[i].src_Y_w_32=MT_Data[i].src_Y_w*Coeff_size;
+				MT_Data[i].dst_Y_w_32=MT_Data[i].dst_Y_w*Coeff_size;
+				MT_Data[i].src_UV_w_32=MT_Data[i].src_UV_w*Coeff_size;
+				MT_Data[i].dst_UV_w_32=MT_Data[i].dst_UV_w*Coeff_size;
 				break;
 		}
 	}
@@ -947,125 +926,82 @@ uint32 JPSDR_Deinterlace::GetParams()
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 
-	if ((mData.mode==5) || (mData.mode==6))
+	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+
+	switch(pxsrc.format)
 	{
-		switch(pxsrc.format)
-		{
-			case nsVDXPixmap::kPixFormat_YUV444_Planar :
-			case nsVDXPixmap::kPixFormat_YUV422_Planar :
-			case nsVDXPixmap::kPixFormat_YUV420_Planar :
-			case nsVDXPixmap::kPixFormat_YUV411_Planar :
-			case nsVDXPixmap::kPixFormat_YUV410_Planar :
-			case nsVDXPixmap::kPixFormat_Y8 :
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar :
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar :
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar :
-			case nsVDXPixmap::kPixFormat_YUV444_Planar_709 :
-			case nsVDXPixmap::kPixFormat_YUV422_Planar_709 :
-			case nsVDXPixmap::kPixFormat_YUV420_Planar_709 :
-			case nsVDXPixmap::kPixFormat_YUV411_Planar_709 :
-			case nsVDXPixmap::kPixFormat_YUV410_Planar_709 :				
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar_709 :
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709 :
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar_709 :
-			case nsVDXPixmap::kPixFormat_YUV444_Planar_FR :
-			case nsVDXPixmap::kPixFormat_YUV422_Planar_FR :
-			case nsVDXPixmap::kPixFormat_YUV420_Planar_FR :
-			case nsVDXPixmap::kPixFormat_YUV411_Planar_FR :
-			case nsVDXPixmap::kPixFormat_YUV410_Planar_FR :
-			case nsVDXPixmap::kPixFormat_Y8_FR :
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar_FR :
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar_FR :
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar_FR :
-			case nsVDXPixmap::kPixFormat_YUV444_Planar_709_FR :
-			case nsVDXPixmap::kPixFormat_YUV422_Planar_709_FR :
-			case nsVDXPixmap::kPixFormat_YUV420_Planar_709_FR :
-			case nsVDXPixmap::kPixFormat_YUV411_Planar_709_FR :
-			case nsVDXPixmap::kPixFormat_YUV410_Planar_709_FR :
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar_709_FR :
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709_FR :
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar_709_FR :				
-				break;
-			default : return FILTERPARAM_NOT_SUPPORTED;
-		}
-	}
-	else
-	{
-		switch(pxsrc.format)
-		{
-/*			case nsVDXPixmap::kPixFormat_XRGB1555 :
-			case nsVDXPixmap::kPixFormat_RGB565 :
-			case nsVDXPixmap::kPixFormat_RGB888 :*/
-			case nsVDXPixmap::kPixFormat_XRGB8888 :
-			case nsVDXPixmap::kPixFormat_YUV422_YUYV :
-			case nsVDXPixmap::kPixFormat_YUV422_UYVY :
-			case nsVDXPixmap::kPixFormat_YUV444_Planar :
-			case nsVDXPixmap::kPixFormat_YUV422_Planar :
-			case nsVDXPixmap::kPixFormat_YUV420_Planar :
-			case nsVDXPixmap::kPixFormat_YUV411_Planar :
-			case nsVDXPixmap::kPixFormat_YUV410_Planar :
-			case nsVDXPixmap::kPixFormat_Y8 :
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar :
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar :
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar :
-			case nsVDXPixmap::kPixFormat_YUV422_YUYV_709 :
-			case nsVDXPixmap::kPixFormat_YUV422_UYVY_709 :
-			case nsVDXPixmap::kPixFormat_YUV444_Planar_709 :
-			case nsVDXPixmap::kPixFormat_YUV422_Planar_709 :
-			case nsVDXPixmap::kPixFormat_YUV420_Planar_709 :
-			case nsVDXPixmap::kPixFormat_YUV411_Planar_709 :
-			case nsVDXPixmap::kPixFormat_YUV410_Planar_709 :
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar_709 :
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709 :
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar_709 :
-			case nsVDXPixmap::kPixFormat_YUV422_YUYV_FR :
-			case nsVDXPixmap::kPixFormat_YUV422_UYVY_FR :
-			case nsVDXPixmap::kPixFormat_YUV444_Planar_FR :
-			case nsVDXPixmap::kPixFormat_YUV422_Planar_FR :
-			case nsVDXPixmap::kPixFormat_YUV420_Planar_FR :
-			case nsVDXPixmap::kPixFormat_YUV411_Planar_FR :
-			case nsVDXPixmap::kPixFormat_YUV410_Planar_FR :
-			case nsVDXPixmap::kPixFormat_Y8_FR :
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar_FR :
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar_FR :
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar_FR :
-			case nsVDXPixmap::kPixFormat_YUV422_YUYV_709_FR :
-			case nsVDXPixmap::kPixFormat_YUV422_UYVY_709_FR :
-			case nsVDXPixmap::kPixFormat_YUV444_Planar_709_FR :
-			case nsVDXPixmap::kPixFormat_YUV422_Planar_709_FR :
-			case nsVDXPixmap::kPixFormat_YUV420_Planar_709_FR :
-			case nsVDXPixmap::kPixFormat_YUV411_Planar_709_FR :
-			case nsVDXPixmap::kPixFormat_YUV410_Planar_709_FR :
-			case nsVDXPixmap::kPixFormat_YUV420i_Planar_709_FR :
-			case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709_FR :
-			case nsVDXPixmap::kPixFormat_YUV420it_Planar_709_FR :
-	/*		case nsVDXPixmap::kPixFormat_VDXA_RGB :
-			case nsVDXPixmap::kPixFormat_VDXA_YUV :
-			// VDub2
-			case nsVDXPixmap::kPixFormat_XRGB64 :
-			case nsVDXPixmap::kPixFormat_YUV444_Planar16 :
-			case nsVDXPixmap::kPixFormat_YUV422_Planar16 :
-			case nsVDXPixmap::kPixFormat_YUV420_Planar16 :
-			case nsVDXPixmap::kPixFormat_Y16 :
-			case nsVDXPixmap::kPixFormat_YUV444_Y416 :
-			case nsVDXPixmap::kPixFormat_YUV444_V410 :
-			case nsVDXPixmap::kPixFormat_YUV444_Y410 :
-			case nsVDXPixmap::kPixFormat_R210 :
-			case nsVDXPixmap::kPixFormat_R10K :
-			case nsVDXPixmap::kPixFormat_YUV422_P210 :
-			case nsVDXPixmap::kPixFormat_YUV420_P010 :
-			case nsVDXPixmap::kPixFormat_YUV422_P216 :
-			case nsVDXPixmap::kPixFormat_YUV420_P016 :
-			case nsVDXPixmap::kPixFormat_YUV444_Alpha_Planar :
-			case nsVDXPixmap::kPixFormat_YUV422_Alpha_Planar :
-			case nsVDXPixmap::kPixFormat_YUV420_Alpha_Planar :
-			case nsVDXPixmap::kPixFormat_YUV444_Alpha_Planar16 :
-			case nsVDXPixmap::kPixFormat_YUV422_Alpha_Planar16 :
-			case nsVDXPixmap::kPixFormat_YUV420_Alpha_Planar16 :
-			case nsVDXPixmap::kPixFormat_YUV422_YU64 :*/			
-				break;
-			default : return FILTERPARAM_NOT_SUPPORTED;
-		}
+/*		case nsVDXPixmap::kPixFormat_XRGB1555 :
+		case nsVDXPixmap::kPixFormat_RGB565 :
+		case nsVDXPixmap::kPixFormat_RGB888 :*/
+		case nsVDXPixmap::kPixFormat_XRGB8888 :
+		case nsVDXPixmap::kPixFormat_YUV422_YUYV :
+		case nsVDXPixmap::kPixFormat_YUV422_UYVY :
+		case nsVDXPixmap::kPixFormat_YUV444_Planar :
+		case nsVDXPixmap::kPixFormat_YUV422_Planar :
+		case nsVDXPixmap::kPixFormat_YUV420_Planar :
+		case nsVDXPixmap::kPixFormat_YUV411_Planar :
+		case nsVDXPixmap::kPixFormat_YUV410_Planar :
+		case nsVDXPixmap::kPixFormat_Y8 :
+		case nsVDXPixmap::kPixFormat_YUV420i_Planar :
+		case nsVDXPixmap::kPixFormat_YUV420ib_Planar :
+		case nsVDXPixmap::kPixFormat_YUV420it_Planar :
+		case nsVDXPixmap::kPixFormat_YUV422_YUYV_709 :
+		case nsVDXPixmap::kPixFormat_YUV422_UYVY_709 :
+		case nsVDXPixmap::kPixFormat_YUV444_Planar_709 :
+		case nsVDXPixmap::kPixFormat_YUV422_Planar_709 :
+		case nsVDXPixmap::kPixFormat_YUV420_Planar_709 :
+		case nsVDXPixmap::kPixFormat_YUV411_Planar_709 :
+		case nsVDXPixmap::kPixFormat_YUV410_Planar_709 :
+		case nsVDXPixmap::kPixFormat_YUV420i_Planar_709 :
+		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709 :
+		case nsVDXPixmap::kPixFormat_YUV420it_Planar_709 :
+		case nsVDXPixmap::kPixFormat_YUV422_YUYV_FR :
+		case nsVDXPixmap::kPixFormat_YUV422_UYVY_FR :
+		case nsVDXPixmap::kPixFormat_YUV444_Planar_FR :
+		case nsVDXPixmap::kPixFormat_YUV422_Planar_FR :
+		case nsVDXPixmap::kPixFormat_YUV420_Planar_FR :
+		case nsVDXPixmap::kPixFormat_YUV411_Planar_FR :
+		case nsVDXPixmap::kPixFormat_YUV410_Planar_FR :
+		case nsVDXPixmap::kPixFormat_Y8_FR :
+		case nsVDXPixmap::kPixFormat_YUV420i_Planar_FR :
+		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_FR :
+		case nsVDXPixmap::kPixFormat_YUV420it_Planar_FR :
+		case nsVDXPixmap::kPixFormat_YUV422_YUYV_709_FR :
+		case nsVDXPixmap::kPixFormat_YUV422_UYVY_709_FR :
+		case nsVDXPixmap::kPixFormat_YUV444_Planar_709_FR :
+		case nsVDXPixmap::kPixFormat_YUV422_Planar_709_FR :
+		case nsVDXPixmap::kPixFormat_YUV420_Planar_709_FR :
+		case nsVDXPixmap::kPixFormat_YUV411_Planar_709_FR :
+		case nsVDXPixmap::kPixFormat_YUV410_Planar_709_FR :
+		case nsVDXPixmap::kPixFormat_YUV420i_Planar_709_FR :
+		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709_FR :
+		case nsVDXPixmap::kPixFormat_YUV420it_Planar_709_FR :
+/*		case nsVDXPixmap::kPixFormat_VDXA_RGB :
+		case nsVDXPixmap::kPixFormat_VDXA_YUV :*/
+		// VDub2
+		case nsVDXPixmap::kPixFormat_XRGB64 :
+		case nsVDXPixmap::kPixFormat_YUV444_Planar16 :
+		case nsVDXPixmap::kPixFormat_YUV422_Planar16 :
+		case nsVDXPixmap::kPixFormat_YUV420_Planar16 :
+		case nsVDXPixmap::kPixFormat_Y16 :
+/*		case nsVDXPixmap::kPixFormat_YUV444_Y416 :
+		case nsVDXPixmap::kPixFormat_YUV444_V410 :
+		case nsVDXPixmap::kPixFormat_YUV444_Y410 :
+		case nsVDXPixmap::kPixFormat_R210 :
+		case nsVDXPixmap::kPixFormat_R10K :
+		case nsVDXPixmap::kPixFormat_YUV422_P210 :
+		case nsVDXPixmap::kPixFormat_YUV420_P010 :
+		case nsVDXPixmap::kPixFormat_YUV422_P216 :
+		case nsVDXPixmap::kPixFormat_YUV420_P016 :
+		case nsVDXPixmap::kPixFormat_YUV444_Alpha_Planar :
+		case nsVDXPixmap::kPixFormat_YUV422_Alpha_Planar :
+		case nsVDXPixmap::kPixFormat_YUV420_Alpha_Planar :
+		case nsVDXPixmap::kPixFormat_YUV444_Alpha_Planar16 :
+		case nsVDXPixmap::kPixFormat_YUV422_Alpha_Planar16 :
+		case nsVDXPixmap::kPixFormat_YUV420_Alpha_Planar16 :*/
+		case nsVDXPixmap::kPixFormat_YUV422_YU64 :
+			break;
+		default : return FILTERPARAM_NOT_SUPPORTED;
 	}
 
 	image_data.src_full_mode=CheckFullRangeMode(&fa->src);
@@ -1115,20 +1051,32 @@ uint32 JPSDR_Deinterlace::GetParams()
 			{
 				case 1 :
 				case 2 :
-					if (g_VFVAPIVersion<14) return(FILTERPARAM_SUPPORTS_ALTFORMATS | FILTERPARAM_SWAP_BUFFERS|FILTERPARAM_ALIGN_SCANLINES);
-					else return(FILTERPARAM_SUPPORTS_ALTFORMATS | FILTERPARAM_SWAP_BUFFERS | FILTERPARAM_PURE_TRANSFORM|FILTERPARAM_ALIGN_SCANLINES);
-					break;
-				case 5 :
-				case 6 :
-					return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_ALIGN_SCANLINES);
+					if (VDub2_Enable)
+						return(FILTERPARAM_SUPPORTS_ALTFORMATS | FILTERPARAM_SWAP_BUFFERS | FILTERPARAM_PURE_TRANSFORM|FILTERPARAM_ALIGN_SCANLINES_32);
+					else
+					{
+						if (g_VFVAPIVersion<14) return(FILTERPARAM_SUPPORTS_ALTFORMATS | FILTERPARAM_SWAP_BUFFERS|FILTERPARAM_ALIGN_SCANLINES);
+						else return(FILTERPARAM_SUPPORTS_ALTFORMATS | FILTERPARAM_SWAP_BUFFERS | FILTERPARAM_PURE_TRANSFORM|FILTERPARAM_ALIGN_SCANLINES);
+					}
 					break;
 				default :
-					if (g_VFVAPIVersion<14) return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_ALIGN_SCANLINES);
-					else return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_PURE_TRANSFORM|FILTERPARAM_ALIGN_SCANLINES);
+					if (VDub2_Enable)
+						return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_PURE_TRANSFORM|FILTERPARAM_ALIGN_SCANLINES_32);
+					else
+					{
+						if (g_VFVAPIVersion<14) return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_ALIGN_SCANLINES);
+						else return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_PURE_TRANSFORM|FILTERPARAM_ALIGN_SCANLINES);
+					}
 					break;
 			}
 		}
-		else return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_ALIGN_SCANLINES);
+		else
+		{
+			if (VDub2_Enable)
+				return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_ALIGN_SCANLINES_32);
+			else
+				return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_ALIGN_SCANLINES);
+		}
 	}
 	else
 	{
@@ -1137,34 +1085,33 @@ uint32 JPSDR_Deinterlace::GetParams()
 			switch(mData.mode)
 			{
 				case 2 :
-					if (g_VFVAPIVersion<14) return(FILTERPARAM_SUPPORTS_ALTFORMATS | FILTERPARAM_SWAP_BUFFERS|FILTERPARAM_ALIGN_SCANLINES);
-					else return(FILTERPARAM_SUPPORTS_ALTFORMATS | FILTERPARAM_SWAP_BUFFERS | FILTERPARAM_PURE_TRANSFORM|FILTERPARAM_ALIGN_SCANLINES);
-					break;
-				case 5 :
-				case 6 :
-					return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_ALIGN_SCANLINES);
+					if (VDub2_Enable)
+						return(FILTERPARAM_SUPPORTS_ALTFORMATS | FILTERPARAM_SWAP_BUFFERS | FILTERPARAM_PURE_TRANSFORM|FILTERPARAM_ALIGN_SCANLINES_32);
+					else
+					{
+						if (g_VFVAPIVersion<14) return(FILTERPARAM_SUPPORTS_ALTFORMATS | FILTERPARAM_SWAP_BUFFERS|FILTERPARAM_ALIGN_SCANLINES);
+						else return(FILTERPARAM_SUPPORTS_ALTFORMATS | FILTERPARAM_SWAP_BUFFERS | FILTERPARAM_PURE_TRANSFORM|FILTERPARAM_ALIGN_SCANLINES);
+					}
 					break;
 				default :
-					if (g_VFVAPIVersion<14) return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_ALIGN_SCANLINES);
-					else return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_PURE_TRANSFORM|FILTERPARAM_ALIGN_SCANLINES);
+					if (VDub2_Enable)
+						return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_PURE_TRANSFORM|FILTERPARAM_ALIGN_SCANLINES_32);
+					else
+					{
+						if (g_VFVAPIVersion<14) return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_ALIGN_SCANLINES);
+						else return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_PURE_TRANSFORM|FILTERPARAM_ALIGN_SCANLINES);
+					}
 					break;
 			}
 		}
-		else return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_ALIGN_SCANLINES);
+		else
+		{
+			if (VDub2_Enable)
+				return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_ALIGN_SCANLINES_32);
+			else
+				return(FILTERPARAM_SUPPORTS_ALTFORMATS|FILTERPARAM_ALIGN_SCANLINES);
+		}
 	}
-}
-
-
-bool JPSDR_Deinterlace::Prefetch2(sint64 frame, IVDXVideoPrefetcher *prefetcher)
-{
-	if ((!mData.file_mode) && ((mData.mode==5) || (mData.mode==6)))
-	{
-		prefetcher->PrefetchFrame(0,frame,0);
-		prefetcher->PrefetchFrame(0,frame+1,0);
-	}
-	else prefetcher->PrefetchFrame(0,frame,0);
-
-	return(true);
 }
 
 
@@ -1324,40 +1271,40 @@ void JPSDR_Deinterlace::Start()
 		return;
 	}
 
-	if ((!mData.file_mode) && mData.mt_mode && (mData.mode<5) &&
+	if ((!mData.file_mode) && mData.mt_mode &&
 		((image_data.src_h0>=32) && (image_data.dst_h0>=32))) threads_number=total_cpu;
 	else threads_number=1;
 
 	switch (image_data.src_video_mode)
 	{
 		case VMODE_BMP_RGBA :
-			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,0,0,0);
+			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,0,0,0,image_data.src_bits_pixel);
 			break;
 		case VMODE_PLANAR_YUV444 :
 		case VMODE_Y :
-			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,0,0,2);
+			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,0,0,2,image_data.src_bits_pixel);
 			break;
 		case VMODE_YUYV :
 		case VMODE_UYVY :
-			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,1,0,1);
+			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,1,0,1,image_data.src_bits_pixel);
 			break;
 		case VMODE_PLANAR_YUV422 :
-			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,1,0,2);
+			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,1,0,2,image_data.src_bits_pixel);
 			break;
 		case VMODE_PLANAR_YUV420 :
-			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,1,1,2);
+			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,1,1,2,image_data.src_bits_pixel);
 			break;
 		case VMODE_PLANAR_YUV411 :
-			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,2,0,2);
+			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,2,0,2,image_data.src_bits_pixel);
 			break;
 		case VMODE_PLANAR_YUV410 :
-			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,2,2,2);
+			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,2,2,2,image_data.src_bits_pixel);
 			break;
 		default :
-			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,0,0,0);
+			threads_number=CreateMTData(threads_number,image_data.src_w0,image_data.src_h0,0,0,0,image_data.src_bits_pixel);
 			break;
 	}
-
+	
 	buff_ok=true;
 	for (i=0; i<2; i++)
 	{
@@ -1419,138 +1366,6 @@ void JPSDR_Deinterlace::Start()
 		}
 	}
 
-	if ((mData.mode==5) || (mData.mode==6))
-	{
-		switch(image_data.video_mode)
-		{
-			case VMODE_BMP_RGBA :
-				Yadif_pitch[0]=image_data.src_pitch0_al;
-				Yadif_pitch[0]+=(ALIGN_SIZE << 1);
-				Yadif_modulo[0]=Yadif_pitch[0]-image_data.src_line0;
-				for (i=0; i<3; i++)
-				{
-					tab_Yadif[i].data[0]=(void *)_aligned_malloc(image_data.src_h0*Yadif_pitch[0],ALIGN_SIZE);
-					tab_Yadif[i].absdiff[0]=(void *)_aligned_malloc((image_data.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
-				}
-				avg1[0]=(void *)_aligned_malloc((image_data.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
-				avg2[0]=(void *)_aligned_malloc((image_data.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
-				avg3[0]=(void *)_aligned_malloc((image_data.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
-				abs1[0]=(void *)_aligned_malloc((image_data.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
-				spatial_Yadif_buffer=(void *)_aligned_malloc((image_data.src_h0>>1)*(Yadif_pitch[0]*10),ALIGN_SIZE);
-				break;
-			case VMODE_YUYV :
-			case VMODE_UYVY :
-				Yadif_pitch[0]=image_data.src_pitch0_al;
-				Yadif_pitch[0]+=(ALIGN_SIZE << 1);
-				Yadif_modulo[0]=Yadif_pitch[0]-image_data.src_line0;
-				for (i=0; i<3; i++)
-				{
-					tab_Yadif[i].data[0]=(void *)_aligned_malloc(image_data.src_h0*Yadif_pitch[0],ALIGN_SIZE);
-					tab_Yadif[i].absdiff[0]=(void *)_aligned_malloc((image_data.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
-				}
-				avg1[0]=(void *)_aligned_malloc((image_data.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
-				avg2[0]=(void *)_aligned_malloc((image_data.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
-				avg3[0]=(void *)_aligned_malloc((image_data.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
-				abs1[0]=(void *)_aligned_malloc((image_data.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
-				spatial_Yadif_buffer=(void *)_aligned_malloc((image_data.src_h0>>1)*(Yadif_pitch[0]*10),ALIGN_SIZE);
-				break;
-			case VMODE_PLANAR_YUV444 :
-			case VMODE_PLANAR_YUV422 :
-			case VMODE_PLANAR_YUV420 :
-			case VMODE_PLANAR_YUV411 :
-			case VMODE_PLANAR_YUV410 :
-				Yadif_pitch[0]=image_data.src_pitch0_al;
-				Yadif_pitch[1]=image_data.src_pitch1_al;
-				Yadif_pitch[2]=image_data.src_pitch2_al;;
-				Yadif_pitch[0]+=(ALIGN_SIZE << 1);
-				Yadif_pitch[1]+=(ALIGN_SIZE << 1);
-				Yadif_pitch[2]+=(ALIGN_SIZE << 1);
-				Yadif_modulo[0]=Yadif_pitch[0]-image_data.src_line0;
-				Yadif_modulo[1]=Yadif_pitch[1]-image_data.src_line1;
-				Yadif_modulo[2]=Yadif_pitch[2]-image_data.src_line2;
-				for (i=0; i<3; i++)
-				{
-					tab_Yadif[i].data[0]=(void *)_aligned_malloc(image_data.src_h0*Yadif_pitch[0],ALIGN_SIZE);
-					tab_Yadif[i].absdiff[0]=(void *)_aligned_malloc((image_data.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
-					tab_Yadif[i].data[1]=(void *)_aligned_malloc(image_data.src_h1*Yadif_pitch[1],ALIGN_SIZE);
-					tab_Yadif[i].absdiff[1]=(void *)_aligned_malloc((image_data.src_h1>>1)*Yadif_pitch[1],ALIGN_SIZE);
-					tab_Yadif[i].data[2]=(void *)_aligned_malloc(image_data.src_h2*Yadif_pitch[2],ALIGN_SIZE);
-					tab_Yadif[i].absdiff[2]=(void *)_aligned_malloc((image_data.src_h2>>1)*Yadif_pitch[2],ALIGN_SIZE);
-				}
-				avg1[0]=(void *)_aligned_malloc((image_data.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
-				avg2[0]=(void *)_aligned_malloc((image_data.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
-				avg3[0]=(void *)_aligned_malloc((image_data.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
-				abs1[0]=(void *)_aligned_malloc((image_data.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
-				avg1[1]=(void *)_aligned_malloc((image_data.src_h1>>1)*Yadif_pitch[1],ALIGN_SIZE);
-				avg2[1]=(void *)_aligned_malloc((image_data.src_h1>>1)*Yadif_pitch[1],ALIGN_SIZE);
-				avg3[1]=(void *)_aligned_malloc((image_data.src_h1>>1)*Yadif_pitch[1],ALIGN_SIZE);
-				abs1[1]=(void *)_aligned_malloc((image_data.src_h1>>1)*Yadif_pitch[1],ALIGN_SIZE);
-				avg1[2]=(void *)_aligned_malloc((image_data.src_h2>>1)*Yadif_pitch[2],ALIGN_SIZE);
-				avg2[2]=(void *)_aligned_malloc((image_data.src_h2>>1)*Yadif_pitch[2],ALIGN_SIZE);
-				avg3[2]=(void *)_aligned_malloc((image_data.src_h2>>1)*Yadif_pitch[2],ALIGN_SIZE);
-				abs1[2]=(void *)_aligned_malloc((image_data.src_h2>>1)*Yadif_pitch[2],ALIGN_SIZE);
-				spatial_Yadif_buffer=(void *)_aligned_malloc((image_data.src_h0>>1)*(Yadif_pitch[0]*10),ALIGN_SIZE);
-				break;
-			case VMODE_Y :
-				Yadif_pitch[0]=image_data.src_pitch0_al;
-				Yadif_pitch[0]+=(ALIGN_SIZE << 1);
-				Yadif_modulo[0]=Yadif_pitch[0]-image_data.src_line0;
-				for (i=0; i<3; i++)
-				{
-					tab_Yadif[i].data[0]=(void *)_aligned_malloc(image_data.src_h0*Yadif_pitch[0],ALIGN_SIZE);
-					tab_Yadif[i].absdiff[0]=(void *)_aligned_malloc((image_data.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
-				}
-				avg1[0]=(void *)_aligned_malloc((image_data.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
-				avg2[0]=(void *)_aligned_malloc((image_data.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
-				avg3[0]=(void *)_aligned_malloc((image_data.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
-				abs1[0]=(void *)_aligned_malloc((image_data.src_h0>>1)*Yadif_pitch[0],ALIGN_SIZE);
-				spatial_Yadif_buffer=(void *)_aligned_malloc((image_data.src_h0>>1)*(Yadif_pitch[0]*10),ALIGN_SIZE);
-				break;
-		}
-
-		buff_ok=true;
-		for (i=0; i<3; i++)
-		{
-			for (j=0; j<3; j++)
-			{
-				if (Yadif_pitch[j]!=0)
-				{
-					buff_ok=buff_ok && (tab_Yadif[i].data[j]!=NULL);
-					buff_ok=buff_ok && (tab_Yadif[i].absdiff[j]!=NULL);
-				}
-			}
-		}
-		for (i=0; i<3; i++)
-		{
-			if (Yadif_pitch[i]!=0)
-			{
-				buff_ok=buff_ok && (avg1[i]!=NULL);
-				buff_ok=buff_ok && (avg2[i]!=NULL);
-				buff_ok=buff_ok && (avg3[i]!=NULL);
-				buff_ok=buff_ok && (abs1[i]!=NULL);
-			}
-		}
-		buff_ok=buff_ok && (spatial_Yadif_buffer!=NULL);
-
-		if (!buff_ok)
-		{
-			ff->ExceptOutOfMemory();
-			return;
-		}
-		for (i=0; i<3; i++)
-		{
-			for (j=0; j<3; j++)
-			{
-				if (Yadif_pitch[j]!=0)
-				{
-					tab_Yadif[i].data[j]=(void *)((size_t)tab_Yadif[i].data[j]+ALIGN_SIZE);
-					tab_Yadif[i].absdiff[j]=(void *)((size_t)tab_Yadif[i].absdiff[j]+ALIGN_SIZE);
-				}
-			}
-		}
-
-	}
-
 	if (threads_number>1)
 	{
 		if (!threadpoolAllocated)
@@ -1559,11 +1374,6 @@ void JPSDR_Deinterlace::Start()
 			return;
 		}
 	}
-
-	write_index_Yadif=0;
-	current_frame_Yadif=1;
-	previous_frame_Yadif=0;
-	next_frame_Yadif=2;
 }
 	
 
@@ -1571,25 +1381,6 @@ void JPSDR_Deinterlace::End()
 {
 	int16_t i,j;
 
-	my_aligned_free(spatial_Yadif_buffer);
-	for (i=2; i>=0; i--)
-	{
-		my_aligned_free(abs1[i]);
-		my_aligned_free(avg3[i]);
-		my_aligned_free(avg2[i]);
-		my_aligned_free(avg1[i]);
-	}
-
-	for (i=2; i>=0; i--)
-	{
-		Yadif_pitch[i]=0;
-		Yadif_modulo[i]=0;
-		for (j=2; j>=0; j--)
-		{
-			my_aligned_free(tab_Yadif[i].absdiff[j]);
-			my_aligned_free(tab_Yadif[i].data[j]);
-		}
-	}
 	my_aligned_free(buffer2);
 	my_aligned_free(buffer1);
 	my_aligned_free(buffer0);
@@ -1603,636 +1394,7 @@ void JPSDR_Deinterlace::End()
 }
 
 
-
-#define fastmin(a, b) ((a) + (((b) - (a)) & (((b) - (a)) >> 31)))
-#define fastmax(a, b) ((b) - (((b) - (a)) & (((b) - (a)) >> 31)))
-#define fastminmax(a, b, mn, mx) ((t = (b) - (a)), (t &= t >> 31), ((mn) = (a) + t), ((mx) = (b) - t))
-
-
-void JPSDR_Deinterlace::YadifTemporalPlanarKeepBottom(const void *src, void *_avg1, void *_avg2, void *_avg3,void *_abs1, void *_dst,
-	ptrdiff_t src_pitch, ptrdiff_t src_modulo, ptrdiff_t buffer_pitch, ptrdiff_t buffer_modulo,ptrdiff_t dst_pitch,
-	ptrdiff_t dst_modulo, const int32_t w, const int32_t _h)
-{
-	const uint8_t *srcT,*srcB;
-	uint8_t *avgT,*avgC,*avgB;
-	uint8_t *avg2,*avg3,*abs1;
-	uint8_t *dst;
-	const int32_t h=_h-2;
-
-	srcT=(uint8_t *)src;
-	srcB=srcT+(src_pitch<<1);
-	avgT=(uint8_t *)_avg1;
-	avgC=avgT+buffer_pitch;
-	avgB=avgC+buffer_pitch;
-	avg2=(uint8_t *)_avg2+buffer_pitch;
-	avg3=(uint8_t *)_avg3+buffer_pitch;
-	abs1=(uint8_t *)_abs1+buffer_pitch;
-	dst=(uint8_t *)_dst+(dst_pitch<<1);
-
-	for (int32_t i=0; i<h; i++)
-	{
-		for (int32_t j=0; j<w; j++)
-		{
-			int32_t p0,p1,p2,p3,p4;
-			int32_t tdiff,tdiff0,tdiff1,tdiff2;
-			int32_t d12,d10,d32,d34,min_32_12,max_32_12,max_10_34,min_10_34,lo,hi,t;
-			int32_t min,max,spatial_pred;
-
-			p0=*avgT++;
-			p1=*srcT++;
-			p2=*avgC++;
-			p3=*srcB++;
-			p4=*avgB++;
-			tdiff0=*abs1++;
-			tdiff1=*avg2++;
-			tdiff2=*avg3++;
-			d12=p2-p1;
-			d10=p0-p1;
-			d32=p2-p3;
-			d34=p4-p3;
-
-			tdiff=fastmax(tdiff0,fastmax(tdiff1,tdiff2));
-			fastminmax(d32, d12, min_32_12, max_32_12);
-			fastminmax(d10, d34, min_10_34, max_10_34);
-			max=fastmax(max_32_12, min_10_34);
-			min=fastmin(min_32_12, max_10_34);
-			tdiff=fastmax(fastmax(tdiff, min),-max);
-
-			lo=p2-tdiff;
-			hi=p2+tdiff;
-			spatial_pred=*dst;
-			spatial_pred=fastmin(hi,spatial_pred);
-			spatial_pred=fastmax(lo,spatial_pred);
-
-			*dst++=(uint8_t)spatial_pred;
-		}
-		srcT+=(src_pitch+src_modulo);
-		srcB+=(src_pitch+src_modulo);
-		dst+=(dst_pitch+dst_modulo);
-		avgT+=buffer_modulo;
-		avgC+=buffer_modulo;
-		avgB+=buffer_modulo;
-		avg2+=buffer_modulo;
-		avg3+=buffer_modulo;
-		abs1+=buffer_modulo;
-	}
-}
-
-
-
-void JPSDR_Deinterlace::YadifTemporalPlanarKeepTop(const void *src, void *_avg1, void *_avg2, void *_avg3,void *_abs1, void *_dst,
-	ptrdiff_t src_pitch, ptrdiff_t src_modulo, ptrdiff_t buffer_pitch, ptrdiff_t buffer_modulo,ptrdiff_t dst_pitch,
-	ptrdiff_t dst_modulo, const int32_t w, const int32_t _h)
-{
-	const uint8_t *srcT,*srcB;
-	uint8_t *avgT,*avgC,*avgB;
-	uint8_t *avg2,*avg3,*abs1;
-	uint8_t *dst;
-	const int32_t h=_h-2;
-
-	srcT=(uint8_t *)src+(src_pitch<<1);
-	srcB=srcT+(src_pitch<<1);
-	avgT=(uint8_t *)_avg1;
-	avgC=avgT+buffer_pitch;
-	avgB=avgC+buffer_pitch;
-	avg2=(uint8_t *)_avg2+buffer_pitch;
-	avg3=(uint8_t *)_avg3+buffer_pitch;
-	abs1=(uint8_t *)_abs1+buffer_pitch;
-	dst=(uint8_t *)_dst+(dst_pitch<<1);
-
-	for (int32_t i=0; i<h; i++)
-	{
-		for (int32_t j=0; j<w; j++)
-		{
-			int32_t p0,p1,p2,p3,p4;
-			int32_t tdiff,tdiff0,tdiff1,tdiff2;
-			int32_t d12,d10,d32,d34,max_32_12,max_10_34,min_10_34,min_32_12,lo,hi,t;
-			int32_t min,max,spatial_pred;
-
-			p0=*avgT++;
-			p1=*srcT++;
-			p2=*avgC++;
-			p3=*srcB++;
-			p4=*avgB++;
-			tdiff0=*abs1++;
-			tdiff1=*avg2++;
-			tdiff2=*avg3++;
-			d12=p2-p1;
-			d10=p0-p1;
-			d32=p2-p3;
-			d34=p4-p3;
-
-			tdiff=fastmax(tdiff0,fastmax(tdiff1,tdiff2));
-			fastminmax(d32, d12, min_32_12, max_32_12);
-			fastminmax(d10, d34, min_10_34, max_10_34);
-			max=fastmax(max_32_12, min_10_34);
-			min=fastmin(min_32_12, max_10_34);
-			tdiff=fastmax(fastmax(tdiff, min),-max);
-
-			lo=p2-tdiff;
-			hi=p2+tdiff;
-			spatial_pred=*dst;
-			spatial_pred=fastmin(hi,spatial_pred);
-			spatial_pred=fastmax(lo,spatial_pred);
-
-			*dst++=(uint8_t)spatial_pred;
-		}
-		srcT+=(src_pitch+src_modulo);
-		srcB+=(src_pitch+src_modulo);
-		dst+=(dst_pitch+dst_modulo);
-		avgT+=buffer_modulo;
-		avgC+=buffer_modulo;
-		avgB+=buffer_modulo;
-		avg2+=buffer_modulo;
-		avg3+=buffer_modulo;
-		abs1+=buffer_modulo;
-	}
-}
-
-#undef fastminmax
-#undef fastmax
-#undef fastmin
-
-
-
-
-void JPSDR_Deinterlace::YadifSpatiafBufferPlanarKeepTop(const void *src, void *_dst, ptrdiff_t src_pitch,
-	ptrdiff_t src_modulo, ptrdiff_t dst_pitch, ptrdiff_t dst_modulo, const int32_t w, const int32_t h)
-{
-	const int32_t h_1=h-1,w_2=w+2;
-	const uint8_t *src1,*src2;
-	uint8_t *dst;
-
-	src1=(uint8_t *)src;
-	src2=src1+(src_pitch<<1);
-	dst=(uint8_t *)_dst;
-
-	for (int32_t i=0; i<h_1; i++)
-	{
-		uint32_t offset;
-
-		offset=0;
-		for (int32_t j=-2; j<w_2; j++)
-		{
-			dst[offset]=(uint8_t)(((uint16_t)src1[j]+(uint16_t)src2[j]+1)>>1);
-			dst[offset+1]=(uint8_t)abs((int16_t)src1[j]-(int16_t)src2[j]);
-			dst[offset+2]=(uint8_t)(((uint16_t)src1[j-1]+(uint16_t)src2[j+1]+1)>>1);
-			dst[offset+3]=(uint8_t)abs((int16_t)src1[j-1]-(int16_t)src2[j+1]);
-			dst[offset+4]=(uint8_t)(((uint16_t)src1[j-2]+(uint16_t)src2[j+2]+1)>>1);
-			dst[offset+5]=(uint8_t)abs((int16_t)src1[j-2]-(int16_t)src2[j+2]);
-			dst[offset+6]=(uint8_t)(((uint16_t)src1[j+1]+(uint16_t)src2[j-1]+1)>>1);
-			dst[offset+7]=(uint8_t)abs((int16_t)src1[j+1]-(int16_t)src2[j-1]);
-			dst[offset+8]=(uint8_t)(((uint16_t)src1[j+2]+(uint16_t)src2[j-2]+1)>>1);
-			dst[offset+9]=(uint8_t)abs((int16_t)src1[j+2]-(int16_t)src2[j-2]);
-			offset+=10;
-		}
-		src1+=(src_pitch<<1);
-		src2+=(src_pitch<<1);
-		dst+=dst_pitch;
-	}
-}
-
-
-void JPSDR_Deinterlace::YadifSpatiafBufferPlanarKeepBottom(const void *src, void *_dst, ptrdiff_t src_pitch,
-	ptrdiff_t src_modulo, ptrdiff_t dst_pitch, ptrdiff_t dst_modulo, const int32_t w, const int32_t h)
-{
-	const int32_t h_1=h-1,w_2=w+2;
-	const uint8_t *src1,*src2;
-	uint8_t *dst;
-
-	src1=(uint8_t *)src+src_pitch;
-	src2=src1+(src_pitch<<1);
-	dst=(uint8_t *)_dst;
-
-	for (int32_t i=0; i<h_1; i++)
-	{
-		uint32_t offset;
-
-		offset=0;
-		for (int32_t j=-2; j<w_2; j++)
-		{
-			dst[offset]=(uint8_t)(((uint16_t)src1[j]+(uint16_t)src2[j]+1)>>1);
-			dst[offset+1]=(uint8_t)abs((int16_t)src1[j]-(int16_t)src2[j]);
-			dst[offset+2]=(uint8_t)(((uint16_t)src1[j-1]+(uint16_t)src2[j+1]+1)>>1);
-			dst[offset+3]=(uint8_t)abs((int16_t)src1[j-1]-(int16_t)src2[j+1]);
-			dst[offset+4]=(uint8_t)(((uint16_t)src1[j-2]+(uint16_t)src2[j+2]+1)>>1);
-			dst[offset+5]=(uint8_t)abs((int16_t)src1[j-2]-(int16_t)src2[j+2]);
-			dst[offset+6]=(uint8_t)(((uint16_t)src1[j+1]+(uint16_t)src2[j-1]+1)>>1);
-			dst[offset+7]=(uint8_t)abs((int16_t)src1[j+1]-(int16_t)src2[j-1]);
-			dst[offset+8]=(uint8_t)(((uint16_t)src1[j+2]+(uint16_t)src2[j-2]+1)>>1);
-			dst[offset+9]=(uint8_t)abs((int16_t)src1[j+2]-(int16_t)src2[j-2]);
-			offset+=10;
-		}
-		src1+=(src_pitch<<1);
-		src2+=(src_pitch<<1);
-		dst+=dst_pitch;
-	}
-}
-
-
-
-void JPSDR_Deinterlace::YadifSpatialPlanarKeepTop(void *_buffer, void *_dst, ptrdiff_t buffer_pitch,
-	ptrdiff_t buffer_modulo, ptrdiff_t dst_pitch, ptrdiff_t dst_modulo, const int32_t w, const int32_t h)
-{
-	const int32_t h_1=h-1;
-	uint8_t *buffer,*dst;
-	uint32_t offset;
-
-	dst=(uint8_t *)_dst;
-	buffer=(uint8_t *)_buffer;
-
-	for (int32_t i=0; i<h_1; i++)
-	{
-		offset=20;
-		for (int32_t j=0; j<w; j++)
-		{
-			uint16_t spatial_pred, spatial_score,score;
-
-			spatial_pred=buffer[offset];
-			spatial_score=buffer[offset+1-10]+buffer[offset+1]+buffer[offset+1+10];
-			score=buffer[offset+3-10]+buffer[offset+3]+buffer[offset+3+10];
-			if (score<spatial_score)
-			{
-				spatial_pred=buffer[offset+2];
-				spatial_score=score;
-				score=buffer[offset+5-10]+buffer[offset+5]+buffer[offset+5+10];
-				if (score<spatial_score)
-				{
-					spatial_pred=buffer[offset+4];
-					spatial_score=score;
-				}
-			}
-			score=buffer[offset+7-10]+buffer[offset+7]+buffer[offset+7+10];
-			if (score<spatial_score)
-			{
-				spatial_pred=buffer[offset+6];
-				spatial_score=score;
-				score=buffer[offset+9-10]+buffer[offset+9]+buffer[offset+9+10];
-				if (score<spatial_score) spatial_pred=buffer[offset+8];
-			}
-			dst[j]=(uint8_t)spatial_pred;
-			offset+=10;
-		}
-		dst+=(dst_pitch<<1);
-		buffer+=buffer_pitch;
-	}
-
-	buffer-=buffer_pitch;
-	offset=20;
-	for (int32_t j=0; j<w; j++)
-	{
-		dst[j]=(uint8_t)(((uint16_t)dst[j]+(uint16_t)buffer[offset]+1)>>1);
-		offset+=10;
-	}
-}
-
-
-void JPSDR_Deinterlace::YadifSpatialPlanarKeepBottom(void *_buffer, void *_dst, ptrdiff_t buffer_pitch,
-	ptrdiff_t buffer_modulo, ptrdiff_t dst_pitch, ptrdiff_t dst_modulo, const int32_t w, const int32_t h)
-{
-	const int32_t h_1=h-1;
-	uint8_t *buffer,*dst;
-	uint32_t offset;
-
-	dst=(uint8_t *)_dst;
-	buffer=(uint8_t *)_buffer;
-
-	offset=20;
-	for (int32_t j=0; j<w; j++)
-	{
-		dst[j]=(uint8_t)(((uint16_t)dst[j]+(uint16_t)buffer[offset]+1)>>1);
-		offset+=10;
-	}
-	dst+=(dst_pitch<<1);
-
-	for (int32_t i=0; i<h_1; i++)
-	{
-		offset=20;
-		for (int32_t j=0; j<w; j++)
-		{
-			uint16_t spatial_pred, spatial_score,score;
-
-			spatial_pred=buffer[offset];
-			spatial_score=buffer[offset+1-10]+buffer[offset+1]+buffer[offset+1+10];
-			score=buffer[offset+3-10]+buffer[offset+3]+buffer[offset+3+10];
-			if (score<spatial_score)
-			{
-				spatial_pred=buffer[offset+2];
-				spatial_score=score;
-				score=buffer[offset+5-10]+buffer[offset+5]+buffer[offset+5+10];
-				if (score<spatial_score)
-				{
-					spatial_pred=buffer[offset+4];
-					spatial_score=score;
-				}
-			}
-			score=buffer[offset+7-10]+buffer[offset+7]+buffer[offset+7+10];
-			if (score<spatial_score)
-			{
-				spatial_pred=buffer[offset+6];
-				spatial_score=score;
-				score=buffer[offset+9-10]+buffer[offset+9]+buffer[offset+9+10];
-				if (score<spatial_score) spatial_pred=buffer[offset+8];
-			}
-			dst[j]=(uint8_t)spatial_pred;
-			offset+=10;
-		}
-		dst+=(dst_pitch<<1);
-		buffer+=buffer_pitch;
-	}
-}
-
-
-
-void JPSDR_Deinterlace::YadifAbsDiffAvg(const void *src_a, const void *src_b, void *_dst_abs, void *_dst_avg,
-	ptrdiff_t src_pitch, ptrdiff_t src_modulo, ptrdiff_t dst_pitch, ptrdiff_t dst_modulo, const int32_t w, const int32_t h)
-{
-	const uint8_t *src1,*src2;
-	uint8_t *dst_avg,*dst_abs;
-
-
-	if (AVX_Enable)
-	{
-		JPSDR_Deinterlace_YadifAbsDiffAvg_AVX(src_a,src_b,_dst_abs,_dst_avg,src_pitch<<1,dst_pitch,(w+15)>>4,h);
-		return;
-	}
-
-	if (SSE2_Enable)
-	{
-		JPSDR_Deinterlace_YadifAbsDiffAvg_SSE(src_a,src_b,_dst_abs,_dst_avg,src_pitch<<1,dst_pitch,(w+15)>>4,h);
-		return;
-	}
-
-	src1=(uint8_t *)src_a;
-	src2=(uint8_t *)src_b;
-	dst_avg=(uint8_t *)_dst_avg;
-	dst_abs=(uint8_t *)_dst_abs;
-
-	for (int32_t i=0; i<h; i++)
-	{
-		for (int32_t j=0; j<w; j++)
-		{
-			int16_t d1,d2;
-
-			d1=(int16_t)src1[j];
-			d2=(int16_t)src2[j];
-			dst_avg[j]=(uint8_t)((d1+d2+1)>>1);
-			dst_abs[j]=(uint8_t)abs(d1-d2);
-		}
-		dst_avg+=dst_pitch;
-		dst_abs+=dst_pitch;
-		src1+=(src_pitch<<1);
-		src2+=(src_pitch<<1);
-	}
-}
-
-
-
-void JPSDR_Deinterlace::YadifAbsDiff(const void *src_a, const void *src_b, void *_dst, ptrdiff_t src_pitch, ptrdiff_t src_modulo,
-	ptrdiff_t dst_pitch, ptrdiff_t dst_modulo, const int32_t w, const int32_t h)
-{
-	const uint8_t *src1,*src2;
-	uint8_t *dst;
-
-	if (AVX_Enable)
-	{
-		JPSDR_Deinterlace_YadifAbsDiff_AVX(src_a,src_b,_dst,src_pitch<<1,dst_pitch,(w+15)>>4,h);
-		return;
-	}
-
-	if (SSE2_Enable)
-	{
-		JPSDR_Deinterlace_YadifAbsDiff_SSE(src_a,src_b,_dst,src_pitch<<1,dst_pitch,(w+15)>>4,h);
-		return;
-	}
-
-	src1=(uint8_t *)src_a;
-	src2=(uint8_t *)src_b;
-	dst=(uint8_t *)_dst;
-
-	for (int32_t i=0; i<h; i++)
-	{
-		for (int32_t j=0; j<w; j++)
-		{
-			dst[j]=(uint8_t)abs((int16_t)src1[j]-(int16_t)src2[j]);
-		}
-		dst+=dst_pitch;
-		src1+=(src_pitch<<1);
-		src2+=(src_pitch<<1);
-	}
-}
-
-
-void JPSDR_Deinterlace::YadifAvgKeepBottom(const void *src, void *_dst, ptrdiff_t src_pitch, ptrdiff_t src_modulo,
-	ptrdiff_t dst_pitch, ptrdiff_t dst_modulo, const int32_t w, const int32_t h)
-{
-	const uint8_t *src1,*src2;
-	uint8_t *dst;
-	const int32_t h_1=h-1;
-
-	src1=(uint8_t *)src;
-	src2=src1+src_pitch;
-	dst=(uint8_t *)_dst;
-
-	memcpy(dst,src1,w);
-	dst+=dst_pitch;
-
-	if (AVX_Enable)
-	{
-		JPSDR_Deinterlace_YadifAvg_AVX(src1,src2,dst,src_pitch,dst_pitch,(w+15)>>4,h_1);
-		return;
-	}
-
-	if (SSE2_Enable)
-	{
-		JPSDR_Deinterlace_YadifAvg_SSE(src1,src2,dst,src_pitch,dst_pitch,(w+15)>>4,h_1);
-		return;
-	}
-
-	for (int32_t i=0; i<h_1; i++)
-	{
-		for (int32_t j=0; j<w; j++)
-		{
-			dst[j]=(uint8_t)(((uint16_t)src1[j]+(uint16_t)src2[j]+1)>>1);
-		}
-		dst+=dst_pitch;
-		src1+=src_pitch;
-		src2+=src_pitch;
-	}
-}
-
-
-void JPSDR_Deinterlace::YadifAvgKeepTop(const void *src, void *_dst, ptrdiff_t src_pitch, ptrdiff_t src_modulo,
-	ptrdiff_t dst_pitch, ptrdiff_t dst_modulo, const int32_t w, const int32_t h)
-{
-	const uint8_t *src1,*src2;
-	uint8_t *dst;
-	const int32_t h_1=h-1;
-
-	src1=(uint8_t *)src;
-	src2=src1+src_pitch;
-	dst=(uint8_t *)_dst;
-
-	if (AVX_Enable)
-	{
-		JPSDR_Deinterlace_YadifAvg_AVX(src1,src2,dst,src_pitch,dst_pitch,(w+15)>>4,h_1);
-		dst+=h_1*dst_pitch;
-		src1+=h_1*src_pitch;
-		memcpy(dst,src1,w);
-		return;
-	}
-
-	if (SSE2_Enable)
-	{
-		JPSDR_Deinterlace_YadifAvg_SSE(src1,src2,dst,src_pitch,dst_pitch,(w+15)>>4,h_1);
-		dst+=h_1*dst_pitch;
-		src1+=h_1*src_pitch;
-		memcpy(dst,src1,w);
-		return;
-	}
-
-	for (int32_t i=0; i<h_1; i++)
-	{
-		for (int32_t j=0; j<w; j++)
-		{
-			dst[j]=(uint8_t)(((uint16_t)src1[j]+(uint16_t)src2[j]+1)>>1);
-		}
-		dst+=dst_pitch;
-		src1+=src_pitch;
-		src2+=src_pitch;
-	}
-	memcpy(dst,src1,w);
-}
-
-
-void JPSDR_Deinterlace::AddBorderRGB(void *dst,ptrdiff_t dst_pitch, const int32_t w, const int32_t h)
-{
-	RGB32BMP *ptr;
-
-	ptr=(RGB32BMP *)dst;
-	for (int32_t i=0; i<h; i++)
-	{
-		RGB32BMP data;
-
-		data=*ptr;
-		ptr[-1]=data;
-		ptr[-2]=data;
-		ptr[-3]=data;
-		ptr[-4]=data;
-		data=ptr[w-1];
-		ptr[w]=data;
-		ptr[w+1]=data;
-		ptr[w+2]=data;
-		ptr[w+3]=data;
-		ptr=(RGB32BMP *)((uint8_t *)ptr + dst_pitch);
-	}
-}
-
-
-void JPSDR_Deinterlace::AddBorderYUYV(void *dst,ptrdiff_t dst_pitch, const int32_t w, const int32_t h)
-{
-	YUYV *ptr;
-	const int32_t w0=(w+1)>>1;
-
-	ptr=(YUYV *)dst;
-	for (int32_t i=0; i<h; i++)
-	{
-		YUYV data;
-
-		data=*ptr;
-		data.y2=data.y1;
-		ptr[-1]=data;
-		ptr[-2]=data;
-		ptr[-3]=data;
-		ptr[-4]=data;
-		data=ptr[w0-1];
-		data.y1=data.y2;
-		ptr[w0]=data;
-		ptr[w0+1]=data;
-		ptr[w0+2]=data;
-		ptr[w0+3]=data;
-		ptr=(YUYV *)((uint8_t *)ptr + dst_pitch);
-	}
-}
-
-
-void JPSDR_Deinterlace::AddBorderUYVY(void *dst,ptrdiff_t dst_pitch, const int32_t w, const int32_t h)
-{
-	UYVY *ptr;
-	const int32_t w0=(w+1)>>1;
-
-	ptr=(UYVY *)dst;
-	for (int32_t i=0; i<h; i++)
-	{
-		UYVY data;
-
-		data=*ptr;
-		data.y2=data.y1;
-		ptr[-1]=data;
-		ptr[-2]=data;
-		ptr[-3]=data;
-		ptr[-4]=data;
-		data=ptr[w0-1];
-		data.y1=data.y2;
-		ptr[w0]=data;
-		ptr[w0+1]=data;
-		ptr[w0+2]=data;
-		ptr[w0+3]=data;
-		ptr=(UYVY *)((uint8_t *)ptr + dst_pitch);
-	}
-}
-
-
-void JPSDR_Deinterlace::AddBorderPlanar(void *dst,ptrdiff_t dst_pitch, const int32_t w, const int32_t h)
-{
-	uint8_t *ptr;
-
-	ptr=(uint8_t *)dst;
-	for (int32_t i=0; i<h; i++)
-	{
-		uint8_t data;
-
-		data=*ptr;
-		ptr[-1]=data;
-		ptr[-2]=data;
-		ptr[-3]=data;
-		ptr[-4]=data;
-		ptr[-5]=data;
-		ptr[-6]=data;
-		ptr[-7]=data;
-		ptr[-8]=data;
-		ptr[-9]=data;
-		ptr[-10]=data;
-		ptr[-11]=data;
-		ptr[-12]=data;
-		ptr[-13]=data;
-		ptr[-14]=data;
-		ptr[-15]=data;
-		ptr[-16]=data;
-		data=ptr[w-1];
-		ptr[w]=data;
-		ptr[w+1]=data;
-		ptr[w+2]=data;
-		ptr[w+3]=data;
-		ptr[w+4]=data;
-		ptr[w+5]=data;
-		ptr[w+6]=data;
-		ptr[w+7]=data;
-		ptr[w+8]=data;
-		ptr[w+9]=data;
-		ptr[w+10]=data;
-		ptr[w+11]=data;
-		ptr[w+12]=data;
-		ptr[w+13]=data;
-		ptr[w+14]=data;
-		ptr[w+15]=data;
-		ptr+=dst_pitch;
-	}
-}
-
-		
-void JPSDR_Deinterlace::Blend_Tri_RGB32(const void *src,void *_dst,const int32_t w,const int32_t h,
-	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+static void Blend_Tri_RGB32(const void *src,void *_dst,const int32_t w,const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const RGB32BMP *src1,*src2,*src3;
 	RGB32BMP *dst;
@@ -2244,9 +1406,9 @@ void JPSDR_Deinterlace::Blend_Tri_RGB32(const void *src,void *_dst,const int32_t
 
 	for (int32_t j=0; j<w; j++)
 	{
-		dst[j].r=((uint16_t)src1[j].r+(uint16_t)src2[j].r+1)>>1;
-		dst[j].g=((uint16_t)src1[j].g+(uint16_t)src2[j].g+1)>>1;
-		dst[j].b=((uint16_t)src1[j].b+(uint16_t)src2[j].b+1)>>1;
+		dst[j].r=(uint8_t)(((uint16_t)src1[j].r+(uint16_t)src2[j].r+1)>>1);
+		dst[j].g=(uint8_t)(((uint16_t)src1[j].g+(uint16_t)src2[j].g+1)>>1);
+		dst[j].b=(uint8_t)(((uint16_t)src1[j].b+(uint16_t)src2[j].b+1)>>1);
 		dst[j].alpha=src1[j].alpha;
 	}
 	dst=(RGB32BMP *)((uint8_t *)dst+dst_pitch);
@@ -2255,9 +1417,9 @@ void JPSDR_Deinterlace::Blend_Tri_RGB32(const void *src,void *_dst,const int32_t
 	{
 		for (int32_t j=0; j<w; j++)
 		{
-			dst[j].r=(((uint16_t)src1[j].r+(uint16_t)src3[j].r+(((uint16_t)src2[j].r) << 1))+2) >> 2;
-			dst[j].g=(((uint16_t)src1[j].g+(uint16_t)src3[j].g+(((uint16_t)src2[j].g) << 1))+2) >> 2;
-			dst[j].b=(((uint16_t)src1[j].b+(uint16_t)src3[j].b+(((uint16_t)src2[j].b) << 1))+2) >> 2;
+			dst[j].r=(uint8_t)((((uint16_t)src1[j].r+(uint16_t)src3[j].r+(((uint16_t)src2[j].r) << 1))+2) >> 2);
+			dst[j].g=(uint8_t)((((uint16_t)src1[j].g+(uint16_t)src3[j].g+(((uint16_t)src2[j].g) << 1))+2) >> 2);
+			dst[j].b=(uint8_t)((((uint16_t)src1[j].b+(uint16_t)src3[j].b+(((uint16_t)src2[j].b) << 1))+2) >> 2);
 			dst[j].alpha=src2[j].alpha;
 		}
 		src1=(RGB32BMP *)((uint8_t *)src1+src_pitch);
@@ -2268,18 +1430,59 @@ void JPSDR_Deinterlace::Blend_Tri_RGB32(const void *src,void *_dst,const int32_t
 
 	for (int32_t j=0; j<w; j++)
 	{
-		dst[j].r=((uint16_t)src1[j].r+(uint16_t)src2[j].r+1)>>1;
-		dst[j].g=((uint16_t)src1[j].g+(uint16_t)src2[j].g+1)>>1;
-		dst[j].b=((uint16_t)src1[j].b+(uint16_t)src2[j].b+1)>>1;
+		dst[j].r=(uint8_t)(((uint16_t)src1[j].r+(uint16_t)src2[j].r+1)>>1);
+		dst[j].g=(uint8_t)(((uint16_t)src1[j].g+(uint16_t)src2[j].g+1)>>1);
+		dst[j].b=(uint8_t)(((uint16_t)src1[j].b+(uint16_t)src2[j].b+1)>>1);
 		dst[j].alpha=src2[j].alpha;
 	}
-
 }
 
 
+static void Blend_Tri_RGB64(const void *src,void *_dst,const int32_t w,const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+{
+	const RGB64BMP *src1,*src2,*src3;
+	RGB64BMP *dst;
 
-void JPSDR_Deinterlace::Blend_Tri_RGB32a(const void *src,void *_dst,const int32_t w,const int32_t h,
-	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+	src1=(RGB64BMP *)src;
+	src2=(RGB64BMP *)((uint8_t *)src1+src_pitch);
+	src3=(RGB64BMP *)((uint8_t *)src2+src_pitch);
+	dst=(RGB64BMP *)_dst;
+
+	for (int32_t j=0; j<w; j++)
+	{
+		dst[j].r=(uint16_t)(((uint32_t)src1[j].r+(uint32_t)src2[j].r+1)>>1);
+		dst[j].g=(uint16_t)(((uint32_t)src1[j].g+(uint32_t)src2[j].g+1)>>1);
+		dst[j].b=(uint16_t)(((uint32_t)src1[j].b+(uint32_t)src2[j].b+1)>>1);
+		dst[j].alpha=src1[j].alpha;
+	}
+	dst=(RGB64BMP *)((uint8_t *)dst+dst_pitch);
+
+	for (int32_t i=0; i<h; i++)
+	{
+		for (int32_t j=0; j<w; j++)
+		{
+			dst[j].r=(uint16_t)((((uint32_t)src1[j].r+(uint32_t)src3[j].r+(((uint32_t)src2[j].r) << 1))+2) >> 2);
+			dst[j].g=(uint16_t)((((uint32_t)src1[j].g+(uint32_t)src3[j].g+(((uint32_t)src2[j].g) << 1))+2) >> 2);
+			dst[j].b=(uint16_t)((((uint32_t)src1[j].b+(uint32_t)src3[j].b+(((uint32_t)src2[j].b) << 1))+2) >> 2);
+			dst[j].alpha=src2[j].alpha;
+		}
+		src1=(RGB64BMP *)((uint8_t *)src1+src_pitch);
+		src2=(RGB64BMP *)((uint8_t *)src2+src_pitch);
+		src3=(RGB64BMP *)((uint8_t *)src3+src_pitch);
+		dst=(RGB64BMP *)((uint8_t *)dst+dst_pitch);
+	}
+
+	for (int32_t j=0; j<w; j++)
+	{
+		dst[j].r=(uint16_t)(((uint32_t)src1[j].r+(uint32_t)src2[j].r+1)>>1);
+		dst[j].g=(uint16_t)(((uint32_t)src1[j].g+(uint32_t)src2[j].g+1)>>1);
+		dst[j].b=(uint16_t)(((uint32_t)src1[j].b+(uint32_t)src2[j].b+1)>>1);
+		dst[j].alpha=src2[j].alpha;
+	}
+}
+
+
+static void Blend_Tri_RGB32a(const void *src,void *_dst,const int32_t w,const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const RGB32BMP *src1,*src2,*src3;
 	RGB32BMP *dst;
@@ -2291,9 +1494,9 @@ void JPSDR_Deinterlace::Blend_Tri_RGB32a(const void *src,void *_dst,const int32_
 
 	for (int32_t j=0; j<w; j++)
 	{
-		dst[j].r=((uint16_t)src1[j].r+(uint16_t)src2[j].r+1)>>1;
-		dst[j].g=((uint16_t)src1[j].g+(uint16_t)src2[j].g+1)>>1;
-		dst[j].b=((uint16_t)src1[j].b+(uint16_t)src2[j].b+1)>>1;
+		dst[j].r=(uint8_t)(((uint16_t)src1[j].r+(uint16_t)src2[j].r+1)>>1);
+		dst[j].g=(uint8_t)(((uint16_t)src1[j].g+(uint16_t)src2[j].g+1)>>1);
+		dst[j].b=(uint8_t)(((uint16_t)src1[j].b+(uint16_t)src2[j].b+1)>>1);
 		dst[j].alpha=src1[j].alpha;
 	}
 	dst=(RGB32BMP *)((uint8_t *)dst+dst_pitch);
@@ -2302,9 +1505,9 @@ void JPSDR_Deinterlace::Blend_Tri_RGB32a(const void *src,void *_dst,const int32_
 	{
 		for (int32_t j=0; j<w; j++)
 		{
-			dst[j].r=(((uint16_t)src1[j].r+(uint16_t)src3[j].r+(((uint16_t)src2[j].r) << 1))+2) >> 2;
-			dst[j].g=(((uint16_t)src1[j].g+(uint16_t)src3[j].g+(((uint16_t)src2[j].g) << 1))+2) >> 2;
-			dst[j].b=(((uint16_t)src1[j].b+(uint16_t)src3[j].b+(((uint16_t)src2[j].b) << 1))+2) >> 2;
+			dst[j].r=(uint8_t)((((uint16_t)src1[j].r+(uint16_t)src3[j].r+(((uint16_t)src2[j].r) << 1))+2) >> 2);
+			dst[j].g=(uint8_t)((((uint16_t)src1[j].g+(uint16_t)src3[j].g+(((uint16_t)src2[j].g) << 1))+2) >> 2);
+			dst[j].b=(uint8_t)((((uint16_t)src1[j].b+(uint16_t)src3[j].b+(((uint16_t)src2[j].b) << 1))+2) >> 2);
 			dst[j].alpha=src2[j].alpha;
 		}
 		src1=(RGB32BMP *)((uint8_t *)src1+src_pitch);
@@ -2315,8 +1518,43 @@ void JPSDR_Deinterlace::Blend_Tri_RGB32a(const void *src,void *_dst,const int32_
 }
 
 
-void JPSDR_Deinterlace::Blend_Tri_RGB32b(const void *src,void *_dst,const int32_t w,const int32_t h,
-	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+static void Blend_Tri_RGB64a(const void *src,void *_dst,const int32_t w,const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+{
+	const RGB64BMP *src1,*src2,*src3;
+	RGB64BMP *dst;
+
+	src1=(RGB64BMP *)src;
+	src2=(RGB64BMP *)((uint8_t *)src1+src_pitch);
+	src3=(RGB64BMP *)((uint8_t *)src2+src_pitch);
+	dst=(RGB64BMP *)_dst;
+
+	for (int32_t j=0; j<w; j++)
+	{
+		dst[j].r=(uint16_t)(((uint32_t)src1[j].r+(uint32_t)src2[j].r+1)>>1);
+		dst[j].g=(uint16_t)(((uint32_t)src1[j].g+(uint32_t)src2[j].g+1)>>1);
+		dst[j].b=(uint16_t)(((uint32_t)src1[j].b+(uint32_t)src2[j].b+1)>>1);
+		dst[j].alpha=src1[j].alpha;
+	}
+	dst=(RGB64BMP *)((uint8_t *)dst+dst_pitch);
+
+	for (int32_t i=0; i<h; i++)
+	{
+		for (int32_t j=0; j<w; j++)
+		{
+			dst[j].r=(uint16_t)((((uint32_t)src1[j].r+(uint32_t)src3[j].r+(((uint32_t)src2[j].r) << 1))+2) >> 2);
+			dst[j].g=(uint16_t)((((uint32_t)src1[j].g+(uint32_t)src3[j].g+(((uint32_t)src2[j].g) << 1))+2) >> 2);
+			dst[j].b=(uint16_t)((((uint32_t)src1[j].b+(uint32_t)src3[j].b+(((uint32_t)src2[j].b) << 1))+2) >> 2);
+			dst[j].alpha=src2[j].alpha;
+		}
+		src1=(RGB64BMP *)((uint8_t *)src1+src_pitch);
+		src2=(RGB64BMP *)((uint8_t *)src2+src_pitch);
+		src3=(RGB64BMP *)((uint8_t *)src3+src_pitch);
+		dst=(RGB64BMP *)((uint8_t *)dst+dst_pitch);
+	}
+}
+
+
+static void Blend_Tri_RGB32b(const void *src,void *_dst,const int32_t w,const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const RGB32BMP *src1,*src2,*src3;
 	RGB32BMP *dst;
@@ -2330,9 +1568,9 @@ void JPSDR_Deinterlace::Blend_Tri_RGB32b(const void *src,void *_dst,const int32_
 	{
 		for (int32_t j=0; j<w; j++)
 		{
-			dst[j].r=(((uint16_t)src1[j].r+(uint16_t)src3[j].r+(((uint16_t)src2[j].r) << 1))+2) >> 2;
-			dst[j].g=(((uint16_t)src1[j].g+(uint16_t)src3[j].g+(((uint16_t)src2[j].g) << 1))+2) >> 2;
-			dst[j].b=(((uint16_t)src1[j].b+(uint16_t)src3[j].b+(((uint16_t)src2[j].b) << 1))+2) >> 2;
+			dst[j].r=(uint8_t)((((uint16_t)src1[j].r+(uint16_t)src3[j].r+(((uint16_t)src2[j].r) << 1))+2) >> 2);
+			dst[j].g=(uint8_t)((((uint16_t)src1[j].g+(uint16_t)src3[j].g+(((uint16_t)src2[j].g) << 1))+2) >> 2);
+			dst[j].b=(uint8_t)((((uint16_t)src1[j].b+(uint16_t)src3[j].b+(((uint16_t)src2[j].b) << 1))+2) >> 2);
 			dst[j].alpha=src2[j].alpha;
 		}
 		src1=(RGB32BMP *)((uint8_t *)src1+src_pitch);
@@ -2340,13 +1578,37 @@ void JPSDR_Deinterlace::Blend_Tri_RGB32b(const void *src,void *_dst,const int32_
 		src3=(RGB32BMP *)((uint8_t *)src3+src_pitch);
 		dst=(RGB32BMP *)((uint8_t *)dst+dst_pitch);
 	}
-
 }
 
 
+static void Blend_Tri_RGB64b(const void *src,void *_dst,const int32_t w,const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+{
+	const RGB64BMP *src1,*src2,*src3;
+	RGB64BMP *dst;
 
-void JPSDR_Deinterlace::Blend_Tri_RGB32c(const void *src,void *_dst,const int32_t w,const int32_t h,
-	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+	src1=(RGB64BMP *)src;
+	src2=(RGB64BMP *)((uint8_t *)src1+src_pitch);
+	src3=(RGB64BMP *)((uint8_t *)src2+src_pitch);
+	dst=(RGB64BMP *)_dst;
+
+	for (int32_t i=0; i<h; i++)
+	{
+		for (int32_t j=0; j<w; j++)
+		{
+			dst[j].r=(uint16_t)((((uint32_t)src1[j].r+(uint32_t)src3[j].r+(((uint32_t)src2[j].r) << 1))+2) >> 2);
+			dst[j].g=(uint16_t)((((uint32_t)src1[j].g+(uint32_t)src3[j].g+(((uint32_t)src2[j].g) << 1))+2) >> 2);
+			dst[j].b=(uint16_t)((((uint32_t)src1[j].b+(uint32_t)src3[j].b+(((uint32_t)src2[j].b) << 1))+2) >> 2);
+			dst[j].alpha=src2[j].alpha;
+		}
+		src1=(RGB64BMP *)((uint8_t *)src1+src_pitch);
+		src2=(RGB64BMP *)((uint8_t *)src2+src_pitch);
+		src3=(RGB64BMP *)((uint8_t *)src3+src_pitch);
+		dst=(RGB64BMP *)((uint8_t *)dst+dst_pitch);
+	}
+}
+
+
+static void Blend_Tri_RGB32c(const void *src,void *_dst,const int32_t w,const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const RGB32BMP *src1,*src2,*src3;
 	RGB32BMP *dst;
@@ -2360,9 +1622,9 @@ void JPSDR_Deinterlace::Blend_Tri_RGB32c(const void *src,void *_dst,const int32_
 	{
 		for (int32_t j=0; j<w; j++)
 		{
-			dst[j].r=(((uint16_t)src1[j].r+(uint16_t)src3[j].r+(((uint16_t)src2[j].r) << 1))+2) >> 2;
-			dst[j].g=(((uint16_t)src1[j].g+(uint16_t)src3[j].g+(((uint16_t)src2[j].g) << 1))+2) >> 2;
-			dst[j].b=(((uint16_t)src1[j].b+(uint16_t)src3[j].b+(((uint16_t)src2[j].b) << 1))+2) >> 2;
+			dst[j].r=(uint8_t)((((uint16_t)src1[j].r+(uint16_t)src3[j].r+(((uint16_t)src2[j].r) << 1))+2) >> 2);
+			dst[j].g=(uint8_t)((((uint16_t)src1[j].g+(uint16_t)src3[j].g+(((uint16_t)src2[j].g) << 1))+2) >> 2);
+			dst[j].b=(uint8_t)((((uint16_t)src1[j].b+(uint16_t)src3[j].b+(((uint16_t)src2[j].b) << 1))+2) >> 2);
 			dst[j].alpha=src2[j].alpha;
 		}
 		src1=(RGB32BMP *)((uint8_t *)src1+src_pitch);
@@ -2373,16 +1635,51 @@ void JPSDR_Deinterlace::Blend_Tri_RGB32c(const void *src,void *_dst,const int32_
 
 	for (int32_t j=0; j<w; j++)
 	{
-		dst[j].r=((uint16_t)src1[j].r+(uint16_t)src2[j].r+1)>>1;
-		dst[j].g=((uint16_t)src1[j].g+(uint16_t)src2[j].g+1)>>1;
-		dst[j].b=((uint16_t)src1[j].b+(uint16_t)src2[j].b+1)>>1;
+		dst[j].r=(uint8_t)(((uint16_t)src1[j].r+(uint16_t)src2[j].r+1)>>1);
+		dst[j].g=(uint8_t)(((uint16_t)src1[j].g+(uint16_t)src2[j].g+1)>>1);
+		dst[j].b=(uint8_t)(((uint16_t)src1[j].b+(uint16_t)src2[j].b+1)>>1);
 		dst[j].alpha=src2[j].alpha;
 	}
-
 }
 
-void JPSDR_Deinterlace::Blend_Tri_RGB32(const void *src,void *_dst,void *buffer[],const int32_t w,
-	const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+
+static void Blend_Tri_RGB64c(const void *src,void *_dst,const int32_t w,const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+{
+	const RGB64BMP *src1,*src2,*src3;
+	RGB64BMP *dst;
+
+	src1=(RGB64BMP *)src;
+	src2=(RGB64BMP *)((uint8_t *)src1+src_pitch);
+	src3=(RGB64BMP *)((uint8_t *)src2+src_pitch);
+	dst=(RGB64BMP *)_dst;
+
+	for (int32_t i=0; i<h; i++)
+	{
+		for (int32_t j=0; j<w; j++)
+		{
+			dst[j].r=(uint16_t)((((uint32_t)src1[j].r+(uint32_t)src3[j].r+(((uint32_t)src2[j].r) << 1))+2) >> 2);
+			dst[j].g=(uint16_t)((((uint32_t)src1[j].g+(uint32_t)src3[j].g+(((uint32_t)src2[j].g) << 1))+2) >> 2);
+			dst[j].b=(uint16_t)((((uint32_t)src1[j].b+(uint32_t)src3[j].b+(((uint32_t)src2[j].b) << 1))+2) >> 2);
+			dst[j].alpha=src2[j].alpha;
+		}
+		src1=(RGB64BMP *)((uint8_t *)src1+src_pitch);
+		src2=(RGB64BMP *)((uint8_t *)src2+src_pitch);
+		src3=(RGB64BMP *)((uint8_t *)src3+src_pitch);
+		dst=(RGB64BMP *)((uint8_t *)dst+dst_pitch);
+	}
+
+	for (int32_t j=0; j<w; j++)
+	{
+		dst[j].r=(uint16_t)(((uint32_t)src1[j].r+(uint32_t)src2[j].r+1)>>1);
+		dst[j].g=(uint16_t)(((uint32_t)src1[j].g+(uint32_t)src2[j].g+1)>>1);
+		dst[j].b=(uint16_t)(((uint32_t)src1[j].b+(uint32_t)src2[j].b+1)>>1);
+		dst[j].alpha=src2[j].alpha;
+	}
+}
+
+
+static void Blend_Tri_RGB32(const void *src,void *_dst,void *buffer[],const int32_t w,const int32_t h,
+	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const RGB32BMP *src1,*src2,*src3;
 	RGB32BMP *dst;
@@ -2398,9 +1695,9 @@ void JPSDR_Deinterlace::Blend_Tri_RGB32(const void *src,void *_dst,void *buffer[
 	src1=(RGB32BMP *)buffer[0];
 	for (int32_t j=0; j<w; j++)
 	{
-		dst[j].r=((uint16_t)src1[j].r+(uint16_t)src2[j].r+1)>>1;
-		dst[j].g=((uint16_t)src1[j].g+(uint16_t)src2[j].g+1)>>1;
-		dst[j].b=((uint16_t)src1[j].b+(uint16_t)src2[j].b+1)>>1;
+		dst[j].r=(uint8_t)(((uint16_t)src1[j].r+(uint16_t)src2[j].r+1)>>1);
+		dst[j].g=(uint8_t)(((uint16_t)src1[j].g+(uint16_t)src2[j].g+1)>>1);
+		dst[j].b=(uint8_t)(((uint16_t)src1[j].b+(uint16_t)src2[j].b+1)>>1);
 		dst[j].alpha=src1[j].alpha;
 	}
 	dst=(RGB32BMP *)((uint8_t *)dst+dst_pitch);
@@ -2412,9 +1709,9 @@ void JPSDR_Deinterlace::Blend_Tri_RGB32(const void *src,void *_dst,void *buffer[
 		src1=(RGB32BMP *)buffer[indice_buffer];
 		for (int32_t j=0; j<w; j++)
 		{
-			dst[j].r=(((uint16_t)src1[j].r+(uint16_t)src3[j].r+(((uint16_t)src2[j].r) << 1))+2) >> 2;
-			dst[j].g=(((uint16_t)src1[j].g+(uint16_t)src3[j].g+(((uint16_t)src2[j].g) << 1))+2) >> 2;
-			dst[j].b=(((uint16_t)src1[j].b+(uint16_t)src3[j].b+(((uint16_t)src2[j].b) << 1))+2) >> 2;
+			dst[j].r=(uint8_t)((((uint16_t)src1[j].r+(uint16_t)src3[j].r+(((uint16_t)src2[j].r) << 1))+2) >> 2);
+			dst[j].g=(uint8_t)((((uint16_t)src1[j].g+(uint16_t)src3[j].g+(((uint16_t)src2[j].g) << 1))+2) >> 2);
+			dst[j].b=(uint8_t)((((uint16_t)src1[j].b+(uint16_t)src3[j].b+(((uint16_t)src2[j].b) << 1))+2) >> 2);
 			dst[j].alpha=src2[j].alpha;
 		}
 		src2=(RGB32BMP *)((uint8_t *)src2+src_pitch);
@@ -2426,16 +1723,68 @@ void JPSDR_Deinterlace::Blend_Tri_RGB32(const void *src,void *_dst,void *buffer[
 	src1=(RGB32BMP *)buffer[indice_buffer];
 	for (int32_t j=0; j<w; j++)
 	{
-		dst[j].r=((uint16_t)src1[j].r+(uint16_t)src2[j].r+1)>>1;
-		dst[j].g=((uint16_t)src1[j].g+(uint16_t)src2[j].g+1)>>1;
-		dst[j].b=((uint16_t)src1[j].b+(uint16_t)src2[j].b+1)>>1;
+		dst[j].r=(uint8_t)(((uint16_t)src1[j].r+(uint16_t)src2[j].r+1)>>1);
+		dst[j].g=(uint8_t)(((uint16_t)src1[j].g+(uint16_t)src2[j].g+1)>>1);
+		dst[j].b=(uint8_t)(((uint16_t)src1[j].b+(uint16_t)src2[j].b+1)>>1);
 		dst[j].alpha=src2[j].alpha;
 	}
-
 }
 
 
-void JPSDR_Deinterlace::Blend_Tri_YUV32(const void *src,void *_dst,const int32_t w,const int32_t h,
+static void Blend_Tri_RGB64(const void *src,void *_dst,void *buffer[],const int32_t w,const int32_t h,
+	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+{
+	const RGB64BMP *src1,*src2,*src3;
+	RGB64BMP *dst;
+	uint8_t indice_buffer;
+
+	src2=(RGB64BMP *)((uint8_t *)src+src_pitch);
+	src3=(RGB64BMP *)((uint8_t *)src2+src_pitch);
+	dst=(RGB64BMP *)_dst;
+
+	memcpy(buffer[0],src,w << 3);
+	indice_buffer=1;
+
+	src1=(RGB64BMP *)buffer[0];
+	for (int32_t j=0; j<w; j++)
+	{
+		dst[j].r=(uint16_t)(((uint32_t)src1[j].r+(uint32_t)src2[j].r+1)>>1);
+		dst[j].g=(uint16_t)(((uint32_t)src1[j].g+(uint32_t)src2[j].g+1)>>1);
+		dst[j].b=(uint16_t)(((uint32_t)src1[j].b+(uint32_t)src2[j].b+1)>>1);
+		dst[j].alpha=src1[j].alpha;
+	}
+	dst=(RGB64BMP *)((uint8_t *)dst+dst_pitch);
+
+	for (int32_t i=0; i<h; i++)
+	{
+		memcpy(buffer[indice_buffer],src2,w << 3);
+		indice_buffer=(indice_buffer+1)%2;
+		src1=(RGB64BMP *)buffer[indice_buffer];
+		for (int32_t j=0; j<w; j++)
+		{
+			dst[j].r=(uint16_t)((((uint32_t)src1[j].r+(uint32_t)src3[j].r+(((uint32_t)src2[j].r) << 1))+2) >> 2);
+			dst[j].g=(uint16_t)((((uint32_t)src1[j].g+(uint32_t)src3[j].g+(((uint32_t)src2[j].g) << 1))+2) >> 2);
+			dst[j].b=(uint16_t)((((uint32_t)src1[j].b+(uint32_t)src3[j].b+(((uint32_t)src2[j].b) << 1))+2) >> 2);
+			dst[j].alpha=src2[j].alpha;
+		}
+		src2=(RGB64BMP *)((uint8_t *)src2+src_pitch);
+		src3=(RGB64BMP *)((uint8_t *)src3+src_pitch);
+		dst=(RGB64BMP *)((uint8_t *)dst+dst_pitch);
+	}
+
+	indice_buffer=(indice_buffer+1)%2;
+	src1=(RGB64BMP *)buffer[indice_buffer];
+	for (int32_t j=0; j<w; j++)
+	{
+		dst[j].r=(uint16_t)(((uint32_t)src1[j].r+(uint32_t)src2[j].r+1)>>1);
+		dst[j].g=(uint16_t)(((uint32_t)src1[j].g+(uint32_t)src2[j].g+1)>>1);
+		dst[j].b=(uint16_t)(((uint32_t)src1[j].b+(uint32_t)src2[j].b+1)>>1);
+		dst[j].alpha=src2[j].alpha;
+	}
+}
+
+
+static void Blend_Tri_YUV32(const void *src,void *_dst,const int32_t w,const int32_t h,
 	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const YUYV *src1,*src2,*src3;
@@ -2448,10 +1797,10 @@ void JPSDR_Deinterlace::Blend_Tri_YUV32(const void *src,void *_dst,const int32_t
 
 	for (int32_t j=0; j<w; j++)
 	{
-		dst[j].y1=((uint16_t)src1[j].y1+(uint16_t)src2[j].y1+1)>>1;
-		dst[j].u=((uint16_t)src1[j].u+(uint16_t)src2[j].u+1)>>1;
-		dst[j].y2=((uint16_t)src1[j].y2+(uint16_t)src2[j].y2+1)>>1;
-		dst[j].v=((uint16_t)src1[j].v+(uint16_t)src2[j].v+1)>>1;
+		dst[j].y1=(uint8_t)(((uint16_t)src1[j].y1+(uint16_t)src2[j].y1+1)>>1);
+		dst[j].u=(uint8_t)(((uint16_t)src1[j].u+(uint16_t)src2[j].u+1)>>1);
+		dst[j].y2=(uint8_t)(((uint16_t)src1[j].y2+(uint16_t)src2[j].y2+1)>>1);
+		dst[j].v=(uint8_t)(((uint16_t)src1[j].v+(uint16_t)src2[j].v+1)>>1);
 	}
 	dst=(YUYV *)((uint8_t *)dst+dst_pitch);
 	
@@ -2459,10 +1808,10 @@ void JPSDR_Deinterlace::Blend_Tri_YUV32(const void *src,void *_dst,const int32_t
 	{
 		for (int32_t j=0; j<w; j++)
 		{
-			dst[j].y1=(((uint16_t)src1[j].y1+(uint16_t)src3[j].y1+(((uint16_t)src2[j].y1) << 1))+2) >> 2;
-			dst[j].u=(((uint16_t)src1[j].u+(uint16_t)src3[j].u+(((uint16_t)src2[j].u) << 1))+2) >> 2;
-			dst[j].y2=(((uint16_t)src1[j].y2+(uint16_t)src3[j].y2+(((uint16_t)src2[j].y2) << 1))+2) >> 2;
-			dst[j].v=(((uint16_t)src1[j].v+(uint16_t)src3[j].v+(((uint16_t)src2[j].v) << 1))+2) >> 2;
+			dst[j].y1=(uint8_t)((((uint16_t)src1[j].y1+(uint16_t)src3[j].y1+(((uint16_t)src2[j].y1) << 1))+2) >> 2);
+			dst[j].u=(uint8_t)((((uint16_t)src1[j].u+(uint16_t)src3[j].u+(((uint16_t)src2[j].u) << 1))+2) >> 2);
+			dst[j].y2=(uint8_t)((((uint16_t)src1[j].y2+(uint16_t)src3[j].y2+(((uint16_t)src2[j].y2) << 1))+2) >> 2);
+			dst[j].v=(uint8_t)((((uint16_t)src1[j].v+(uint16_t)src3[j].v+(((uint16_t)src2[j].v) << 1))+2) >> 2);
 		}
 		src1=(YUYV *)((uint8_t *)src1+src_pitch);
 		src2=(YUYV *)((uint8_t *)src2+src_pitch);
@@ -2472,17 +1821,60 @@ void JPSDR_Deinterlace::Blend_Tri_YUV32(const void *src,void *_dst,const int32_t
 
 	for (int32_t j=0; j<w; j++)
 	{
-		dst[j].y1=((uint16_t)src1[j].y1+(uint16_t)src2[j].y1+1)>>1;
-		dst[j].u=((uint16_t)src1[j].u+(uint16_t)src2[j].u+1)>>1;
-		dst[j].y2=((uint16_t)src1[j].y2+(uint16_t)src2[j].y2+1)>>1;
-		dst[j].v=((uint16_t)src1[j].v+(uint16_t)src2[j].v+1)>>1;
+		dst[j].y1=(uint8_t)(((uint16_t)src1[j].y1+(uint16_t)src2[j].y1+1)>>1);
+		dst[j].u=(uint8_t)(((uint16_t)src1[j].u+(uint16_t)src2[j].u+1)>>1);
+		dst[j].y2=(uint8_t)(((uint16_t)src1[j].y2+(uint16_t)src2[j].y2+1)>>1);
+		dst[j].v=(uint8_t)(((uint16_t)src1[j].v+(uint16_t)src2[j].v+1)>>1);
 	}
-
 }
 
 
+static void Blend_Tri_YUV64(const void *src,void *_dst,const int32_t w,const int32_t h,
+	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+{
+	const YUYV16 *src1,*src2,*src3;
+	YUYV16 *dst;
 
-void JPSDR_Deinterlace::Blend_Tri_YUV32a(const void *src,void *_dst,const int32_t w,const int32_t h,
+	src1=(YUYV16 *)src;
+	src2=(YUYV16 *)((uint8_t *)src1+src_pitch);
+	src3=(YUYV16 *)((uint8_t *)src2+src_pitch);
+	dst=(YUYV16 *)(uint8_t *)_dst;
+
+	for (int32_t j=0; j<w; j++)
+	{
+		dst[j].y1=(uint16_t)(((uint32_t)src1[j].y1+(uint32_t)src2[j].y1+1)>>1);
+		dst[j].u=(uint16_t)(((uint32_t)src1[j].u+(uint32_t)src2[j].u+1)>>1);
+		dst[j].y2=(uint16_t)(((uint32_t)src1[j].y2+(uint32_t)src2[j].y2+1)>>1);
+		dst[j].v=(uint16_t)(((uint32_t)src1[j].v+(uint32_t)src2[j].v+1)>>1);
+	}
+	dst=(YUYV16 *)((uint8_t *)dst+dst_pitch);
+	
+	for (int32_t i=0; i<h; i++)
+	{
+		for (int32_t j=0; j<w; j++)
+		{
+			dst[j].y1=(uint16_t)((((uint32_t)src1[j].y1+(uint32_t)src3[j].y1+(((uint32_t)src2[j].y1) << 1))+2) >> 2);
+			dst[j].u=(uint16_t)((((uint32_t)src1[j].u+(uint32_t)src3[j].u+(((uint32_t)src2[j].u) << 1))+2) >> 2);
+			dst[j].y2=(uint16_t)((((uint32_t)src1[j].y2+(uint32_t)src3[j].y2+(((uint32_t)src2[j].y2) << 1))+2) >> 2);
+			dst[j].v=(uint16_t)((((uint32_t)src1[j].v+(uint32_t)src3[j].v+(((uint32_t)src2[j].v) << 1))+2) >> 2);
+		}
+		src1=(YUYV16 *)((uint8_t *)src1+src_pitch);
+		src2=(YUYV16 *)((uint8_t *)src2+src_pitch);
+		src3=(YUYV16 *)((uint8_t *)src3+src_pitch);
+		dst=(YUYV16 *)((uint8_t *)dst+dst_pitch);
+	}
+
+	for (int32_t j=0; j<w; j++)
+	{
+		dst[j].y1=(uint16_t)(((uint32_t)src1[j].y1+(uint32_t)src2[j].y1+1)>>1);
+		dst[j].u=(uint16_t)(((uint32_t)src1[j].u+(uint32_t)src2[j].u+1)>>1);
+		dst[j].y2=(uint16_t)(((uint32_t)src1[j].y2+(uint32_t)src2[j].y2+1)>>1);
+		dst[j].v=(uint16_t)(((uint32_t)src1[j].v+(uint32_t)src2[j].v+1)>>1);
+	}
+}
+
+
+static void Blend_Tri_YUV32a(const void *src,void *_dst,const int32_t w,const int32_t h,
 	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const YUYV *src1,*src2,*src3;
@@ -2495,10 +1887,10 @@ void JPSDR_Deinterlace::Blend_Tri_YUV32a(const void *src,void *_dst,const int32_
 
 	for (int32_t j=0; j<w; j++)
 	{
-		dst[j].y1=((uint16_t)src1[j].y1+(uint16_t)src2[j].y1+1)>>1;
-		dst[j].u=((uint16_t)src1[j].u+(uint16_t)src2[j].u+1)>>1;
-		dst[j].y2=((uint16_t)src1[j].y2+(uint16_t)src2[j].y2+1)>>1;
-		dst[j].v=((uint16_t)src1[j].v+(uint16_t)src2[j].v+1)>>1;
+		dst[j].y1=(uint8_t)(((uint16_t)src1[j].y1+(uint16_t)src2[j].y1+1)>>1);
+		dst[j].u=(uint8_t)(((uint16_t)src1[j].u+(uint16_t)src2[j].u+1)>>1);
+		dst[j].y2=(uint8_t)(((uint16_t)src1[j].y2+(uint16_t)src2[j].y2+1)>>1);
+		dst[j].v=(uint8_t)(((uint16_t)src1[j].v+(uint16_t)src2[j].v+1)>>1);
 	}
 	dst=(YUYV *)((uint8_t *)dst+dst_pitch);
 	
@@ -2506,22 +1898,57 @@ void JPSDR_Deinterlace::Blend_Tri_YUV32a(const void *src,void *_dst,const int32_
 	{
 		for (int32_t j=0; j<w; j++)
 		{
-			dst[j].y1=(((uint16_t)src1[j].y1+(uint16_t)src3[j].y1+(((uint16_t)src2[j].y1) << 1))+2) >> 2;
-			dst[j].u=(((uint16_t)src1[j].u+(uint16_t)src3[j].u+(((uint16_t)src2[j].u) << 1))+2) >> 2;
-			dst[j].y2=(((uint16_t)src1[j].y2+(uint16_t)src3[j].y2+(((uint16_t)src2[j].y2) << 1))+2) >> 2;
-			dst[j].v=(((uint16_t)src1[j].v+(uint16_t)src3[j].v+(((uint16_t)src2[j].v) << 1))+2) >> 2;
+			dst[j].y1=(uint8_t)((((uint16_t)src1[j].y1+(uint16_t)src3[j].y1+(((uint16_t)src2[j].y1) << 1))+2) >> 2);
+			dst[j].u=(uint8_t)((((uint16_t)src1[j].u+(uint16_t)src3[j].u+(((uint16_t)src2[j].u) << 1))+2) >> 2);
+			dst[j].y2=(uint8_t)((((uint16_t)src1[j].y2+(uint16_t)src3[j].y2+(((uint16_t)src2[j].y2) << 1))+2) >> 2);
+			dst[j].v=(uint8_t)((((uint16_t)src1[j].v+(uint16_t)src3[j].v+(((uint16_t)src2[j].v) << 1))+2) >> 2);
 		}
 		src1=(YUYV *)((uint8_t *)src1+src_pitch);
 		src2=(YUYV *)((uint8_t *)src2+src_pitch);
 		src3=(YUYV *)((uint8_t *)src3+src_pitch);
 		dst=(YUYV *)((uint8_t *)dst+dst_pitch);
 	}
-
 }
 
 
+static void Blend_Tri_YUV64a(const void *src,void *_dst,const int32_t w,const int32_t h,
+	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+{
+	const YUYV16 *src1,*src2,*src3;
+	YUYV16 *dst;
 
-void JPSDR_Deinterlace::Blend_Tri_YUV32b(const void *src,void *_dst,const int32_t w,const int32_t h,
+	src1=(YUYV16 *)src;
+	src2=(YUYV16 *)((uint8_t *)src1+src_pitch);
+	src3=(YUYV16 *)((uint8_t *)src2+src_pitch);
+	dst=(YUYV16 *)(uint8_t *)_dst;
+
+	for (int32_t j=0; j<w; j++)
+	{
+		dst[j].y1=(uint16_t)(((uint32_t)src1[j].y1+(uint32_t)src2[j].y1+1)>>1);
+		dst[j].u=(uint16_t)(((uint32_t)src1[j].u+(uint32_t)src2[j].u+1)>>1);
+		dst[j].y2=(uint16_t)(((uint32_t)src1[j].y2+(uint32_t)src2[j].y2+1)>>1);
+		dst[j].v=(uint16_t)(((uint32_t)src1[j].v+(uint32_t)src2[j].v+1)>>1);
+	}
+	dst=(YUYV16 *)((uint8_t *)dst+dst_pitch);
+	
+	for (int32_t i=0; i<h; i++)
+	{
+		for (int32_t j=0; j<w; j++)
+		{
+			dst[j].y1=(uint16_t)((((uint32_t)src1[j].y1+(uint16_t)src3[j].y1+(((uint32_t)src2[j].y1) << 1))+2) >> 2);
+			dst[j].u=(uint16_t)((((uint32_t)src1[j].u+(uint16_t)src3[j].u+(((uint32_t)src2[j].u) << 1))+2) >> 2);
+			dst[j].y2=(uint16_t)((((uint32_t)src1[j].y2+(uint16_t)src3[j].y2+(((uint32_t)src2[j].y2) << 1))+2) >> 2);
+			dst[j].v=(uint16_t)((((uint32_t)src1[j].v+(uint16_t)src3[j].v+(((uint32_t)src2[j].v) << 1))+2) >> 2);
+		}
+		src1=(YUYV16 *)((uint8_t *)src1+src_pitch);
+		src2=(YUYV16 *)((uint8_t *)src2+src_pitch);
+		src3=(YUYV16 *)((uint8_t *)src3+src_pitch);
+		dst=(YUYV16 *)((uint8_t *)dst+dst_pitch);
+	}
+}
+
+
+static void Blend_Tri_YUV32b(const void *src,void *_dst,const int32_t w,const int32_t h,
 	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const YUYV *src1,*src2,*src3;
@@ -2536,22 +1963,48 @@ void JPSDR_Deinterlace::Blend_Tri_YUV32b(const void *src,void *_dst,const int32_
 	{
 		for (int32_t j=0; j<w; j++)
 		{
-			dst[j].y1=(((uint16_t)src1[j].y1+(uint16_t)src3[j].y1+(((uint16_t)src2[j].y1) << 1))+2) >> 2;
-			dst[j].u=(((uint16_t)src1[j].u+(uint16_t)src3[j].u+(((uint16_t)src2[j].u) << 1))+2) >> 2;
-			dst[j].y2=(((uint16_t)src1[j].y2+(uint16_t)src3[j].y2+(((uint16_t)src2[j].y2) << 1))+2) >> 2;
-			dst[j].v=(((uint16_t)src1[j].v+(uint16_t)src3[j].v+(((uint16_t)src2[j].v) << 1))+2) >> 2;
+			dst[j].y1=(uint8_t)((((uint16_t)src1[j].y1+(uint16_t)src3[j].y1+(((uint16_t)src2[j].y1) << 1))+2) >> 2);
+			dst[j].u=(uint8_t)((((uint16_t)src1[j].u+(uint16_t)src3[j].u+(((uint16_t)src2[j].u) << 1))+2) >> 2);
+			dst[j].y2=(uint8_t)((((uint16_t)src1[j].y2+(uint16_t)src3[j].y2+(((uint16_t)src2[j].y2) << 1))+2) >> 2);
+			dst[j].v=(uint8_t)((((uint16_t)src1[j].v+(uint16_t)src3[j].v+(((uint16_t)src2[j].v) << 1))+2) >> 2);
 		}
 		src1=(YUYV *)((uint8_t *)src1+src_pitch);
 		src2=(YUYV *)((uint8_t *)src2+src_pitch);
 		src3=(YUYV *)((uint8_t *)src3+src_pitch);
 		dst=(YUYV *)((uint8_t *)dst+dst_pitch);
 	}
-
 }
 
 
+static void Blend_Tri_YUV64b(const void *src,void *_dst,const int32_t w,const int32_t h,
+	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+{
+	const YUYV16 *src1,*src2,*src3;
+	YUYV16 *dst;
 
-void JPSDR_Deinterlace::Blend_Tri_YUV32c(const void *src,void *_dst,const int32_t w,const int32_t h,
+	src1=(YUYV16 *)src;
+	src2=(YUYV16 *)((uint8_t *)src1+src_pitch);
+	src3=(YUYV16 *)((uint8_t *)src2+src_pitch);
+	dst=(YUYV16 *)(uint8_t *)_dst;
+
+	for (int32_t i=0; i<h; i++)
+	{
+		for (int32_t j=0; j<w; j++)
+		{
+			dst[j].y1=(uint16_t)((((uint32_t)src1[j].y1+(uint32_t)src3[j].y1+(((uint32_t)src2[j].y1) << 1))+2) >> 2);
+			dst[j].u=(uint16_t)((((uint32_t)src1[j].u+(uint32_t)src3[j].u+(((uint32_t)src2[j].u) << 1))+2) >> 2);
+			dst[j].y2=(uint16_t)((((uint32_t)src1[j].y2+(uint32_t)src3[j].y2+(((uint32_t)src2[j].y2) << 1))+2) >> 2);
+			dst[j].v=(uint16_t)((((uint32_t)src1[j].v+(uint32_t)src3[j].v+(((uint32_t)src2[j].v) << 1))+2) >> 2);
+		}
+		src1=(YUYV16 *)((uint8_t *)src1+src_pitch);
+		src2=(YUYV16 *)((uint8_t *)src2+src_pitch);
+		src3=(YUYV16 *)((uint8_t *)src3+src_pitch);
+		dst=(YUYV16 *)((uint8_t *)dst+dst_pitch);
+	}
+}
+
+
+static void Blend_Tri_YUV32c(const void *src,void *_dst,const int32_t w,const int32_t h,
 	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const YUYV *src1,*src2,*src3;
@@ -2566,10 +2019,10 @@ void JPSDR_Deinterlace::Blend_Tri_YUV32c(const void *src,void *_dst,const int32_
 	{
 		for (int32_t j=0; j<w; j++)
 		{
-			dst[j].y1=(((uint16_t)src1[j].y1+(uint16_t)src3[j].y1+(((uint16_t)src2[j].y1) << 1))+2) >> 2;
-			dst[j].u=(((uint16_t)src1[j].u+(uint16_t)src3[j].u+(((uint16_t)src2[j].u) << 1))+2) >> 2;
-			dst[j].y2=(((uint16_t)src1[j].y2+(uint16_t)src3[j].y2+(((uint16_t)src2[j].y2) << 1))+2) >> 2;
-			dst[j].v=(((uint16_t)src1[j].v+(uint16_t)src3[j].v+(((uint16_t)src2[j].v) << 1))+2) >> 2;
+			dst[j].y1=(uint8_t)((((uint16_t)src1[j].y1+(uint16_t)src3[j].y1+(((uint16_t)src2[j].y1) << 1))+2) >> 2);
+			dst[j].u=(uint8_t)((((uint16_t)src1[j].u+(uint16_t)src3[j].u+(((uint16_t)src2[j].u) << 1))+2) >> 2);
+			dst[j].y2=(uint8_t)((((uint16_t)src1[j].y2+(uint16_t)src3[j].y2+(((uint16_t)src2[j].y2) << 1))+2) >> 2);
+			dst[j].v=(uint8_t)((((uint16_t)src1[j].v+(uint16_t)src3[j].v+(((uint16_t)src2[j].v) << 1))+2) >> 2);
 		}
 		src1=(YUYV *)((uint8_t *)src1+src_pitch);
 		src2=(YUYV *)((uint8_t *)src2+src_pitch);
@@ -2579,16 +2032,51 @@ void JPSDR_Deinterlace::Blend_Tri_YUV32c(const void *src,void *_dst,const int32_
 
 	for (int32_t j=0; j<w; j++)
 	{
-		dst[j].y1=((uint16_t)src1[j].y1+(uint16_t)src2[j].y1+1)>>1;
-		dst[j].u=((uint16_t)src1[j].u+(uint16_t)src2[j].u+1)>>1;
-		dst[j].y2=((uint16_t)src1[j].y2+(uint16_t)src2[j].y2+1)>>1;
-		dst[j].v=((uint16_t)src1[j].v+(uint16_t)src2[j].v+1)>>1;
+		dst[j].y1=(uint8_t)(((uint16_t)src1[j].y1+(uint16_t)src2[j].y1+1)>>1);
+		dst[j].u=(uint8_t)(((uint16_t)src1[j].u+(uint16_t)src2[j].u+1)>>1);
+		dst[j].y2=(uint8_t)(((uint16_t)src1[j].y2+(uint16_t)src2[j].y2+1)>>1);
+		dst[j].v=(uint8_t)(((uint16_t)src1[j].v+(uint16_t)src2[j].v+1)>>1);
 	}
-
 }
 
 
-void JPSDR_Deinterlace::Blend_Tri_YUV32(const void *src,void *_dst,void *buffer[],const int32_t w,
+static void Blend_Tri_YUV64c(const void *src,void *_dst,const int32_t w,const int32_t h,
+	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+{
+	const YUYV16 *src1,*src2,*src3;
+	YUYV16 *dst;
+
+	src1=(YUYV16 *)src;
+	src2=(YUYV16 *)((uint8_t *)src1+src_pitch);
+	src3=(YUYV16 *)((uint8_t *)src2+src_pitch);
+	dst=(YUYV16 *)(uint8_t *)_dst;
+
+	for (int32_t i=0; i<h; i++)
+	{
+		for (int32_t j=0; j<w; j++)
+		{
+			dst[j].y1=(uint16_t)((((uint32_t)src1[j].y1+(uint32_t)src3[j].y1+(((uint32_t)src2[j].y1) << 1))+2) >> 2);
+			dst[j].u=(uint16_t)((((uint32_t)src1[j].u+(uint32_t)src3[j].u+(((uint32_t)src2[j].u) << 1))+2) >> 2);
+			dst[j].y2=(uint16_t)((((uint32_t)src1[j].y2+(uint32_t)src3[j].y2+(((uint32_t)src2[j].y2) << 1))+2) >> 2);
+			dst[j].v=(uint16_t)((((uint32_t)src1[j].v+(uint32_t)src3[j].v+(((uint32_t)src2[j].v) << 1))+2) >> 2);
+		}
+		src1=(YUYV16 *)((uint8_t *)src1+src_pitch);
+		src2=(YUYV16 *)((uint8_t *)src2+src_pitch);
+		src3=(YUYV16 *)((uint8_t *)src3+src_pitch);
+		dst=(YUYV16 *)((uint8_t *)dst+dst_pitch);
+	}
+
+	for (int32_t j=0; j<w; j++)
+	{
+		dst[j].y1=(uint16_t)(((uint32_t)src1[j].y1+(uint32_t)src2[j].y1+1)>>1);
+		dst[j].u=(uint16_t)(((uint32_t)src1[j].u+(uint32_t)src2[j].u+1)>>1);
+		dst[j].y2=(uint16_t)(((uint32_t)src1[j].y2+(uint32_t)src2[j].y2+1)>>1);
+		dst[j].v=(uint16_t)(((uint32_t)src1[j].v+(uint32_t)src2[j].v+1)>>1);
+	}
+}
+
+
+static void Blend_Tri_YUV32(const void *src,void *_dst,void *buffer[],const int32_t w,
 	const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	const YUYV *src1,*src2,*src3;
@@ -2604,10 +2092,10 @@ void JPSDR_Deinterlace::Blend_Tri_YUV32(const void *src,void *_dst,void *buffer[
 	src1=(YUYV *)buffer[0];
 	for (int32_t j=0; j<w; j++)
 	{
-		dst[j].y1=((uint16_t)src1[j].y1+(uint16_t)src2[j].y1+1)>>1;
-		dst[j].u=((uint16_t)src1[j].u+(uint16_t)src2[j].u+1)>>1;
-		dst[j].y2=((uint16_t)src1[j].y2+(uint16_t)src2[j].y2+1)>>1;
-		dst[j].v=((uint16_t)src1[j].v+(uint16_t)src2[j].v+1)>>1;
+		dst[j].y1=(uint8_t)(((uint16_t)src1[j].y1+(uint16_t)src2[j].y1+1)>>1);
+		dst[j].u=(uint8_t)(((uint16_t)src1[j].u+(uint16_t)src2[j].u+1)>>1);
+		dst[j].y2=(uint8_t)(((uint16_t)src1[j].y2+(uint16_t)src2[j].y2+1)>>1);
+		dst[j].v=(uint8_t)(((uint16_t)src1[j].v+(uint16_t)src2[j].v+1)>>1);
 	}
 	dst=(YUYV *)((uint8_t *)dst+dst_pitch);
 
@@ -2618,10 +2106,10 @@ void JPSDR_Deinterlace::Blend_Tri_YUV32(const void *src,void *_dst,void *buffer[
 		src1=(YUYV *)buffer[indice_buffer];
 		for (int32_t j=0; j<w; j++)
 		{
-			dst[j].y1=(((uint16_t)src1[j].y1+(uint16_t)src3[j].y1+(((uint16_t)src2[j].y1) << 1))+2) >> 2;
-			dst[j].u=(((uint16_t)src1[j].u+(uint16_t)src3[j].u+(((uint16_t)src2[j].u) << 1))+2) >> 2;
-			dst[j].y2=(((uint16_t)src1[j].y2+(uint16_t)src3[j].y2+(((uint16_t)src2[j].y2) << 1))+2) >> 2;
-			dst[j].v=(((uint16_t)src1[j].v+(uint16_t)src3[j].v+(((uint16_t)src2[j].v) << 1))+2) >> 2;
+			dst[j].y1=(uint8_t)((((uint16_t)src1[j].y1+(uint16_t)src3[j].y1+(((uint16_t)src2[j].y1) << 1))+2) >> 2);
+			dst[j].u=(uint8_t)((((uint16_t)src1[j].u+(uint16_t)src3[j].u+(((uint16_t)src2[j].u) << 1))+2) >> 2);
+			dst[j].y2=(uint8_t)((((uint16_t)src1[j].y2+(uint16_t)src3[j].y2+(((uint16_t)src2[j].y2) << 1))+2) >> 2);
+			dst[j].v=(uint8_t)((((uint16_t)src1[j].v+(uint16_t)src3[j].v+(((uint16_t)src2[j].v) << 1))+2) >> 2);
 		}
 		src2=(YUYV *)((uint8_t *)src2+src_pitch);
 		src3=(YUYV *)((uint8_t *)src3+src_pitch);
@@ -2632,118 +2120,86 @@ void JPSDR_Deinterlace::Blend_Tri_YUV32(const void *src,void *_dst,void *buffer[
 	src1=(YUYV *)buffer[indice_buffer];
 	for (int32_t j=0; j<w; j++)
 	{
-		dst[j].y1=((uint16_t)src1[j].y1+(uint16_t)src2[j].y1+1)>>1;
-		dst[j].u=((uint16_t)src1[j].u+(uint16_t)src2[j].u+1)>>1;
-		dst[j].y2=((uint16_t)src1[j].y2+(uint16_t)src2[j].y2+1)>>1;
-		dst[j].v=((uint16_t)src1[j].v+(uint16_t)src2[j].v+1)>>1;
+		dst[j].y1=(uint8_t)(((uint16_t)src1[j].y1+(uint16_t)src2[j].y1+1)>>1);
+		dst[j].u=(uint8_t)(((uint16_t)src1[j].u+(uint16_t)src2[j].u+1)>>1);
+		dst[j].y2=(uint8_t)(((uint16_t)src1[j].y2+(uint16_t)src2[j].y2+1)>>1);
+		dst[j].v=(uint8_t)(((uint16_t)src1[j].v+(uint16_t)src2[j].v+1)>>1);
 	}
-
 }
 
 
-
-void JPSDR_Deinterlace::Blend_Tri_Planar8(const void *src,void *_dst,const int32_t w,const int32_t h,
+static void Blend_Tri_YUV64(const void *src,void *_dst,void *buffer[],const int32_t w,const int32_t h,
 	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
-	const uint8_t *src1,*src2,*src3;
-	uint8_t *dst;
+	const YUYV16 *src1,*src2,*src3;
+	YUYV16 *dst;
+	uint8_t indice_buffer;
 
-	src1=(uint8_t *)src;
-	src2=src1+src_pitch;
-	src3=src2+src_pitch;
-	dst=(uint8_t *)_dst;
+	src2=(YUYV16 *)((uint8_t *)src+src_pitch);
+	src3=(YUYV16 *)((uint8_t *)src2+src_pitch);
+	dst=(YUYV16 *)_dst;
+	memcpy(buffer[0],src,w << 3);
+	indice_buffer=1;
 
+	src1=(YUYV16 *)buffer[0];
 	for (int32_t j=0; j<w; j++)
-		dst[j]=((uint16_t)src1[j]+(uint16_t)src2[j]+1)>>1;
-	dst+=dst_pitch;
-
-	for (int32_t i=0; i<h; i++)
 	{
-		for (int32_t j=0; j<w; j++)
-			dst[j]=(((uint16_t)src1[j]+(uint16_t)src3[j]+(((uint16_t)src2[j]) << 1))+2) >> 2;
-		src1+=src_pitch;
-		src2+=src_pitch;
-		src3+=src_pitch;
-		dst+=dst_pitch;
+		dst[j].y1=(uint16_t)(((uint32_t)src1[j].y1+(uint32_t)src2[j].y1+1)>>1);
+		dst[j].u=(uint16_t)(((uint32_t)src1[j].u+(uint32_t)src2[j].u+1)>>1);
+		dst[j].y2=(uint16_t)(((uint32_t)src1[j].y2+(uint32_t)src2[j].y2+1)>>1);
+		dst[j].v=(uint16_t)(((uint32_t)src1[j].v+(uint32_t)src2[j].v+1)>>1);
 	}
-
-	for (int32_t j=0; j<w; j++)
-		dst[j]=((uint16_t)src1[j]+(uint16_t)src2[j]+1)>>1;
-
-}
-
-
-
-void JPSDR_Deinterlace::Blend_Tri_Planar8a(const void *src,void *_dst,const int32_t w,const int32_t h,
-	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
-{
-	const uint8_t *src1,*src2,*src3;
-	uint8_t *dst;
-
-	src1=(uint8_t *)src;
-	src2=src1+src_pitch;
-	src3=src2+src_pitch;
-	dst=(uint8_t *)_dst;
-
-	for (int32_t j=0; j<w; j++)
-		dst[j]=((uint16_t)src1[j]+(uint16_t)src2[j]+1)>>1;
-	dst+=dst_pitch;
+	dst=(YUYV16 *)((uint8_t *)dst+dst_pitch);
 
 	for (int32_t i=0; i<h; i++)
 	{
-		for (int32_t j=0; j<w; j++)
-			dst[j]=(((uint16_t)src1[j]+(uint16_t)src3[j]+(((uint16_t)src2[j]) << 1))+2) >> 2;
-		src1+=src_pitch;
-		src2+=src_pitch;
-		src3+=src_pitch;
-		dst+=dst_pitch;
-	}
-}
-
-
-
-void JPSDR_Deinterlace::Blend_Tri_Planar8b(const void *src,void *_dst,const int32_t w,const int32_t h,
-	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
-{
-	const uint8_t *src1,*src2,*src3;
-	uint8_t *dst;
-
-	src1=(uint8_t *)src;
-	src2=src1+src_pitch;
-	src3=src2+src_pitch;
-	dst=(uint8_t *)_dst;
-
-	for (int32_t i=0; i<h; i++)
-	{
-		for (int32_t j=0; j<w; j++)
-			dst[j]=(((uint16_t)src1[j]+(uint16_t)src3[j]+(((uint16_t)src2[j]) << 1))+2) >> 2;
-		src1+=src_pitch;
-		src2+=src_pitch;
-		src3+=src_pitch;
-		dst+=dst_pitch;
-	}
-
-}
-
-
-
-void JPSDR_Deinterlace::Blend_Tri_Planar8c(const void *src,void *_dst,const int32_t w,const int32_t h,
-	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
-{
-	const uint8_t *src1,*src2,*src3;
-	uint8_t *dst;
-
-	src1=(uint8_t *)src;
-	src2=src1+src_pitch;
-	src3=src2+src_pitch;
-	dst=(uint8_t *)_dst;
-
-	for (int32_t i=0; i<h; i++)
-	{
+		memcpy(buffer[indice_buffer],src2,w << 3);
+		indice_buffer=(indice_buffer+1)%2;
+		src1=(YUYV16 *)buffer[indice_buffer];
 		for (int32_t j=0; j<w; j++)
 		{
-			dst[j]=(((uint16_t)src1[j]+(uint16_t)src3[j]+(((uint16_t)src2[j]) << 1))+2) >> 2;
+			dst[j].y1=(uint16_t)((((uint32_t)src1[j].y1+(uint32_t)src3[j].y1+(((uint32_t)src2[j].y1) << 1))+2) >> 2);
+			dst[j].u=(uint16_t)((((uint32_t)src1[j].u+(uint32_t)src3[j].u+(((uint32_t)src2[j].u) << 1))+2) >> 2);
+			dst[j].y2=(uint16_t)((((uint32_t)src1[j].y2+(uint32_t)src3[j].y2+(((uint32_t)src2[j].y2) << 1))+2) >> 2);
+			dst[j].v=(uint16_t)((((uint32_t)src1[j].v+(uint32_t)src3[j].v+(((uint32_t)src2[j].v) << 1))+2) >> 2);
 		}
+		src2=(YUYV16 *)((uint8_t *)src2+src_pitch);
+		src3=(YUYV16 *)((uint8_t *)src3+src_pitch);
+		dst=(YUYV16 *)((uint8_t *)dst+dst_pitch);
+	}
+
+	indice_buffer=(indice_buffer+1)%2;
+	src1=(YUYV16 *)buffer[indice_buffer];
+	for (int32_t j=0; j<w; j++)
+	{
+		dst[j].y1=(uint16_t)(((uint32_t)src1[j].y1+(uint32_t)src2[j].y1+1)>>1);
+		dst[j].u=(uint16_t)(((uint32_t)src1[j].u+(uint32_t)src2[j].u+1)>>1);
+		dst[j].y2=(uint16_t)(((uint32_t)src1[j].y2+(uint32_t)src2[j].y2+1)>>1);
+		dst[j].v=(uint16_t)(((uint32_t)src1[j].v+(uint32_t)src2[j].v+1)>>1);
+	}
+}
+
+
+static void Blend_Tri_Planar8(const void *src,void *_dst,const int32_t w,const int32_t h,
+	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+{
+	const uint8_t *src1,*src2,*src3;
+	uint8_t *dst;
+
+	src1=(uint8_t *)src;
+	src2=src1+src_pitch;
+	src3=src2+src_pitch;
+	dst=(uint8_t *)_dst;
+
+	for (int32_t j=0; j<w; j++)
+		dst[j]=(uint8_t)(((uint16_t)src1[j]+(uint16_t)src2[j]+1)>>1);
+	dst+=dst_pitch;
+
+	for (int32_t i=0; i<h; i++)
+	{
+		for (int32_t j=0; j<w; j++)
+			dst[j]=(uint8_t)((((uint16_t)src1[j]+(uint16_t)src3[j]+(((uint16_t)src2[j]) << 1))+2) >> 2);
+
 		src1+=src_pitch;
 		src2+=src_pitch;
 		src3+=src_pitch;
@@ -2751,14 +2207,245 @@ void JPSDR_Deinterlace::Blend_Tri_Planar8c(const void *src,void *_dst,const int3
 	}
 
 	for (int32_t j=0; j<w; j++)
+		dst[j]=(uint8_t)(((uint16_t)src1[j]+(uint16_t)src2[j]+1)>>1);
+}
+
+
+static void Blend_Tri_Planar16(const void *src,void *_dst,const int32_t w,const int32_t h,
+	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+{
+	const uint8_t *src1_,*src2_,*src3_;
+	uint8_t *dst_;
+
+	src1_=(uint8_t *)src;
+	src2_=src1_+src_pitch;
+	src3_=src2_+src_pitch;
+	dst_=(uint8_t *)_dst;
+
+	const uint16_t *src1=(const uint16_t *)src1_,*src2=(const uint16_t *)src2_;
+	uint16_t *dst=(uint16_t *)dst_;
+
+	for (int32_t j=0; j<w; j++)
+		dst[j]=(uint16_t)(((uint32_t)src1[j]+(uint32_t)src2[j]+1)>>1);
+	dst_+=dst_pitch;
+
+	const uint16_t *src3;
+
+	for (int32_t i=0; i<h; i++)
 	{
-		dst[j]=((uint16_t)src1[j]+(uint16_t)src2[j]+1)>>1;
+		src1=(const uint16_t *)src1_;
+		src2=(const uint16_t *)src2_;
+		src3=(const uint16_t *)src3_;
+		dst=(uint16_t *)dst_;
+
+		for (int32_t j=0; j<w; j++)
+			dst[j]=(uint16_t)((((uint32_t)src1[j]+(uint32_t)src3[j]+(((uint32_t)src2[j]) << 1))+2) >> 2);
+
+		src1_+=src_pitch;
+		src2_+=src_pitch;
+		src3_+=src_pitch;
+		dst_+=dst_pitch;
+	}
+
+	src1=(const uint16_t *)src1_;
+	src2=(const uint16_t *)src2_;
+	dst=(uint16_t *)dst_;
+
+	for (int32_t j=0; j<w; j++)
+		dst[j]=(uint16_t)(((uint32_t)src1[j]+(uint32_t)src2[j]+1)>>1);
+}
+
+
+static void Blend_Tri_Planar8a(const void *src,void *_dst,const int32_t w,const int32_t h,
+	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+{
+	const uint8_t *src1,*src2,*src3;
+	uint8_t *dst;
+
+	src1=(uint8_t *)src;
+	src2=src1+src_pitch;
+	src3=src2+src_pitch;
+	dst=(uint8_t *)_dst;
+
+	for (int32_t j=0; j<w; j++)
+		dst[j]=(uint8_t)(((uint16_t)src1[j]+(uint16_t)src2[j]+1)>>1);
+	dst+=dst_pitch;
+
+	for (int32_t i=0; i<h; i++)
+	{
+		for (int32_t j=0; j<w; j++)
+			dst[j]=(uint8_t)((((uint16_t)src1[j]+(uint16_t)src3[j]+(((uint16_t)src2[j]) << 1))+2) >> 2);
+
+		src1+=src_pitch;
+		src2+=src_pitch;
+		src3+=src_pitch;
+		dst+=dst_pitch;
+	}
+}
+
+
+static void Blend_Tri_Planar16a(const void *src,void *_dst,const int32_t w,const int32_t h,
+	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+{
+	const uint8_t *src1_,*src2_,*src3_;
+	uint8_t *dst_;
+
+	src1_=(uint8_t *)src;
+	src2_=src1_+src_pitch;
+	src3_=src2_+src_pitch;
+	dst_=(uint8_t *)_dst;
+
+	const uint16_t *src1=(const uint16_t *)src1_,*src2=(const uint16_t *)src2_;
+	uint16_t *dst=(uint16_t *)dst_;
+
+	for (int32_t j=0; j<w; j++)
+		dst[j]=(uint16_t)(((uint32_t)src1[j]+(uint32_t)src2[j]+1)>>1);
+	dst_+=dst_pitch;
+
+	const uint16_t *src3;
+
+	for (int32_t i=0; i<h; i++)
+	{
+		src1=(const uint16_t *)src1_;
+		src2=(const uint16_t *)src2_;
+		src3=(const uint16_t *)src3_;
+		dst=(uint16_t *)dst_;
+
+		for (int32_t j=0; j<w; j++)
+			dst[j]=(uint16_t)((((uint32_t)src1[j]+(uint32_t)src3[j]+(((uint32_t)src2[j]) << 1))+2) >> 2);
+
+		src1_+=src_pitch;
+		src2_+=src_pitch;
+		src3_+=src_pitch;
+		dst_+=dst_pitch;
+	}
+}
+
+
+static void Blend_Tri_Planar8b(const void *src,void *_dst,const int32_t w,const int32_t h,
+	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+{
+	const uint8_t *src1,*src2,*src3;
+	uint8_t *dst;
+
+	src1=(uint8_t *)src;
+	src2=src1+src_pitch;
+	src3=src2+src_pitch;
+	dst=(uint8_t *)_dst;
+
+	for (int32_t i=0; i<h; i++)
+	{
+		for (int32_t j=0; j<w; j++)
+			dst[j]=(uint8_t)((((uint16_t)src1[j]+(uint16_t)src3[j]+(((uint16_t)src2[j]) << 1))+2) >> 2);
+
+		src1+=src_pitch;
+		src2+=src_pitch;
+		src3+=src_pitch;
+		dst+=dst_pitch;
 	}
 
 }
 
 
-void JPSDR_Deinterlace::Blend_Tri_Planar8(const void *src,void *_dst,void *buffer[],const int32_t w,
+static void Blend_Tri_Planar16b(const void *src,void *_dst,const int32_t w,const int32_t h,
+	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+{
+	const uint8_t *src1_,*src2_,*src3_;
+	uint8_t *dst_;
+
+	src1_=(uint8_t *)src;
+	src2_=src1_+src_pitch;
+	src3_=src2_+src_pitch;
+	dst_=(uint8_t *)_dst;
+
+	const uint16_t *src1,*src2,*src3;
+	uint16_t *dst;
+
+	for (int32_t i=0; i<h; i++)
+	{
+		src1=(const uint16_t *)src1_;
+		src2=(const uint16_t *)src2_;
+		src3=(const uint16_t *)src3_;
+		dst=(uint16_t *)dst_;
+
+		for (int32_t j=0; j<w; j++)
+			dst[j]=(uint16_t)((((uint32_t)src1[j]+(uint32_t)src3[j]+(((uint32_t)src2[j]) << 1))+2) >> 2);
+
+		src1_+=src_pitch;
+		src2_+=src_pitch;
+		src3_+=src_pitch;
+		dst_+=dst_pitch;
+	}
+}
+
+
+static void Blend_Tri_Planar8c(const void *src,void *_dst,const int32_t w,const int32_t h,
+	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+{
+	const uint8_t *src1,*src2,*src3;
+	uint8_t *dst;
+
+	src1=(uint8_t *)src;
+	src2=src1+src_pitch;
+	src3=src2+src_pitch;
+	dst=(uint8_t *)_dst;
+
+	for (int32_t i=0; i<h; i++)
+	{
+		for (int32_t j=0; j<w; j++)
+			dst[j]=(uint8_t)((((uint16_t)src1[j]+(uint16_t)src3[j]+(((uint16_t)src2[j]) << 1))+2) >> 2);
+
+		src1+=src_pitch;
+		src2+=src_pitch;
+		src3+=src_pitch;
+		dst+=dst_pitch;
+	}
+
+	for (int32_t j=0; j<w; j++)
+		dst[j]=(uint8_t)(((uint16_t)src1[j]+(uint16_t)src2[j]+1)>>1);
+}
+
+
+static void Blend_Tri_Planar16c(const void *src,void *_dst,const int32_t w,const int32_t h,
+	ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+{
+	const uint8_t *src1_,*src2_,*src3_;
+	uint8_t *dst_;
+
+	src1_=(uint8_t *)src;
+	src2_=src1_+src_pitch;
+	src3_=src2_+src_pitch;
+	dst_=(uint8_t *)_dst;
+
+	const uint16_t *src1,*src2,*src3;
+	uint16_t *dst;
+
+	for (int32_t i=0; i<h; i++)
+	{
+		src1=(const uint16_t *)src1_;
+		src2=(const uint16_t *)src2_;
+		src3=(const uint16_t *)src3_;
+		dst=(uint16_t *)dst_;
+
+		for (int32_t j=0; j<w; j++)
+			dst[j]=(uint16_t)((((uint32_t)src1[j]+(uint32_t)src3[j]+(((uint32_t)src2[j]) << 1))+2) >> 2);
+
+		src1_+=src_pitch;
+		src2_+=src_pitch;
+		src3_+=src_pitch;
+		dst_+=dst_pitch;
+	}
+
+	src1=(const uint16_t *)src1_;
+	src2=(const uint16_t *)src2_;
+	dst=(uint16_t *)dst_;
+
+	for (int32_t j=0; j<w; j++)
+		dst[j]=(uint16_t)(((uint32_t)src1[j]+(uint32_t)src2[j]+1)>>1);
+}
+
+
+static void Blend_Tri_Planar8(const void *src,void *_dst,void *buffer[],const int32_t w,
 	const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
 {
 	uint8_t *src1,*src2,*src3,*dst;
@@ -2771,8 +2458,10 @@ void JPSDR_Deinterlace::Blend_Tri_Planar8(const void *src,void *_dst,void *buffe
 	indice_buffer=1;
 
 	src1=(uint8_t *)buffer[0];
+
 	for (int32_t j=0; j<w; j++)
-		dst[j]=((uint16_t)src1[j]+(uint16_t)src2[j]+1)>>1;
+		dst[j]=(uint8_t)(((uint16_t)src1[j]+(uint16_t)src2[j]+1)>>1);
+
 	dst+=dst_pitch;
 
 	for (int32_t i=0; i<h; i++)
@@ -2780,8 +2469,10 @@ void JPSDR_Deinterlace::Blend_Tri_Planar8(const void *src,void *_dst,void *buffe
 		memcpy(buffer[indice_buffer],src2,w);
 		indice_buffer=(indice_buffer+1)%2;
 		src1=(uint8_t *)buffer[indice_buffer];
+
 		for (int32_t j=0; j<w; j++)
-			dst[j]=(((uint16_t)src1[j]+(uint16_t)src3[j]+(((uint16_t)src2[j]) << 1))+2) >> 2;
+			dst[j]=(uint8_t)((((uint16_t)src1[j]+(uint16_t)src3[j]+(((uint16_t)src2[j]) << 1))+2) >> 2);
+
 		src2+=src_pitch;
 		src3+=src_pitch;
 		dst+=dst_pitch;
@@ -2789,14 +2480,67 @@ void JPSDR_Deinterlace::Blend_Tri_Planar8(const void *src,void *_dst,void *buffe
 
 	indice_buffer=(indice_buffer+1)%2;
 	src1=(uint8_t *)buffer[indice_buffer];
+
 	for (int32_t j=0; j<w; j++)
-		dst[j]=((uint16_t)src1[j]+(uint16_t)src2[j]+1)>>1;
-
+		dst[j]=(uint8_t)(((uint16_t)src1[j]+(uint16_t)src2[j]+1)>>1);
 }
 
 
+static void Blend_Tri_Planar16(const void *src,void *_dst,void *buffer[],const int32_t w,
+	const int32_t h,ptrdiff_t src_pitch,ptrdiff_t dst_pitch)
+{
+	uint8_t *src1_,*src2_,*src3_,*dst_;
+	uint8_t indice_buffer;
 
-void JPSDR_Deinterlace::Deinterlace_Blend_MT_1(uint8_t thread_num)
+	src2_=((uint8_t *)src)+src_pitch;
+	src3_=src2_+src_pitch;
+	dst_=(uint8_t *)_dst;
+	memcpy(buffer[0],src,w);
+	indice_buffer=1;
+
+	src1_=(uint8_t *)buffer[0];
+
+	const uint16_t *src1=(const uint16_t *)src1_,*src2=(const uint16_t *)src2_;
+	uint16_t *dst=(uint16_t *)dst_;
+
+	for (int32_t j=0; j<w; j++)
+		dst[j]=(uint16_t)(((uint32_t)src1[j]+(uint32_t)src2[j]+1)>>1);
+
+	dst_+=dst_pitch;
+
+	const uint16_t *src3;
+
+	for (int32_t i=0; i<h; i++)
+	{
+		memcpy(buffer[indice_buffer],src2_,w);
+		indice_buffer=(indice_buffer+1)%2;
+		src1_=(uint8_t *)buffer[indice_buffer];
+
+		src1=(const uint16_t *)src1_;
+		src2=(const uint16_t *)src2_;
+		src3=(const uint16_t *)src3_;
+		dst=(uint16_t *)dst_;
+
+		for (int32_t j=0; j<w; j++)
+			dst[j]=(uint16_t)((((uint32_t)src1[j]+(uint32_t)src3[j]+(((uint32_t)src2[j]) << 1))+2) >> 2);
+
+		src2_+=src_pitch;
+		src3_+=src_pitch;
+		dst_+=dst_pitch;
+	}
+
+	indice_buffer=(indice_buffer+1)%2;
+	src1_=(uint8_t *)buffer[indice_buffer];
+	src1=(const uint16_t *)src1_;
+	src2=(const uint16_t *)src2_;
+	dst=(uint16_t *)dst_;
+
+	for (int32_t j=0; j<w; j++)
+		dst[j]=(uint16_t)(((uint32_t)src1[j]+(uint32_t)src2[j]+1)>>1);
+}
+
+
+void JPSDR_Deinterlace::Deinterlace_Blend_8_MT_1(uint8_t thread_num)
 {
 	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
 
@@ -2812,16 +2556,24 @@ void JPSDR_Deinterlace::Deinterlace_Blend_MT_1(uint8_t thread_num)
 		if (mt_data_inf.bottom) h--;
 	}
 
-	if (AVX_Enable)
-		JPSDR_Deinterlace_Blend_AVX_3_A(mt_data_inf.src1_0,mt_data_inf.src1_1,
-			mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+#ifdef AVX2_BUILD_POSSIBLE
+	if (AVX2_Enable)
+		JPSDR_Deinterlace_Blend_8_AVX2(mt_data_inf.src1_0,mt_data_inf.src1_1,
+			mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 	else
+#endif
 	{
-		if (SSE2_Enable)
-			JPSDR_Deinterlace_Blend_SSE_3_A(mt_data_inf.src1_0,mt_data_inf.src1_1,
+		if (AVX_Enable)
+			JPSDR_Deinterlace_Blend_8_AVX(mt_data_inf.src1_0,mt_data_inf.src1_1,
 				mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
-		else JPSDR_Deinterlace_Blend_Non_MMX_24(mt_data_inf.src1_0,mt_data_inf.src1_1,mt_data_inf.dst1,
-			mt_data_inf.src_Y_w_32,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		else
+		{
+			if (SSE2_Enable)
+				JPSDR_Deinterlace_Blend_8_SSE2(mt_data_inf.src1_0,mt_data_inf.src1_1,
+					mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			else JPSDR_Deinterlace_Blend_24(mt_data_inf.src1_0,mt_data_inf.src1_1,mt_data_inf.dst1,
+				mt_data_inf.src_Y_w_32,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		}
 	}
 
 	if (mt_data_inf.div_h)
@@ -2845,8 +2597,7 @@ void JPSDR_Deinterlace::Deinterlace_Blend_MT_1(uint8_t thread_num)
 }
 
 
-
-void JPSDR_Deinterlace::Deinterlace_Blend_MT_2(uint8_t thread_num)
+void JPSDR_Deinterlace::Deinterlace_Blend_16_MT_1(uint8_t thread_num)
 {
 	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
 
@@ -2862,16 +2613,24 @@ void JPSDR_Deinterlace::Deinterlace_Blend_MT_2(uint8_t thread_num)
 		if (mt_data_inf.bottom) h--;
 	}
 
-	if (AVX_Enable)
-		JPSDR_Deinterlace_Blend_AVX_3_A(mt_data_inf.src1_0,mt_data_inf.src1_1,
-			mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+#ifdef AVX2_BUILD_POSSIBLE
+	if (AVX2_Enable)
+		JPSDR_Deinterlace_Blend_16_AVX2(mt_data_inf.src1_0,mt_data_inf.src1_1,
+			mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 	else
+#endif
 	{
-		if (SSE2_Enable)
-			JPSDR_Deinterlace_Blend_SSE_3_A(mt_data_inf.src1_0,mt_data_inf.src1_1,
+		if (AVX_Enable)
+			JPSDR_Deinterlace_Blend_16_AVX(mt_data_inf.src1_0,mt_data_inf.src1_1,
 				mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
-		else JPSDR_Deinterlace_Blend_Non_MMX_32(mt_data_inf.src1_0,mt_data_inf.src1_1,mt_data_inf.dst1,
-			mt_data_inf.src_Y_w_32,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		else
+		{
+			if (SSE2_Enable)
+				JPSDR_Deinterlace_Blend_16_SSE2(mt_data_inf.src1_0,mt_data_inf.src1_1,
+					mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			else JPSDR_Deinterlace_Blend_48(mt_data_inf.src1_0,mt_data_inf.src1_1,mt_data_inf.dst1,
+				mt_data_inf.src_Y_w_32>>1,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		}
 	}
 
 	if (mt_data_inf.div_h)
@@ -2895,7 +2654,7 @@ void JPSDR_Deinterlace::Deinterlace_Blend_MT_2(uint8_t thread_num)
 }
 
 
-void JPSDR_Deinterlace::Deinterlace_Blend_MT_3(uint8_t thread_num)
+void JPSDR_Deinterlace::Deinterlace_Blend_8_MT_2(uint8_t thread_num)
 {
 	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
 
@@ -2911,16 +2670,138 @@ void JPSDR_Deinterlace::Deinterlace_Blend_MT_3(uint8_t thread_num)
 		if (mt_data_inf.bottom) h--;
 	}
 
-	if (AVX_Enable)
-		JPSDR_Deinterlace_Blend_AVX_3_A(mt_data_inf.src1_0,mt_data_inf.src1_1,
-			mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+#ifdef AVX2_BUILD_POSSIBLE
+	if (AVX2_Enable)
+		JPSDR_Deinterlace_Blend_8_AVX2(mt_data_inf.src1_0,mt_data_inf.src1_1,
+			mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+	else
+#endif
+	{
+		if (AVX_Enable)
+			JPSDR_Deinterlace_Blend_8_AVX(mt_data_inf.src1_0,mt_data_inf.src1_1,
+				mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		else
+		{
+			if (SSE2_Enable)
+				JPSDR_Deinterlace_Blend_8_SSE2(mt_data_inf.src1_0,mt_data_inf.src1_1,
+					mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			else JPSDR_Deinterlace_Blend_32(mt_data_inf.src1_0,mt_data_inf.src1_1,mt_data_inf.dst1,
+				mt_data_inf.src_Y_w_32,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		}
+	}
+
+	if (mt_data_inf.div_h)
+	{
+		if (mt_data_inf.dec_h)
+		{
+			if (mt_data_inf.bottom)
+				memcpy((uint8_t *)mt_data_inf.dst1+(mt_data_inf.dst_pitch1*h),
+					(uint8_t *)mt_data_inf.dst1+(mt_data_inf.dst_pitch1*(h-1)),mt_data_inf.src_Y_w_32 << 2);
+			else
+				memcpy(mt_data_inf.dst1,(uint8_t *)mt_data_inf.dst1+mt_data_inf.dst_pitch1,
+					mt_data_inf.src_Y_w_32 << 2);
+		}
+	}
 	else
 	{
-		if (SSE2_Enable)
-			JPSDR_Deinterlace_Blend_SSE_3_A(mt_data_inf.src1_0,mt_data_inf.src1_1,
+		if (mt_data_inf.bottom)
+			memcpy((uint8_t *)mt_data_inf.dst1+(mt_data_inf.dst_pitch1*h),
+				(uint8_t *)mt_data_inf.dst1+(mt_data_inf.dst_pitch1*(h-1)),mt_data_inf.src_Y_w_32 << 2);
+	}
+}
+
+
+void JPSDR_Deinterlace::Deinterlace_Blend_16_MT_2(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	int32_t h=mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min;
+
+	if (mt_data_inf.div_h)
+	{
+		h>>=1;
+		if (mt_data_inf.dec_h) h--;
+	}
+	else
+	{
+		if (mt_data_inf.bottom) h--;
+	}
+
+#ifdef AVX2_BUILD_POSSIBLE
+	if (AVX2_Enable)
+		JPSDR_Deinterlace_Blend_16_AVX2(mt_data_inf.src1_0,mt_data_inf.src1_1,
+			mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+	else
+#endif
+	{
+		if (AVX_Enable)
+			JPSDR_Deinterlace_Blend_16_AVX(mt_data_inf.src1_0,mt_data_inf.src1_1,
 				mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
-		else JPSDR_Deinterlace_Blend_Non_MMX_8(mt_data_inf.src1_0,mt_data_inf.src1_1,mt_data_inf.dst1,
-			mt_data_inf.src_Y_w,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		else
+		{
+			if (SSE2_Enable)
+				JPSDR_Deinterlace_Blend_16_SSE2(mt_data_inf.src1_0,mt_data_inf.src1_1,
+					mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			else JPSDR_Deinterlace_Blend_64(mt_data_inf.src1_0,mt_data_inf.src1_1,mt_data_inf.dst1,
+				mt_data_inf.src_Y_w_32>>1,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		}
+	}
+
+	if (mt_data_inf.div_h)
+	{
+		if (mt_data_inf.dec_h)
+		{
+			if (mt_data_inf.bottom)
+				memcpy((uint8_t *)mt_data_inf.dst1+(mt_data_inf.dst_pitch1*h),
+					(uint8_t *)mt_data_inf.dst1+(mt_data_inf.dst_pitch1*(h-1)),mt_data_inf.src_Y_w_32 << 2);
+			else
+				memcpy(mt_data_inf.dst1,(uint8_t *)mt_data_inf.dst1+mt_data_inf.dst_pitch1,
+					mt_data_inf.src_Y_w_32 << 2);
+		}
+	}
+	else
+	{
+		if (mt_data_inf.bottom)
+			memcpy((uint8_t *)mt_data_inf.dst1+(mt_data_inf.dst_pitch1*h),
+				(uint8_t *)mt_data_inf.dst1+(mt_data_inf.dst_pitch1*(h-1)),mt_data_inf.src_Y_w_32 << 2);
+	}
+}
+
+
+void JPSDR_Deinterlace::Deinterlace_Blend_8_MT_3(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	int32_t h=mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min;
+
+	if (mt_data_inf.div_h)
+	{
+		h>>=1;
+		if (mt_data_inf.dec_h) h--;
+	}
+	else
+	{
+		if (mt_data_inf.bottom) h--;
+	}
+
+#ifdef AVX2_BUILD_POSSIBLE
+	if (AVX2_Enable)
+		JPSDR_Deinterlace_Blend_8_AVX2(mt_data_inf.src1_0,mt_data_inf.src1_1,
+			mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+	else
+#endif
+	{
+		if (AVX_Enable)
+			JPSDR_Deinterlace_Blend_8_AVX(mt_data_inf.src1_0,mt_data_inf.src1_1,
+				mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		else
+		{
+			if (SSE2_Enable)
+				JPSDR_Deinterlace_Blend_8_SSE2(mt_data_inf.src1_0,mt_data_inf.src1_1,
+					mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			else JPSDR_Deinterlace_Blend_8(mt_data_inf.src1_0,mt_data_inf.src1_1,mt_data_inf.dst1,
+				mt_data_inf.src_Y_w,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		}
 	}
 
 	if (mt_data_inf.div_h)
@@ -2944,8 +2825,64 @@ void JPSDR_Deinterlace::Deinterlace_Blend_MT_3(uint8_t thread_num)
 }
 
 
+void JPSDR_Deinterlace::Deinterlace_Blend_16_MT_3(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
 
-void JPSDR_Deinterlace::Deinterlace_Blend_MT_4(uint8_t thread_num)
+	int32_t h=mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min;
+
+	if (mt_data_inf.div_h)
+	{
+		h>>=1;
+		if (mt_data_inf.dec_h) h--;
+	}
+	else
+	{
+		if (mt_data_inf.bottom) h--;
+	}
+
+#ifdef AVX2_BUILD_POSSIBLE
+	if (AVX2_Enable)
+		JPSDR_Deinterlace_Blend_16_AVX2(mt_data_inf.src1_0,mt_data_inf.src1_1,
+			mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+	else
+#endif
+	{
+		if (AVX_Enable)
+			JPSDR_Deinterlace_Blend_16_AVX(mt_data_inf.src1_0,mt_data_inf.src1_1,
+				mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		else
+		{
+			if (SSE2_Enable)
+				JPSDR_Deinterlace_Blend_16_SSE2(mt_data_inf.src1_0,mt_data_inf.src1_1,
+					mt_data_inf.dst1,(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			else JPSDR_Deinterlace_Blend_16(mt_data_inf.src1_0,mt_data_inf.src1_1,mt_data_inf.dst1,
+				mt_data_inf.src_Y_w,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		}
+	}
+
+	if (mt_data_inf.div_h)
+	{
+		if (mt_data_inf.dec_h)
+		{
+			if (mt_data_inf.bottom)
+				memcpy((uint8_t *)mt_data_inf.dst1+(mt_data_inf.dst_pitch1*h),
+					(uint8_t *)mt_data_inf.dst1+(mt_data_inf.dst_pitch1*(h-1)),mt_data_inf.src_Y_w);
+			else
+				memcpy(mt_data_inf.dst1,(uint8_t *)mt_data_inf.dst1+mt_data_inf.dst_pitch1,
+					mt_data_inf.src_Y_w);
+		}
+	}
+	else
+	{
+		if (mt_data_inf.bottom)
+			memcpy((uint8_t *)mt_data_inf.dst1+(mt_data_inf.dst_pitch1*h),
+				(uint8_t *)mt_data_inf.dst1+(mt_data_inf.dst_pitch1*(h-1)),mt_data_inf.src_Y_w);
+	}
+}
+
+
+void JPSDR_Deinterlace::Deinterlace_Blend_8_MT_4(uint8_t thread_num)
 {
 	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
 
@@ -2961,16 +2898,24 @@ void JPSDR_Deinterlace::Deinterlace_Blend_MT_4(uint8_t thread_num)
 		if (mt_data_inf.bottom) h--;
 	}
 
-	if (AVX_Enable)
-		JPSDR_Deinterlace_Blend_AVX_3_A(mt_data_inf.src2_0,mt_data_inf.src2_1,
-			mt_data_inf.dst2,(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+#ifdef AVX2_BUILD_POSSIBLE
+	if (AVX2_Enable)
+		JPSDR_Deinterlace_Blend_8_AVX2(mt_data_inf.src2_0,mt_data_inf.src2_1,
+			mt_data_inf.dst2,(mt_data_inf.src_UV_w_32+7)>>3,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
 	else
+#endif
 	{
-		if (SSE2_Enable)
-			JPSDR_Deinterlace_Blend_SSE_3_A(mt_data_inf.src2_0,mt_data_inf.src2_1,
+		if (AVX_Enable)
+			JPSDR_Deinterlace_Blend_8_AVX(mt_data_inf.src2_0,mt_data_inf.src2_1,
 				mt_data_inf.dst2,(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
-		else JPSDR_Deinterlace_Blend_Non_MMX_8(mt_data_inf.src2_0,mt_data_inf.src2_1,mt_data_inf.dst2,
-			mt_data_inf.src_UV_w,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+		else
+		{
+			if (SSE2_Enable)
+				JPSDR_Deinterlace_Blend_8_SSE2(mt_data_inf.src2_0,mt_data_inf.src2_1,
+					mt_data_inf.dst2,(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+			else JPSDR_Deinterlace_Blend_8(mt_data_inf.src2_0,mt_data_inf.src2_1,mt_data_inf.dst2,
+				mt_data_inf.src_UV_w,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+		}
 	}
 
 	if (mt_data_inf.div_h)
@@ -2994,8 +2939,7 @@ void JPSDR_Deinterlace::Deinterlace_Blend_MT_4(uint8_t thread_num)
 }
 
 
-
-void JPSDR_Deinterlace::Deinterlace_Blend_MT_5(uint8_t thread_num)
+void JPSDR_Deinterlace::Deinterlace_Blend_16_MT_4(uint8_t thread_num)
 {
 	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
 
@@ -3011,16 +2955,81 @@ void JPSDR_Deinterlace::Deinterlace_Blend_MT_5(uint8_t thread_num)
 		if (mt_data_inf.bottom) h--;
 	}
 
-	if (AVX_Enable)
-		JPSDR_Deinterlace_Blend_AVX_3_A(mt_data_inf.src3_0,mt_data_inf.src3_1,
-			mt_data_inf.dst3,(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+#ifdef AVX2_BUILD_POSSIBLE
+	if (AVX2_Enable)
+		JPSDR_Deinterlace_Blend_16_AVX2(mt_data_inf.src2_0,mt_data_inf.src2_1,
+			mt_data_inf.dst2,(mt_data_inf.src_UV_w_32+7)>>3,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+	else
+#endif
+	{
+		if (AVX_Enable)
+			JPSDR_Deinterlace_Blend_16_AVX(mt_data_inf.src2_0,mt_data_inf.src2_1,
+				mt_data_inf.dst2,(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+		else
+		{
+			if (SSE2_Enable)
+				JPSDR_Deinterlace_Blend_16_SSE2(mt_data_inf.src2_0,mt_data_inf.src2_1,
+					mt_data_inf.dst2,(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+			else JPSDR_Deinterlace_Blend_16(mt_data_inf.src2_0,mt_data_inf.src2_1,mt_data_inf.dst2,
+				mt_data_inf.src_UV_w,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+		}
+	}
+
+	if (mt_data_inf.div_h)
+	{
+		if (mt_data_inf.dec_h)
+		{
+			if (mt_data_inf.bottom)
+				memcpy((uint8_t *)mt_data_inf.dst2+(mt_data_inf.dst_pitch2*h),
+					(uint8_t *)mt_data_inf.dst2+(mt_data_inf.dst_pitch2*(h-1)),mt_data_inf.src_UV_w);
+			else
+				memcpy(mt_data_inf.dst2,(uint8_t *)mt_data_inf.dst2+mt_data_inf.dst_pitch2,
+					mt_data_inf.src_UV_w);
+		}
+	}
 	else
 	{
-		if (SSE2_Enable)
-			JPSDR_Deinterlace_Blend_SSE_3_A(mt_data_inf.src3_0,mt_data_inf.src3_1,
+		if (mt_data_inf.bottom)
+			memcpy((uint8_t *)mt_data_inf.dst2+(mt_data_inf.dst_pitch2*h),
+				(uint8_t *)mt_data_inf.dst2+(mt_data_inf.dst_pitch2*(h-1)),mt_data_inf.src_UV_w);
+	}
+}
+
+
+void JPSDR_Deinterlace::Deinterlace_Blend_8_MT_5(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	int32_t h=mt_data_inf.src_UV_h_max-mt_data_inf.src_UV_h_min;
+
+	if (mt_data_inf.div_h)
+	{
+		h>>=1;
+		if (mt_data_inf.dec_h) h--;
+	}
+	else
+	{
+		if (mt_data_inf.bottom) h--;
+	}
+
+#ifdef AVX2_BUILD_POSSIBLE
+	if (AVX2_Enable)
+		JPSDR_Deinterlace_Blend_8_AVX2(mt_data_inf.src3_0,mt_data_inf.src3_1,
+			mt_data_inf.dst3,(mt_data_inf.src_UV_w_32+7)>>3,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+	else
+#endif
+	{
+		if (AVX_Enable)
+			JPSDR_Deinterlace_Blend_8_AVX(mt_data_inf.src3_0,mt_data_inf.src3_1,
 				mt_data_inf.dst3,(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
-		else JPSDR_Deinterlace_Blend_Non_MMX_8(mt_data_inf.src3_0,mt_data_inf.src3_1,mt_data_inf.dst3,
-			mt_data_inf.src_UV_w,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+		else
+		{
+			if (SSE2_Enable)
+				JPSDR_Deinterlace_Blend_8_SSE2(mt_data_inf.src3_0,mt_data_inf.src3_1,
+					mt_data_inf.dst3,(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+			else JPSDR_Deinterlace_Blend_8(mt_data_inf.src3_0,mt_data_inf.src3_1,mt_data_inf.dst3,
+				mt_data_inf.src_UV_w,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+		}
 	}
 
 	if (mt_data_inf.div_h)
@@ -3044,8 +3053,64 @@ void JPSDR_Deinterlace::Deinterlace_Blend_MT_5(uint8_t thread_num)
 }
 
 
+void JPSDR_Deinterlace::Deinterlace_Blend_16_MT_5(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
 
-void JPSDR_Deinterlace::Deinterlace_Tri_MT_1(uint8_t thread_num)
+	int32_t h=mt_data_inf.src_UV_h_max-mt_data_inf.src_UV_h_min;
+
+	if (mt_data_inf.div_h)
+	{
+		h>>=1;
+		if (mt_data_inf.dec_h) h--;
+	}
+	else
+	{
+		if (mt_data_inf.bottom) h--;
+	}
+
+#ifdef AVX2_BUILD_POSSIBLE
+	if (AVX2_Enable)
+		JPSDR_Deinterlace_Blend_16_AVX2(mt_data_inf.src3_0,mt_data_inf.src3_1,
+			mt_data_inf.dst3,(mt_data_inf.src_UV_w_32+7)>>3,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+	else
+#endif
+	{
+		if (AVX_Enable)
+			JPSDR_Deinterlace_Blend_16_AVX(mt_data_inf.src3_0,mt_data_inf.src3_1,
+				mt_data_inf.dst3,(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+		else
+		{
+			if (SSE2_Enable)
+				JPSDR_Deinterlace_Blend_16_SSE2(mt_data_inf.src3_0,mt_data_inf.src3_1,
+					mt_data_inf.dst3,(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+			else JPSDR_Deinterlace_Blend_16(mt_data_inf.src3_0,mt_data_inf.src3_1,mt_data_inf.dst3,
+				mt_data_inf.src_UV_w,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+		}
+	}
+
+	if (mt_data_inf.div_h)
+	{
+		if (mt_data_inf.dec_h)
+		{
+			if (mt_data_inf.bottom)
+				memcpy((uint8_t *)mt_data_inf.dst3+(mt_data_inf.dst_pitch3*h),
+					(uint8_t *)mt_data_inf.dst3+(mt_data_inf.dst_pitch3*(h-1)),mt_data_inf.src_UV_w);
+			else
+				memcpy(mt_data_inf.dst3,(uint8_t *)mt_data_inf.dst3+mt_data_inf.dst_pitch3,
+					mt_data_inf.src_UV_w);
+		}
+	}
+	else
+	{
+		if (mt_data_inf.bottom)
+			memcpy((uint8_t *)mt_data_inf.dst3+(mt_data_inf.dst_pitch3*h),
+				(uint8_t *)mt_data_inf.dst3+(mt_data_inf.dst_pitch3*(h-1)),mt_data_inf.src_UV_w);
+	}
+}
+
+
+void JPSDR_Deinterlace::Deinterlace_8_Tri_MT_1(uint8_t thread_num)
 {
 	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
 
@@ -3053,59 +3118,78 @@ void JPSDR_Deinterlace::Deinterlace_Tri_MT_1(uint8_t thread_num)
 
 	if (mt_data_inf.top || mt_data_inf.bottom) h--;
 
-	if (AVX_Enable)
+#ifdef AVX2_BUILD_POSSIBLE
+	if (AVX2_Enable)
 	{
 		if (mt_data_inf.top)
-			JPSDR_Deinterlace_Blend_Tri_AVX_3_A_a(mt_data_inf.src1_0,mt_data_inf.dst1,
-				(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			JPSDR_Deinterlace_Blend_8_Tri_AVX2_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+				(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 		else
 		{
 			if (mt_data_inf.bottom)
-				JPSDR_Deinterlace_Blend_Tri_AVX_3_A_c(mt_data_inf.src1_0,mt_data_inf.dst1,
-					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				JPSDR_Deinterlace_Blend_8_Tri_AVX2_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+					(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 			else
-				JPSDR_Deinterlace_Blend_Tri_AVX_3_A_b(mt_data_inf.src1_0,mt_data_inf.dst1,
-					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				JPSDR_Deinterlace_Blend_8_Tri_AVX2_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+					(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 		}
 	}
 	else
+#endif
 	{
-		if (SSE2_Enable)
+		if (AVX_Enable)
 		{
 			if (mt_data_inf.top)
-				JPSDR_Deinterlace_Blend_Tri_SSE_3_A_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+				JPSDR_Deinterlace_Blend_8_Tri_AVX_a(mt_data_inf.src1_0,mt_data_inf.dst1,
 					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 			else
 			{
 				if (mt_data_inf.bottom)
-					JPSDR_Deinterlace_Blend_Tri_SSE_3_A_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+					JPSDR_Deinterlace_Blend_8_Tri_AVX_c(mt_data_inf.src1_0,mt_data_inf.dst1,
 						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 				else
-					JPSDR_Deinterlace_Blend_Tri_SSE_3_A_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+					JPSDR_Deinterlace_Blend_8_Tri_AVX_b(mt_data_inf.src1_0,mt_data_inf.dst1,
 						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 			}
 		}
 		else
 		{
-			if (mt_data_inf.top)
-				Blend_Tri_RGB32a(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
-					mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			if (SSE2_Enable)
+			{
+				if (mt_data_inf.top)
+					JPSDR_Deinterlace_Blend_8_Tri_SSE2_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				else
+				{
+					if (mt_data_inf.bottom)
+						JPSDR_Deinterlace_Blend_8_Tri_SSE2_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+							(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+					else
+						JPSDR_Deinterlace_Blend_8_Tri_SSE2_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+							(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				}
+			}
 			else
 			{
-				if (mt_data_inf.bottom)
-					Blend_Tri_RGB32c(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
+				if (mt_data_inf.top)
+					Blend_Tri_RGB32a(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
 						mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 				else
-					Blend_Tri_RGB32b(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
-						mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				{
+					if (mt_data_inf.bottom)
+						Blend_Tri_RGB32c(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
+							mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+					else
+						Blend_Tri_RGB32b(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
+							mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				}
 			}
 		}
 	}
 }
 
 
-
-void JPSDR_Deinterlace::Deinterlace_Tri_MT_2(uint8_t thread_num)
+void JPSDR_Deinterlace::Deinterlace_16_Tri_MT_1(uint8_t thread_num)
 {
 	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
 
@@ -3113,59 +3197,78 @@ void JPSDR_Deinterlace::Deinterlace_Tri_MT_2(uint8_t thread_num)
 
 	if (mt_data_inf.top || mt_data_inf.bottom) h--;
 
-	if (AVX_Enable)
+#ifdef AVX2_BUILD_POSSIBLE
+	if (AVX2_Enable)
 	{
 		if (mt_data_inf.top)
-			JPSDR_Deinterlace_Blend_Tri_AVX_3_A_a(mt_data_inf.src1_0,mt_data_inf.dst1,
-				(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			JPSDR_Deinterlace_Blend_16_Tri_AVX2_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+				(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 		else
 		{
 			if (mt_data_inf.bottom)
-				JPSDR_Deinterlace_Blend_Tri_AVX_3_A_c(mt_data_inf.src1_0,mt_data_inf.dst1,
-					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				JPSDR_Deinterlace_Blend_16_Tri_AVX2_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+					(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 			else
-				JPSDR_Deinterlace_Blend_Tri_AVX_3_A_b(mt_data_inf.src1_0,mt_data_inf.dst1,
-					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				JPSDR_Deinterlace_Blend_16_Tri_AVX2_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+					(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 		}
 	}
 	else
+#endif
 	{
-		if (SSE2_Enable)
+		if (AVX_Enable)
 		{
 			if (mt_data_inf.top)
-				JPSDR_Deinterlace_Blend_Tri_SSE_3_A_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+				JPSDR_Deinterlace_Blend_16_Tri_AVX_a(mt_data_inf.src1_0,mt_data_inf.dst1,
 					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 			else
 			{
 				if (mt_data_inf.bottom)
-					JPSDR_Deinterlace_Blend_Tri_SSE_3_A_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+					JPSDR_Deinterlace_Blend_16_Tri_AVX_c(mt_data_inf.src1_0,mt_data_inf.dst1,
 						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 				else
-					JPSDR_Deinterlace_Blend_Tri_SSE_3_A_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+					JPSDR_Deinterlace_Blend_16_Tri_AVX_b(mt_data_inf.src1_0,mt_data_inf.dst1,
 						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 			}
 		}
 		else
 		{
-			if (mt_data_inf.top)
-				Blend_Tri_YUV32a(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
-					mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			if (SSE2_Enable)
+			{
+				if (mt_data_inf.top)
+					JPSDR_Deinterlace_Blend_16_Tri_SSE2_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				else
+				{
+					if (mt_data_inf.bottom)
+						JPSDR_Deinterlace_Blend_16_Tri_SSE2_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+							(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+					else
+						JPSDR_Deinterlace_Blend_16_Tri_SSE2_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+							(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				}
+			}
 			else
 			{
-				if (mt_data_inf.bottom)
-					Blend_Tri_YUV32c(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
+				if (mt_data_inf.top)
+					Blend_Tri_RGB64a(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32>>1,h,
 						mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 				else
-					Blend_Tri_YUV32b(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
-						mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				{
+					if (mt_data_inf.bottom)
+						Blend_Tri_RGB64c(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32>>1,h,
+							mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+					else
+						Blend_Tri_RGB64b(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32>>1,h,
+							mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				}
 			}
 		}
 	}
 }
 
 
-
-void JPSDR_Deinterlace::Deinterlace_Tri_MT_3(uint8_t thread_num)
+void JPSDR_Deinterlace::Deinterlace_8_Tri_MT_2(uint8_t thread_num)
 {
 	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
 
@@ -3173,60 +3276,315 @@ void JPSDR_Deinterlace::Deinterlace_Tri_MT_3(uint8_t thread_num)
 
 	if (mt_data_inf.top || mt_data_inf.bottom) h--;
 
-	if (AVX_Enable)
+#ifdef AVX2_BUILD_POSSIBLE
+	if (AVX2_Enable)
 	{
 		if (mt_data_inf.top)
-			JPSDR_Deinterlace_Blend_Tri_AVX_3_A_a(mt_data_inf.src1_0,mt_data_inf.dst1,
-				(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			JPSDR_Deinterlace_Blend_8_Tri_AVX2_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+				(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 		else
 		{
 			if (mt_data_inf.bottom)
-				JPSDR_Deinterlace_Blend_Tri_AVX_3_A_c(mt_data_inf.src1_0,mt_data_inf.dst1,
-					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				JPSDR_Deinterlace_Blend_8_Tri_AVX2_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+					(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 			else
-				JPSDR_Deinterlace_Blend_Tri_AVX_3_A_b(mt_data_inf.src1_0,mt_data_inf.dst1,
-					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				JPSDR_Deinterlace_Blend_8_Tri_AVX2_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+					(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 		}
 	}
 	else
+#endif
 	{
-		if (SSE2_Enable)
+		if (AVX_Enable)
 		{
 			if (mt_data_inf.top)
-				JPSDR_Deinterlace_Blend_Tri_SSE_3_A_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+				JPSDR_Deinterlace_Blend_8_Tri_AVX_a(mt_data_inf.src1_0,mt_data_inf.dst1,
 					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 			else
 			{
 				if (mt_data_inf.bottom)
-					JPSDR_Deinterlace_Blend_Tri_SSE_3_A_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+					JPSDR_Deinterlace_Blend_8_Tri_AVX_c(mt_data_inf.src1_0,mt_data_inf.dst1,
 						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 				else
-					JPSDR_Deinterlace_Blend_Tri_SSE_3_A_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+					JPSDR_Deinterlace_Blend_8_Tri_AVX_b(mt_data_inf.src1_0,mt_data_inf.dst1,
 						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 			}
 		}
 		else
 		{
-			if (mt_data_inf.top)
-				Blend_Tri_Planar8a(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w,h,
-					mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			if (SSE2_Enable)
+			{
+				if (mt_data_inf.top)
+					JPSDR_Deinterlace_Blend_8_Tri_SSE2_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				else
+				{
+					if (mt_data_inf.bottom)
+						JPSDR_Deinterlace_Blend_8_Tri_SSE2_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+							(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+					else
+						JPSDR_Deinterlace_Blend_8_Tri_SSE2_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+							(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				}
+			}
 			else
 			{
-				if (mt_data_inf.bottom)
-					Blend_Tri_Planar8c(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w,h,
+				if (mt_data_inf.top)
+					Blend_Tri_YUV32a(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
 						mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
 				else
-					Blend_Tri_Planar8b(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w,h,
-						mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				{
+					if (mt_data_inf.bottom)
+						Blend_Tri_YUV32c(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
+							mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+					else
+						Blend_Tri_YUV32b(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32,h,
+							mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				}
 			}
 		}
 	}
 }
 
 
+void JPSDR_Deinterlace::Deinterlace_16_Tri_MT_2(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	int32_t h=mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min;
+
+	if (mt_data_inf.top || mt_data_inf.bottom) h--;
+
+#ifdef AVX2_BUILD_POSSIBLE
+	if (AVX2_Enable)
+	{
+		if (mt_data_inf.top)
+			JPSDR_Deinterlace_Blend_16_Tri_AVX2_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+				(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		else
+		{
+			if (mt_data_inf.bottom)
+				JPSDR_Deinterlace_Blend_16_Tri_AVX2_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+					(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			else
+				JPSDR_Deinterlace_Blend_16_Tri_AVX2_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+					(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		}
+	}
+	else
+#endif
+	{
+		if (AVX_Enable)
+		{
+			if (mt_data_inf.top)
+				JPSDR_Deinterlace_Blend_16_Tri_AVX_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			else
+			{
+				if (mt_data_inf.bottom)
+					JPSDR_Deinterlace_Blend_16_Tri_AVX_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				else
+					JPSDR_Deinterlace_Blend_16_Tri_AVX_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			}
+		}
+		else
+		{
+			if (SSE2_Enable)
+			{
+				if (mt_data_inf.top)
+					JPSDR_Deinterlace_Blend_16_Tri_SSE2_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				else
+				{
+					if (mt_data_inf.bottom)
+						JPSDR_Deinterlace_Blend_16_Tri_SSE2_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+							(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+					else
+						JPSDR_Deinterlace_Blend_16_Tri_SSE2_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+							(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				}
+			}
+			else
+			{
+				if (mt_data_inf.top)
+					Blend_Tri_YUV64a(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32>>1,h,
+						mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				else
+				{
+					if (mt_data_inf.bottom)
+						Blend_Tri_YUV64c(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32>>1,h,
+							mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+					else
+						Blend_Tri_YUV64b(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w_32>>1,h,
+							mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				}
+			}
+		}
+	}
+}
 
 
-void JPSDR_Deinterlace::Deinterlace_Tri_MT_4(uint8_t thread_num)
+void JPSDR_Deinterlace::Deinterlace_8_Tri_MT_3(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	int32_t h=mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min;
+
+	if (mt_data_inf.top || mt_data_inf.bottom) h--;
+
+#ifdef AVX2_BUILD_POSSIBLE
+	if (AVX2_Enable)
+	{
+		if (mt_data_inf.top)
+			JPSDR_Deinterlace_Blend_8_Tri_AVX2_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+				(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		else
+		{
+			if (mt_data_inf.bottom)
+				JPSDR_Deinterlace_Blend_8_Tri_AVX2_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+					(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			else
+				JPSDR_Deinterlace_Blend_8_Tri_AVX2_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+					(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		}
+	}
+	else
+#endif
+	{
+		if (AVX_Enable)
+		{
+			if (mt_data_inf.top)
+				JPSDR_Deinterlace_Blend_8_Tri_AVX_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			else
+			{
+				if (mt_data_inf.bottom)
+					JPSDR_Deinterlace_Blend_8_Tri_AVX_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				else
+					JPSDR_Deinterlace_Blend_8_Tri_AVX_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			}
+		}
+		else
+		{
+			if (SSE2_Enable)
+			{
+				if (mt_data_inf.top)
+					JPSDR_Deinterlace_Blend_8_Tri_SSE2_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				else
+				{
+					if (mt_data_inf.bottom)
+						JPSDR_Deinterlace_Blend_8_Tri_SSE2_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+							(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+					else
+						JPSDR_Deinterlace_Blend_8_Tri_SSE2_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+							(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				}
+			}
+			else
+			{
+				if (mt_data_inf.top)
+					Blend_Tri_Planar8a(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w,h,
+						mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				else
+				{
+					if (mt_data_inf.bottom)
+						Blend_Tri_Planar8c(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w,h,
+							mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+					else
+						Blend_Tri_Planar8b(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w,h,
+							mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				}
+			}
+		}
+	}
+}
+
+
+void JPSDR_Deinterlace::Deinterlace_16_Tri_MT_3(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	int32_t h=mt_data_inf.src_Y_h_max-mt_data_inf.src_Y_h_min;
+
+	if (mt_data_inf.top || mt_data_inf.bottom) h--;
+
+#ifdef AVX2_BUILD_POSSIBLE
+	if (AVX2_Enable)
+	{
+		if (mt_data_inf.top)
+			JPSDR_Deinterlace_Blend_16_Tri_AVX2_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+				(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		else
+		{
+			if (mt_data_inf.bottom)
+				JPSDR_Deinterlace_Blend_16_Tri_AVX2_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+					(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			else
+				JPSDR_Deinterlace_Blend_16_Tri_AVX2_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+					(mt_data_inf.src_Y_w_32+7)>>3,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+		}
+	}
+	else
+#endif
+	{
+		if (AVX_Enable)
+		{
+			if (mt_data_inf.top)
+				JPSDR_Deinterlace_Blend_16_Tri_AVX_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+					(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			else
+			{
+				if (mt_data_inf.bottom)
+					JPSDR_Deinterlace_Blend_16_Tri_AVX_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				else
+					JPSDR_Deinterlace_Blend_16_Tri_AVX_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+			}
+		}
+		else
+		{
+			if (SSE2_Enable)
+			{
+				if (mt_data_inf.top)
+					JPSDR_Deinterlace_Blend_16_Tri_SSE2_a(mt_data_inf.src1_0,mt_data_inf.dst1,
+						(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				else
+				{
+					if (mt_data_inf.bottom)
+						JPSDR_Deinterlace_Blend_16_Tri_SSE2_c(mt_data_inf.src1_0,mt_data_inf.dst1,
+							(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+					else
+						JPSDR_Deinterlace_Blend_16_Tri_SSE2_b(mt_data_inf.src1_0,mt_data_inf.dst1,
+							(mt_data_inf.src_Y_w_32+3)>>2,h,mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				}
+			}
+			else
+			{
+				if (mt_data_inf.top)
+					Blend_Tri_Planar16a(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w,h,
+						mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				else
+				{
+					if (mt_data_inf.bottom)
+						Blend_Tri_Planar16c(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w,h,
+							mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+					else
+						Blend_Tri_Planar16b(mt_data_inf.src1_0,mt_data_inf.dst1,mt_data_inf.src_Y_w,h,
+							mt_data_inf.src_pitch1,mt_data_inf.dst_pitch1);
+				}
+			}
+		}
+	}
+}
+
+
+void JPSDR_Deinterlace::Deinterlace_8_Tri_MT_4(uint8_t thread_num)
 {
 	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
 
@@ -3234,59 +3592,78 @@ void JPSDR_Deinterlace::Deinterlace_Tri_MT_4(uint8_t thread_num)
 
 	if (mt_data_inf.top || mt_data_inf.bottom) h--;
 
-	if (AVX_Enable)
+#ifdef AVX2_BUILD_POSSIBLE
+	if (AVX2_Enable)
 	{
 		if (mt_data_inf.top)
-			JPSDR_Deinterlace_Blend_Tri_AVX_3_A_a(mt_data_inf.src2_0,mt_data_inf.dst2,
-				(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+			JPSDR_Deinterlace_Blend_8_Tri_AVX2_a(mt_data_inf.src2_0,mt_data_inf.dst2,
+				(mt_data_inf.src_UV_w_32+7)>>3,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
 		else
 		{
 			if (mt_data_inf.bottom)
-				JPSDR_Deinterlace_Blend_Tri_AVX_3_A_c(mt_data_inf.src2_0,mt_data_inf.dst2,
-					(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+				JPSDR_Deinterlace_Blend_8_Tri_AVX2_c(mt_data_inf.src2_0,mt_data_inf.dst2,
+					(mt_data_inf.src_UV_w_32+7)>>3,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
 			else
-				JPSDR_Deinterlace_Blend_Tri_AVX_3_A_b(mt_data_inf.src2_0,mt_data_inf.dst2,
-					(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+				JPSDR_Deinterlace_Blend_8_Tri_AVX2_b(mt_data_inf.src2_0,mt_data_inf.dst2,
+					(mt_data_inf.src_UV_w_32+7)>>3,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
 		}
 	}
 	else
+#endif
 	{
-		if (SSE2_Enable)
+		if (AVX_Enable)
 		{
 			if (mt_data_inf.top)
-				JPSDR_Deinterlace_Blend_Tri_SSE_3_A_a(mt_data_inf.src2_0,mt_data_inf.dst2,
+				JPSDR_Deinterlace_Blend_8_Tri_AVX_a(mt_data_inf.src2_0,mt_data_inf.dst2,
 					(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
 			else
 			{
 				if (mt_data_inf.bottom)
-					JPSDR_Deinterlace_Blend_Tri_SSE_3_A_c(mt_data_inf.src2_0,mt_data_inf.dst2,
+					JPSDR_Deinterlace_Blend_8_Tri_AVX_c(mt_data_inf.src2_0,mt_data_inf.dst2,
 						(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
 				else
-					JPSDR_Deinterlace_Blend_Tri_SSE_3_A_b(mt_data_inf.src2_0,mt_data_inf.dst2,
+					JPSDR_Deinterlace_Blend_8_Tri_AVX_b(mt_data_inf.src2_0,mt_data_inf.dst2,
 						(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
 			}
 		}
 		else
 		{
-			if (mt_data_inf.top)
-				Blend_Tri_Planar8a(mt_data_inf.src2_0,mt_data_inf.dst2,mt_data_inf.src_UV_w,h,
-					mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+			if (SSE2_Enable)
+			{
+				if (mt_data_inf.top)
+					JPSDR_Deinterlace_Blend_8_Tri_SSE2_a(mt_data_inf.src2_0,mt_data_inf.dst2,
+						(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+				else
+				{
+					if (mt_data_inf.bottom)
+						JPSDR_Deinterlace_Blend_8_Tri_SSE2_c(mt_data_inf.src2_0,mt_data_inf.dst2,
+							(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+					else
+						JPSDR_Deinterlace_Blend_8_Tri_SSE2_b(mt_data_inf.src2_0,mt_data_inf.dst2,
+							(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+				}
+			}
 			else
 			{
-				if (mt_data_inf.bottom)
-					Blend_Tri_Planar8c(mt_data_inf.src2_0,mt_data_inf.dst2,mt_data_inf.src_UV_w,h,
+				if (mt_data_inf.top)
+					Blend_Tri_Planar8a(mt_data_inf.src2_0,mt_data_inf.dst2,mt_data_inf.src_UV_w,h,
 						mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
 				else
-					Blend_Tri_Planar8b(mt_data_inf.src2_0,mt_data_inf.dst2,mt_data_inf.src_UV_w,h,
-						mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+				{
+					if (mt_data_inf.bottom)
+						Blend_Tri_Planar8c(mt_data_inf.src2_0,mt_data_inf.dst2,mt_data_inf.src_UV_w,h,
+							mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+					else
+						Blend_Tri_Planar8b(mt_data_inf.src2_0,mt_data_inf.dst2,mt_data_inf.src_UV_w,h,
+							mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+				}
 			}
 		}
 	}
 }
 
 
-
-void JPSDR_Deinterlace::Deinterlace_Tri_MT_5(uint8_t thread_num)
+void JPSDR_Deinterlace::Deinterlace_16_Tri_MT_4(uint8_t thread_num)
 {
 	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
 
@@ -3294,57 +3671,233 @@ void JPSDR_Deinterlace::Deinterlace_Tri_MT_5(uint8_t thread_num)
 
 	if (mt_data_inf.top || mt_data_inf.bottom) h--;
 
-	if (AVX_Enable)
+#ifdef AVX2_BUILD_POSSIBLE
+	if (AVX2_Enable)
 	{
 		if (mt_data_inf.top)
-			JPSDR_Deinterlace_Blend_Tri_AVX_3_A_a(mt_data_inf.src3_0,mt_data_inf.dst3,
-				(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+			JPSDR_Deinterlace_Blend_16_Tri_AVX2_a(mt_data_inf.src2_0,mt_data_inf.dst2,
+				(mt_data_inf.src_UV_w_32+7)>>3,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
 		else
 		{
 			if (mt_data_inf.bottom)
-				JPSDR_Deinterlace_Blend_Tri_AVX_3_A_c(mt_data_inf.src3_0,mt_data_inf.dst3,
-					(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+				JPSDR_Deinterlace_Blend_16_Tri_AVX2_c(mt_data_inf.src2_0,mt_data_inf.dst2,
+					(mt_data_inf.src_UV_w_32+7)>>3,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
 			else
-				JPSDR_Deinterlace_Blend_Tri_AVX_3_A_b(mt_data_inf.src3_0,mt_data_inf.dst3,
-					(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+				JPSDR_Deinterlace_Blend_16_Tri_AVX2_b(mt_data_inf.src2_0,mt_data_inf.dst2,
+					(mt_data_inf.src_UV_w_32+7)>>3,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
 		}
 	}
 	else
+#endif
 	{
-		if (SSE2_Enable)
+		if (AVX_Enable)
 		{
 			if (mt_data_inf.top)
-				JPSDR_Deinterlace_Blend_Tri_SSE_3_A_a(mt_data_inf.src3_0,mt_data_inf.dst3,
-					(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+				JPSDR_Deinterlace_Blend_16_Tri_AVX_a(mt_data_inf.src2_0,mt_data_inf.dst2,
+					(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
 			else
 			{
 				if (mt_data_inf.bottom)
-					JPSDR_Deinterlace_Blend_Tri_SSE_3_A_c(mt_data_inf.src3_0,mt_data_inf.dst3,
-						(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+					JPSDR_Deinterlace_Blend_16_Tri_AVX_c(mt_data_inf.src2_0,mt_data_inf.dst2,
+						(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
 				else
-					JPSDR_Deinterlace_Blend_Tri_SSE_3_A_b(mt_data_inf.src3_0,mt_data_inf.dst3,
-						(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+					JPSDR_Deinterlace_Blend_16_Tri_AVX_b(mt_data_inf.src2_0,mt_data_inf.dst2,
+						(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
 			}
 		}
 		else
 		{
-			if (mt_data_inf.top)
-				Blend_Tri_Planar8a(mt_data_inf.src3_0,mt_data_inf.dst3,mt_data_inf.src_UV_w,h,
-					mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+			if (SSE2_Enable)
+			{
+				if (mt_data_inf.top)
+					JPSDR_Deinterlace_Blend_16_Tri_SSE2_a(mt_data_inf.src2_0,mt_data_inf.dst2,
+						(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+				else
+				{
+					if (mt_data_inf.bottom)
+						JPSDR_Deinterlace_Blend_16_Tri_SSE2_c(mt_data_inf.src2_0,mt_data_inf.dst2,
+							(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+					else
+						JPSDR_Deinterlace_Blend_16_Tri_SSE2_b(mt_data_inf.src2_0,mt_data_inf.dst2,
+							(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+				}
+			}
 			else
 			{
-				if (mt_data_inf.bottom)
-					Blend_Tri_Planar8c(mt_data_inf.src3_0,mt_data_inf.dst3,mt_data_inf.src_UV_w,h,
-						mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+				if (mt_data_inf.top)
+					Blend_Tri_Planar16a(mt_data_inf.src2_0,mt_data_inf.dst2,mt_data_inf.src_UV_w,h,
+						mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
 				else
-					Blend_Tri_Planar8b(mt_data_inf.src3_0,mt_data_inf.dst3,mt_data_inf.src_UV_w,h,
-						mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+				{
+					if (mt_data_inf.bottom)
+						Blend_Tri_Planar16c(mt_data_inf.src2_0,mt_data_inf.dst2,mt_data_inf.src_UV_w,h,
+							mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+					else
+						Blend_Tri_Planar16b(mt_data_inf.src2_0,mt_data_inf.dst2,mt_data_inf.src_UV_w,h,
+							mt_data_inf.src_pitch2,mt_data_inf.dst_pitch2);
+				}
 			}
 		}
 	}
 }
 
 
+void JPSDR_Deinterlace::Deinterlace_8_Tri_MT_5(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	int32_t h=mt_data_inf.src_UV_h_max-mt_data_inf.src_UV_h_min;
+
+	if (mt_data_inf.top || mt_data_inf.bottom) h--;
+
+#ifdef AVX2_BUILD_POSSIBLE
+	if (AVX2_Enable)
+	{
+		if (mt_data_inf.top)
+			JPSDR_Deinterlace_Blend_8_Tri_AVX2_a(mt_data_inf.src3_0,mt_data_inf.dst3,
+				(mt_data_inf.src_UV_w_32+7)>>3,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+		else
+		{
+			if (mt_data_inf.bottom)
+				JPSDR_Deinterlace_Blend_8_Tri_AVX2_c(mt_data_inf.src3_0,mt_data_inf.dst3,
+					(mt_data_inf.src_UV_w_32+7)>>3,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+			else
+				JPSDR_Deinterlace_Blend_8_Tri_AVX2_b(mt_data_inf.src3_0,mt_data_inf.dst3,
+					(mt_data_inf.src_UV_w_32+7)>>3,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+		}
+	}
+	else
+#endif
+	{
+		if (AVX_Enable)
+		{
+			if (mt_data_inf.top)
+				JPSDR_Deinterlace_Blend_8_Tri_AVX_a(mt_data_inf.src3_0,mt_data_inf.dst3,
+					(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+			else
+			{
+				if (mt_data_inf.bottom)
+					JPSDR_Deinterlace_Blend_8_Tri_AVX_c(mt_data_inf.src3_0,mt_data_inf.dst3,
+						(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+				else
+					JPSDR_Deinterlace_Blend_8_Tri_AVX_b(mt_data_inf.src3_0,mt_data_inf.dst3,
+						(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+			}
+		}
+		else
+		{
+			if (SSE2_Enable)
+			{
+				if (mt_data_inf.top)
+					JPSDR_Deinterlace_Blend_8_Tri_SSE2_a(mt_data_inf.src3_0,mt_data_inf.dst3,
+						(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+				else
+				{
+					if (mt_data_inf.bottom)
+						JPSDR_Deinterlace_Blend_8_Tri_SSE2_c(mt_data_inf.src3_0,mt_data_inf.dst3,
+							(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+					else
+						JPSDR_Deinterlace_Blend_8_Tri_SSE2_b(mt_data_inf.src3_0,mt_data_inf.dst3,
+							(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+				}
+			}
+			else
+			{
+				if (mt_data_inf.top)
+					Blend_Tri_Planar8a(mt_data_inf.src3_0,mt_data_inf.dst3,mt_data_inf.src_UV_w,h,
+						mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+				else
+				{
+					if (mt_data_inf.bottom)
+						Blend_Tri_Planar8c(mt_data_inf.src3_0,mt_data_inf.dst3,mt_data_inf.src_UV_w,h,
+							mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+					else
+						Blend_Tri_Planar8b(mt_data_inf.src3_0,mt_data_inf.dst3,mt_data_inf.src_UV_w,h,
+							mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+				}
+			}
+		}
+	}
+}
+
+
+void JPSDR_Deinterlace::Deinterlace_16_Tri_MT_5(uint8_t thread_num)
+{
+	const MT_Data_Info mt_data_inf=MT_Data[thread_num];
+
+	int32_t h=mt_data_inf.src_UV_h_max-mt_data_inf.src_UV_h_min;
+
+	if (mt_data_inf.top || mt_data_inf.bottom) h--;
+
+#ifdef AVX2_BUILD_POSSIBLE
+	if (AVX2_Enable)
+	{
+		if (mt_data_inf.top)
+			JPSDR_Deinterlace_Blend_16_Tri_AVX2_a(mt_data_inf.src3_0,mt_data_inf.dst3,
+				(mt_data_inf.src_UV_w_32+7)>>3,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+		else
+		{
+			if (mt_data_inf.bottom)
+				JPSDR_Deinterlace_Blend_16_Tri_AVX2_c(mt_data_inf.src3_0,mt_data_inf.dst3,
+					(mt_data_inf.src_UV_w_32+7)>>3,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+			else
+				JPSDR_Deinterlace_Blend_16_Tri_AVX2_b(mt_data_inf.src3_0,mt_data_inf.dst3,
+					(mt_data_inf.src_UV_w_32+7)>>3,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+		}
+	}
+	else
+#endif
+	{
+		if (AVX_Enable)
+		{
+			if (mt_data_inf.top)
+				JPSDR_Deinterlace_Blend_16_Tri_AVX_a(mt_data_inf.src3_0,mt_data_inf.dst3,
+					(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+			else
+			{
+				if (mt_data_inf.bottom)
+					JPSDR_Deinterlace_Blend_16_Tri_AVX_c(mt_data_inf.src3_0,mt_data_inf.dst3,
+						(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+				else
+					JPSDR_Deinterlace_Blend_16_Tri_AVX_b(mt_data_inf.src3_0,mt_data_inf.dst3,
+						(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+			}
+		}
+		else
+		{
+			if (SSE2_Enable)
+			{
+				if (mt_data_inf.top)
+					JPSDR_Deinterlace_Blend_16_Tri_SSE2_a(mt_data_inf.src3_0,mt_data_inf.dst3,
+						(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+				else
+				{
+					if (mt_data_inf.bottom)
+						JPSDR_Deinterlace_Blend_16_Tri_SSE2_c(mt_data_inf.src3_0,mt_data_inf.dst3,
+							(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+					else
+						JPSDR_Deinterlace_Blend_16_Tri_SSE2_b(mt_data_inf.src3_0,mt_data_inf.dst3,
+							(mt_data_inf.src_UV_w_32+3)>>2,h,mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+				}
+			}
+			else
+			{
+				if (mt_data_inf.top)
+					Blend_Tri_Planar16a(mt_data_inf.src3_0,mt_data_inf.dst3,mt_data_inf.src_UV_w,h,
+						mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+				else
+				{
+					if (mt_data_inf.bottom)
+						Blend_Tri_Planar16c(mt_data_inf.src3_0,mt_data_inf.dst3,mt_data_inf.src_UV_w,h,
+							mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+					else
+						Blend_Tri_Planar16b(mt_data_inf.src3_0,mt_data_inf.dst3,mt_data_inf.src_UV_w,h,
+							mt_data_inf.src_pitch3,mt_data_inf.dst_pitch3);
+				}
+			}
+		}
+	}
+}
 
 
 void JPSDR_Deinterlace::StaticThreadpool(void *ptr)
@@ -3354,17 +3907,27 @@ void JPSDR_Deinterlace::StaticThreadpool(void *ptr)
 	
 	switch(data->f_process)
 	{
-		case 1 : ptrClass->Deinterlace_Blend_MT_1(data->thread_Id); break;
-		case 2 : ptrClass->Deinterlace_Blend_MT_2(data->thread_Id); break;
-		case 3 : ptrClass->Deinterlace_Blend_MT_3(data->thread_Id); break;
-		case 7 : ptrClass->Deinterlace_Blend_MT_4(data->thread_Id); break;
-		case 8 : ptrClass->Deinterlace_Blend_MT_5(data->thread_Id); break;
-		case 4 : ptrClass->Deinterlace_Tri_MT_1(data->thread_Id); break;
-		case 5 : ptrClass->Deinterlace_Tri_MT_2(data->thread_Id); break;
-		case 6 : ptrClass->Deinterlace_Tri_MT_3(data->thread_Id); break;
-		case 9 : ptrClass->Deinterlace_Tri_MT_4(data->thread_Id); break;
-		case 10 : ptrClass->Deinterlace_Tri_MT_5(data->thread_Id); break;
-		default : ;
+		case 1 : ptrClass->Deinterlace_Blend_8_MT_1(data->thread_Id); break;
+		case 2 : ptrClass->Deinterlace_Blend_8_MT_2(data->thread_Id); break;
+		case 3 : ptrClass->Deinterlace_Blend_8_MT_3(data->thread_Id); break;
+		case 7 : ptrClass->Deinterlace_Blend_8_MT_4(data->thread_Id); break;
+		case 8 : ptrClass->Deinterlace_Blend_8_MT_5(data->thread_Id); break;
+		case 4 : ptrClass->Deinterlace_8_Tri_MT_1(data->thread_Id); break;
+		case 5 : ptrClass->Deinterlace_8_Tri_MT_2(data->thread_Id); break;
+		case 6 : ptrClass->Deinterlace_8_Tri_MT_3(data->thread_Id); break;
+		case 9 : ptrClass->Deinterlace_8_Tri_MT_4(data->thread_Id); break;
+		case 10 : ptrClass->Deinterlace_8_Tri_MT_5(data->thread_Id); break;
+		case 11 : ptrClass->Deinterlace_Blend_16_MT_1(data->thread_Id); break;
+		case 12 : ptrClass->Deinterlace_Blend_16_MT_2(data->thread_Id); break;
+		case 13 : ptrClass->Deinterlace_Blend_16_MT_3(data->thread_Id); break;
+		case 17 : ptrClass->Deinterlace_Blend_16_MT_4(data->thread_Id); break;
+		case 18 : ptrClass->Deinterlace_Blend_16_MT_5(data->thread_Id); break;
+		case 14 : ptrClass->Deinterlace_16_Tri_MT_1(data->thread_Id); break;
+		case 15 : ptrClass->Deinterlace_16_Tri_MT_2(data->thread_Id); break;
+		case 16 : ptrClass->Deinterlace_16_Tri_MT_3(data->thread_Id); break;
+		case 19 : ptrClass->Deinterlace_16_Tri_MT_4(data->thread_Id); break;
+		case 20 : ptrClass->Deinterlace_16_Tri_MT_5(data->thread_Id); break;
+		default : break;
 	}
 }
 
@@ -3372,33 +3935,19 @@ void JPSDR_Deinterlace::StaticThreadpool(void *ptr)
 
 void JPSDR_Deinterlace::Run()
 {
-	const VDXPixmap *tab_pxsrc[2];
 	int32_t h0,h1,h2;
 	const void *src1_0,*src2_0,*src1_1,*src2_1,*src1_2,*src2_2;
 	void *dst0_0,*dst0_1,*dst0_2;
-	void *dst0,*dst1,*dst2;
 	bool deinterlace,transfert_buffer,swap_buffer;
 	uint8_t current_mode;
-	uint8_t discardP,discardN;
 	uint16_t i;
+	uint8_t Offset_MT=0;
 
 	if ((image_data.src_h0==0) || (image_data.src_w0==0)) return;
 
-	if ((!mData.file_mode) && ((mData.mode==5) || (mData.mode==6)))
-	{
-		tab_pxsrc[0]=fa->mpSourceFrames[0]->mpPixmap;
-		tab_pxsrc[1]=fa->mpSourceFrames[1]->mpPixmap;
-	}
-	else
-	{
-		tab_pxsrc[0]=fa->mpSourceFrames[0]->mpPixmap;
-		tab_pxsrc[1]=fa->mpSourceFrames[0]->mpPixmap;
-	}
-
-	const VDXPixmapAlpha& pxdst=(const VDXPixmapAlpha&)*fa->mpOutputFrames[0]->mpPixmap;
-	const VDXPixmapAlpha& pxsrc=(const VDXPixmapAlpha&)*tab_pxsrc[0];
-	const VDXPixmapAlpha& pxsrc1=(const VDXPixmapAlpha&)*tab_pxsrc[1];
 	const VDXFBitmap& pxsrc2 = *fa->mpSourceFrames[0];
+	const VDXPixmapAlpha& pxsrc=(const VDXPixmapAlpha&)*fa->mpSourceFrames[0]->mpPixmap;
+	const VDXPixmapAlpha& pxdst=(const VDXPixmapAlpha&)*fa->mpOutputFrames[0]->mpPixmap;
 
 	image_data.src_plane0=pxsrc.data;
 	image_data.src_plane1=pxsrc.data2;
@@ -3410,656 +3959,6 @@ void JPSDR_Deinterlace::Run()
 	swap_buffer=(!mData.file_mode) && ((mData.mode==2) ||
 		(mData.mt_mode && (mData.mode==1)));
 	current_mode=mData.mode;
-
-	if ((!mData.file_mode) && ((mData.mode==5) || (mData.mode==6)))
-	{
-		if (pxsrc2.mFrameNumber==0)
-		{
-			write_index_Yadif=0;
-			switch(image_data.video_mode)
-			{
-				case VMODE_BMP_RGBA :
-					Move_Full(image_data.src_plane0,tab_Yadif[write_index_Yadif].data[0],image_data.src_line0,
-						image_data.src_h0,image_data.src_pitch0,Yadif_pitch[0]);
-					AddBorderRGB(tab_Yadif[write_index_Yadif].data[0],Yadif_pitch[0],image_data.src_w0,image_data.src_h0);
-					write_index_Yadif++;
-					Move_Full(image_data.src_plane0,tab_Yadif[write_index_Yadif].data[0],image_data.src_line0,
-						image_data.src_h0,image_data.src_pitch0,Yadif_pitch[0]);
-					AddBorderRGB(tab_Yadif[write_index_Yadif].data[0],Yadif_pitch[0],image_data.src_w0,image_data.src_h0);
-					write_index_Yadif++;
-					break;
-				case VMODE_YUYV :
-					Move_Full(image_data.src_plane0,tab_Yadif[write_index_Yadif].data[0],image_data.src_line0,
-						image_data.src_h0,image_data.src_pitch0,Yadif_pitch[0]);
-					AddBorderYUYV(tab_Yadif[write_index_Yadif].data[0],Yadif_pitch[0],image_data.src_w0,image_data.src_h0);
-					write_index_Yadif++;
-					Move_Full(image_data.src_plane0,tab_Yadif[write_index_Yadif].data[0],image_data.src_line0,
-						image_data.src_h0,image_data.src_pitch0,Yadif_pitch[0]);
-					AddBorderYUYV(tab_Yadif[write_index_Yadif].data[0],Yadif_pitch[0],image_data.src_w0,image_data.src_h0);
-					write_index_Yadif++;
-					break;
-				case VMODE_UYVY :
-					Move_Full(image_data.src_plane0,tab_Yadif[write_index_Yadif].data[0],image_data.src_line0,
-						image_data.src_h0,image_data.src_pitch0,Yadif_pitch[0]);
-					AddBorderUYVY(tab_Yadif[write_index_Yadif].data[0],Yadif_pitch[0],image_data.src_w0,image_data.src_h0);
-					write_index_Yadif++;
-					Move_Full(image_data.src_plane0,tab_Yadif[write_index_Yadif].data[0],image_data.src_line0,
-						image_data.src_h0,image_data.src_pitch0,Yadif_pitch[0]);
-					AddBorderUYVY(tab_Yadif[write_index_Yadif].data[0],Yadif_pitch[0],image_data.src_w0,image_data.src_h0);
-					write_index_Yadif++;
-					break;
-				case VMODE_PLANAR_YUV444 :
-				case VMODE_PLANAR_YUV422 :
-				case VMODE_PLANAR_YUV420 :
-				case VMODE_PLANAR_YUV411 :
-				case VMODE_PLANAR_YUV410 :
-					Move_Full(image_data.src_plane0,tab_Yadif[write_index_Yadif].data[0],image_data.src_line0,
-						image_data.src_h0,image_data.src_pitch0,Yadif_pitch[0]);
-					Move_Full(image_data.src_plane1,tab_Yadif[write_index_Yadif].data[1],image_data.src_line1,
-						image_data.src_h1,image_data.src_pitch1,Yadif_pitch[1]);
-					Move_Full(image_data.src_plane2,tab_Yadif[write_index_Yadif].data[2],image_data.src_line2,
-						image_data.src_h2,image_data.src_pitch2,Yadif_pitch[2]);
-					AddBorderPlanar(tab_Yadif[write_index_Yadif].data[0],Yadif_pitch[0],image_data.src_w0,image_data.src_h0);
-					AddBorderPlanar(tab_Yadif[write_index_Yadif].data[1],Yadif_pitch[1],image_data.src_w1,image_data.src_h1);
-					AddBorderPlanar(tab_Yadif[write_index_Yadif].data[2],Yadif_pitch[2],image_data.src_w2,image_data.src_h2);
-					write_index_Yadif++;
-					Move_Full(image_data.src_plane0,tab_Yadif[write_index_Yadif].data[0],image_data.src_line0,
-						image_data.src_h0,image_data.src_pitch0,Yadif_pitch[0]);
-					Move_Full(image_data.src_plane1,tab_Yadif[write_index_Yadif].data[1],image_data.src_line1,
-						image_data.src_h1,image_data.src_pitch1,Yadif_pitch[1]);
-					Move_Full(image_data.src_plane2,tab_Yadif[write_index_Yadif].data[2],image_data.src_line2,
-						image_data.src_h2,image_data.src_pitch2,Yadif_pitch[2]);
-					AddBorderPlanar(tab_Yadif[write_index_Yadif].data[0],Yadif_pitch[0],image_data.src_w0,image_data.src_h0);
-					AddBorderPlanar(tab_Yadif[write_index_Yadif].data[1],Yadif_pitch[1],image_data.src_w1,image_data.src_h1);
-					AddBorderPlanar(tab_Yadif[write_index_Yadif].data[2],Yadif_pitch[2],image_data.src_w2,image_data.src_h2);
-					write_index_Yadif++;
-					break;
-				case VMODE_Y :
-					Move_Full(image_data.src_plane0,tab_Yadif[write_index_Yadif].data[0],image_data.src_line0,
-						image_data.src_h0,image_data.src_pitch0,Yadif_pitch[0]);
-					AddBorderPlanar(tab_Yadif[write_index_Yadif].data[0],Yadif_pitch[0],image_data.src_w0,image_data.src_h0);
-					write_index_Yadif++;
-					Move_Full(image_data.src_plane0,tab_Yadif[write_index_Yadif].data[0],image_data.src_line0,
-						image_data.src_h0,image_data.src_pitch0,Yadif_pitch[0]);
-					AddBorderPlanar(tab_Yadif[write_index_Yadif].data[0],Yadif_pitch[0],image_data.src_w0,image_data.src_h0);
-					write_index_Yadif++;
-					break;
-			}
-			switch(image_data.video_mode)
-			{
-				case VMODE_BMP_RGBA :
-				case VMODE_YUYV :
-				case VMODE_UYVY :
-				case VMODE_Y :
-					src1_0=tab_Yadif[0].data[0];
-					src2_0=tab_Yadif[1].data[0];
-					break;
-				case VMODE_PLANAR_YUV444 :
-				case VMODE_PLANAR_YUV422 :
-				case VMODE_PLANAR_YUV420 :
-				case VMODE_PLANAR_YUV411 :
-				case VMODE_PLANAR_YUV410 :
-					src1_0=tab_Yadif[0].data[0];
-					src2_0=tab_Yadif[1].data[0];
-					src1_1=tab_Yadif[0].data[1];
-					src2_1=tab_Yadif[1].data[1];
-					src1_2=tab_Yadif[0].data[2];
-					src2_2=tab_Yadif[1].data[2];
-					break;
-			}
-
-			if (mData.mode==6) // Keep bottom field
-			{
-				switch(image_data.video_mode)
-				{
-					case VMODE_BMP_RGBA :
-					case VMODE_YUYV :
-					case VMODE_UYVY :
-					case VMODE_Y :
-						src1_0=(void *)((uint8_t *)src1_0+Yadif_pitch[0]);
-						src2_0=(void *)((uint8_t *)src2_0+Yadif_pitch[0]);
-						YadifAbsDiff(src1_0,src2_0,tab_Yadif[0].absdiff[0],Yadif_pitch[0],Yadif_modulo[0],Yadif_pitch[0],
-							Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						break;
-					case VMODE_PLANAR_YUV444 :
-					case VMODE_PLANAR_YUV422 :
-					case VMODE_PLANAR_YUV420 :
-					case VMODE_PLANAR_YUV411 :
-					case VMODE_PLANAR_YUV410 :
-						src1_0=(void *) ((uint8_t *)src1_0+Yadif_pitch[0]);
-						src2_0=(void *) ((uint8_t *)src2_0+Yadif_pitch[0]);
-						src1_1=(void *) ((uint8_t *)src1_1+Yadif_pitch[1]);
-						src2_1=(void *) ((uint8_t *)src2_1+Yadif_pitch[1]);
-						src1_2=(void *) ((uint8_t *)src1_2+Yadif_pitch[2]);
-						src2_2=(void *) ((uint8_t *)src2_2+Yadif_pitch[2]);
-						YadifAbsDiff(src1_0,src2_0,tab_Yadif[0].absdiff[0],Yadif_pitch[0],Yadif_modulo[0],Yadif_pitch[0],
-							Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						YadifAbsDiff(src1_1,src2_1,tab_Yadif[0].absdiff[1],Yadif_pitch[1],Yadif_modulo[1],Yadif_pitch[1],
-							Yadif_modulo[1],image_data.src_line1,image_data.src_h1>>1);
-						YadifAbsDiff(src1_2,src2_2,tab_Yadif[0].absdiff[2],Yadif_pitch[2],Yadif_modulo[2],Yadif_pitch[2],
-							Yadif_modulo[2],image_data.src_line2,image_data.src_h2>>1);
-						break;
-				}
-			}
-			else // Keep top field
-			{
-				switch(image_data.video_mode)
-				{
-					case VMODE_BMP_RGBA :
-					case VMODE_YUYV :
-					case VMODE_UYVY :
-					case VMODE_Y :
-						YadifAbsDiff(src1_0,src2_0,tab_Yadif[0].absdiff[0],Yadif_pitch[0],Yadif_modulo[0],Yadif_pitch[0],
-							Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						break;
-					case VMODE_PLANAR_YUV444 :
-					case VMODE_PLANAR_YUV422 :
-					case VMODE_PLANAR_YUV420 :
-					case VMODE_PLANAR_YUV411 :
-					case VMODE_PLANAR_YUV410 :
-						YadifAbsDiff(src1_0,src2_0,tab_Yadif[0].absdiff[0],Yadif_pitch[0],Yadif_modulo[0],Yadif_pitch[0],
-							Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						YadifAbsDiff(src1_1,src2_1,tab_Yadif[0].absdiff[1],Yadif_pitch[1],Yadif_modulo[1],Yadif_pitch[1],
-							Yadif_modulo[1],image_data.src_line1,image_data.src_h1>>1);
-						YadifAbsDiff(src1_2,src2_2,tab_Yadif[0].absdiff[2],Yadif_pitch[2],Yadif_modulo[2],Yadif_pitch[2],
-							Yadif_modulo[2],image_data.src_line2,image_data.src_h2>>1);
-						break;
-				}
-			}
-			current_frame_Yadif=1;
-			previous_frame_Yadif=0;
-			next_frame_Yadif=2;
-		}
-	// Au-delà de la trame 0.
-		image_data.src_plane0=pxsrc1.data;
-		image_data.src_plane1=pxsrc1.data2;
-		image_data.src_plane2=pxsrc1.data3;
-
-			switch(image_data.video_mode)
-			{
-				case VMODE_BMP_RGBA :
-					Move_Full(image_data.src_plane0,tab_Yadif[write_index_Yadif].data[0],image_data.src_line0,
-						image_data.src_h0,image_data.src_pitch0,Yadif_pitch[0]);
-					AddBorderRGB(tab_Yadif[write_index_Yadif].data[0],Yadif_pitch[0],image_data.src_w0,image_data.src_h0);
-					break;
-				case VMODE_YUYV :
-					Move_Full(image_data.src_plane0,tab_Yadif[write_index_Yadif].data[0],image_data.src_line0,
-						image_data.src_h0,image_data.src_pitch0,Yadif_pitch[0]);
-					AddBorderYUYV(tab_Yadif[write_index_Yadif].data[0],Yadif_pitch[0],image_data.src_w0,image_data.src_h0);
-					break;
-				case VMODE_UYVY :
-					Move_Full(image_data.src_plane0,tab_Yadif[write_index_Yadif].data[0],image_data.src_line0,
-						image_data.src_h0,image_data.src_pitch0,Yadif_pitch[0]);
-					AddBorderUYVY(tab_Yadif[write_index_Yadif].data[0],Yadif_pitch[0],image_data.src_w0,image_data.src_h0);
-					break;
-				case VMODE_PLANAR_YUV444 :
-				case VMODE_PLANAR_YUV422 :
-				case VMODE_PLANAR_YUV420 :
-				case VMODE_PLANAR_YUV411 :
-				case VMODE_PLANAR_YUV410 :
-					Move_Full(image_data.src_plane0,tab_Yadif[write_index_Yadif].data[0],image_data.src_line0,
-						image_data.src_h0,image_data.src_pitch0,Yadif_pitch[0]);
-					Move_Full(image_data.src_plane1,tab_Yadif[write_index_Yadif].data[1],image_data.src_line1,
-						image_data.src_h1,image_data.src_pitch1,Yadif_pitch[1]);
-					Move_Full(image_data.src_plane2,tab_Yadif[write_index_Yadif].data[2],image_data.src_line2,
-						image_data.src_h2,image_data.src_pitch2,Yadif_pitch[2]);
-					AddBorderPlanar(tab_Yadif[write_index_Yadif].data[0],Yadif_pitch[0],image_data.src_w0,image_data.src_h0);
-					AddBorderPlanar(tab_Yadif[write_index_Yadif].data[1],Yadif_pitch[1],image_data.src_w1,image_data.src_h1);
-					AddBorderPlanar(tab_Yadif[write_index_Yadif].data[2],Yadif_pitch[2],image_data.src_w2,image_data.src_h2);
-					break;
-				case VMODE_Y :
-					Move_Full(image_data.src_plane0,tab_Yadif[write_index_Yadif].data[0],image_data.src_line0,
-						image_data.src_h0,image_data.src_pitch0,Yadif_pitch[0]);
-					AddBorderPlanar(tab_Yadif[write_index_Yadif].data[0],Yadif_pitch[0],image_data.src_w0,image_data.src_h0);
-					break;
-			}
-
-			switch(image_data.video_mode)
-			{
-				case VMODE_BMP_RGBA :
-				case VMODE_YUYV :
-				case VMODE_UYVY :
-				case VMODE_Y :
-					src1_0=tab_Yadif[current_frame_Yadif].data[0];
-					src2_0=tab_Yadif[next_frame_Yadif].data[0];
-					break;
-				case VMODE_PLANAR_YUV444 :
-				case VMODE_PLANAR_YUV422 :
-				case VMODE_PLANAR_YUV420 :
-				case VMODE_PLANAR_YUV411 :
-				case VMODE_PLANAR_YUV410 :
-					src1_0=tab_Yadif[current_frame_Yadif].data[0];
-					src2_0=tab_Yadif[next_frame_Yadif].data[0];
-					src1_1=tab_Yadif[current_frame_Yadif].data[1];
-					src2_1=tab_Yadif[next_frame_Yadif].data[1];
-					src1_2=tab_Yadif[current_frame_Yadif].data[2];
-					src2_2=tab_Yadif[next_frame_Yadif].data[2];
-					break;
-			}
-
-			if (mData.mode==6) // Keep Bottom
-			{
-				switch(image_data.video_mode)
-				{
-					case VMODE_BMP_RGBA :
-					case VMODE_YUYV :
-					case VMODE_UYVY :
-					case VMODE_Y :
-						src1_0=(void *)((uint8_t *)src1_0+Yadif_pitch[0]);
-						src2_0=(void *)((uint8_t *)src2_0+Yadif_pitch[0]);
-						YadifAbsDiff(src1_0,src2_0,tab_Yadif[current_frame_Yadif].absdiff[0],Yadif_pitch[0],Yadif_modulo[0],Yadif_pitch[0],
-							Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						break;
-					case VMODE_PLANAR_YUV444 :
-					case VMODE_PLANAR_YUV422 :
-					case VMODE_PLANAR_YUV420 :
-					case VMODE_PLANAR_YUV411 :
-					case VMODE_PLANAR_YUV410 :
-						src1_0=(void *) ((uint8_t *)src1_0+Yadif_pitch[0]);
-						src2_0=(void *) ((uint8_t *)src2_0+Yadif_pitch[0]);
-						src1_1=(void *) ((uint8_t *)src1_1+Yadif_pitch[1]);
-						src2_1=(void *) ((uint8_t *)src2_1+Yadif_pitch[1]);
-						src1_2=(void *) ((uint8_t *)src1_2+Yadif_pitch[2]);
-						src2_2=(void *) ((uint8_t *)src2_2+Yadif_pitch[2]);
-						YadifAbsDiff(src1_0,src2_0,tab_Yadif[current_frame_Yadif].absdiff[0],Yadif_pitch[0],Yadif_modulo[0],Yadif_pitch[0],
-							Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						YadifAbsDiff(src1_1,src2_1,tab_Yadif[current_frame_Yadif].absdiff[1],Yadif_pitch[1],Yadif_modulo[1],Yadif_pitch[1],
-							Yadif_modulo[1],image_data.src_line1,image_data.src_h1>>1);
-						YadifAbsDiff(src1_2,src2_2,tab_Yadif[current_frame_Yadif].absdiff[2],Yadif_pitch[2],Yadif_modulo[2],Yadif_pitch[2],
-							Yadif_modulo[2],image_data.src_line2,image_data.src_h2>>1);
-						break;
-				}
-				switch(image_data.video_mode)
-				{
-					case VMODE_BMP_RGBA :
-					case VMODE_YUYV :
-					case VMODE_UYVY :
-					case VMODE_Y :
-						src1_0=(void *)((uint8_t *)tab_Yadif[current_frame_Yadif].data[0]+Yadif_pitch[0]);
-						dst0=(void *)((uint8_t *)image_data.dst_plane0+image_data.dst_pitch0);
-						break;
-					case VMODE_PLANAR_YUV444 :
-					case VMODE_PLANAR_YUV422 :
-					case VMODE_PLANAR_YUV420 :
-					case VMODE_PLANAR_YUV411 :
-					case VMODE_PLANAR_YUV410 :
-						src1_0=(void *)((uint8_t *)tab_Yadif[current_frame_Yadif].data[0]+Yadif_pitch[0]);
-						src1_1=(void *)((uint8_t *)tab_Yadif[current_frame_Yadif].data[1]+Yadif_pitch[1]);
-						src1_2=(void *)((uint8_t *)tab_Yadif[current_frame_Yadif].data[2]+Yadif_pitch[2]);
-						dst0=(void *)((uint8_t *)image_data.dst_plane0+image_data.dst_pitch0);
-						dst1=(void *)((uint8_t *)image_data.dst_plane1+image_data.dst_pitch1);
-						dst2=(void *)((uint8_t *)image_data.dst_plane2+image_data.dst_pitch2);
-						break;
-				}
-				switch(image_data.video_mode)
-				{
-					case VMODE_BMP_RGBA :
-					case VMODE_YUYV :
-					case VMODE_UYVY :
-					case VMODE_Y :
-						Move_Half(src1_0,dst0,image_data.src_line0,image_data.src_h0>>1,Yadif_pitch[0],image_data.dst_pitch0);
-						break;
-					case VMODE_PLANAR_YUV444 :
-					case VMODE_PLANAR_YUV422 :
-					case VMODE_PLANAR_YUV420 :
-					case VMODE_PLANAR_YUV411 :
-					case VMODE_PLANAR_YUV410 :
-						Move_Half(src1_0,dst0,image_data.src_line0,image_data.src_h0>>1,Yadif_pitch[0],image_data.dst_pitch0);
-						Move_Half(src1_1,dst1,image_data.src_line1,image_data.src_h1>>1,Yadif_pitch[1],image_data.dst_pitch1);
-						Move_Half(src1_2,dst2,image_data.src_line2,image_data.src_h2>>1,Yadif_pitch[2],image_data.dst_pitch2);
-						break;
-				}
-				// Here selection of discarded frames, different from TFF/BFF
-				if (mData.TFF)
-				{
-					discardP=current_frame_Yadif;
-					discardN=next_frame_Yadif;
-				}
-				else
-				{
-					discardP=previous_frame_Yadif;
-					discardN=current_frame_Yadif;
-				}
-				switch(image_data.video_mode)
-				{
-					case VMODE_BMP_RGBA :
-					case VMODE_YUYV :
-					case VMODE_UYVY :
-					case VMODE_Y :
-						src1_0=tab_Yadif[discardP].data[0];
-						src2_0=tab_Yadif[discardN].data[0];
-						dst0=image_data.dst_plane0;
-						break;
-					case VMODE_PLANAR_YUV444 :
-					case VMODE_PLANAR_YUV422 :
-					case VMODE_PLANAR_YUV420 :
-					case VMODE_PLANAR_YUV411 :
-					case VMODE_PLANAR_YUV410 :
-						src1_0=tab_Yadif[discardP].data[0];
-						src2_0=tab_Yadif[discardN].data[0];
-						src1_1=tab_Yadif[discardP].data[1];
-						src2_1=tab_Yadif[discardN].data[1];
-						src1_2=tab_Yadif[discardP].data[2];
-						src2_2=tab_Yadif[discardN].data[2];
-						dst0=image_data.dst_plane0;
-						dst1=image_data.dst_plane1;
-						dst2=image_data.dst_plane2;
-						break;
-				}
-				switch(image_data.video_mode)
-				{
-					case VMODE_BMP_RGBA :
-					case VMODE_YUYV :
-					case VMODE_UYVY :
-						YadifAbsDiffAvg(src1_0,src2_0,abs1[0],avg1[0],Yadif_pitch[0],Yadif_modulo[0],Yadif_pitch[0],
-							Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						YadifAvgKeepBottom(tab_Yadif[previous_frame_Yadif].absdiff[0],avg2[0],Yadif_pitch[0],Yadif_modulo[0],
-							Yadif_pitch[0],Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						YadifAvgKeepBottom(tab_Yadif[current_frame_Yadif].absdiff[0],avg3[0],Yadif_pitch[0],Yadif_modulo[0],
-							Yadif_pitch[0],Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						break;
-					case VMODE_PLANAR_YUV444 :
-					case VMODE_PLANAR_YUV422 :
-					case VMODE_PLANAR_YUV420 :
-					case VMODE_PLANAR_YUV411 :
-					case VMODE_PLANAR_YUV410 :
-						YadifAbsDiffAvg(src1_0,src2_0,abs1[0],avg1[0],Yadif_pitch[0],Yadif_modulo[0],Yadif_pitch[0],
-							Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						YadifAvgKeepBottom(tab_Yadif[previous_frame_Yadif].absdiff[0],avg2[0],Yadif_pitch[0],Yadif_modulo[0],
-							Yadif_pitch[0],Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						YadifAvgKeepBottom(tab_Yadif[current_frame_Yadif].absdiff[0],avg3[0],Yadif_pitch[0],Yadif_modulo[0],
-							Yadif_pitch[0],Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						YadifAbsDiffAvg(src1_1,src2_1,abs1[1],avg1[1],Yadif_pitch[1],Yadif_modulo[1],Yadif_pitch[1],
-							Yadif_modulo[1],image_data.src_line1,image_data.src_h1>>1);
-						YadifAvgKeepBottom(tab_Yadif[previous_frame_Yadif].absdiff[1],avg2[1],Yadif_pitch[1],Yadif_modulo[1],
-							Yadif_pitch[1],Yadif_modulo[1],image_data.src_line1,image_data.src_h1>>1);
-						YadifAvgKeepBottom(tab_Yadif[current_frame_Yadif].absdiff[1],avg3[1],Yadif_pitch[1],Yadif_modulo[1],
-							Yadif_pitch[1],Yadif_modulo[1],image_data.src_line1,image_data.src_h1>>1);
-						YadifAbsDiffAvg(src1_2,src2_2,abs1[2],avg1[2],Yadif_pitch[2],Yadif_modulo[2],Yadif_pitch[2],
-							Yadif_modulo[2],image_data.src_line2,image_data.src_h2>>1);
-						YadifAvgKeepBottom(tab_Yadif[previous_frame_Yadif].absdiff[2],avg2[2],Yadif_pitch[2],Yadif_modulo[2],
-							Yadif_pitch[2],Yadif_modulo[2],image_data.src_line2,image_data.src_h2>>1);
-						YadifAvgKeepBottom(tab_Yadif[current_frame_Yadif].absdiff[2],avg3[2],Yadif_pitch[2],Yadif_modulo[2],
-							Yadif_pitch[2],Yadif_modulo[2],image_data.src_line2,image_data.src_h2>>1);
-						YadifSpatiafBufferPlanarKeepBottom(tab_Yadif[current_frame_Yadif].data[0],spatial_Yadif_buffer,
-							Yadif_pitch[0],Yadif_modulo[0],Yadif_pitch[0]*10,Yadif_modulo[0],image_data.src_line0,image_data.dst_h0>>1);
-						YadifSpatialPlanarKeepBottom(spatial_Yadif_buffer,dst0,Yadif_pitch[0]*10,Yadif_modulo[0],image_data.dst_pitch0,
-							image_data.dst_modulo0,image_data.src_line0,image_data.dst_h0>>1);
-						YadifSpatiafBufferPlanarKeepBottom(tab_Yadif[current_frame_Yadif].data[1],spatial_Yadif_buffer,
-							Yadif_pitch[1],Yadif_modulo[1],Yadif_pitch[1]*10,Yadif_modulo[1],image_data.src_line1,image_data.dst_h1>>1);
-						YadifSpatialPlanarKeepBottom(spatial_Yadif_buffer,dst1,Yadif_pitch[1]*10,Yadif_modulo[1],image_data.dst_pitch1,
-							image_data.dst_modulo1,image_data.src_line1,image_data.dst_h1>>1);
-						YadifSpatiafBufferPlanarKeepBottom(tab_Yadif[current_frame_Yadif].data[2],spatial_Yadif_buffer,
-							Yadif_pitch[2],Yadif_modulo[2],Yadif_pitch[2]*10,Yadif_modulo[2],image_data.src_line2,image_data.dst_h2>>1);
-						YadifSpatialPlanarKeepBottom(spatial_Yadif_buffer,dst2,Yadif_pitch[2]*10,Yadif_modulo[2],image_data.dst_pitch2,
-							image_data.dst_modulo2,image_data.src_line2,image_data.dst_h2>>1);
-						break;
-					case VMODE_Y :
-						YadifAbsDiffAvg(src1_0,src2_0,abs1[0],avg1[0],Yadif_pitch[0],Yadif_modulo[0],Yadif_pitch[0],
-							Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						YadifAvgKeepBottom(tab_Yadif[previous_frame_Yadif].absdiff[0],avg2[0],Yadif_pitch[0],Yadif_modulo[0],
-							Yadif_pitch[0],Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						YadifAvgKeepBottom(tab_Yadif[current_frame_Yadif].absdiff[0],avg3[0],Yadif_pitch[0],Yadif_modulo[0],
-							Yadif_pitch[0],Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						YadifSpatiafBufferPlanarKeepBottom(tab_Yadif[current_frame_Yadif].data[0],spatial_Yadif_buffer,
-							Yadif_pitch[0],Yadif_modulo[0],Yadif_pitch[0]*10,Yadif_modulo[0],image_data.src_line0,image_data.dst_h0>>1);
-						YadifSpatialPlanarKeepBottom(spatial_Yadif_buffer,dst0,Yadif_pitch[0]*10,Yadif_modulo[0],image_data.dst_pitch0,
-							image_data.dst_modulo0,image_data.src_line0,image_data.dst_h0>>1);
-						break;
-				}
-				switch(image_data.video_mode)
-				{
-					case VMODE_BMP_RGBA :
-					case VMODE_YUYV :
-					case VMODE_UYVY :
-					case VMODE_Y :
-						src1_0=(void *)((uint8_t *)tab_Yadif[current_frame_Yadif].data[0]+Yadif_pitch[0]);
-						break;
-					case VMODE_PLANAR_YUV444 :
-					case VMODE_PLANAR_YUV422 :
-					case VMODE_PLANAR_YUV420 :
-					case VMODE_PLANAR_YUV411 :
-					case VMODE_PLANAR_YUV410 :
-						src1_0=(void *)((uint8_t *)tab_Yadif[current_frame_Yadif].data[0]+Yadif_pitch[0]);
-						src1_1=(void *)((uint8_t *)tab_Yadif[current_frame_Yadif].data[1]+Yadif_pitch[1]);
-						src1_2=(void *)((uint8_t *)tab_Yadif[current_frame_Yadif].data[2]+Yadif_pitch[2]);
-						break;
-				}
-				switch(image_data.video_mode)
-				{
-					case VMODE_BMP_RGBA :
-					case VMODE_YUYV :
-					case VMODE_UYVY :
-						break;
-					case VMODE_PLANAR_YUV444 :
-					case VMODE_PLANAR_YUV422 :
-					case VMODE_PLANAR_YUV420 :
-					case VMODE_PLANAR_YUV411 :
-					case VMODE_PLANAR_YUV410 :
-						YadifTemporalPlanarKeepBottom(src1_0,avg1[0],avg2[0],avg3[0],abs1[0],dst0,Yadif_pitch[0],Yadif_modulo[0],
-							Yadif_pitch[0],Yadif_modulo[0],image_data.dst_pitch0,image_data.dst_modulo0,image_data.src_line0,image_data.src_h0>>1);
-						YadifTemporalPlanarKeepBottom(src1_1,avg1[1],avg2[1],avg3[1],abs1[1],dst1,Yadif_pitch[1],Yadif_modulo[1],
-							Yadif_pitch[1],Yadif_modulo[1],image_data.dst_pitch1,image_data.dst_modulo1,image_data.src_line1,image_data.src_h1>>1);
-						YadifTemporalPlanarKeepBottom(src1_2,avg1[2],avg2[2],avg3[2],abs1[2],dst2,Yadif_pitch[2],Yadif_modulo[2],
-							Yadif_pitch[2],Yadif_modulo[2],image_data.dst_pitch2,image_data.dst_modulo2,image_data.src_line2,image_data.src_h2>>1);
-						break;
-					case VMODE_Y :
-						YadifTemporalPlanarKeepBottom(src1_0,avg1[0],avg2[0],avg3[0],abs1[0],dst0,Yadif_pitch[0],Yadif_modulo[0],
-							Yadif_pitch[0],Yadif_modulo[0],image_data.dst_pitch0,image_data.dst_modulo0,image_data.src_line0,image_data.src_h0>>1);
-						break;
-				}
-			}
-			else
-			{  // Keep Top
-				switch(image_data.video_mode)
-				{
-					case VMODE_BMP_RGBA :
-					case VMODE_YUYV :
-					case VMODE_UYVY :
-					case VMODE_Y :
-						YadifAbsDiff(src1_0,src2_0,tab_Yadif[current_frame_Yadif].absdiff[0],Yadif_pitch[0],Yadif_modulo[0],Yadif_pitch[0],
-							Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						break;
-					case VMODE_PLANAR_YUV444 :
-					case VMODE_PLANAR_YUV422 :
-					case VMODE_PLANAR_YUV420 :
-					case VMODE_PLANAR_YUV411 :
-					case VMODE_PLANAR_YUV410 :
-						YadifAbsDiff(src1_0,src2_0,tab_Yadif[current_frame_Yadif].absdiff[0],Yadif_pitch[0],Yadif_modulo[0],Yadif_pitch[0],
-							Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						YadifAbsDiff(src1_1,src2_1,tab_Yadif[current_frame_Yadif].absdiff[1],Yadif_pitch[1],Yadif_modulo[1],Yadif_pitch[1],
-							Yadif_modulo[1],image_data.src_line1,image_data.src_h1>>1);
-						YadifAbsDiff(src1_2,src2_2,tab_Yadif[current_frame_Yadif].absdiff[2],Yadif_pitch[2],Yadif_modulo[2],Yadif_pitch[2],
-							Yadif_modulo[2],image_data.src_line2,image_data.src_h2>>1);
-						break;
-				}
-				switch(image_data.video_mode)
-				{
-					case VMODE_BMP_RGBA :
-					case VMODE_YUYV :
-					case VMODE_UYVY :
-					case VMODE_Y :
-						src1_0=tab_Yadif[current_frame_Yadif].data[0];
-						dst0=image_data.dst_plane0;
-						break;
-					case VMODE_PLANAR_YUV444 :
-					case VMODE_PLANAR_YUV422 :
-					case VMODE_PLANAR_YUV420 :
-					case VMODE_PLANAR_YUV411 :
-					case VMODE_PLANAR_YUV410 :
-						src1_0=tab_Yadif[current_frame_Yadif].data[0];
-						src1_1=tab_Yadif[current_frame_Yadif].data[1];
-						src1_2=tab_Yadif[current_frame_Yadif].data[2];
-						dst0=image_data.dst_plane0;
-						dst1=image_data.dst_plane1;
-						dst2=image_data.dst_plane2;
-						break;
-				}
-				switch(image_data.video_mode)
-				{
-					case VMODE_BMP_RGBA :
-					case VMODE_YUYV :
-					case VMODE_UYVY :
-					case VMODE_Y :
-						Move_Half(src1_0,dst0,image_data.src_line0,image_data.src_h0>>1,Yadif_pitch[0],image_data.dst_pitch0);
-						break;
-					case VMODE_PLANAR_YUV444 :
-					case VMODE_PLANAR_YUV422 :
-					case VMODE_PLANAR_YUV420 :
-					case VMODE_PLANAR_YUV411 :
-					case VMODE_PLANAR_YUV410 :
-						Move_Half(src1_0,dst0,image_data.src_line0,image_data.src_h0>>1,Yadif_pitch[0],image_data.dst_pitch0);
-						Move_Half(src1_1,dst1,image_data.src_line1,image_data.src_h1>>1,Yadif_pitch[1],image_data.dst_pitch1);
-						Move_Half(src1_2,dst2,image_data.src_line2,image_data.src_h2>>1,Yadif_pitch[2],image_data.dst_pitch2);
-						break;
-				}
-				// Here selection of discarded frames, is different form TFF/BFF
-				if (mData.TFF)
-				{
-					discardP=previous_frame_Yadif;
-					discardN=current_frame_Yadif;
-				}
-				else
-				{
-					discardP=current_frame_Yadif;
-					discardN=next_frame_Yadif;
-				}
-				switch(image_data.video_mode)
-				{
-					case VMODE_BMP_RGBA :
-					case VMODE_YUYV :
-					case VMODE_UYVY :
-					case VMODE_Y :
-						src1_0=(void *)((uint8_t *)tab_Yadif[discardP].data[0]+Yadif_pitch[0]);
-						src2_0=(void *)((uint8_t *)tab_Yadif[discardN].data[0]+Yadif_pitch[0]);
-						dst0=(void *)((uint8_t *)image_data.dst_plane0+image_data.dst_pitch0);
-						break;
-					case VMODE_PLANAR_YUV444 :
-					case VMODE_PLANAR_YUV422 :
-					case VMODE_PLANAR_YUV420 :
-					case VMODE_PLANAR_YUV411 :
-					case VMODE_PLANAR_YUV410 :
-						src1_0=(void *)((uint8_t *)tab_Yadif[discardP].data[0]+Yadif_pitch[0]);
-						src2_0=(void *)((uint8_t *)tab_Yadif[discardN].data[0]+Yadif_pitch[0]);
-						src1_1=(void *)((uint8_t *)tab_Yadif[discardP].data[1]+Yadif_pitch[1]);
-						src2_1=(void *)((uint8_t *)tab_Yadif[discardN].data[1]+Yadif_pitch[1]);
-						src1_2=(void *)((uint8_t *)tab_Yadif[discardP].data[2]+Yadif_pitch[2]);
-						src2_2=(void *)((uint8_t *)tab_Yadif[discardN].data[2]+Yadif_pitch[2]);
-						dst0=(void *)((uint8_t *)image_data.dst_plane0+image_data.dst_pitch0);
-						dst1=(void *)((uint8_t *)image_data.dst_plane1+image_data.dst_pitch1);
-						dst2=(void *)((uint8_t *)image_data.dst_plane2+image_data.dst_pitch2);
-						break;
-				}
-				switch(image_data.video_mode)
-				{
-					case VMODE_BMP_RGBA :
-					case VMODE_YUYV :
-					case VMODE_UYVY :
-						YadifAbsDiffAvg(src1_0,src2_0,abs1[0],avg1[0],Yadif_pitch[0],Yadif_modulo[0],Yadif_pitch[0],
-							Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						YadifAvgKeepTop(tab_Yadif[previous_frame_Yadif].absdiff[0],avg2[0],Yadif_pitch[0],Yadif_modulo[0],
-							Yadif_pitch[0],Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						YadifAvgKeepTop(tab_Yadif[current_frame_Yadif].absdiff[0],avg3[0],Yadif_pitch[0],Yadif_modulo[0],
-							Yadif_pitch[0],Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						break;
-					case VMODE_PLANAR_YUV444 :
-					case VMODE_PLANAR_YUV422 :
-					case VMODE_PLANAR_YUV420 :
-					case VMODE_PLANAR_YUV411 :
-					case VMODE_PLANAR_YUV410 :
-						YadifAbsDiffAvg(src1_0,src2_0,abs1[0],avg1[0],Yadif_pitch[0],Yadif_modulo[0],Yadif_pitch[0],
-							Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						YadifAvgKeepTop(tab_Yadif[previous_frame_Yadif].absdiff[0],avg2[0],Yadif_pitch[0],Yadif_modulo[0],
-							Yadif_pitch[0],Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						YadifAvgKeepTop(tab_Yadif[current_frame_Yadif].absdiff[0],avg3[0],Yadif_pitch[0],Yadif_modulo[0],
-							Yadif_pitch[0],Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						YadifAbsDiffAvg(src1_1,src2_1,abs1[1],avg1[1],Yadif_pitch[1],Yadif_modulo[1],Yadif_pitch[1],
-							Yadif_modulo[1],image_data.src_line1,image_data.src_h1>>1);
-						YadifAvgKeepTop(tab_Yadif[previous_frame_Yadif].absdiff[1],avg2[1],Yadif_pitch[1],Yadif_modulo[1],
-							Yadif_pitch[1],Yadif_modulo[1],image_data.src_line1,image_data.src_h1>>1);
-						YadifAvgKeepTop(tab_Yadif[current_frame_Yadif].absdiff[1],avg3[1],Yadif_pitch[1],Yadif_modulo[1],
-							Yadif_pitch[1],Yadif_modulo[1],image_data.src_line1,image_data.src_h1>>1);
-						YadifAbsDiffAvg(src1_2,src2_2,abs1[2],avg1[2],Yadif_pitch[2],Yadif_modulo[2],Yadif_pitch[2],
-							Yadif_modulo[2],image_data.src_line2,image_data.src_h2>>1);
-						YadifAvgKeepTop(tab_Yadif[previous_frame_Yadif].absdiff[2],avg2[2],Yadif_pitch[2],Yadif_modulo[2],
-							Yadif_pitch[2],Yadif_modulo[2],image_data.src_line2,image_data.src_h2>>1);
-						YadifAvgKeepTop(tab_Yadif[current_frame_Yadif].absdiff[2],avg3[2],Yadif_pitch[2],Yadif_modulo[2],
-							Yadif_pitch[2],Yadif_modulo[2],image_data.src_line2,image_data.src_h2>>1);
-						YadifSpatiafBufferPlanarKeepTop(tab_Yadif[current_frame_Yadif].data[0],spatial_Yadif_buffer,
-							Yadif_pitch[0],Yadif_modulo[0],Yadif_pitch[0]*10,Yadif_modulo[0],image_data.src_line0,image_data.dst_h0>>1);
-						YadifSpatialPlanarKeepTop(spatial_Yadif_buffer,dst0,Yadif_pitch[0]*10,Yadif_modulo[0],image_data.dst_pitch0,
-							image_data.dst_modulo0,image_data.src_line0,image_data.dst_h0>>1);
-						YadifSpatiafBufferPlanarKeepTop(tab_Yadif[current_frame_Yadif].data[1],spatial_Yadif_buffer,
-							Yadif_pitch[1],Yadif_modulo[1],Yadif_pitch[1]*10,Yadif_modulo[1],image_data.src_line1,image_data.dst_h1>>1);
-						YadifSpatialPlanarKeepTop(spatial_Yadif_buffer,dst1,Yadif_pitch[1]*10,Yadif_modulo[1],image_data.dst_pitch1,
-							image_data.dst_modulo1,image_data.src_line1,image_data.dst_h1>>1);
-						YadifSpatiafBufferPlanarKeepTop(tab_Yadif[current_frame_Yadif].data[2],spatial_Yadif_buffer,
-							Yadif_pitch[2],Yadif_modulo[2],Yadif_pitch[2]*10,Yadif_modulo[2],image_data.src_line2,image_data.dst_h2>>1);
-						YadifSpatialPlanarKeepTop(spatial_Yadif_buffer,dst2,Yadif_pitch[2]*10,Yadif_modulo[2],image_data.dst_pitch2,
-							image_data.dst_modulo2,image_data.src_line2,image_data.dst_h2>>1);
-						break;
-					case VMODE_Y :
-						YadifAbsDiffAvg(src1_0,src2_0,abs1[0],avg1[0],Yadif_pitch[0],Yadif_modulo[0],Yadif_pitch[0],
-							Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						YadifAvgKeepTop(tab_Yadif[previous_frame_Yadif].absdiff[0],avg2[0],Yadif_pitch[0],Yadif_modulo[0],
-							Yadif_pitch[0],Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						YadifAvgKeepTop(tab_Yadif[current_frame_Yadif].absdiff[0],avg3[0],Yadif_pitch[0],Yadif_modulo[0],
-							Yadif_pitch[0],Yadif_modulo[0],image_data.src_line0,image_data.src_h0>>1);
-						YadifSpatiafBufferPlanarKeepTop(tab_Yadif[current_frame_Yadif].data[0],spatial_Yadif_buffer,
-							Yadif_pitch[0],Yadif_modulo[0],Yadif_pitch[0]*10,Yadif_modulo[0],image_data.src_line0,image_data.dst_h0>>1);
-						YadifSpatialPlanarKeepTop(spatial_Yadif_buffer,dst0,Yadif_pitch[0]*10,Yadif_modulo[0],image_data.dst_pitch0,
-							image_data.dst_modulo0,image_data.src_line0,image_data.dst_h0>>1);
-						break;
-				}
-				switch(image_data.video_mode)
-				{
-					case VMODE_BMP_RGBA :
-					case VMODE_YUYV :
-					case VMODE_UYVY :
-					case VMODE_Y :
-						src1_0=tab_Yadif[current_frame_Yadif].data[0];
-						break;
-					case VMODE_PLANAR_YUV444 :
-					case VMODE_PLANAR_YUV422 :
-					case VMODE_PLANAR_YUV420 :
-					case VMODE_PLANAR_YUV411 :
-					case VMODE_PLANAR_YUV410 :
-						src1_0=tab_Yadif[current_frame_Yadif].data[0];
-						src1_1=tab_Yadif[current_frame_Yadif].data[1];
-						src1_2=tab_Yadif[current_frame_Yadif].data[2];
-						break;
-				}
-				switch(image_data.video_mode)
-				{
-					case VMODE_BMP_RGBA :
-					case VMODE_YUYV :
-					case VMODE_UYVY :
-						break;
-					case VMODE_PLANAR_YUV444 :
-					case VMODE_PLANAR_YUV422 :
-					case VMODE_PLANAR_YUV420 :
-					case VMODE_PLANAR_YUV411 :
-					case VMODE_PLANAR_YUV410 :
-						YadifTemporalPlanarKeepTop(src1_0,avg1[0],avg2[0],avg3[0],abs1[0],dst0,Yadif_pitch[0],Yadif_modulo[0],
-							Yadif_pitch[0],Yadif_modulo[0],image_data.dst_pitch0,image_data.dst_modulo0,image_data.src_line0,image_data.src_h0>>1);
-						YadifTemporalPlanarKeepTop(src1_1,avg1[1],avg2[1],avg3[1],abs1[1],dst1,Yadif_pitch[1],Yadif_modulo[1],
-							Yadif_pitch[1],Yadif_modulo[1],image_data.dst_pitch1,image_data.dst_modulo1,image_data.src_line1,image_data.src_h1>>1);
-						YadifTemporalPlanarKeepTop(src1_2,avg1[2],avg2[2],avg3[2],abs1[2],dst2,Yadif_pitch[2],Yadif_modulo[2],
-							Yadif_pitch[2],Yadif_modulo[2],image_data.dst_pitch2,image_data.dst_modulo2,image_data.src_line2,image_data.src_h2>>1);
-						break;
-					case VMODE_Y :
-						YadifTemporalPlanarKeepTop(src1_0,avg1[0],avg2[0],avg3[0],abs1[0],dst0,Yadif_pitch[0],Yadif_modulo[0],
-							Yadif_pitch[0],Yadif_modulo[0],image_data.dst_pitch0,image_data.dst_modulo0,image_data.src_line0,image_data.src_h0>>1);
-						break;
-				}
-			}
-		current_frame_Yadif=(current_frame_Yadif+1)%3;
-		next_frame_Yadif=(next_frame_Yadif+1)%3;
-		previous_frame_Yadif=(previous_frame_Yadif+1)%3;
-		write_index_Yadif=(write_index_Yadif+1)%3;
-		return;
-	}
-	// Fin de Yadiff
 
 	transfert_buffer=false;
 	if (mData.file_mode)
@@ -4122,6 +4021,8 @@ void JPSDR_Deinterlace::Run()
 		}
 		return;
 	}
+
+	if (image_data.src_bits_pixel>8) Offset_MT=10;
 
 	if (threads_number>1)
 	{
@@ -4347,7 +4248,7 @@ void JPSDR_Deinterlace::Run()
 					default : ;
 				}
 				break;
-			default : ;
+			default : break;
 		}
 
 		if (f_proc!=0)
@@ -4357,7 +4258,7 @@ void JPSDR_Deinterlace::Run()
 				if (f_proc<7)
 				{
 					for(uint8_t i=0; i<threads_number; i++)
-						MT_Thread[i].f_process=f_proc;
+						MT_Thread[i].f_process=f_proc+Offset_MT;
 
 					if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
 
@@ -4370,17 +4271,17 @@ void JPSDR_Deinterlace::Run()
 					{
 						case 7 :
 							for(uint8_t i=0; i<threads_number; i++)
-								MT_Thread[i].f_process=3;
+								MT_Thread[i].f_process=3+Offset_MT;
 
 							if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
 
 							for(uint8_t i=0; i<threads_number; i++)
-								MT_Thread[i].f_process=7;
+								MT_Thread[i].f_process=7+Offset_MT;
 
 							if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
 
 							for(uint8_t i=0; i<threads_number; i++)
-								MT_Thread[i].f_process=8;
+								MT_Thread[i].f_process=8+Offset_MT;
 
 							if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
 
@@ -4389,17 +4290,17 @@ void JPSDR_Deinterlace::Run()
 							break;
 						case 8 :
 							for(uint8_t i=0; i<threads_number; i++)
-								MT_Thread[i].f_process=6;
+								MT_Thread[i].f_process=6+Offset_MT;
 
 							if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
 
 							for(uint8_t i=0; i<threads_number; i++)
-								MT_Thread[i].f_process=9;
+								MT_Thread[i].f_process=9+Offset_MT;
 
 							if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
 
 							for(uint8_t i=0; i<threads_number; i++)
-								MT_Thread[i].f_process=10;
+								MT_Thread[i].f_process=10+Offset_MT;
 
 							if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
 
@@ -4409,12 +4310,22 @@ void JPSDR_Deinterlace::Run()
 						default : break;
 					}
 				}
-				poolInterface->ReleaseThreadPool(UserId,true);
+				poolInterface->ReleaseThreadPool(UserId,false);
 			}
 		}
 	}
 	else
 	{
+		ptrdiff_t srcPitch0,srcPitch1,srcPitch2;
+		ptrdiff_t dstPitch0,dstPitch1,dstPitch2;
+
+		srcPitch0=image_data.src_pitch0;
+		srcPitch1=image_data.src_pitch1;
+		srcPitch2=image_data.src_pitch2;
+		dstPitch0=image_data.dst_pitch0;
+		dstPitch1=image_data.dst_pitch1;
+		dstPitch2=image_data.dst_pitch2;
+
 		switch(current_mode)
 		{
 		case 1 :
@@ -4447,40 +4358,40 @@ void JPSDR_Deinterlace::Run()
 			src2_0 = (void *)((uint8_t *)src1_0+2*image_data.src_pitch0);
 			dst0_0 = (void *)((uint8_t *)image_data.dst_plane0+2*image_data.dst_pitch0);
 			h0=(image_data.src_h0 >> 1)-1;
-			image_data.src_pitch0<<=1;
-			image_data.dst_pitch0<<=1;
+			srcPitch0<<=1;
+			dstPitch0<<=1;
 			src1_1 = (void *)((uint8_t *)image_data.src_plane1+image_data.src_pitch1);
 			src2_1 = (void *)((uint8_t *)src1_1+2*image_data.src_pitch1);
 			dst0_1 = (void *)((uint8_t *)image_data.dst_plane1+2*image_data.dst_pitch1);
 			h1=(image_data.src_h1 >> 1)-1;
-			image_data.src_pitch1<<=1;
-			image_data.dst_pitch1<<=1;
+			srcPitch1<<=1;
+			dstPitch1<<=1;
 			src1_2 = (void *)((uint8_t *)image_data.src_plane2+image_data.src_pitch2);
 			src2_2 = (void *)((uint8_t *)src1_2+2*image_data.src_pitch2);
 			dst0_2 = (void *)((uint8_t *)image_data.dst_plane2+2*image_data.dst_pitch2);
 			h2=(image_data.src_h2 >> 1)-1;
-			image_data.src_pitch2<<=1;
-			image_data.dst_pitch2<<=1;
+			srcPitch2<<=1;
+			dstPitch2<<=1;
 			break;
 		case 4 :
 			src1_0 = image_data.src_plane0;
 			src2_0 = (void *)((uint8_t *)src1_0+2*image_data.src_pitch0);
 			dst0_0 = (void *)((uint8_t *)image_data.dst_plane0+image_data.dst_pitch0);
 			h0=(image_data.src_h0 >> 1)-1;
-			image_data.src_pitch0<<=1;
-			image_data.dst_pitch0<<=1;
+			srcPitch0<<=1;
+			dstPitch0<<=1;
 			src1_1 = image_data.src_plane1;
 			src2_1 = (void *)((uint8_t *)src1_1+2*image_data.src_pitch1);
 			dst0_1 = (void *)((uint8_t *)image_data.dst_plane1+image_data.dst_pitch1);
 			h1=(image_data.src_h1 >> 1)-1;
-			image_data.src_pitch1<<=1;
-			image_data.dst_pitch1<<=1;
+			srcPitch1<<=1;
+			dstPitch1<<=1;
 			src1_2 = image_data.src_plane2;
 			src2_2 = (void *)((uint8_t *)src1_2+2*image_data.src_pitch2);
 			dst0_2 = (void *)((uint8_t *)image_data.dst_plane2+image_data.dst_pitch2);
 			h2=(image_data.src_h2 >> 1)-1;
-			image_data.src_pitch2<<=1;
-			image_data.dst_pitch2<<=1;
+			srcPitch2<<=1;
+			dstPitch2<<=1;
 			break;
 		}
 	
@@ -4493,50 +4404,133 @@ void JPSDR_Deinterlace::Run()
 					case VMODE_YUYV :
 					case VMODE_UYVY :
 					case VMODE_Y :
-						Move_Full(buffer0,image_data.dst_plane0,image_data.src_line0,image_data.src_h0,buffer0_pitch,image_data.dst_pitch0);
+						Move_Full(buffer0,image_data.dst_plane0,image_data.src_line0,image_data.src_h0,buffer0_pitch,dstPitch0);
 						break;
 					case VMODE_PLANAR_YUV444 :
 					case VMODE_PLANAR_YUV422 :
 					case VMODE_PLANAR_YUV420 :
 					case VMODE_PLANAR_YUV411 :
 					case VMODE_PLANAR_YUV410 :
-						Move_Full(buffer0,image_data.dst_plane0,image_data.src_line0,image_data.src_h0,buffer0_pitch,image_data.dst_pitch0);
-						Move_Full(buffer1,image_data.dst_plane1,image_data.src_line1,image_data.src_h1,buffer1_pitch,image_data.dst_pitch1);
-						Move_Full(buffer2,image_data.dst_plane2,image_data.src_line2,image_data.src_h2,buffer2_pitch,image_data.dst_pitch2);
+						Move_Full(buffer0,image_data.dst_plane0,image_data.src_line0,image_data.src_h0,buffer0_pitch,dstPitch0);
+						Move_Full(buffer1,image_data.dst_plane1,image_data.src_line1,image_data.src_h1,buffer1_pitch,dstPitch1);
+						Move_Full(buffer2,image_data.dst_plane2,image_data.src_line2,image_data.src_h2,buffer2_pitch,dstPitch2);
 						break;
 				}
 				break;
 			case 1 :
 			case 3 :
 			case 4 :
-				if (AVX_Enable)
+#ifdef AVX2_BUILD_POSSIBLE
+				if (AVX2_Enable)
 				{
 					switch(image_data.video_mode)
 					{
 						case VMODE_BMP_RGBA :
-							JPSDR_Deinterlace_Blend_AVX_3_A(src1_0,src2_0,dst0_0,(image_data.src_w0+3)>>2,
-								h0,image_data.src_pitch0,image_data.dst_pitch0);
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_8_AVX2(src1_0,src2_0,dst0_0,(image_data.src_w0+7)>>3,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_16_AVX2(src1_0,src2_0,dst0_0,((image_data.src_w0<<1)+7)>>3,
+									h0,srcPitch0,dstPitch0);
 							break;
 						case VMODE_YUYV :
 						case VMODE_UYVY :
-								JPSDR_Deinterlace_Blend_AVX_3_A(src1_0,src2_0,dst0_0,(image_data.src_w0+7)>>3,
-									h0,image_data.src_pitch0,image_data.dst_pitch0);
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_8_AVX2(src1_0,src2_0,dst0_0,(image_data.src_w0+15)>>4,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_16_AVX2(src1_0,src2_0,dst0_0,((image_data.src_w0<<1)+15)>>4,
+									h0,srcPitch0,dstPitch0);
 							break;
 						case VMODE_PLANAR_YUV444 :
 						case VMODE_PLANAR_YUV422 :
 						case VMODE_PLANAR_YUV420 :
 						case VMODE_PLANAR_YUV411 :
 						case VMODE_PLANAR_YUV410 :
-							JPSDR_Deinterlace_Blend_AVX_3_A(src1_0,src2_0,dst0_0,(image_data.src_w0+15)>>4,
-								h0,image_data.src_pitch0,image_data.dst_pitch0);								
-							JPSDR_Deinterlace_Blend_AVX_3_A(src1_1,src2_1,dst0_1,(image_data.src_w1+15)>>4,
-								h1,image_data.src_pitch1,image_data.dst_pitch1);
-							JPSDR_Deinterlace_Blend_AVX_3_A(src1_2,src2_2,dst0_2,(image_data.src_w2+15)>>4,
-								h2,image_data.src_pitch2,image_data.dst_pitch2);
+							if (image_data.src_bits_pixel==8)
+							{
+								JPSDR_Deinterlace_Blend_8_AVX2(src1_0,src2_0,dst0_0,(image_data.src_w0+31)>>5,
+									h0,srcPitch0,dstPitch0);								
+								JPSDR_Deinterlace_Blend_8_AVX2(src1_1,src2_1,dst0_1,(image_data.src_w1+31)>>5,
+									h1,srcPitch1,dstPitch1);
+								JPSDR_Deinterlace_Blend_8_AVX2(src1_2,src2_2,dst0_2,(image_data.src_w2+31)>>5,
+									h2,srcPitch2,dstPitch2);
+							}
+							else
+							{
+								JPSDR_Deinterlace_Blend_16_AVX2(src1_0,src2_0,dst0_0,((image_data.src_w0<<1)+31)>>5,
+									h0,srcPitch0,dstPitch0);								
+								JPSDR_Deinterlace_Blend_16_AVX2(src1_1,src2_1,dst0_1,((image_data.src_w1<<1)+31)>>5,
+									h1,srcPitch1,dstPitch1);
+								JPSDR_Deinterlace_Blend_16_AVX2(src1_2,src2_2,dst0_2,((image_data.src_w2<<1)+31)>>5,
+									h2,srcPitch2,dstPitch2);
+							}
 							break;
 						case VMODE_Y :
-							JPSDR_Deinterlace_Blend_AVX_3_A(src1_0,src2_0,dst0_0,(image_data.src_w0+15)>>4,
-								h0,image_data.src_pitch0,image_data.dst_pitch0);
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_8_AVX2(src1_0,src2_0,dst0_0,(image_data.src_w0+31)>>5,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_16_AVX2(src1_0,src2_0,dst0_0,((image_data.src_w0<<1)+31)>>5,
+									h0,srcPitch0,dstPitch0);
+							break;
+					}
+				}
+				else
+#endif
+				{
+				if (AVX_Enable)
+				{
+					switch(image_data.video_mode)
+					{
+						case VMODE_BMP_RGBA :
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_8_AVX(src1_0,src2_0,dst0_0,(image_data.src_w0+3)>>2,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_16_AVX(src1_0,src2_0,dst0_0,((image_data.src_w0<<1)+3)>>2,
+									h0,srcPitch0,dstPitch0);
+							break;
+						case VMODE_YUYV :
+						case VMODE_UYVY :
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_8_AVX(src1_0,src2_0,dst0_0,(image_data.src_w0+7)>>3,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_16_AVX(src1_0,src2_0,dst0_0,((image_data.src_w0<<1)+7)>>3,
+									h0,srcPitch0,dstPitch0);
+							break;
+						case VMODE_PLANAR_YUV444 :
+						case VMODE_PLANAR_YUV422 :
+						case VMODE_PLANAR_YUV420 :
+						case VMODE_PLANAR_YUV411 :
+						case VMODE_PLANAR_YUV410 :
+							if (image_data.src_bits_pixel==8)
+							{
+								JPSDR_Deinterlace_Blend_8_AVX(src1_0,src2_0,dst0_0,(image_data.src_w0+15)>>4,
+									h0,srcPitch0,dstPitch0);								
+								JPSDR_Deinterlace_Blend_8_AVX(src1_1,src2_1,dst0_1,(image_data.src_w1+15)>>4,
+									h1,srcPitch1,dstPitch1);
+								JPSDR_Deinterlace_Blend_8_AVX(src1_2,src2_2,dst0_2,(image_data.src_w2+15)>>4,
+									h2,srcPitch2,dstPitch2);
+							}
+							else
+							{
+								JPSDR_Deinterlace_Blend_16_AVX(src1_0,src2_0,dst0_0,((image_data.src_w0<<1)+15)>>4,
+									h0,srcPitch0,dstPitch0);								
+								JPSDR_Deinterlace_Blend_16_AVX(src1_1,src2_1,dst0_1,((image_data.src_w1<<1)+15)>>4,
+									h1,srcPitch1,dstPitch1);
+								JPSDR_Deinterlace_Blend_16_AVX(src1_2,src2_2,dst0_2,((image_data.src_w2<<1)+15)>>4,
+									h2,srcPitch2,dstPitch2);
+							}
+							break;
+						case VMODE_Y :
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_8_AVX(src1_0,src2_0,dst0_0,(image_data.src_w0+15)>>4,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_16_AVX(src1_0,src2_0,dst0_0,((image_data.src_w0<<1)+15)>>4,
+									h0,srcPitch0,dstPitch0);
 							break;
 					}
 				}
@@ -4548,29 +4542,53 @@ void JPSDR_Deinterlace::Run()
 					switch(image_data.video_mode)
 					{
 						case VMODE_BMP_RGBA :
-							JPSDR_Deinterlace_Blend_SSE_3_A(src1_0,src2_0,dst0_0,(image_data.src_w0+3)>>2,
-								h0,image_data.src_pitch0,image_data.dst_pitch0);
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_8_SSE2(src1_0,src2_0,dst0_0,(image_data.src_w0+3)>>2,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_16_SSE2(src1_0,src2_0,dst0_0,((image_data.src_w0<<1)+3)>>2,
+									h0,srcPitch0,dstPitch0);
 							break;
 						case VMODE_YUYV :
 						case VMODE_UYVY :
-								JPSDR_Deinterlace_Blend_SSE_3_A(src1_0,src2_0,dst0_0,(image_data.src_w0+7)>>3,
-									h0,image_data.src_pitch0,image_data.dst_pitch0);
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_8_SSE2(src1_0,src2_0,dst0_0,(image_data.src_w0+7)>>3,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_16_SSE2(src1_0,src2_0,dst0_0,((image_data.src_w0<<1)+7)>>3,
+									h0,srcPitch0,dstPitch0);
 							break;
 						case VMODE_PLANAR_YUV444 :
 						case VMODE_PLANAR_YUV422 :
 						case VMODE_PLANAR_YUV420 :
 						case VMODE_PLANAR_YUV411 :
 						case VMODE_PLANAR_YUV410 :
-							JPSDR_Deinterlace_Blend_SSE_3_A(src1_0,src2_0,dst0_0,(image_data.src_w0+15)>>4,
-								h0,image_data.src_pitch0,image_data.dst_pitch0);								
-							JPSDR_Deinterlace_Blend_SSE_3_A(src1_1,src2_1,dst0_1,(image_data.src_w1+15)>>4,
-								h1,image_data.src_pitch1,image_data.dst_pitch1);
-							JPSDR_Deinterlace_Blend_SSE_3_A(src1_2,src2_2,dst0_2,(image_data.src_w2+15)>>4,
-								h2,image_data.src_pitch2,image_data.dst_pitch2);
+							if (image_data.src_bits_pixel==8)
+							{
+								JPSDR_Deinterlace_Blend_8_SSE2(src1_0,src2_0,dst0_0,(image_data.src_w0+15)>>4,
+									h0,srcPitch0,dstPitch0);								
+								JPSDR_Deinterlace_Blend_8_SSE2(src1_1,src2_1,dst0_1,(image_data.src_w1+15)>>4,
+									h1,srcPitch1,dstPitch1);
+								JPSDR_Deinterlace_Blend_8_SSE2(src1_2,src2_2,dst0_2,(image_data.src_w2+15)>>4,
+									h2,srcPitch2,dstPitch2);
+							}
+							else
+							{
+								JPSDR_Deinterlace_Blend_16_SSE2(src1_0,src2_0,dst0_0,((image_data.src_w0<<1)+15)>>4,
+									h0,srcPitch0,dstPitch0);								
+								JPSDR_Deinterlace_Blend_16_SSE2(src1_1,src2_1,dst0_1,((image_data.src_w1<<1)+15)>>4,
+									h1,srcPitch1,dstPitch1);
+								JPSDR_Deinterlace_Blend_16_SSE2(src1_2,src2_2,dst0_2,((image_data.src_w2<<1)+15)>>4,
+									h2,srcPitch2,dstPitch2);
+							}
 							break;
 						case VMODE_Y :
-							JPSDR_Deinterlace_Blend_SSE_3_A(src1_0,src2_0,dst0_0,(image_data.src_w0+15)>>4,
-								h0,image_data.src_pitch0,image_data.dst_pitch0);
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_8_SSE2(src1_0,src2_0,dst0_0,(image_data.src_w0+15)>>4,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_16_SSE2(src1_0,src2_0,dst0_0,((image_data.src_w0<<1)+15)>>4,
+									h0,srcPitch0,dstPitch0);
 							break;
 					}
 				}
@@ -4579,34 +4597,60 @@ void JPSDR_Deinterlace::Run()
 					switch(image_data.video_mode)
 					{
 						case VMODE_BMP_RGBA :
-							JPSDR_Deinterlace_Blend_Non_MMX_24(src1_0,src2_0,dst0_0,image_data.src_w0,
-								h0,image_data.src_pitch0,image_data.dst_pitch0);
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_24(src1_0,src2_0,dst0_0,image_data.src_w0,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_48(src1_0,src2_0,dst0_0,image_data.src_w0,
+									h0,srcPitch0,dstPitch0);
 							break;
 						case VMODE_YUYV :
 						case VMODE_UYVY :
-							JPSDR_Deinterlace_Blend_Non_MMX_32(src1_0,src2_0,dst0_0,(image_data.src_w0+1)>>1,
-								h0,image_data.src_pitch0,image_data.dst_pitch0);
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_32(src1_0,src2_0,dst0_0,(image_data.src_w0+1)>>1,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_64(src1_0,src2_0,dst0_0,(image_data.src_w0+1)>>1,
+									h0,srcPitch0,dstPitch0);
 							break;
 						case VMODE_PLANAR_YUV444 :
 						case VMODE_PLANAR_YUV422 :
 						case VMODE_PLANAR_YUV420 :
 						case VMODE_PLANAR_YUV411 :
 						case VMODE_PLANAR_YUV410 :
-							JPSDR_Deinterlace_Blend_Non_MMX_8(src1_0,src2_0,dst0_0,image_data.src_w0,
-								h0,image_data.src_pitch0,image_data.dst_pitch0);
-							JPSDR_Deinterlace_Blend_Non_MMX_8(src1_1,src2_1,dst0_1,image_data.src_w1,
-								h1,image_data.src_pitch1,image_data.dst_pitch1);
-							JPSDR_Deinterlace_Blend_Non_MMX_8(src1_2,src2_2,dst0_2,image_data.src_w2,
-								h2,image_data.src_pitch2,image_data.dst_pitch2);
+							if (image_data.src_bits_pixel==8)
+							{
+								JPSDR_Deinterlace_Blend_8(src1_0,src2_0,dst0_0,image_data.src_w0,
+									h0,srcPitch0,dstPitch0);
+								JPSDR_Deinterlace_Blend_8(src1_1,src2_1,dst0_1,image_data.src_w1,
+									h1,srcPitch1,dstPitch1);
+								JPSDR_Deinterlace_Blend_8(src1_2,src2_2,dst0_2,image_data.src_w2,
+									h2,srcPitch2,dstPitch2);
+							}
+							else
+							{
+								JPSDR_Deinterlace_Blend_16(src1_0,src2_0,dst0_0,image_data.src_w0,
+									h0,srcPitch0,dstPitch0);
+								JPSDR_Deinterlace_Blend_16(src1_1,src2_1,dst0_1,image_data.src_w1,
+									h1,srcPitch1,dstPitch1);
+								JPSDR_Deinterlace_Blend_16(src1_2,src2_2,dst0_2,image_data.src_w2,
+									h2,srcPitch2,dstPitch2);
+							}
 							break;
 						case VMODE_Y :
-							JPSDR_Deinterlace_Blend_Non_MMX_8(src1_0,src2_0,dst0_0,image_data.src_w0,
-								h0,image_data.src_pitch0,image_data.dst_pitch0);
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_8(src1_0,src2_0,dst0_0,image_data.src_w0,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_16(src1_0,src2_0,dst0_0,image_data.src_w0,
+									h0,srcPitch0,dstPitch0);
 							break;
 					}
 				}
 
 				}
+				}
+
 				switch (current_mode)
 				{
 					case 1 :
@@ -4617,20 +4661,20 @@ void JPSDR_Deinterlace::Run()
 							case VMODE_YUYV :
 							case VMODE_UYVY :
 							case VMODE_Y :
-								memcpy((uint8_t *)dst0_0+(h0*image_data.dst_pitch0),
-									(uint8_t *)dst0_0+((h0-1)*image_data.dst_pitch0),image_data.src_line0);
+								memcpy((uint8_t *)dst0_0+(h0*dstPitch0),
+									(uint8_t *)dst0_0+((h0-1)*dstPitch0),image_data.src_line0);
 								break;
 							case VMODE_PLANAR_YUV444 :
 							case VMODE_PLANAR_YUV422 :
 							case VMODE_PLANAR_YUV420 :
 							case VMODE_PLANAR_YUV411 :
 							case VMODE_PLANAR_YUV410 :
-								memcpy((uint8_t *)dst0_0+(h0*image_data.dst_pitch0),
-									(uint8_t *)dst0_0+((h0-1)*image_data.dst_pitch0),image_data.src_line0);
-								memcpy((uint8_t *)dst0_1+(h1*image_data.dst_pitch1),
-									(uint8_t *)dst0_1+((h1-1)*image_data.dst_pitch1),image_data.src_line1);
-								memcpy((uint8_t *)dst0_2+(h2*image_data.dst_pitch2),
-									(uint8_t *)dst0_2+((h2-1)*image_data.dst_pitch2),image_data.src_line2);
+								memcpy((uint8_t *)dst0_0+(h0*dstPitch0),
+									(uint8_t *)dst0_0+((h0-1)*dstPitch0),image_data.src_line0);
+								memcpy((uint8_t *)dst0_1+(h1*dstPitch1),
+									(uint8_t *)dst0_1+((h1-1)*dstPitch1),image_data.src_line1);
+								memcpy((uint8_t *)dst0_2+(h2*dstPitch2),
+									(uint8_t *)dst0_2+((h2-1)*dstPitch2),image_data.src_line2);
 								break;
 						}
 						break;
@@ -4641,16 +4685,16 @@ void JPSDR_Deinterlace::Run()
 							case VMODE_YUYV :
 							case VMODE_UYVY :
 							case VMODE_Y :
-								memcpy(dst0_0,(uint8_t *)dst0_0+image_data.dst_pitch0,image_data.src_line0);
+								memcpy(dst0_0,(uint8_t *)dst0_0+dstPitch0,image_data.src_line0);
 								break;
 							case VMODE_PLANAR_YUV444 :
 							case VMODE_PLANAR_YUV422 :
 							case VMODE_PLANAR_YUV420 :
 							case VMODE_PLANAR_YUV411 :
 							case VMODE_PLANAR_YUV410 :
-								memcpy(dst0_0,(uint8_t *)dst0_0+image_data.dst_pitch0,image_data.src_line0);
-								memcpy(dst0_1,(uint8_t *)dst0_1+image_data.dst_pitch1,image_data.src_line1);
-								memcpy(dst0_2,(uint8_t *)dst0_2+image_data.dst_pitch2,image_data.src_line2);
+								memcpy(dst0_0,(uint8_t *)dst0_0+dstPitch0,image_data.src_line0);
+								memcpy(dst0_1,(uint8_t *)dst0_1+dstPitch1,image_data.src_line1);
+								memcpy(dst0_2,(uint8_t *)dst0_2+dstPitch2,image_data.src_line2);
 								break;
 						}
 						break;
@@ -4658,34 +4702,117 @@ void JPSDR_Deinterlace::Run()
 				}
 				break;
 			case 2 :
-				if (AVX_Enable && swap_buffer)
+#ifdef AVX2_BUILD_POSSIBLE
+				if (AVX2_Enable && swap_buffer)
 				{
 					switch(image_data.video_mode)
 					{
 						case VMODE_BMP_RGBA :
-							JPSDR_Deinterlace_Blend_Tri_AVX_3_A(src1_0,dst0_0,(image_data.src_w0+3)>>2,
-								h0,image_data.src_pitch0,image_data.dst_pitch0);
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_8_Tri_AVX2(src1_0,dst0_0,(image_data.src_w0+7)>>3,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_16_Tri_AVX2(src1_0,dst0_0,((image_data.src_w0<<1)+7)>>3,
+									h0,srcPitch0,dstPitch0);
 							break;
 						case VMODE_YUYV :
 						case VMODE_UYVY :
-							JPSDR_Deinterlace_Blend_Tri_AVX_3_A(src1_0,dst0_0,(image_data.src_w0+7)>>3,
-								h0,image_data.src_pitch0,image_data.dst_pitch0);
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_8_Tri_AVX2(src1_0,dst0_0,(image_data.src_w0+15)>>4,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_16_Tri_AVX2(src1_0,dst0_0,((image_data.src_w0<<1)+15)>>4,
+									h0,srcPitch0,dstPitch0);
 							break;
 						case VMODE_PLANAR_YUV444 :
 						case VMODE_PLANAR_YUV422 :
 						case VMODE_PLANAR_YUV420 :
 						case VMODE_PLANAR_YUV411 :
 						case VMODE_PLANAR_YUV410 :
-							JPSDR_Deinterlace_Blend_Tri_AVX_3_A(src1_0,dst0_0,(image_data.src_w0+15)>>4,
-								h0,image_data.src_pitch0,image_data.dst_pitch0);
-							JPSDR_Deinterlace_Blend_Tri_AVX_3_A(src1_1,dst0_1,(image_data.src_w1+15)>>4,
-								h1,image_data.src_pitch1,image_data.dst_pitch1);
-							JPSDR_Deinterlace_Blend_Tri_AVX_3_A(src1_2,dst0_2,(image_data.src_w2+15)>>4,
-								h2,image_data.src_pitch2,image_data.dst_pitch2);
+							if (image_data.src_bits_pixel==8)
+							{
+								JPSDR_Deinterlace_Blend_8_Tri_AVX2(src1_0,dst0_0,(image_data.src_w0+31)>>5,
+									h0,srcPitch0,dstPitch0);
+								JPSDR_Deinterlace_Blend_8_Tri_AVX2(src1_1,dst0_1,(image_data.src_w1+31)>>5,
+									h1,srcPitch1,dstPitch1);
+								JPSDR_Deinterlace_Blend_8_Tri_AVX2(src1_2,dst0_2,(image_data.src_w2+31)>>5,
+									h2,srcPitch2,dstPitch2);
+							}
+							else
+							{
+								JPSDR_Deinterlace_Blend_16_Tri_AVX2(src1_0,dst0_0,((image_data.src_w0<<1)+31)>>5,
+									h0,srcPitch0,dstPitch0);
+								JPSDR_Deinterlace_Blend_16_Tri_AVX2(src1_1,dst0_1,((image_data.src_w1<<1)+31)>>5,
+									h1,srcPitch1,dstPitch1);
+								JPSDR_Deinterlace_Blend_16_Tri_AVX2(src1_2,dst0_2,((image_data.src_w2<<1)+31)>>5,
+									h2,srcPitch2,dstPitch2);
+							}
 							break;
 						case VMODE_Y :
-							JPSDR_Deinterlace_Blend_Tri_AVX_3_A(src1_0,dst0_0,(image_data.src_w0+15)>>4,
-								h0,image_data.src_pitch0,image_data.dst_pitch0);
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_8_Tri_AVX2(src1_0,dst0_0,(image_data.src_w0+31)>>5,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_16_Tri_AVX2(src1_0,dst0_0,((image_data.src_w0<<1)+31)>>5,
+									h0,srcPitch0,dstPitch0);
+							break;
+					}
+				}
+				else
+#endif
+				{
+				if (AVX_Enable && swap_buffer)
+				{
+					switch(image_data.video_mode)
+					{
+						case VMODE_BMP_RGBA :
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_8_Tri_AVX(src1_0,dst0_0,(image_data.src_w0+3)>>2,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_16_Tri_AVX(src1_0,dst0_0,((image_data.src_w0<<1)+3)>>2,
+									h0,srcPitch0,dstPitch0);
+							break;
+						case VMODE_YUYV :
+						case VMODE_UYVY :
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_8_Tri_AVX(src1_0,dst0_0,(image_data.src_w0+7)>>3,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_16_Tri_AVX(src1_0,dst0_0,((image_data.src_w0<<1)+7)>>3,
+									h0,srcPitch0,dstPitch0);
+							break;
+						case VMODE_PLANAR_YUV444 :
+						case VMODE_PLANAR_YUV422 :
+						case VMODE_PLANAR_YUV420 :
+						case VMODE_PLANAR_YUV411 :
+						case VMODE_PLANAR_YUV410 :
+							if (image_data.src_bits_pixel==8)
+							{
+								JPSDR_Deinterlace_Blend_8_Tri_AVX(src1_0,dst0_0,(image_data.src_w0+15)>>4,
+									h0,srcPitch0,dstPitch0);
+								JPSDR_Deinterlace_Blend_8_Tri_AVX(src1_1,dst0_1,(image_data.src_w1+15)>>4,
+									h1,srcPitch1,dstPitch1);
+								JPSDR_Deinterlace_Blend_8_Tri_AVX(src1_2,dst0_2,(image_data.src_w2+15)>>4,
+									h2,srcPitch2,dstPitch2);
+							}
+							else
+							{
+								JPSDR_Deinterlace_Blend_16_Tri_AVX(src1_0,dst0_0,((image_data.src_w0<<1)+15)>>4,
+									h0,srcPitch0,dstPitch0);
+								JPSDR_Deinterlace_Blend_16_Tri_AVX(src1_1,dst0_1,((image_data.src_w1<<1)+15)>>4,
+									h1,srcPitch1,dstPitch1);
+								JPSDR_Deinterlace_Blend_16_Tri_AVX(src1_2,dst0_2,((image_data.src_w2<<1)+15)>>4,
+									h2,srcPitch2,dstPitch2);
+							}
+							break;
+						case VMODE_Y :
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_8_Tri_AVX(src1_0,dst0_0,(image_data.src_w0+15)>>4,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_16_Tri_AVX(src1_0,dst0_0,((image_data.src_w0<<1)+15)>>4,
+									h0,srcPitch0,dstPitch0);
 							break;
 					}
 				}
@@ -4697,29 +4824,53 @@ void JPSDR_Deinterlace::Run()
 					switch(image_data.video_mode)
 					{
 						case VMODE_BMP_RGBA :
-							JPSDR_Deinterlace_Blend_Tri_SSE_3_A(src1_0,dst0_0,(image_data.src_w0+3)>>2,
-								h0,image_data.src_pitch0,image_data.dst_pitch0);
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_8_Tri_SSE2(src1_0,dst0_0,(image_data.src_w0+3)>>2,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_16_Tri_SSE2(src1_0,dst0_0,((image_data.src_w0<<1)+3)>>2,
+									h0,srcPitch0,dstPitch0);
 							break;
 						case VMODE_YUYV :
 						case VMODE_UYVY :
-							JPSDR_Deinterlace_Blend_Tri_SSE_3_A(src1_0,dst0_0,(image_data.src_w0+7)>>3,
-								h0,image_data.src_pitch0,image_data.dst_pitch0);
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_8_Tri_SSE2(src1_0,dst0_0,(image_data.src_w0+7)>>3,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_16_Tri_SSE2(src1_0,dst0_0,((image_data.src_w0<<1)+7)>>3,
+									h0,srcPitch0,dstPitch0);
 							break;
 						case VMODE_PLANAR_YUV444 :
 						case VMODE_PLANAR_YUV422 :
 						case VMODE_PLANAR_YUV420 :
 						case VMODE_PLANAR_YUV411 :
 						case VMODE_PLANAR_YUV410 :
-							JPSDR_Deinterlace_Blend_Tri_SSE_3_A(src1_0,dst0_0,(image_data.src_w0+15)>>4,
-								h0,image_data.src_pitch0,image_data.dst_pitch0);
-							JPSDR_Deinterlace_Blend_Tri_SSE_3_A(src1_1,dst0_1,(image_data.src_w1+15)>>4,
-								h1,image_data.src_pitch1,image_data.dst_pitch1);
-							JPSDR_Deinterlace_Blend_Tri_SSE_3_A(src1_2,dst0_2,(image_data.src_w2+15)>>4,
-								h2,image_data.src_pitch2,image_data.dst_pitch2);
+							if (image_data.src_bits_pixel==8)
+							{
+								JPSDR_Deinterlace_Blend_8_Tri_SSE2(src1_0,dst0_0,(image_data.src_w0+15)>>4,
+									h0,srcPitch0,dstPitch0);
+								JPSDR_Deinterlace_Blend_8_Tri_SSE2(src1_1,dst0_1,(image_data.src_w1+15)>>4,
+									h1,srcPitch1,dstPitch1);
+								JPSDR_Deinterlace_Blend_8_Tri_SSE2(src1_2,dst0_2,(image_data.src_w2+15)>>4,
+									h2,srcPitch2,dstPitch2);
+							}
+							else
+							{
+								JPSDR_Deinterlace_Blend_16_Tri_SSE2(src1_0,dst0_0,((image_data.src_w0<<1)+15)>>4,
+									h0,srcPitch0,dstPitch0);
+								JPSDR_Deinterlace_Blend_16_Tri_SSE2(src1_1,dst0_1,((image_data.src_w1<<1)+15)>>4,
+									h1,srcPitch1,dstPitch1);
+								JPSDR_Deinterlace_Blend_16_Tri_SSE2(src1_2,dst0_2,((image_data.src_w2<<1)+15)>>4,
+									h2,srcPitch2,dstPitch2);
+							}
 							break;
 						case VMODE_Y :
-							JPSDR_Deinterlace_Blend_Tri_SSE_3_A(src1_0,dst0_0,(image_data.src_w0+15)>>4,
-								h0,image_data.src_pitch0,image_data.dst_pitch0);
+							if (image_data.src_bits_pixel==8)
+								JPSDR_Deinterlace_Blend_8_Tri_SSE2(src1_0,dst0_0,(image_data.src_w0+15)>>4,
+									h0,srcPitch0,dstPitch0);
+							else
+								JPSDR_Deinterlace_Blend_16_Tri_SSE2(src1_0,dst0_0,((image_data.src_w0<<1)+15)>>4,
+									h0,srcPitch0,dstPitch0);
 							break;
 					}
 				}
@@ -4728,26 +4879,36 @@ void JPSDR_Deinterlace::Run()
 					switch(image_data.video_mode)
 					{
 						case VMODE_BMP_RGBA :
-							if (swap_buffer)
+							if (image_data.src_bits_pixel==8)
 							{
-								Blend_Tri_RGB32(src1_0,dst0_0,image_data.src_w0,h0,image_data.src_pitch0,image_data.dst_pitch0);
+								if (swap_buffer)
+									Blend_Tri_RGB32(src1_0,dst0_0,image_data.src_w0,h0,srcPitch0,dstPitch0);
+								else
+									Blend_Tri_RGB32(src1_0,dst0_0,buffer[0],image_data.src_w0,h0,srcPitch0,dstPitch0);
 							}
 							else
 							{
-								Blend_Tri_RGB32(src1_0,dst0_0,buffer[0],image_data.src_w0,h0,image_data.src_pitch0,
-									image_data.dst_pitch0);
+								if (swap_buffer)
+									Blend_Tri_RGB64(src1_0,dst0_0,image_data.src_w0,h0,srcPitch0,dstPitch0);
+								else
+									Blend_Tri_RGB64(src1_0,dst0_0,buffer[0],image_data.src_w0,h0,srcPitch0,dstPitch0);
 							}
 							break;
 						case VMODE_YUYV :
 						case VMODE_UYVY :
-							if (swap_buffer)
+							if (image_data.src_bits_pixel==8)
 							{
-								Blend_Tri_YUV32(src1_0,dst0_0,(image_data.src_w0+1)>>1,h0,image_data.src_pitch0,image_data.dst_pitch0);
+								if (swap_buffer)
+									Blend_Tri_YUV32(src1_0,dst0_0,(image_data.src_w0+1)>>1,h0,srcPitch0,dstPitch0);
+								else
+									Blend_Tri_YUV32(src1_0,dst0_0,buffer[0],(image_data.src_w0+1)>>1,h0,srcPitch0,dstPitch0);
 							}
 							else
 							{
-								Blend_Tri_YUV32(src1_0,dst0_0,buffer[0],(image_data.src_w0+1)>>1,h0,image_data.src_pitch0,
-									image_data.dst_pitch0);
+								if (swap_buffer)
+									Blend_Tri_YUV64(src1_0,dst0_0,(image_data.src_w0+1)>>1,h0,srcPitch0,dstPitch0);
+								else
+									Blend_Tri_YUV64(src1_0,dst0_0,buffer[0],(image_data.src_w0+1)>>1,h0,srcPitch0,dstPitch0);
 							}
 							break;
 						case VMODE_PLANAR_YUV444 :
@@ -4755,36 +4916,57 @@ void JPSDR_Deinterlace::Run()
 						case VMODE_PLANAR_YUV420 :
 						case VMODE_PLANAR_YUV411 :
 						case VMODE_PLANAR_YUV410 :
-							if (swap_buffer)
+							if (image_data.src_bits_pixel==8)
 							{
-								Blend_Tri_Planar8(src1_0,dst0_0,image_data.src_w0,h0,image_data.src_pitch0,image_data.dst_pitch0);
-								Blend_Tri_Planar8(src1_1,dst0_1,image_data.src_w1,h1,image_data.src_pitch1,image_data.dst_pitch1);
-								Blend_Tri_Planar8(src1_2,dst0_2,image_data.src_w2,h2,image_data.src_pitch2,image_data.dst_pitch2);
+								if (swap_buffer)
+								{
+									Blend_Tri_Planar8(src1_0,dst0_0,image_data.src_w0,h0,srcPitch0,dstPitch0);
+									Blend_Tri_Planar8(src1_1,dst0_1,image_data.src_w1,h1,srcPitch1,dstPitch1);
+									Blend_Tri_Planar8(src1_2,dst0_2,image_data.src_w2,h2,srcPitch2,dstPitch2);
+								}
+								else
+								{
+									Blend_Tri_Planar8(src1_0,dst0_0,buffer[0],image_data.src_w0,h0,srcPitch0,dstPitch0);
+									Blend_Tri_Planar8(src1_1,dst0_1,buffer[1],image_data.src_w1,h1,srcPitch1,dstPitch1);
+									Blend_Tri_Planar8(src1_2,dst0_2,buffer[2],image_data.src_w2,h2,srcPitch2,dstPitch2);
+								}
 							}
 							else
 							{
-								Blend_Tri_Planar8(src1_0,dst0_0,buffer[0],image_data.src_w0,h0,image_data.src_pitch0,
-									image_data.dst_pitch0);
-								Blend_Tri_Planar8(src1_1,dst0_1,buffer[1],image_data.src_w1,h1,image_data.src_pitch1,
-									image_data.dst_pitch1);
-								Blend_Tri_Planar8(src1_2,dst0_2,buffer[2],image_data.src_w2,h2,image_data.src_pitch2,
-									image_data.dst_pitch2);
+								if (swap_buffer)
+								{
+									Blend_Tri_Planar16(src1_0,dst0_0,image_data.src_w0,h0,srcPitch0,dstPitch0);
+									Blend_Tri_Planar16(src1_1,dst0_1,image_data.src_w1,h1,srcPitch1,dstPitch1);
+									Blend_Tri_Planar16(src1_2,dst0_2,image_data.src_w2,h2,srcPitch2,dstPitch2);
+								}
+								else
+								{
+									Blend_Tri_Planar16(src1_0,dst0_0,buffer[0],image_data.src_w0,h0,srcPitch0,dstPitch0);
+									Blend_Tri_Planar16(src1_1,dst0_1,buffer[1],image_data.src_w1,h1,srcPitch1,dstPitch1);
+									Blend_Tri_Planar16(src1_2,dst0_2,buffer[2],image_data.src_w2,h2,srcPitch2,dstPitch2);
+								}
 							}
 							break;
 						case VMODE_Y :
-							if (swap_buffer)
+							if (image_data.src_bits_pixel==8)
 							{
-								Blend_Tri_Planar8(src1_0,dst0_0,image_data.src_w0,h0,image_data.src_pitch0,image_data.dst_pitch0);
+								if (swap_buffer)
+									Blend_Tri_Planar8(src1_0,dst0_0,image_data.src_w0,h0,srcPitch0,dstPitch0);
+								else
+									Blend_Tri_Planar8(src1_0,dst0_0,buffer[0],image_data.src_w0,h0,srcPitch0,dstPitch0);
 							}
 							else
 							{
-								Blend_Tri_Planar8(src1_0,dst0_0,buffer[0],image_data.src_w0,h0,image_data.src_pitch0,
-									image_data.dst_pitch0);
+								if (swap_buffer)
+									Blend_Tri_Planar16(src1_0,dst0_0,image_data.src_w0,h0,srcPitch0,dstPitch0);
+								else
+									Blend_Tri_Planar16(src1_0,dst0_0,buffer[0],image_data.src_w0,h0,srcPitch0,dstPitch0);
 							}
 							break;
 					}
 				}
 
+				}
 				}
 				break;
 		}
@@ -4833,11 +5015,11 @@ void JPSDR_Deinterlace::GetSettingString(char *buf, int maxlen)
 	if (!mData.file_mode)
 	{
 		strcpy_s(str_out,1200," Mode : %d");
-		if ((mData.mode==5) || (mData.mode==6))
+/*		if ((mData.mode==5) || (mData.mode==6))
 		{
 			if (mData.TFF) strcat_s(str_out,1200," (TFF)");
 			else strcat_s(str_out,1200," (BFF)");
-		}
+		}*/
 		SafePrintf(buf,maxlen,str_out,mData.mode);
 	}
 	else
@@ -4883,7 +5065,7 @@ void JPSDR_Deinterlace::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScript
 
 		
 extern VDXFilterDefinition2 filterDef_JPSDR_Deinterlace=
-VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v5.4.0","Deinterlace blending frames. [SSE2][AVX] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v6.0.0","Deinterlace blending frames. [SSE2][AVX][AVX2] Optimised.");
 
 
 

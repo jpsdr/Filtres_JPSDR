@@ -170,6 +170,12 @@
     <MASM Include="..\AutoYUY2\Filtre_JPSDR_AutoYUY2_AVX2_asm_x64.asm">
       <Filter>Fichiers sources</Filter>
     </MASM>
+    <MASM Include="..\Deinterlace\Filtre_JPSDR_Deinterlace_AVX2_asm.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
+    <MASM Include="..\Deinterlace\Filtre_JPSDR_Deinterlace_AVX2_asm_x64.asm">
+      <Filter>Fichiers sources</Filter>
+    </MASM>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
