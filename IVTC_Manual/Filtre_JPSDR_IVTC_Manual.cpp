@@ -168,7 +168,6 @@ bool JPSDR_IVTC_ManualDialog::OnCommand(int cmd)
 class JPSDR_IVTC_Manual : public JPSDRVDXVideoFilter
 {
 public:
-	virtual bool Init();
 	virtual uint32 GetParams();
 	virtual void Start();
 	virtual void Run();
@@ -201,20 +200,14 @@ VDXVF_DEFINE_SCRIPT_METHOD(JPSDR_IVTC_Manual,ScriptConfig,"iis")
 VDXVF_END_SCRIPT_METHODS()
 
 
-bool JPSDR_IVTC_Manual::Init()
-{
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
-
-	return(true);
-}
-
-
 uint32 JPSDR_IVTC_Manual::GetParams()
 {
 	if (g_VFVAPIVersion<12) return FILTERPARAM_NOT_SUPPORTED;
 
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
+
+	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
 
 	switch(pxsrc.format)
 	{
@@ -863,5 +856,5 @@ void JPSDR_IVTC_Manual::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_IVTC_Manual=
-VDXVideoFilterDefinition<JPSDR_IVTC_Manual>("JPSDR","IVTC Manual v3.2.0","IVTC Filter (Manual). [ASM] Optimised.");
+VDXVideoFilterDefinition<JPSDR_IVTC_Manual>("JPSDR","IVTC Manual v3.2.1","IVTC Filter (Manual). [ASM] Optimised.");
 

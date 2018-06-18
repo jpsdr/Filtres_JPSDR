@@ -149,7 +149,6 @@ bool JPSDR_AddBorderDialog::OnCommand(int cmd)
 class JPSDR_AddBorder : public JPSDRVDXVideoFilter
 {
 public:
-	virtual bool Init();
 	virtual uint32 GetParams();
 	virtual void Start();
 	virtual void Run();
@@ -177,22 +176,16 @@ VDXVF_DEFINE_SCRIPT_METHOD(JPSDR_AddBorder,ScriptConfig,"iiiiiii")
 VDXVF_END_SCRIPT_METHODS()
 
 
-bool JPSDR_AddBorder::Init()
-{
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
-	return(true);
-}
-
-
 uint32 JPSDR_AddBorder::GetParams()
 {
+	if (g_VFVAPIVersion<12) return FILTERPARAM_NOT_SUPPORTED;
+	
+	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
 	top_Y=mData.top;
 	bottom_Y=mData.bottom;
 	left_Y=mData.left;
 	right_Y=mData.right;
 
-	if (g_VFVAPIVersion<12) return FILTERPARAM_NOT_SUPPORTED;
-	
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;	
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 	
@@ -692,5 +685,5 @@ void JPSDR_AddBorder::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_AddBorder=
-VDXVideoFilterDefinition<JPSDR_AddBorder>("JPSDR","AddBorder v1.4.0","Add boder to picture.");
+VDXVideoFilterDefinition<JPSDR_AddBorder>("JPSDR","AddBorder v1.4.1","Add boder to picture.");
 

@@ -282,7 +282,6 @@ public:
 		AVX2_Enable=a.AVX2_Enable;
 		AVX_Enable=a.AVX_Enable;
 		SSE2_Enable = a.SSE2_Enable;
-		VDub2_Enable = a.VDub2_Enable;
 		mData=a.mData;
 		InternalInit();
 	}
@@ -335,7 +334,6 @@ bool JPSDR_AutoYUY2::Init()
 	AVX2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_AVX2)!=0);
 	AVX_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_AVX)!=0);
 	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
 	InternalInit();
 
 	return(true);
@@ -398,10 +396,12 @@ JPSDR_AutoYUY2::~JPSDR_AutoYUY2()
 
 uint32 JPSDR_AutoYUY2::GetParams()
 {
+	if (g_VFVAPIVersion<12) return(FILTERPARAM_NOT_SUPPORTED);
+
 	bool full_mode,bt709;
 	uint8_t bit_pixel;
-	
-	if (g_VFVAPIVersion<12) return(FILTERPARAM_NOT_SUPPORTED);
+
+	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
 
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
@@ -9236,5 +9236,5 @@ void JPSDR_AutoYUY2::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_AutoYUY2=
-VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","AutoYUY2 v4.0.0","Convert Planar4:2:0 to 4:2:2 modes. [SSE2][AVX][AVX2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","AutoYUY2 v4.0.1","Convert Planar4:2:0 to 4:2:2 modes. [SSE2][AVX][AVX2] Optimised.");
 

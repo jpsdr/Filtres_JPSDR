@@ -173,8 +173,6 @@ VDXVF_END_SCRIPT_METHODS()
 
 bool JPSDR_VHS::Init()
 {
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
-
 	for (int16_t i=0; i<3; i++)
 	{
 		for (int16_t j=0; j<3; j++)
@@ -196,6 +194,8 @@ uint32 JPSDR_VHS::GetParams()
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 	
+	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+
 	switch(pxsrc.format)
 	{
 /*		case nsVDXPixmap::kPixFormat_XRGB1555 :
@@ -702,5 +702,5 @@ void JPSDR_VHS::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_VHS=
-VDXVideoFilterDefinition<JPSDR_VHS>("JPSDR","VHS I v2.4.0","Filter to remove VHS noise.");
+VDXVideoFilterDefinition<JPSDR_VHS>("JPSDR","VHS I v2.4.1","Filter to remove VHS noise.");
 

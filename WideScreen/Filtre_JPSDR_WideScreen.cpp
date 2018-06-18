@@ -125,7 +125,6 @@ bool JPSDR_WideScreenDialog::OnCommand(int cmd)
 class JPSDR_WideScreen : public JPSDRVDXVideoFilter
 {
 public:
-	virtual bool Init();
 	virtual uint32 GetParams();
 	virtual void Start();
 	virtual void Run();
@@ -150,14 +149,6 @@ VDXVF_DEFINE_SCRIPT_METHOD(JPSDR_WideScreen,ScriptConfig,"ii")
 VDXVF_END_SCRIPT_METHODS()
 
 
-bool JPSDR_WideScreen::Init()
-{
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
-
-	return(true);
-}
-
-
 uint32 JPSDR_WideScreen::GetParams()
 {
 	if (g_VFVAPIVersion<12) return FILTERPARAM_NOT_SUPPORTED;
@@ -165,6 +156,8 @@ uint32 JPSDR_WideScreen::GetParams()
 	const VDXPixmapLayout& pxsrc = *fa->src.mpPixmapLayout;
 	VDXPixmapLayout& pxdst = *fa->dst.mpPixmapLayout;
 	
+	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+
 	switch(pxsrc.format)
 	{
 /*		case nsVDXPixmap::kPixFormat_XRGB1555 :
@@ -335,6 +328,6 @@ void JPSDR_WideScreen::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_WideScreen=
-VDXVideoFilterDefinition<JPSDR_WideScreen>("JPSDR","WideSreen v2.4.0","Black WideScreen and left subtitles.[ASM] Optimised.");
+VDXVideoFilterDefinition<JPSDR_WideScreen>("JPSDR","WideSreen v2.4.1","Black WideScreen and left subtitles.[ASM] Optimised.");
 
 

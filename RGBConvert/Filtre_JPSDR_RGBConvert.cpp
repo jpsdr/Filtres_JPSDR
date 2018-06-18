@@ -153,7 +153,6 @@ public:
 		AVX2_Enable=a.AVX2_Enable;
 		AVX_Enable=a.AVX_Enable;
 		SSE2_Enable = a.SSE2_Enable;
-		VDub2_Enable = a.VDub2_Enable;
 		mData=a.mData;
 		InternalInit();
 	}
@@ -333,7 +332,6 @@ bool JPSDR_RGBConvert::Init()
 	AVX2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_AVX2)!=0);
 	AVX_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_AVX)!=0);
 	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
 	InternalInit();
 
 	return(true);
@@ -1759,6 +1757,8 @@ uint32 JPSDR_RGBConvert::GetParams()
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 
+	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+
 	switch(pxsrc.format)
 	{
 /*		case nsVDXPixmap::kPixFormat_XRGB1555 :
@@ -2699,4 +2699,4 @@ void JPSDR_RGBConvert::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_RGBConvert=
-VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v3.0.1","RGB <-> YCbCr convertion with color matrix option.\n[SSE2][AVX][AVX2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v3.0.2","RGB <-> YCbCr convertion with color matrix option.\n[SSE2][AVX][AVX2] Optimised.");

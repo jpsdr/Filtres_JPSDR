@@ -333,7 +333,6 @@ public:
 	{
 		AVX_Enable=a.AVX_Enable;
 		SSE2_Enable = a.SSE2_Enable;
-		VDub2_Enable = a.VDub2_Enable;
 		mData=a.mData;
 		InternalInit();
 	}
@@ -396,7 +395,6 @@ bool JPSDR_Median::Init()
 {
 	AVX_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_AVX)!=0);
 	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
 	InternalInit();
 
 	return(true);
@@ -746,9 +744,10 @@ uint32 JPSDR_Median::GetParams()
 
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
-
 	bool swap_buffer;
 	
+	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+
 	switch(pxsrc.format)
 	{
 /*		case nsVDXPixmap::kPixFormat_XRGB1555 :
@@ -2211,4 +2210,4 @@ void JPSDR_Median::GetScriptString(char *buf, int maxlen)
 }
 
 extern VDXFilterDefinition2 filterDef_JPSDR_Median=
-VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v3.4.1","Median filter with threshold.");
+VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v3.4.2","Median filter with threshold.");

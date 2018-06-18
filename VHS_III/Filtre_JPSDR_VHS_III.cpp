@@ -528,7 +528,6 @@ bool JPSDR_VHS_III::Init()
 {
 	SSE_Integer_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_INTEGER_SSE)!=0);
 	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
 
 	int32_t i;
 	double a,b,c;
@@ -579,6 +578,8 @@ uint32 JPSDR_VHS_III::GetParams()
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 	
+	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+
 	switch(pxsrc.format)
 	{
 /*		case nsVDXPixmap::kPixFormat_XRGB1555 :
@@ -3040,5 +3041,5 @@ void JPSDR_VHS_III::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_VHS_III=
-VDXVideoFilterDefinition<JPSDR_VHS_III>("JPSDR","VHS III v2.5.0","Filter to remove VHS noise.[ASM][SSE][SSE2] Optimised. Lag 2");
+VDXVideoFilterDefinition<JPSDR_VHS_III>("JPSDR","VHS III v2.5.1","Filter to remove VHS noise.[ASM][SSE][SSE2] Optimised. Lag 2");
 

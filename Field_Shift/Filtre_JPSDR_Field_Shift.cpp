@@ -214,7 +214,6 @@ bool JPSDR_Field_ShiftDialog::OnCommand(int cmd)
 class JPSDR_Field_Shift : public JPSDRVDXVideoFilter
 {
 public:
-	virtual bool Init();
 	virtual uint32 GetParams();
 	virtual void Start();
 	virtual void Run();
@@ -253,13 +252,6 @@ VDXVF_BEGIN_SCRIPT_METHODS(JPSDR_Field_Shift)
 VDXVF_DEFINE_SCRIPT_METHOD(JPSDR_Field_Shift,ScriptConfig,"iis")
 VDXVF_END_SCRIPT_METHODS()
 
-bool JPSDR_Field_Shift::Init()
-{
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
-
-	return(true);
-}
-
 
 uint32 JPSDR_Field_Shift::GetParams()
 {
@@ -267,6 +259,8 @@ uint32 JPSDR_Field_Shift::GetParams()
 
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
+
+	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
 
 	switch(pxsrc.format)
 	{
@@ -1121,5 +1115,5 @@ void JPSDR_Field_Shift::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_Field_Shift=
-VDXVideoFilterDefinition<JPSDR_Field_Shift>("JPSDR","FieldShift v3.2.0","Shift Field from previous and current frame.");
+VDXVideoFilterDefinition<JPSDR_Field_Shift>("JPSDR","FieldShift v3.2.1","Shift Field from previous and current frame.");
 

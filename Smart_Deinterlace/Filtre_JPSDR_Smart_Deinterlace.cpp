@@ -180,7 +180,6 @@ VDXVF_END_SCRIPT_METHODS()
 bool JPSDR_Smart_Deinterlace::Init()
 {
 	Integer_SSE_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_INTEGER_SSE)!=0);
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
 	buffer_delta=NULL;
 	buffer_map=NULL;
 	buffer_2=NULL;
@@ -197,6 +196,8 @@ uint32 JPSDR_Smart_Deinterlace::GetParams()
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 	
+	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+
 	switch(pxsrc.format)
 	{
 /*		case nsVDXPixmap::kPixFormat_XRGB1555 :
@@ -624,6 +625,6 @@ void JPSDR_Smart_Deinterlace::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_Smart_Deinterlace=
-VDXVideoFilterDefinition<JPSDR_Smart_Deinterlace>("JPSDR","SmartDeinterlace v2.4.0","Smart Deinterlace (Based D. Grafh). [MMX][SSE] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Smart_Deinterlace>("JPSDR","SmartDeinterlace v2.4.1","Smart Deinterlace (Based D. Grafh). [MMX][SSE] Optimised.");
 
 
