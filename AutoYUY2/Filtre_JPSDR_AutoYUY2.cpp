@@ -546,7 +546,7 @@ uint32 JPSDR_AutoYUY2::GetParams()
 	}
 	else pxdst.format=nsVDXPixmap::kPixFormat_YUV422_Planar16;
 
-	if ((fma!=NULL) && (fma->fmpixmap!=NULL))
+	if (VDub2_Enable)
 	{
 		FilterModPixmapInfo* info = fma->fmpixmap->GetPixmapInfo((fa->dst).mpPixmap);
 
@@ -555,40 +555,6 @@ uint32 JPSDR_AutoYUY2::GetParams()
 
 		if (bt709) info->colorSpaceMode=nsVDXPixmap::kColorSpaceMode_709;
 		else info->colorSpaceMode=nsVDXPixmap::kColorSpaceMode_601;
-
-		switch(bit_pixel)
-		{
-			case 8 :
-				info->ref_r=0xFF;
-				info->ref_g=0xFF;
-				info->ref_b=0xFF;
-				info->ref_a=0xFF;
-				break;
-			case 10 :
-				info->ref_r=0x3FF;
-				info->ref_g=0x3FF;
-				info->ref_b=0x3FF;
-				info->ref_a=0x3FF;
-				break;
-			case 12 :
-				info->ref_r=0xFFF;
-				info->ref_g=0xFFF;
-				info->ref_b=0xFFF;
-				info->ref_a=0xFFF;
-				break;
-			case 14 :
-				info->ref_r=0x3FFF;
-				info->ref_g=0x3FFF;
-				info->ref_b=0x3FFF;
-				info->ref_a=0x3FFF;
-				break;
-			default :
-				info->ref_r=0xFFFF;
-				info->ref_g=0xFFFF;
-				info->ref_b=0xFFFF;
-				info->ref_a=0xFFFF;
-				break;
-		}
 	}
 
 	pxdst.pitch=0;
@@ -8956,6 +8922,45 @@ void JPSDR_AutoYUY2::Run()
 	const VDXPixmapAlpha& pxdst=(const VDXPixmapAlpha&)*fa->dst.mpPixmap;
 	const VDXPixmapAlpha& pxsrc=(const VDXPixmapAlpha&)*fa->src.mpPixmap;
 
+	if (VDub2_Enable)
+	{
+		FilterModPixmapInfo* info = fma->fmpixmap->GetPixmapInfo((fa->dst).mpPixmap);
+
+		switch(image_data.src_bits_pixel)
+		{
+			case 8 :
+				info->ref_r=0xFF;
+				info->ref_g=0xFF;
+				info->ref_b=0xFF;
+				info->ref_a=0xFF;
+				break;
+			case 10 :
+				info->ref_r=0x3FF;
+				info->ref_g=0x3FF;
+				info->ref_b=0x3FF;
+				info->ref_a=0x3FF;
+				break;
+			case 12 :
+				info->ref_r=0xFFF;
+				info->ref_g=0xFFF;
+				info->ref_b=0xFFF;
+				info->ref_a=0xFFF;
+				break;
+			case 14 :
+				info->ref_r=0x3FFF;
+				info->ref_g=0x3FFF;
+				info->ref_b=0x3FFF;
+				info->ref_a=0x3FFF;
+				break;
+			default :
+				info->ref_r=0xFFFF;
+				info->ref_g=0xFFFF;
+				info->ref_b=0xFFFF;
+				info->ref_a=0xFFFF;
+				break;
+		}
+	}
+
 	uint8_t f_proc=0;
 
 	image_data.src_plane0=pxsrc.data;
@@ -9236,5 +9241,5 @@ void JPSDR_AutoYUY2::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_AutoYUY2=
-VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","AutoYUY2 v4.0.1","Convert Planar4:2:0 to 4:2:2 modes. [SSE2][AVX][AVX2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","AutoYUY2 v4.0.2","Convert Planar4:2:0 to 4:2:2 modes. [SSE2][AVX][AVX2] Optimised.");
 

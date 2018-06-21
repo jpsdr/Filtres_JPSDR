@@ -104,9 +104,9 @@ typedef union _URGB64BMP
 typedef struct _YUYV16
 {
 	uint16_t y1;
-	uint16_t u;
-	uint16_t y2;
 	uint16_t v;
+	uint16_t y2;
+	uint16_t u;
 } YUYV16;
 
 typedef union _UYUYV16
