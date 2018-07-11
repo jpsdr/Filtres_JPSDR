@@ -855,6 +855,7 @@ JPSDR_RGBConvert_Convert_RGB32toYV24_SSE2 proc src:dword,dst_y:dword,dst_u:dword
 	mov esi,src
 
 Convert_RGB32toYV24_SSE2_1:
+	mov edi,lookup
 	mov eax,w0
 	or eax,eax
 	jz Convert_RGB32toYV24_SSE2_3
@@ -864,35 +865,32 @@ Convert_RGB32toYV24_SSE2_2:
 	movzx edx,byte ptr[esi]
 	movzx ecx,byte ptr[esi+1]
 	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	pinsrw xmm0,eax,0
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
+	movzx eax,word ptr[edi+2*ebx+1536]
+	add ax,word ptr[edi+2*ecx+2048]
+	add ax,word ptr[edi+2*edx+2560]
 	pinsrw xmm0,eax,2
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx+3072]
+	add ax,word ptr[edi+2*ecx+3584]
+	add ax,word ptr[edi+2*edx+4096]
 	pinsrw xmm0,eax,4
 	movzx edx,byte ptr[esi+4]
 	movzx ecx,byte ptr[esi+5]
 	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	pinsrw xmm0,eax,1
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
+	movzx eax,word ptr[edi+2*ebx+1536]
+	add ax,word ptr[edi+2*ecx+2048]
+	add ax,word ptr[edi+2*edx+2560]
 	pinsrw xmm0,eax,3
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
+	movzx eax,word ptr[edi+2*ebx+3072]
+	add ax,word ptr[edi+2*ecx+3584]
+	add ax,word ptr[edi+2*edx+4096]
 	pinsrw xmm0,eax,5
 	
 	paddsw xmm0,xmm1
@@ -903,7 +901,7 @@ Convert_RGB32toYV24_SSE2_2:
 	
 	mov edi,dst_y
 	pextrw eax,xmm0,0
-	add src,8
+	add esi,8
 	mov word ptr[edi],ax
 	mov edi,dst_u
 	pextrw eax,xmm0,1
@@ -915,7 +913,7 @@ Convert_RGB32toYV24_SSE2_2:
 	mov word ptr[edi],ax
 	add dst_v,2
 	
-	mov esi,src
+	mov edi,lookup
 	
 	dec i
 	jnz Convert_RGB32toYV24_SSE2_2
@@ -927,18 +925,17 @@ Convert_RGB32toYV24_SSE2_3:
 	movzx edx,byte ptr[esi]
 	movzx ecx,byte ptr[esi+1]
 	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	pinsrw xmm0,eax,0
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
+	movzx eax,word ptr[edi+2*ebx+1536]
+	add ax,word ptr[edi+2*ecx+2048]
+	add ax,word ptr[edi+2*edx+2560]
 	pinsrw xmm0,eax,2
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
+	movzx eax,word ptr[edi+2*ebx+3072]
+	add ax,word ptr[edi+2*ecx+3584]
+	add ax,word ptr[edi+2*edx+4096]
 	pinsrw xmm0,eax,4
 	
 	paddsw xmm0,xmm1
@@ -949,7 +946,7 @@ Convert_RGB32toYV24_SSE2_3:
 	
 	mov edi,dst_y
 	pextrw eax,xmm0,0
-	add src,4
+	add esi,4
 	mov byte ptr[edi],al
 	mov edi,dst_u
 	pextrw eax,xmm0,2
@@ -961,7 +958,6 @@ Convert_RGB32toYV24_SSE2_3:
 	mov byte ptr[edi],al
 	inc dst_v
 	
-	mov esi,src	
 	
 Convert_RGB32toYV24_SSE2_4:	
 	add esi,src_modulo
@@ -974,7 +970,6 @@ Convert_RGB32toYV24_SSE2_4:
 	mov eax,dst_v
 	add eax,dst_modulo_v
 	mov dst_v,eax
-	mov src,esi
 	dec h
 	jnz Convert_RGB32toYV24_SSE2_1
 
@@ -1039,6 +1034,7 @@ JPSDR_RGBConvert_Convert_RGB32toYV24_AVX proc src:dword,dst_y:dword,dst_u:dword,
 	mov esi,src
 
 Convert_RGB32toYV24_AVX_1:
+	mov edi,lookup
 	mov eax,w0
 	or eax,eax
 	jz Convert_RGB32toYV24_AVX_3
@@ -1048,35 +1044,32 @@ Convert_RGB32toYV24_AVX_2:
 	movzx edx,byte ptr[esi]
 	movzx ecx,byte ptr[esi+1]
 	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	vpinsrw xmm0,xmm0,eax,0
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
+	movzx eax,word ptr[edi+2*ebx+1536]
+	add ax,word ptr[edi+2*ecx+2048]
+	add ax,word ptr[edi+2*edx+2560]
 	vpinsrw xmm0,xmm0,eax,2
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx+3072]
+	add ax,word ptr[edi+2*ecx+3584]
+	add ax,word ptr[edi+2*edx+4096]
 	vpinsrw xmm0,xmm0,eax,4
 	movzx edx,byte ptr[esi+4]
 	movzx ecx,byte ptr[esi+5]
 	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	vpinsrw xmm0,xmm0,eax,1
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
+	movzx eax,word ptr[edi+2*ebx+1536]
+	add ax,word ptr[edi+2*ecx+2048]
+	add ax,word ptr[edi+2*edx+2560]
 	vpinsrw xmm0,xmm0,eax,3
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
+	movzx eax,word ptr[edi+2*ebx+3072]
+	add ax,word ptr[edi+2*ecx+3584]
+	add ax,word ptr[edi+2*edx+4096]
 	vpinsrw xmm0,xmm0,eax,5
 	
 	vpaddsw xmm0,xmm0,xmm1
@@ -1087,7 +1080,7 @@ Convert_RGB32toYV24_AVX_2:
 	
 	mov edi,dst_y
 	vpextrw eax,xmm0,0
-	add src,8
+	add esi,8
 	mov word ptr[edi],ax
 	mov edi,dst_u
 	vpextrw eax,xmm0,1
@@ -1099,7 +1092,7 @@ Convert_RGB32toYV24_AVX_2:
 	mov word ptr[edi],ax
 	add dst_v,2
 	
-	mov esi,src
+	mov edi,lookup
 	
 	dec i
 	jnz Convert_RGB32toYV24_AVX_2
@@ -1111,18 +1104,17 @@ Convert_RGB32toYV24_AVX_3:
 	movzx edx,byte ptr[esi]
 	movzx ecx,byte ptr[esi+1]
 	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	vpinsrw xmm0,xmm0,eax,0
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
+	movzx eax,word ptr[edi+2*ebx+1536]
+	add ax,word ptr[edi+2*ecx+2048]
+	add ax,word ptr[edi+2*edx+2560]
 	vpinsrw xmm0,xmm0,eax,2
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
+	movzx eax,word ptr[edi+2*ebx+3072]
+	add ax,word ptr[edi+2*ecx+3584]
+	add ax,word ptr[edi+2*edx+4096]
 	vpinsrw xmm0,xmm0,eax,4
 	
 	vpaddsw xmm0,xmm0,xmm1
@@ -1133,7 +1125,7 @@ Convert_RGB32toYV24_AVX_3:
 	
 	mov edi,dst_y
 	vpextrw eax,xmm0,0
-	add src,4
+	add esi,4
 	mov byte ptr[edi],al
 	mov edi,dst_u
 	vpextrw eax,xmm0,2
@@ -1144,8 +1136,6 @@ Convert_RGB32toYV24_AVX_3:
 	inc dst_u
 	mov byte ptr[edi],al
 	inc dst_v
-	
-	mov esi,src	
 	
 Convert_RGB32toYV24_AVX_4:	
 	add esi,src_modulo
@@ -1158,7 +1148,6 @@ Convert_RGB32toYV24_AVX_4:
 	mov eax,dst_v
 	add eax,dst_modulo_v
 	mov dst_v,eax
-	mov src,esi
 	dec h
 	jnz Convert_RGB32toYV24_AVX_1
 
@@ -1220,6 +1209,7 @@ JPSDR_RGBConvert_Convert_RGB64toYV24_SSE41 proc src:dword,dst_y:dword,dst_u:dwor
 	mov esi,src
 
 Convert_RGB64toYV24_SSE41_1:
+	mov edi,lookup
 	mov eax,w0
 	or eax,eax
 	jz Convert_RGB64toYV24_SSE41_3
@@ -1229,35 +1219,32 @@ Convert_RGB64toYV24_SSE41_2:
 	movzx edx,word ptr[esi]
 	movzx ecx,word ptr[esi+2]
 	movzx ebx,word ptr[esi+4] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
-	add eax,dword ptr[esi+4*edx+524288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
+	add eax,dword ptr[edi+4*edx+524288]
 	pinsrd xmm0,eax,0
-	mov eax,dword ptr[esi+4*ebx+786432]
-	add eax,dword ptr[esi+4*ecx+1048576]
-	add eax,dword ptr[esi+4*edx+1310720]
+	mov eax,dword ptr[edi+4*ebx+786432]
+	add eax,dword ptr[edi+4*ecx+1048576]
+	add eax,dword ptr[edi+4*edx+1310720]
 	pinsrd xmm0,eax,1
-	mov eax,dword ptr[esi+4*ebx+1572864]
-	add eax,dword ptr[esi+4*ecx+1835008]
-	add eax,dword ptr[esi+4*edx+2097152]
-	mov esi,src
+	mov eax,dword ptr[edi+4*ebx+1572864]
+	add eax,dword ptr[edi+4*ecx+1835008]
+	add eax,dword ptr[edi+4*edx+2097152]
 	pinsrd xmm0,eax,2
 	movzx edx,word ptr[esi+8]
 	movzx ecx,word ptr[esi+10]
 	movzx ebx,word ptr[esi+12] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
-	add eax,dword ptr[esi+4*edx+524288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
+	add eax,dword ptr[edi+4*edx+524288]
 	pinsrd xmm4,eax,0
-	mov eax,dword ptr[esi+4*ebx+786432]
-	add eax,dword ptr[esi+4*ecx+1048576]
-	add eax,dword ptr[esi+4*edx+1310720]
+	mov eax,dword ptr[edi+4*ebx+786432]
+	add eax,dword ptr[edi+4*ecx+1048576]
+	add eax,dword ptr[edi+4*edx+1310720]
 	pinsrd xmm4,eax,1
-	mov eax,dword ptr[esi+4*ebx+1572864]
-	add eax,dword ptr[esi+4*ecx+1835008]
-	add eax,dword ptr[esi+4*edx+2097152]
+	mov eax,dword ptr[edi+4*ebx+1572864]
+	add eax,dword ptr[edi+4*ecx+1835008]
+	add eax,dword ptr[edi+4*edx+2097152]
 	pinsrd xmm4,eax,2
 	
 	paddd xmm0,xmm1
@@ -1272,7 +1259,7 @@ Convert_RGB64toYV24_SSE41_2:
 	
 	mov edi,dst_y
 	pextrd eax,xmm0,0
-	add src,16
+	add esi,16
 	mov dword ptr[edi],eax
 	mov edi,dst_u
 	pextrd eax,xmm0,1
@@ -1284,7 +1271,7 @@ Convert_RGB64toYV24_SSE41_2:
 	mov dword ptr[edi],eax
 	add dst_v,4
 	
-	mov esi,src
+	mov edi,lookup
 	
 	dec i
 	jnz Convert_RGB64toYV24_SSE41_2
@@ -1296,18 +1283,17 @@ Convert_RGB64toYV24_SSE41_3:
 	movzx edx,word ptr[esi]
 	movzx ecx,word ptr[esi+2]
 	movzx ebx,word ptr[esi+4] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
-	add eax,dword ptr[esi+4*edx+524288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
+	add eax,dword ptr[edi+4*edx+524288]
 	pinsrd xmm0,eax,0
-	mov eax,dword ptr[esi+4*ebx+786432]
-	add eax,dword ptr[esi+4*ecx+1048576]
-	add eax,dword ptr[esi+4*edx+1310720]
+	mov eax,dword ptr[edi+4*ebx+786432]
+	add eax,dword ptr[edi+4*ecx+1048576]
+	add eax,dword ptr[edi+4*edx+1310720]
 	pinsrd xmm0,eax,1
-	mov eax,dword ptr[esi+4*ebx+1572864]
-	add eax,dword ptr[esi+4*ecx+1835008]
-	add eax,dword ptr[esi+4*edx+2097152]
+	mov eax,dword ptr[edi+4*ebx+1572864]
+	add eax,dword ptr[edi+4*ecx+1835008]
+	add eax,dword ptr[edi+4*edx+2097152]
 	pinsrd xmm0,eax,2
 	
 	paddd xmm0,xmm1
@@ -1319,7 +1305,7 @@ Convert_RGB64toYV24_SSE41_3:
 	
 	mov edi,dst_y
 	pextrw eax,xmm0,0
-	add src,8
+	add esi,8
 	mov word ptr[edi],ax
 	mov edi,dst_u
 	pextrw eax,xmm0,2
@@ -1330,8 +1316,6 @@ Convert_RGB64toYV24_SSE41_3:
 	add dst_u,2
 	mov word ptr[edi],ax
 	add dst_v,2
-	
-	mov esi,src	
 	
 Convert_RGB64toYV24_SSE41_4:	
 	add esi,src_modulo
@@ -1344,7 +1328,6 @@ Convert_RGB64toYV24_SSE41_4:
 	mov eax,dst_v
 	add eax,dst_modulo_v
 	mov dst_v,eax
-	mov src,esi
 	dec h
 	jnz Convert_RGB64toYV24_SSE41_1
 
@@ -1406,6 +1389,7 @@ JPSDR_RGBConvert_Convert_RGB64toYV24_AVX proc src:dword,dst_y:dword,dst_u:dword,
 	mov esi,src
 
 Convert_RGB64toYV24_AVX_1:
+	mov edi,lookup
 	mov eax,w0
 	or eax,eax
 	jz Convert_RGB64toYV24_AVX_3
@@ -1415,35 +1399,32 @@ Convert_RGB64toYV24_AVX_2:
 	movzx edx,word ptr[esi]
 	movzx ecx,word ptr[esi+2]
 	movzx ebx,word ptr[esi+4] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
-	add eax,dword ptr[esi+4*edx+524288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
+	add eax,dword ptr[edi+4*edx+524288]
 	vpinsrd xmm0,xmm0,eax,0
-	mov eax,dword ptr[esi+4*ebx+786432]
-	add eax,dword ptr[esi+4*ecx+1048576]
-	add eax,dword ptr[esi+4*edx+1310720]
+	mov eax,dword ptr[edi+4*ebx+786432]
+	add eax,dword ptr[edi+4*ecx+1048576]
+	add eax,dword ptr[edi+4*edx+1310720]
 	vpinsrd xmm0,xmm0,eax,1
-	mov eax,dword ptr[esi+4*ebx+1572864]
-	add eax,dword ptr[esi+4*ecx+1835008]
-	add eax,dword ptr[esi+4*edx+2097152]
-	mov esi,src
+	mov eax,dword ptr[edi+4*ebx+1572864]
+	add eax,dword ptr[edi+4*ecx+1835008]
+	add eax,dword ptr[edi+4*edx+2097152]
 	vpinsrd xmm0,xmm0,eax,2
 	movzx edx,word ptr[esi+8]
 	movzx ecx,word ptr[esi+10]
 	movzx ebx,word ptr[esi+12] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
-	add eax,dword ptr[esi+4*edx+524288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
+	add eax,dword ptr[edi+4*edx+524288]
 	vpinsrd xmm4,xmm4,eax,0
-	mov eax,dword ptr[esi+4*ebx+786432]
-	add eax,dword ptr[esi+4*ecx+1048576]
-	add eax,dword ptr[esi+4*edx+1310720]
+	mov eax,dword ptr[edi+4*ebx+786432]
+	add eax,dword ptr[edi+4*ecx+1048576]
+	add eax,dword ptr[edi+4*edx+1310720]
 	vpinsrd xmm4,xmm4,eax,1
-	mov eax,dword ptr[esi+4*ebx+1572864]
-	add eax,dword ptr[esi+4*ecx+1835008]
-	add eax,dword ptr[esi+4*edx+2097152]
+	mov eax,dword ptr[edi+4*ebx+1572864]
+	add eax,dword ptr[edi+4*ecx+1835008]
+	add eax,dword ptr[edi+4*edx+2097152]
 	vpinsrd xmm4,xmm4,eax,2
 	
 	vpaddd xmm0,xmm0,xmm1
@@ -1458,7 +1439,7 @@ Convert_RGB64toYV24_AVX_2:
 	
 	mov edi,dst_y
 	vpextrd eax,xmm0,0
-	add src,16
+	add esi,16
 	mov dword ptr[edi],eax
 	mov edi,dst_u
 	vpextrd eax,xmm0,1
@@ -1470,7 +1451,7 @@ Convert_RGB64toYV24_AVX_2:
 	mov dword ptr[edi],eax
 	add dst_v,4
 	
-	mov esi,src
+	mov edi,lookup
 	
 	dec i
 	jnz Convert_RGB64toYV24_AVX_2
@@ -1482,18 +1463,17 @@ Convert_RGB64toYV24_AVX_3:
 	movzx edx,word ptr[esi]
 	movzx ecx,word ptr[esi+2]
 	movzx ebx,word ptr[esi+4] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
-	add eax,dword ptr[esi+4*edx+524288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
+	add eax,dword ptr[edi+4*edx+524288]
 	vpinsrd xmm0,xmm0,eax,0
-	mov eax,dword ptr[esi+4*ebx+786432]
-	add eax,dword ptr[esi+4*ecx+1048576]
-	add eax,dword ptr[esi+4*edx+1310720]
+	mov eax,dword ptr[edi+4*ebx+786432]
+	add eax,dword ptr[edi+4*ecx+1048576]
+	add eax,dword ptr[edi+4*edx+1310720]
 	vpinsrd xmm0,xmm0,eax,1
-	mov eax,dword ptr[esi+4*ebx+1572864]
-	add eax,dword ptr[esi+4*ecx+1835008]
-	add eax,dword ptr[esi+4*edx+2097152]
+	mov eax,dword ptr[edi+4*ebx+1572864]
+	add eax,dword ptr[edi+4*ecx+1835008]
+	add eax,dword ptr[edi+4*edx+2097152]
 	vpinsrd xmm0,xmm0,eax,2
 	
 	vpaddd xmm0,xmm0,xmm1
@@ -1505,7 +1485,7 @@ Convert_RGB64toYV24_AVX_3:
 	
 	mov edi,dst_y
 	vpextrw eax,xmm0,0
-	add src,8
+	add esi,8
 	mov word ptr[edi],ax
 	mov edi,dst_u
 	vpextrw eax,xmm0,2
@@ -1516,8 +1496,6 @@ Convert_RGB64toYV24_AVX_3:
 	add dst_u,2
 	mov word ptr[edi],ax
 	add dst_v,2
-	
-	mov esi,src	
 	
 Convert_RGB64toYV24_AVX_4:	
 	add esi,src_modulo
@@ -1530,7 +1508,6 @@ Convert_RGB64toYV24_AVX_4:
 	mov eax,dst_v
 	add eax,dst_modulo_v
 	mov dst_v,eax
-	mov src,esi
 	dec h
 	jnz Convert_RGB64toYV24_AVX_1
 
@@ -1596,124 +1573,110 @@ JPSDR_RGBConvert_RGB32toYUYV_SSE2 proc src:dword,dst:dword,w:dword,h:dword,offse
 	shr eax,3
 	mov w0,eax
 
-	mov edi,dst
 	mov esi,src
 	
 Boucle0_8:
+	mov edi,lookup
 	mov eax,w0
 	or eax,eax
 	jz Suite0_8
+	
 	mov i,eax
 Boucle1_8:
 	movzx edx,byte ptr[esi]
 	movzx ecx,byte ptr[esi+1]
 	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	pinsrw xmm0,eax,0
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
+	movzx eax,word ptr[edi+2*ebx+1536]
+	add ax,word ptr[edi+2*ecx+2048]
+	add ax,word ptr[edi+2*edx+2560]
 	pinsrw xmm0,eax,1
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx+3072]
+	add ax,word ptr[edi+2*ecx+3584]
+	add ax,word ptr[edi+2*edx+4096]
 	pinsrw xmm0,eax,3
 	
 	movzx edx,byte ptr[esi+4]
 	movzx ecx,byte ptr[esi+5]
 	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	pinsrw xmm0,eax,2
 	
 	movzx edx,byte ptr[esi+8]
 	movzx ecx,byte ptr[esi+9]
 	movzx ebx,byte ptr[esi+10] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	pinsrw xmm0,eax,4
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
+	movzx eax,word ptr[edi+2*ebx+1536]
+	add ax,word ptr[edi+2*ecx+2048]
+	add ax,word ptr[edi+2*edx+2560]
 	pinsrw xmm0,eax,5
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx+3072]
+	add ax,word ptr[edi+2*ecx+3584]
+	add ax,word ptr[edi+2*edx+4096]
 	pinsrw xmm0,eax,7
 	
 	movzx edx,byte ptr[esi+12]
 	movzx ecx,byte ptr[esi+13]
 	movzx ebx,byte ptr[esi+14] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	pinsrw xmm0,eax,6
 
 	movzx edx,byte ptr[esi+16]
 	movzx ecx,byte ptr[esi+17]
 	movzx ebx,byte ptr[esi+18] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	pinsrw xmm4,eax,0
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
+	movzx eax,word ptr[edi+2*ebx+1536]
+	add ax,word ptr[edi+2*ecx+2048]
+	add ax,word ptr[edi+2*edx+2560]
 	pinsrw xmm4,eax,1
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx+3072]
+	add ax,word ptr[edi+2*ecx+3584]
+	add ax,word ptr[edi+2*edx+4096]
 	pinsrw xmm4,eax,3
 	
 	movzx edx,byte ptr[esi+20]
 	movzx ecx,byte ptr[esi+21]
 	movzx ebx,byte ptr[esi+22] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	pinsrw xmm4,eax,2
 	
 	movzx edx,byte ptr[esi+24]
 	movzx ecx,byte ptr[esi+25]
 	movzx ebx,byte ptr[esi+26] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	pinsrw xmm4,eax,4
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
+	movzx eax,word ptr[edi+2*ebx+1536]
+	add ax,word ptr[edi+2*ecx+2048]
+	add ax,word ptr[edi+2*edx+2560]
 	pinsrw xmm4,eax,5
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx+3072]
+	add ax,word ptr[edi+2*ecx+3584]
+	add ax,word ptr[edi+2*edx+4096]
 	pinsrw xmm4,eax,7
 	
 	movzx edx,byte ptr[esi+28]
 	movzx ecx,byte ptr[esi+29]
 	movzx ebx,byte ptr[esi+30] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	pinsrw xmm4,eax,6
 		
 	paddsw xmm0,xmm1
@@ -1726,13 +1689,14 @@ Boucle1_8:
 	pminsw xmm4,xmm3	
 	packuswb xmm0,xmm4
 	
-	add src,32
+	mov edi,dst
+	add esi,32
 	
 	movdqa XMMWORD ptr[edi],xmm0
 	
-	mov esi,src
+	add dst,16
 	
-	add edi,16
+	mov edi,lookup
 	
 	dec i	
 	jnz Boucle1_8
@@ -1744,56 +1708,49 @@ Suite0_8:
 	movzx edx,byte ptr[esi]
 	movzx ecx,byte ptr[esi+1]
 	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	pinsrw xmm0,eax,0
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
+	movzx eax,word ptr[edi+2*ebx+1536]
+	add ax,word ptr[edi+2*ecx+2048]
+	add ax,word ptr[edi+2*edx+2560]
 	pinsrw xmm0,eax,1
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx+3072]
+	add ax,word ptr[edi+2*ecx+3584]
+	add ax,word ptr[edi+2*edx+4096]
 	pinsrw xmm0,eax,3
 	
 	movzx edx,byte ptr[esi+4]
 	movzx ecx,byte ptr[esi+5]
 	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	pinsrw xmm0,eax,2
 	
 	movzx edx,byte ptr[esi+8]
 	movzx ecx,byte ptr[esi+9]
 	movzx ebx,byte ptr[esi+10] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	pinsrw xmm0,eax,4
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
+	movzx eax,word ptr[edi+2*ebx+1536]
+	add ax,word ptr[edi+2*ecx+2048]
+	add ax,word ptr[edi+2*edx+2560]
 	pinsrw xmm0,eax,5
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx+3072]
+	add ax,word ptr[edi+2*ecx+3584]
+	add ax,word ptr[edi+2*edx+4096]
 	pinsrw xmm0,eax,7
 	
 	movzx edx,byte ptr[esi+12]
 	movzx ecx,byte ptr[esi+13]
 	movzx ebx,byte ptr[esi+14] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	pinsrw xmm0,eax,6
 		
 	paddsw xmm0,xmm1
@@ -1802,13 +1759,14 @@ Suite0_8:
 	pminsw xmm0,xmm3	
 	packuswb xmm0,xmm0
 	
-	add src,16
+	mov edi,dst
+	add esi,16
 	
 	movq qword ptr[edi],xmm0
 	
-	mov esi,src
+	add dst,8
 	
-	add edi,8	
+	mov edi,lookup
 	
 Suite1_8:	
 	test w,2
@@ -1817,28 +1775,25 @@ Suite1_8:
 	movzx edx,byte ptr[esi]
 	movzx ecx,byte ptr[esi+1]
 	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	pinsrw xmm0,eax,0
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
+	movzx eax,word ptr[edi+2*ebx+1536]
+	add ax,word ptr[edi+2*ecx+2048]
+	add ax,word ptr[edi+2*edx+2560]
 	pinsrw xmm0,eax,1
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx+3072]
+	add ax,word ptr[edi+2*ecx+3584]
+	add ax,word ptr[edi+2*edx+4096]
 	pinsrw xmm0,eax,3
 	
 	movzx edx,byte ptr[esi+4]
 	movzx ecx,byte ptr[esi+5]
 	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	pinsrw xmm0,eax,2
 		
 	paddsw xmm0,xmm1
@@ -1847,17 +1802,18 @@ Suite1_8:
 	pminsw xmm0,xmm3	
 	packuswb xmm0,xmm0
 	
-	add src,8
+	mov edi,dst
+	add esi,8
 	
 	movd dword ptr[edi],xmm0
 	
-	add edi,4
+	add dst,4
 	
 Suite2_8:	
-	mov esi,src
+	mov edi,dst
 	add esi,src_modulo
 	add edi,dst_modulo
-	mov src,esi
+	mov dst,edi
 	dec h
 	jnz Boucle0_8
 
@@ -1923,10 +1879,10 @@ JPSDR_RGBConvert_RGB32toYUYV_AVX proc src:dword,dst:dword,w:dword,h:dword,offset
 	shr eax,3
 	mov w0,eax
 
-	mov edi,dst
 	mov esi,src
 	
 Boucle0_8_AVX:
+	mov edi,lookup
 	mov eax,w0
 	or eax,eax
 	jz Suite0_8_AVX
@@ -1936,112 +1892,97 @@ Boucle1_8_AVX:
 	movzx edx,byte ptr[esi]
 	movzx ecx,byte ptr[esi+1]
 	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	vpinsrw xmm0,xmm0,eax,0
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
+	movzx eax,word ptr[edi+2*ebx+1536]
+	add ax,word ptr[edi+2*ecx+2048]
+	add ax,word ptr[edi+2*edx+2560]
 	vpinsrw xmm0,xmm0,eax,1
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx+3072]
+	add ax,word ptr[edi+2*ecx+3584]
+	add ax,word ptr[edi+2*edx+4096]
 	vpinsrw xmm0,xmm0,eax,3
 	
 	movzx edx,byte ptr[esi+4]
 	movzx ecx,byte ptr[esi+5]
 	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	vpinsrw xmm0,xmm0,eax,2
 	
 	movzx edx,byte ptr[esi+8]
 	movzx ecx,byte ptr[esi+9]
 	movzx ebx,byte ptr[esi+10] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	vpinsrw xmm0,xmm0,eax,4
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
+	movzx eax,word ptr[edi+2*ebx+1536]
+	add ax,word ptr[edi+2*ecx+2048]
+	add ax,word ptr[edi+2*edx+2560]
 	vpinsrw xmm0,xmm0,eax,5
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx+3072]
+	add ax,word ptr[edi+2*ecx+3584]
+	add ax,word ptr[edi+2*edx+4096]
 	vpinsrw xmm0,xmm0,eax,7
 	
 	movzx edx,byte ptr[esi+12]
 	movzx ecx,byte ptr[esi+13]
 	movzx ebx,byte ptr[esi+14] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	vpinsrw xmm0,xmm0,eax,6
 		
 	movzx edx,byte ptr[esi+16]
 	movzx ecx,byte ptr[esi+17]
 	movzx ebx,byte ptr[esi+18] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	vpinsrw xmm4,xmm4,eax,0
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
+	movzx eax,word ptr[edi+2*ebx+1536]
+	add ax,word ptr[edi+2*ecx+2048]
+	add ax,word ptr[edi+2*edx+2560]
 	vpinsrw xmm4,xmm4,eax,1
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx+3072]
+	add ax,word ptr[edi+2*ecx+3584]
+	add ax,word ptr[edi+2*edx+4096]
 	vpinsrw xmm4,xmm4,eax,3
 	
 	movzx edx,byte ptr[esi+20]
 	movzx ecx,byte ptr[esi+21]
 	movzx ebx,byte ptr[esi+22] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	vpinsrw xmm4,xmm4,eax,2
 	
 	movzx edx,byte ptr[esi+24]
 	movzx ecx,byte ptr[esi+25]
 	movzx ebx,byte ptr[esi+26] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	vpinsrw xmm4,xmm4,eax,4
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
+	movzx eax,word ptr[edi+2*ebx+1536]
+	add ax,word ptr[edi+2*ecx+2048]
+	add ax,word ptr[edi+2*edx+2560]
 	vpinsrw xmm4,xmm4,eax,5
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx+3072]
+	add ax,word ptr[edi+2*ecx+3584]
+	add ax,word ptr[edi+2*edx+4096]
 	vpinsrw xmm4,xmm4,eax,7
 	
 	movzx edx,byte ptr[esi+28]
 	movzx ecx,byte ptr[esi+29]
 	movzx ebx,byte ptr[esi+30] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	vpinsrw xmm4,xmm4,eax,6		
 		
 	vpaddsw xmm0,xmm0,xmm1
@@ -2054,13 +1995,14 @@ Boucle1_8_AVX:
 	vpminsw xmm4,xmm4,xmm3	
 	vpackuswb xmm0,xmm0,xmm4
 	
-	add src,32
+	mov edi,dst
+	add esi,32
 	
 	vmovdqa XMMWORD ptr[edi],xmm0
 	
-	mov esi,src
+	add dst,16
 	
-	add edi,16
+	mov edi,lookup
 	
 	dec i	
 	jnz Boucle1_8_AVX
@@ -2072,56 +2014,49 @@ Suite0_8_AVX:
 	movzx edx,byte ptr[esi]
 	movzx ecx,byte ptr[esi+1]
 	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	vpinsrw xmm0,xmm0,eax,0
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
+	movzx eax,word ptr[edi+2*ebx+1536]
+	add ax,word ptr[edi+2*ecx+2048]
+	add ax,word ptr[edi+2*edx+2560]
 	vpinsrw xmm0,xmm0,eax,1
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx+3072]
+	add ax,word ptr[edi+2*ecx+3584]
+	add ax,word ptr[edi+2*edx+4096]
 	vpinsrw xmm0,xmm0,eax,3
 	
 	movzx edx,byte ptr[esi+4]
 	movzx ecx,byte ptr[esi+5]
 	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	vpinsrw xmm0,xmm0,eax,2
 	
 	movzx edx,byte ptr[esi+8]
 	movzx ecx,byte ptr[esi+9]
 	movzx ebx,byte ptr[esi+10] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	vpinsrw xmm0,xmm0,eax,4
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
+	movzx eax,word ptr[edi+2*ebx+1536]
+	add ax,word ptr[edi+2*ecx+2048]
+	add ax,word ptr[edi+2*edx+2560]
 	vpinsrw xmm0,xmm0,eax,5
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx+3072]
+	add ax,word ptr[edi+2*ecx+3584]
+	add ax,word ptr[edi+2*edx+4096]
 	vpinsrw xmm0,xmm0,eax,7
 	
 	movzx edx,byte ptr[esi+12]
 	movzx ecx,byte ptr[esi+13]
 	movzx ebx,byte ptr[esi+14] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	vpinsrw xmm0,xmm0,eax,6
 		
 	vpaddsw xmm0,xmm0,xmm1
@@ -2130,13 +2065,14 @@ Suite0_8_AVX:
 	vpminsw xmm0,xmm0,xmm3	
 	vpackuswb xmm0,xmm0,xmm0
 	
-	add src,16
+	mov edi,dst
+	add esi,16
 	
 	vmovq qword ptr[edi],xmm0
 	
-	mov esi,src
+	add dst,8
 	
-	add edi,8
+	mov edi,lookup
 	
 Suite1_8_AVX:	
 	test w,2
@@ -2145,28 +2081,25 @@ Suite1_8_AVX:
 	movzx edx,byte ptr[esi]
 	movzx ecx,byte ptr[esi+1]
 	movzx ebx,byte ptr[esi+2] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	vpinsrw xmm0,xmm0,eax,0
-	movzx eax,word ptr[esi+2*ebx+1536]
-	add ax,word ptr[esi+2*ecx+2048]
-	add ax,word ptr[esi+2*edx+2560]
+	movzx eax,word ptr[edi+2*ebx+1536]
+	add ax,word ptr[edi+2*ecx+2048]
+	add ax,word ptr[edi+2*edx+2560]
 	vpinsrw xmm0,xmm0,eax,1
-	movzx eax,word ptr[esi+2*ebx+3072]
-	add ax,word ptr[esi+2*ecx+3584]
-	add ax,word ptr[esi+2*edx+4096]
-	mov esi,src
+	movzx eax,word ptr[edi+2*ebx+3072]
+	add ax,word ptr[edi+2*ecx+3584]
+	add ax,word ptr[edi+2*edx+4096]
 	vpinsrw xmm0,xmm0,eax,3
 	
 	movzx edx,byte ptr[esi+4]
 	movzx ecx,byte ptr[esi+5]
 	movzx ebx,byte ptr[esi+6] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+512]
-	add ax,word ptr[esi+2*edx+1024]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+512]
+	add ax,word ptr[edi+2*edx+1024]
 	vpinsrw xmm0,xmm0,eax,2
 		
 	vpaddsw xmm0,xmm0,xmm1
@@ -2175,17 +2108,18 @@ Suite1_8_AVX:
 	vpminsw xmm0,xmm0,xmm3	
 	vpackuswb xmm0,xmm0,xmm0
 	
-	add src,8
+	mov edi,dst
+	add esi,8
 	
 	vmovd dword ptr[edi],xmm0
 	
-	add edi,4	
+	add dst,4
 	
 Suite2_8_AVX:	
-	mov esi,src
+	mov edi,dst
 	add esi,src_modulo
 	add edi,dst_modulo
-	mov src,esi
+	mov dst,edi
 	dec h
 	jnz Boucle0_8_AVX
 
@@ -2247,10 +2181,10 @@ JPSDR_RGBConvert_RGB64toYU64_SSE41 proc src:dword,dst:dword,w:dword,h:dword,offs
 	shr eax,2
 	mov w0,eax
 
-	mov edi,dst
 	mov esi,src
 	
 Boucle0_8_SSE41:
+	mov edi,lookup
 	mov eax,w0
 	or eax,eax
 	jz Suite0_8_SSE41
@@ -2260,56 +2194,49 @@ Boucle1_8_SSE41:
 	movzx edx,word ptr[esi]
 	movzx ecx,word ptr[esi+2]
 	movzx ebx,word ptr[esi+4] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
-	add eax,dword ptr[esi+4*edx+524288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
+	add eax,dword ptr[edi+4*edx+524288]
 	pinsrd xmm0,eax,0
-	mov eax,dword ptr[esi+4*ebx+786432]
-	add eax,dword ptr[esi+4*ecx+1048576]
-	add eax,dword ptr[esi+4*edx+1310720]
+	mov eax,dword ptr[edi+4*ebx+786432]
+	add eax,dword ptr[edi+4*ecx+1048576]
+	add eax,dword ptr[edi+4*edx+1310720]
 	pinsrd xmm0,eax,3
-	mov eax,dword ptr[esi+4*ebx+1572864]
-	add eax,dword ptr[esi+4*ecx+1835008]
-	add eax,dword ptr[esi+4*edx+2097152]
-	mov esi,src
+	mov eax,dword ptr[edi+4*ebx+1572864]
+	add eax,dword ptr[edi+4*ecx+1835008]
+	add eax,dword ptr[edi+4*edx+2097152]
 	pinsrd xmm0,eax,1
 	
 	movzx edx,word ptr[esi+8]
 	movzx ecx,word ptr[esi+10]
 	movzx ebx,word ptr[esi+12] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
-	add eax,dword ptr[esi+4*edx+524288]
-	mov esi,src
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
+	add eax,dword ptr[edi+4*edx+524288]
 	pinsrd xmm0,eax,2
 
 	movzx edx,word ptr[esi+16]
 	movzx ecx,word ptr[esi+18]
 	movzx ebx,word ptr[esi+20] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
-	add eax,dword ptr[esi+4*edx+524288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
+	add eax,dword ptr[edi+4*edx+524288]
 	pinsrd xmm4,eax,0
-	mov eax,dword ptr[esi+4*ebx+786432]
-	add eax,dword ptr[esi+4*ecx+1048576]
-	add eax,dword ptr[esi+4*edx+1310720]
+	mov eax,dword ptr[edi+4*ebx+786432]
+	add eax,dword ptr[edi+4*ecx+1048576]
+	add eax,dword ptr[edi+4*edx+1310720]
 	pinsrd xmm4,eax,3
-	mov eax,dword ptr[esi+4*ebx+1572864]
-	add eax,dword ptr[esi+4*ecx+1835008]
-	add eax,dword ptr[esi+4*edx+2097152]
-	mov esi,src
+	mov eax,dword ptr[edi+4*ebx+1572864]
+	add eax,dword ptr[edi+4*ecx+1835008]
+	add eax,dword ptr[edi+4*edx+2097152]
 	pinsrd xmm4,eax,1
 	
 	movzx edx,word ptr[esi+24]
 	movzx ecx,word ptr[esi+26]
 	movzx ebx,word ptr[esi+28] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
-	add eax,dword ptr[esi+4*edx+524288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
+	add eax,dword ptr[edi+4*edx+524288]
 	pinsrd xmm4,eax,2
 	
 	paddd xmm0,xmm1
@@ -2320,14 +2247,15 @@ Boucle1_8_SSE41:
 	pmaxuw xmm0,xmm2
 	pminuw xmm0,xmm3
 	
-	add src,32
+	mov edi,dst
+	add esi,32
 	
 	movdqa XMMWORD ptr[edi],xmm0
 
-	mov esi,src
-
-	add edi,16
-
+	add dst,16
+	
+	mov edi,lookup
+	
 	dec i	
 	jnz Boucle1_8_SSE41
 	
@@ -2338,28 +2266,25 @@ Suite0_8_SSE41:
 	movzx edx,word ptr[esi]
 	movzx ecx,word ptr[esi+2]
 	movzx ebx,word ptr[esi+4] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
-	add eax,dword ptr[esi+4*edx+524288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
+	add eax,dword ptr[edi+4*edx+524288]
 	pinsrd xmm0,eax,0
-	mov eax,dword ptr[esi+4*ebx+786432]
-	add eax,dword ptr[esi+4*ecx+1048576]
-	add eax,dword ptr[esi+4*edx+1310720]
+	mov eax,dword ptr[edi+4*ebx+786432]
+	add eax,dword ptr[edi+4*ecx+1048576]
+	add eax,dword ptr[edi+4*edx+1310720]
 	pinsrd xmm0,eax,3
-	mov eax,dword ptr[esi+4*ebx+1572864]
-	add eax,dword ptr[esi+4*ecx+1835008]
-	add eax,dword ptr[esi+4*edx+2097152]
-	mov esi,src
+	mov eax,dword ptr[edi+4*ebx+1572864]
+	add eax,dword ptr[edi+4*ecx+1835008]
+	add eax,dword ptr[edi+4*edx+2097152]
 	pinsrd xmm0,eax,1
 	
 	movzx edx,word ptr[esi+8]
 	movzx ecx,word ptr[esi+10]
 	movzx ebx,word ptr[esi+12] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
-	add eax,dword ptr[esi+4*edx+524288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
+	add eax,dword ptr[edi+4*edx+524288]
 	pinsrd xmm0,eax,2
 
 	paddd xmm0,xmm1
@@ -2368,17 +2293,18 @@ Suite0_8_SSE41:
 	pmaxuw xmm0,xmm2
 	pminuw xmm0,xmm3
 	
-	add src,16
+	mov edi,dst
+	add esi,16
 	
 	movq qword ptr[edi],xmm0
 	
-	add edi,8
+	add dst,8
 
 Suite2_8_SSE41:	
-	mov esi,src
+	mov edi,dst
 	add esi,src_modulo
 	add edi,dst_modulo
-	mov src,esi
+	mov dst,edi
 	dec h
 	jnz Boucle0_8_SSE41
 
@@ -2440,10 +2366,10 @@ JPSDR_RGBConvert_RGB64toYU64_AVX proc src:dword,dst:dword,w:dword,h:dword,offset
 	shr eax,2
 	mov w0,eax
 
-	mov edi,dst
 	mov esi,src
 	
 Boucle0_8_64AVX:
+	mov edi,lookup
 	mov eax,w0
 	or eax,eax
 	jz Suite0_8_64AVX
@@ -2453,56 +2379,49 @@ Boucle1_8_64AVX:
 	movzx edx,word ptr[esi]
 	movzx ecx,word ptr[esi+2]
 	movzx ebx,word ptr[esi+4] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
-	add eax,dword ptr[esi+4*edx+524288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
+	add eax,dword ptr[edi+4*edx+524288]
 	vpinsrd xmm0,xmm0,eax,0
-	mov eax,dword ptr[esi+4*ebx+786432]
-	add eax,dword ptr[esi+4*ecx+1048576]
-	add eax,dword ptr[esi+4*edx+1310720]
+	mov eax,dword ptr[edi+4*ebx+786432]
+	add eax,dword ptr[edi+4*ecx+1048576]
+	add eax,dword ptr[edi+4*edx+1310720]
 	vpinsrd xmm0,xmm0,eax,3
-	mov eax,dword ptr[esi+4*ebx+1572864]
-	add eax,dword ptr[esi+4*ecx+1835008]
-	add eax,dword ptr[esi+4*edx+2097152]
-	mov esi,src
+	mov eax,dword ptr[edi+4*ebx+1572864]
+	add eax,dword ptr[edi+4*ecx+1835008]
+	add eax,dword ptr[edi+4*edx+2097152]
 	vpinsrd xmm0,xmm0,eax,1
 	
 	movzx edx,word ptr[esi+8]
 	movzx ecx,word ptr[esi+10]
 	movzx ebx,word ptr[esi+12] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
-	add eax,dword ptr[esi+4*edx+524288]
-	mov esi,src
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
+	add eax,dword ptr[edi+4*edx+524288]
 	vpinsrd xmm0,xmm0,eax,2
 
 	movzx edx,word ptr[esi+16]
 	movzx ecx,word ptr[esi+18]
 	movzx ebx,word ptr[esi+20] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
-	add eax,dword ptr[esi+4*edx+524288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
+	add eax,dword ptr[edi+4*edx+524288]
 	vpinsrd xmm4,xmm4,eax,0
-	mov eax,dword ptr[esi+4*ebx+786432]
-	add eax,dword ptr[esi+4*ecx+1048576]
-	add eax,dword ptr[esi+4*edx+1310720]
+	mov eax,dword ptr[edi+4*ebx+786432]
+	add eax,dword ptr[edi+4*ecx+1048576]
+	add eax,dword ptr[edi+4*edx+1310720]
 	vpinsrd xmm4,xmm4,eax,3
-	mov eax,dword ptr[esi+4*ebx+1572864]
-	add eax,dword ptr[esi+4*ecx+1835008]
-	add eax,dword ptr[esi+4*edx+2097152]
-	mov esi,src
+	mov eax,dword ptr[edi+4*ebx+1572864]
+	add eax,dword ptr[edi+4*ecx+1835008]
+	add eax,dword ptr[edi+4*edx+2097152]
 	vpinsrd xmm4,xmm4,eax,1
 	
 	movzx edx,word ptr[esi+24]
 	movzx ecx,word ptr[esi+26]
 	movzx ebx,word ptr[esi+28] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
-	add eax,dword ptr[esi+4*edx+524288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
+	add eax,dword ptr[edi+4*edx+524288]
 	vpinsrd xmm4,xmm4,eax,2
 	
 	vpaddd xmm0,xmm0,xmm1
@@ -2513,13 +2432,14 @@ Boucle1_8_64AVX:
 	vpmaxuw xmm0,xmm0,xmm2
 	vpminuw xmm0,xmm0,xmm3
 	
-	add src,32
+	mov edi,dst
+	add esi,32
 	
 	vmovdqa XMMWORD ptr[edi],xmm0
 	
-	mov esi,src
+	add dst,16
 	
-	add edi,16
+	mov edi,lookup
 
 	dec i	
 	jnz Boucle1_8_64AVX
@@ -2531,28 +2451,25 @@ Suite0_8_64AVX:
 	movzx edx,word ptr[esi]
 	movzx ecx,word ptr[esi+2]
 	movzx ebx,word ptr[esi+4] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
-	add eax,dword ptr[esi+4*edx+524288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
+	add eax,dword ptr[edi+4*edx+524288]
 	vpinsrd xmm0,xmm0,eax,0
-	mov eax,dword ptr[esi+4*ebx+786432]
-	add eax,dword ptr[esi+4*ecx+1048576]
-	add eax,dword ptr[esi+4*edx+1310720]
+	mov eax,dword ptr[edi+4*ebx+786432]
+	add eax,dword ptr[edi+4*ecx+1048576]
+	add eax,dword ptr[edi+4*edx+1310720]
 	vpinsrd xmm0,xmm0,eax,3
-	mov eax,dword ptr[esi+4*ebx+1572864]
-	add eax,dword ptr[esi+4*ecx+1835008]
-	add eax,dword ptr[esi+4*edx+2097152]
-	mov esi,src
+	mov eax,dword ptr[edi+4*ebx+1572864]
+	add eax,dword ptr[edi+4*ecx+1835008]
+	add eax,dword ptr[edi+4*edx+2097152]
 	vpinsrd xmm0,xmm0,eax,1
 	
 	movzx edx,word ptr[esi+8]
 	movzx ecx,word ptr[esi+10]
 	movzx ebx,word ptr[esi+12] ; ebx=R ecx=G edx=B
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
-	add eax,dword ptr[esi+4*edx+524288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
+	add eax,dword ptr[edi+4*edx+524288]
 	vpinsrd xmm0,xmm0,eax,2
 
 	vpaddd xmm0,xmm0,xmm1
@@ -2561,17 +2478,18 @@ Suite0_8_64AVX:
 	vpmaxuw xmm0,xmm0,xmm2
 	vpminuw xmm0,xmm0,xmm3
 	
-	add src,16
+	mov edi,dst
+	add esi,16
 	
 	vmovq qword ptr[edi],xmm0
 	
-	add edi,8
+	add dst,8
 
 Suite2_8_64AVX:	
-	mov esi,src
+	mov edi,dst
 	add esi,src_modulo
 	add edi,dst_modulo
-	mov src,esi
+	mov dst,edi
 	dec h
 	jnz Boucle0_8_64AVX
 
@@ -2610,9 +2528,9 @@ JPSDR_RGBConvert_Convert_YV24toRGB32_SSE2 proc src_y:dword,src_u:dword,src_v:dwo
 	shr eax,2
 	mov w0,eax
 	
-	mov edi,dst
-	
 Convert_YV24toRGB32_SSE2_1:
+	mov edi,lookup
+	
 	mov eax,w0
 	or eax,eax
 	jz Convert_YV24toRGB32_SSE2_3
@@ -2628,16 +2546,15 @@ Convert_YV24toRGB32_SSE2_2:
 	movzx ecx,byte ptr[esi]
 	mov esi,src_v
 	movzx edx,byte ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*edx+512]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*edx+512]
 	pinsrw xmm0,eax,2
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+1024]
-	add ax,word ptr[esi+2*edx+1536]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+1024]
+	add ax,word ptr[edi+2*edx+1536]
 	pinsrw xmm0,eax,1
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+2048]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+2048]
 	mov esi,src_y
 	pinsrw xmm0,eax,0
 	
@@ -2646,16 +2563,15 @@ Convert_YV24toRGB32_SSE2_2:
 	movzx ecx,byte ptr[esi+1]
 	mov esi,src_v
 	movzx edx,byte ptr[esi+1] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*edx+512]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*edx+512]
 	pinsrw xmm0,eax,6
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+1024]
-	add ax,word ptr[esi+2*edx+1536]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+1024]
+	add ax,word ptr[edi+2*edx+1536]
 	pinsrw xmm0,eax,5
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+2048]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+2048]
 	mov esi,src_y
 	pinsrw xmm0,eax,4
 	
@@ -2664,16 +2580,15 @@ Convert_YV24toRGB32_SSE2_2:
 	movzx ecx,byte ptr[esi+2]
 	mov esi,src_v
 	movzx edx,byte ptr[esi+2] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*edx+512]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*edx+512]
 	pinsrw xmm2,eax,2
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+1024]
-	add ax,word ptr[esi+2*edx+1536]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+1024]
+	add ax,word ptr[edi+2*edx+1536]
 	pinsrw xmm2,eax,1
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+2048]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+2048]
 	mov esi,src_y
 	pinsrw xmm2,eax,0
 	
@@ -2682,18 +2597,17 @@ Convert_YV24toRGB32_SSE2_2:
 	movzx ecx,byte ptr[esi+3]
 	mov esi,src_v
 	movzx edx,byte ptr[esi+3] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*edx+512]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*edx+512]
 	add src_y,4
 	pinsrw xmm2,eax,6
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+1024]
-	add ax,word ptr[esi+2*edx+1536]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+1024]
+	add ax,word ptr[edi+2*edx+1536]
 	add src_u,4
 	pinsrw xmm2,eax,5
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+2048]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+2048]
 	add src_v,4
 	pinsrw xmm2,eax,4	
 	
@@ -2701,11 +2615,16 @@ Convert_YV24toRGB32_SSE2_2:
 	paddsw xmm2,xmm1
 	psraw xmm0,5
 	psraw xmm2,5
-	packuswb xmm0,xmm2
 	
+	mov edi,dst
+	
+	packuswb xmm0,xmm2
+
 	movdqa XMMWORD ptr[edi],xmm0
 	
-	add edi,16
+	add dst,16
+	
+	mov edi,lookup
 	
 	dec i
 	jnz Convert_YV24toRGB32_SSE2_2
@@ -2726,28 +2645,30 @@ Convert_YV24toRGB32_SSE2_3:
 	movzx ecx,byte ptr[esi]
 	mov esi,src_v
 	movzx edx,byte ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*edx+512]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*edx+512]
 	inc src_y
 	pinsrw xmm0,eax,2
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+1024]
-	add ax,word ptr[esi+2*edx+1536]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+1024]
+	add ax,word ptr[edi+2*edx+1536]
 	inc src_u
 	pinsrw xmm0,eax,1
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+2048]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+2048]
 	inc src_v
 	pinsrw xmm0,eax,0
 	
 	paddsw xmm0,xmm1
 	psraw xmm0,5
+	
+	mov edi,dst
+	
 	packuswb xmm0,xmm0
 	
 	movd dword ptr[edi],xmm0
 	
-	add edi,4
+	add dst,4
 	
 	jmp Convert_YV24toRGB32_SSE2_5
 	
@@ -2758,16 +2679,15 @@ Convert_YV24toRGB32_SSE2_4:
 	movzx ecx,byte ptr[esi]
 	mov esi,src_v
 	movzx edx,byte ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*edx+512]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*edx+512]
 	pinsrw xmm0,eax,2
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+1024]
-	add ax,word ptr[esi+2*edx+1536]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+1024]
+	add ax,word ptr[edi+2*edx+1536]
 	pinsrw xmm0,eax,1
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+2048]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+2048]
 	mov esi,src_y
 	pinsrw xmm0,eax,0
 	
@@ -2776,28 +2696,32 @@ Convert_YV24toRGB32_SSE2_4:
 	movzx ecx,byte ptr[esi+1]
 	mov esi,src_v
 	movzx edx,byte ptr[esi+1] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*edx+512]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*edx+512]
 	add src_y,2
 	pinsrw xmm0,eax,6
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+1024]
-	add ax,word ptr[esi+2*edx+1536]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+1024]
+	add ax,word ptr[edi+2*edx+1536]
 	add src_u,2
 	pinsrw xmm0,eax,5
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+2048]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+2048]
 	add src_v,2
 	pinsrw xmm0,eax,4
 	
 	paddsw xmm0,xmm1
 	psraw xmm0,5
+	
+	mov edi,dst
+	
 	packuswb xmm0,xmm0
 	
 	movq qword ptr[edi],xmm0
 	
-	add edi,8
+	add dst,8
+	
+	mov edi,lookup
 	
 	test w,1
 	jz short Convert_YV24toRGB32_SSE2_5
@@ -2810,33 +2734,37 @@ Convert_YV24toRGB32_SSE2_4:
 	movzx ecx,byte ptr[esi]
 	mov esi,src_v
 	movzx edx,byte ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*edx+512]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*edx+512]
 	inc src_y
 	pinsrw xmm0,eax,2
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+1024]
-	add ax,word ptr[esi+2*edx+1536]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+1024]
+	add ax,word ptr[edi+2*edx+1536]
 	inc src_u
 	pinsrw xmm0,eax,1
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+2048]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+2048]
 	inc src_v
 	pinsrw xmm0,eax,0	
 	
 	paddsw xmm0,xmm1
 	psraw xmm0,5
+	
+	mov edi,dst
+	
 	packuswb xmm0,xmm0
 	
 	movd dword ptr[edi],xmm0
 	
-	add edi,4
+	add dst,4
 	
 Convert_YV24toRGB32_SSE2_5:	
-	add edi,dst_modulo
+	mov edi,dst
 	mov eax,src_y
+	add edi,dst_modulo
 	add eax,src_modulo_y
+	mov dst,edi
 	mov src_y,eax
 	mov eax,src_u
 	add eax,src_modulo_u
@@ -2884,9 +2812,9 @@ JPSDR_RGBConvert_Convert_YV24toRGB32_AVX proc src_y:dword,src_u:dword,src_v:dwor
 	shr eax,2
 	mov w0,eax
 	
-	mov edi,dst
-	
 Convert_YV24toRGB32_AVX_1:
+	mov edi,lookup
+	
 	mov eax,w0
 	or eax,eax
 	jz Convert_YV24toRGB32_AVX_3
@@ -2899,16 +2827,15 @@ Convert_YV24toRGB32_AVX_2:
 	movzx ecx,byte ptr[esi]
 	mov esi,src_v
 	movzx edx,byte ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*edx+512]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*edx+512]
 	vpinsrw xmm0,xmm0,eax,2
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+1024]
-	add ax,word ptr[esi+2*edx+1536]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+1024]
+	add ax,word ptr[edi+2*edx+1536]
 	vpinsrw xmm0,xmm0,eax,1
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+2048]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+2048]
 	mov esi,src_y
 	vpinsrw xmm0,xmm0,eax,0
 	
@@ -2917,16 +2844,15 @@ Convert_YV24toRGB32_AVX_2:
 	movzx ecx,byte ptr[esi+1]
 	mov esi,src_v
 	movzx edx,byte ptr[esi+1] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*edx+512]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*edx+512]
 	vpinsrw xmm0,xmm0,eax,6
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+1024]
-	add ax,word ptr[esi+2*edx+1536]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+1024]
+	add ax,word ptr[edi+2*edx+1536]
 	vpinsrw xmm0,xmm0,eax,5
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+2048]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+2048]
 	mov esi,src_y
 	vpinsrw xmm0,xmm0,eax,4
 	
@@ -2935,16 +2861,15 @@ Convert_YV24toRGB32_AVX_2:
 	movzx ecx,byte ptr[esi+2]
 	mov esi,src_v
 	movzx edx,byte ptr[esi+2] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*edx+512]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*edx+512]
 	vpinsrw xmm2,xmm2,eax,2
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+1024]
-	add ax,word ptr[esi+2*edx+1536]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+1024]
+	add ax,word ptr[edi+2*edx+1536]
 	vpinsrw xmm2,xmm2,eax,1
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+2048]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+2048]
 	mov esi,src_y
 	vpinsrw xmm2,xmm2,eax,0
 	
@@ -2953,18 +2878,17 @@ Convert_YV24toRGB32_AVX_2:
 	movzx ecx,byte ptr[esi+3]
 	mov esi,src_v
 	movzx edx,byte ptr[esi+3] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*edx+512]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*edx+512]
 	add src_y,4
 	vpinsrw xmm2,xmm2,eax,6
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+1024]
-	add ax,word ptr[esi+2*edx+1536]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+1024]
+	add ax,word ptr[edi+2*edx+1536]
 	add src_u,4
 	vpinsrw xmm2,xmm2,eax,5
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+2048]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+2048]
 	add src_v,4
 	vpinsrw xmm2,xmm2,eax,4	
 	
@@ -2972,11 +2896,16 @@ Convert_YV24toRGB32_AVX_2:
 	vpaddsw xmm2,xmm2,xmm1
 	vpsraw xmm0,xmm0,5
 	vpsraw xmm2,xmm2,5
+	
+	mov edi,dst
+	
 	vpackuswb xmm3,xmm0,xmm2
 	
 	vmovdqa XMMWORD ptr[edi],xmm3
 	
-	add edi,16
+	add dst,16
+	
+	mov edi,lookup
 	
 	dec i
 	jnz Convert_YV24toRGB32_AVX_2
@@ -2995,28 +2924,30 @@ Convert_YV24toRGB32_AVX_3:
 	movzx ecx,byte ptr[esi]
 	mov esi,src_v
 	movzx edx,byte ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*edx+512]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*edx+512]
 	inc src_y
 	vpinsrw xmm0,xmm0,eax,2
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+1024]
-	add ax,word ptr[esi+2*edx+1536]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+1024]
+	add ax,word ptr[edi+2*edx+1536]
 	inc src_u
 	vpinsrw xmm0,xmm0,eax,1
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+2048]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+2048]
 	inc src_v
 	vpinsrw xmm0,xmm0,eax,0
 	
 	vpaddsw xmm0,xmm0,xmm1
 	vpsraw xmm0,xmm0,5
+	
+	mov edi,dst
+	
 	vpackuswb xmm3,xmm0,xmm0
 	
 	vmovd dword ptr[edi],xmm3
 	
-	add edi,4
+	add dst,4
 	
 	jmp Convert_YV24toRGB32_AVX_5
 	
@@ -3027,16 +2958,15 @@ Convert_YV24toRGB32_AVX_4:
 	movzx ecx,byte ptr[esi]
 	mov esi,src_v
 	movzx edx,byte ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*edx+512]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*edx+512]
 	vpinsrw xmm0,xmm0,eax,2
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+1024]
-	add ax,word ptr[esi+2*edx+1536]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+1024]
+	add ax,word ptr[edi+2*edx+1536]
 	vpinsrw xmm0,xmm0,eax,1
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+2048]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+2048]
 	mov esi,src_y
 	vpinsrw xmm0,xmm0,eax,0
 	
@@ -3045,28 +2975,32 @@ Convert_YV24toRGB32_AVX_4:
 	movzx ecx,byte ptr[esi+1]
 	mov esi,src_v
 	movzx edx,byte ptr[esi+1] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*edx+512]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*edx+512]
 	add src_y,2
 	vpinsrw xmm0,xmm0,eax,6
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+1024]
-	add ax,word ptr[esi+2*edx+1536]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+1024]
+	add ax,word ptr[edi+2*edx+1536]
 	add src_u,2
 	vpinsrw xmm0,xmm0,eax,5
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+2048]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+2048]
 	add src_v,2
 	vpinsrw xmm0,xmm0,eax,4	
 	
 	vpaddsw xmm0,xmm0,xmm1
 	vpsraw xmm0,xmm0,5
+	
+	mov edi,dst
+	
 	vpackuswb xmm3,xmm0,xmm0
 	
 	vmovq qword ptr[edi],xmm3
 	
-	add edi,8
+	add dst,8
+	
+	mov edi,lookup
 	
 	test w,1
 	jz short Convert_YV24toRGB32_AVX_5
@@ -3077,33 +3011,37 @@ Convert_YV24toRGB32_AVX_4:
 	movzx ecx,byte ptr[esi]
 	mov esi,src_v
 	movzx edx,byte ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*edx+512]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*edx+512]
 	inc src_y
 	vpinsrw xmm0,xmm0,eax,2
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+1024]
-	add ax,word ptr[esi+2*edx+1536]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+1024]
+	add ax,word ptr[edi+2*edx+1536]
 	inc src_u
 	vpinsrw xmm0,xmm0,eax,1
-	movzx eax,word ptr[esi+2*ebx]
-	add ax,word ptr[esi+2*ecx+2048]
+	movzx eax,word ptr[edi+2*ebx]
+	add ax,word ptr[edi+2*ecx+2048]
 	inc src_v
 	vpinsrw xmm0,xmm0,eax,0
 	
 	vpaddsw xmm0,xmm0,xmm1
 	vpsraw xmm0,xmm0,5
+	
+	mov edi,dst
+	
 	vpackuswb xmm3,xmm0,xmm0
 	
 	vmovd dword ptr[edi],xmm3
 	
-	add edi,4
+	add dst,4
 	
 Convert_YV24toRGB32_AVX_5:	
-	add edi,dst_modulo
+	mov edi,dst
 	mov eax,src_y
+	add edi,dst_modulo
 	add eax,src_modulo_y
+	mov dst,edi
 	mov src_y,eax
 	mov eax,src_u
 	add eax,src_modulo_u
@@ -3146,9 +3084,9 @@ JPSDR_RGBConvert_Convert_10_YV24toRGB64_SSE41 proc src_y:dword,src_u:dword,src_v
 	shr eax,1
 	mov w0,eax
 	
-	mov edi,dst
-	
 Convert_10_YV24toRGB64_SSE41_1:
+	mov edi,lookup
+
 	mov eax,w0
 	or eax,eax
 	jz Convert_10_YV24toRGB64_SSE41_3
@@ -3164,16 +3102,15 @@ Convert_10_YV24toRGB64_SSE41_2:
 	movzx ecx,word ptr[esi]
 	mov esi,src_v
 	movzx edx,word ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+4096]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+4096]
 	pinsrd xmm0,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+8192]
-	add eax,dword ptr[esi+4*edx+12288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+8192]
+	add eax,dword ptr[edi+4*edx+12288]
 	pinsrd xmm0,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+16384]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+16384]
 	mov esi,src_y
 	pinsrd xmm0,eax,0
 	
@@ -3182,18 +3119,17 @@ Convert_10_YV24toRGB64_SSE41_2:
 	movzx ecx,word ptr[esi+2]
 	mov esi,src_v
 	movzx edx,word ptr[esi+2] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+4096]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+4096]
 	add src_y,4
 	pinsrd xmm2,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+8192]
-	add eax,dword ptr[esi+4*edx+12288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+8192]
+	add eax,dword ptr[edi+4*edx+12288]
 	add src_u,4
 	pinsrd xmm2,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+16384]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+16384]
 	add src_v,4
 	pinsrd xmm2,eax,0
 	
@@ -3201,11 +3137,16 @@ Convert_10_YV24toRGB64_SSE41_2:
 	paddd xmm2,xmm1
 	psrad xmm0,8
 	psrad xmm2,8
+	
+	mov edi,dst
+	
 	packusdw xmm0,xmm2
 	
 	movdqa XMMWORD ptr[edi],xmm0
 	
-	add edi,16
+	add dst,16
+	
+	mov edi,lookup
 	
 	dec i
 	jnz Convert_10_YV24toRGB64_SSE41_2
@@ -3222,33 +3163,37 @@ Convert_10_YV24toRGB64_SSE41_3:
 	movzx ecx,word ptr[esi]
 	mov esi,src_v
 	movzx edx,word ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+4096]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+4096]
 	add src_y,2
 	pinsrd xmm0,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+8192]
-	add eax,dword ptr[esi+4*edx+12288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+8192]
+	add eax,dword ptr[edi+4*edx+12288]
 	add src_u,2
 	pinsrd xmm0,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+16384]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+16384]
 	add src_v,2	
 	pinsrd xmm0,eax,0
 	
 	paddd xmm0,xmm1
 	psrad xmm0,8
+	
+	mov edi,dst
+	
 	packusdw xmm0,xmm0
 	
 	movq qword ptr[edi],xmm0
 	
-	add edi,8
+	add dst,8
 
 Convert_10_YV24toRGB64_SSE41_4:	
-	add edi,dst_modulo
+	mov edi,dst
 	mov eax,src_y
+	add edi,dst_modulo
 	add eax,src_modulo_y
+	mov dst,edi
 	mov src_y,eax
 	mov eax,src_u
 	add eax,src_modulo_u
@@ -3291,9 +3236,9 @@ JPSDR_RGBConvert_Convert_12_YV24toRGB64_SSE41 proc src_y:dword,src_u:dword,src_v
 	shr eax,1
 	mov w0,eax
 	
-	mov edi,dst
-	
 Convert_12_YV24toRGB64_SSE41_1:
+	mov edi,lookup
+
 	mov eax,w0
 	or eax,eax
 	jz Convert_12_YV24toRGB64_SSE41_3
@@ -3309,16 +3254,15 @@ Convert_12_YV24toRGB64_SSE41_2:
 	movzx ecx,word ptr[esi]
 	mov esi,src_v
 	movzx edx,word ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+16384]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+16384]
 	pinsrd xmm0,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+32768]
-	add eax,dword ptr[esi+4*edx+49152]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+32768]
+	add eax,dword ptr[edi+4*edx+49152]
 	pinsrd xmm0,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+65536]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+65536]
 	mov esi,src_y
 	pinsrd xmm0,eax,0
 	
@@ -3327,18 +3271,17 @@ Convert_12_YV24toRGB64_SSE41_2:
 	movzx ecx,word ptr[esi+2]
 	mov esi,src_v
 	movzx edx,word ptr[esi+2] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+16384]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+16384]
 	add src_y,4
 	pinsrd xmm2,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+32768]
-	add eax,dword ptr[esi+4*edx+49152]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+32768]
+	add eax,dword ptr[edi+4*edx+49152]
 	add src_u,4
 	pinsrd xmm2,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+65536]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+65536]
 	add src_v,4
 	pinsrd xmm2,eax,0
 	
@@ -3346,11 +3289,15 @@ Convert_12_YV24toRGB64_SSE41_2:
 	paddd xmm2,xmm1
 	psrad xmm0,8
 	psrad xmm2,8
+	
+	mov edi,dst
+	
 	packusdw xmm0,xmm2
 	
 	movdqa XMMWORD ptr[edi],xmm0
 	
-	add edi,16
+	add dst,16
+	mov edi,lookup
 	
 	dec i
 	jnz Convert_12_YV24toRGB64_SSE41_2
@@ -3367,33 +3314,37 @@ Convert_12_YV24toRGB64_SSE41_3:
 	movzx ecx,word ptr[esi]
 	mov esi,src_v
 	movzx edx,word ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+16384]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+16384]
 	add src_y,2
 	pinsrd xmm0,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+32768]
-	add eax,dword ptr[esi+4*edx+49152]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+32768]
+	add eax,dword ptr[edi+4*edx+49152]
 	add src_u,2
 	pinsrd xmm0,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+65536]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+65536]
 	add src_v,2	
 	pinsrd xmm0,eax,0
 	
 	paddd xmm0,xmm1
 	psrad xmm0,8
+	
+	mov edi,dst
+	
 	packusdw xmm0,xmm0
 	
 	movq qword ptr[edi],xmm0
 	
-	add edi,8
+	add dst,8
 	
 Convert_12_YV24toRGB64_SSE41_4:	
-	add edi,dst_modulo
+	mov edi,dst
 	mov eax,src_y
+	add edi,dst_modulo
 	add eax,src_modulo_y
+	mov dst,edi
 	mov src_y,eax
 	mov eax,src_u
 	add eax,src_modulo_u
@@ -3436,9 +3387,9 @@ JPSDR_RGBConvert_Convert_14_YV24toRGB64_SSE41 proc src_y:dword,src_u:dword,src_v
 	shr eax,1
 	mov w0,eax
 	
-	mov edi,dst
-	
 Convert_14_YV24toRGB64_SSE41_1:
+	mov edi,lookup
+	
 	mov eax,w0
 	or eax,eax
 	jz Convert_14_YV24toRGB64_SSE41_3
@@ -3454,16 +3405,15 @@ Convert_14_YV24toRGB64_SSE41_2:
 	movzx ecx,word ptr[esi]
 	mov esi,src_v
 	movzx edx,word ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+65536]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+65536]
 	pinsrd xmm0,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+131072]
-	add eax,dword ptr[esi+4*edx+196608]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+131072]
+	add eax,dword ptr[edi+4*edx+196608]
 	pinsrd xmm0,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
 	mov esi,src_y
 	pinsrd xmm0,eax,0
 
@@ -3472,18 +3422,17 @@ Convert_14_YV24toRGB64_SSE41_2:
 	movzx ecx,word ptr[esi+2]
 	mov esi,src_v
 	movzx edx,word ptr[esi+2] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+65536]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+65536]
 	add src_y,4
 	pinsrd xmm2,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+131072]
-	add eax,dword ptr[esi+4*edx+196608]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+131072]
+	add eax,dword ptr[edi+4*edx+196608]
 	add src_u,4
 	pinsrd xmm2,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
 	add src_v,4
 	pinsrd xmm2,eax,0
 	
@@ -3491,11 +3440,16 @@ Convert_14_YV24toRGB64_SSE41_2:
 	paddd xmm2,xmm1
 	psrad xmm0,8
 	psrad xmm2,8
+	
+	mov edi,dst
+	
 	packusdw xmm0,xmm2
 	
 	movdqa XMMWORD ptr[edi],xmm0
 	
-	add edi,16
+	add dst,16
+	
+	mov edi,lookup
 	
 	dec i
 	jnz Convert_14_YV24toRGB64_SSE41_2
@@ -3512,33 +3466,37 @@ Convert_14_YV24toRGB64_SSE41_3:
 	movzx ecx,word ptr[esi]
 	mov esi,src_v
 	movzx edx,word ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+65536]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+65536]
 	add src_y,2
 	pinsrd xmm0,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+131072]
-	add eax,dword ptr[esi+4*edx+196608]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+131072]
+	add eax,dword ptr[edi+4*edx+196608]
 	add src_u,2
 	pinsrd xmm0,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
 	add src_v,2
 	pinsrd xmm0,eax,0
 	
 	paddd xmm0,xmm1
 	psrad xmm0,8
+	
+	mov edi,dst
+	
 	packusdw xmm0,xmm0
 	
 	movq qword ptr[edi],xmm0
 	
-	add edi,8	
+	add dst,8	
 
 Convert_14_YV24toRGB64_SSE41_4:	
-	add edi,dst_modulo
+	mov edi,dst
 	mov eax,src_y
+	add edi,dst_modulo
 	add eax,src_modulo_y
+	mov dst,edi
 	mov src_y,eax
 	mov eax,src_u
 	add eax,src_modulo_u
@@ -3581,9 +3539,9 @@ JPSDR_RGBConvert_Convert_16_YV24toRGB64_SSE41 proc src_y:dword,src_u:dword,src_v
 	shr eax,1
 	mov w0,eax
 	
-	mov edi,dst
-	
 Convert_16_YV24toRGB64_SSE41_1:
+	mov edi,lookup
+	
 	mov eax,w0
 	or eax,eax
 	jz Convert_16_YV24toRGB64_SSE41_3
@@ -3599,16 +3557,15 @@ Convert_16_YV24toRGB64_SSE41_2:
 	movzx ecx,word ptr[esi]
 	mov esi,src_v
 	movzx edx,word ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+262144]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+262144]
 	pinsrd xmm0,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+524288]
-	add eax,dword ptr[esi+4*edx+786432]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+524288]
+	add eax,dword ptr[edi+4*edx+786432]
 	pinsrd xmm0,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+1048576]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+1048576]
 	mov esi,src_y
 	pinsrd xmm0,eax,0
 
@@ -3617,18 +3574,17 @@ Convert_16_YV24toRGB64_SSE41_2:
 	movzx ecx,word ptr[esi+2]
 	mov esi,src_v
 	movzx edx,word ptr[esi+2] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+262144]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+262144]
 	add src_y,4
 	pinsrd xmm2,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+524288]
-	add eax,dword ptr[esi+4*edx+786432]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+524288]
+	add eax,dword ptr[edi+4*edx+786432]
 	add src_u,4
 	pinsrd xmm2,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+1048576]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+1048576]
 	add src_v,4
 	pinsrd xmm2,eax,0
 	
@@ -3636,11 +3592,16 @@ Convert_16_YV24toRGB64_SSE41_2:
 	paddd xmm2,xmm1
 	psrad xmm0,8
 	psrad xmm2,8
+	
+	mov edi,dst
+	
 	packusdw xmm0,xmm2
 	
 	movdqa XMMWORD ptr[edi],xmm0
 	
-	add edi,16
+	add dst,16
+	
+	mov edi,lookup
 	
 	dec i
 	jnz Convert_16_YV24toRGB64_SSE41_2
@@ -3657,33 +3618,37 @@ Convert_16_YV24toRGB64_SSE41_3:
 	movzx ecx,word ptr[esi]
 	mov esi,src_v
 	movzx edx,word ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+262144]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+262144]
 	add src_y,2
 	pinsrd xmm0,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+524288]
-	add eax,dword ptr[esi+4*edx+786432]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+524288]
+	add eax,dword ptr[edi+4*edx+786432]
 	add src_u,2
 	pinsrd xmm0,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+1048576]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+1048576]
 	add src_v,2
 	pinsrd xmm0,eax,0
 	
 	paddd xmm0,xmm1
 	psrad xmm0,8
+	
+	mov edi,dst
+	
 	packusdw xmm0,xmm0
 	
 	movq qword ptr[edi],xmm0
 	
-	add edi,8
+	add dst,8
 	
 Convert_16_YV24toRGB64_SSE41_4:	
-	add edi,dst_modulo
+	mov edi,dst
 	mov eax,src_y
+	add edi,dst_modulo
 	add eax,src_modulo_y
+	mov dst,edi
 	mov src_y,eax
 	mov eax,src_u
 	add eax,src_modulo_u
@@ -3728,9 +3693,9 @@ JPSDR_RGBConvert_Convert_10_YV24toRGB64_AVX proc src_y:dword,src_u:dword,src_v:d
 	shr eax,1
 	mov w0,eax
 	
-	mov edi,dst
-	
 Convert_10_YV24toRGB64_AVX_1:
+	mov edi,lookup
+
 	mov eax,w0
 	or eax,eax 
 	jz Convert_10_YV24toRGB64_AVX_3
@@ -3743,16 +3708,15 @@ Convert_10_YV24toRGB64_AVX_2:
 	movzx ecx,word ptr[esi]
 	mov esi,src_v
 	movzx edx,word ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+4096]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+4096]
 	vpinsrd xmm0,xmm0,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+8192]
-	add eax,dword ptr[esi+4*edx+12288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+8192]
+	add eax,dword ptr[edi+4*edx+12288]
 	vpinsrd xmm0,xmm0,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+16384]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+16384]
 	mov esi,src_y
 	vpinsrd xmm0,xmm0,eax,0
 
@@ -3761,18 +3725,17 @@ Convert_10_YV24toRGB64_AVX_2:
 	movzx ecx,word ptr[esi+2]
 	mov esi,src_v
 	movzx edx,word ptr[esi+2] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+4096]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+4096]
 	add src_y,4
 	vpinsrd xmm2,xmm2,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+8192]
-	add eax,dword ptr[esi+4*edx+12288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+8192]
+	add eax,dword ptr[edi+4*edx+12288]
 	add src_u,4
 	vpinsrd xmm2,xmm2,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+16384]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+16384]
 	add src_v,4
 	vpinsrd xmm2,xmm2,eax,0
 
@@ -3780,11 +3743,16 @@ Convert_10_YV24toRGB64_AVX_2:
 	vpaddd xmm2,xmm2,xmm1
 	vpsrad xmm0,xmm0,8
 	vpsrad xmm2,xmm2,8
+	
+	mov edi,dst
+	
 	vpackusdw xmm3,xmm0,xmm2
 	
 	vmovdqa XMMWORD ptr[edi],xmm3
+		
+	add dst,16
 	
-	add edi,16
+	mov edi,lookup
 	
 	dec i
 	jnz Convert_10_YV24toRGB64_AVX_2
@@ -3799,33 +3767,37 @@ Convert_10_YV24toRGB64_AVX_3:
 	movzx ecx,word ptr[esi]
 	mov esi,src_v
 	movzx edx,word ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+4096]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+4096]
 	add src_y,2
 	vpinsrd xmm0,xmm0,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+8192]
-	add eax,dword ptr[esi+4*edx+12288]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+8192]
+	add eax,dword ptr[edi+4*edx+12288]
 	add src_u,2
 	vpinsrd xmm0,xmm0,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+16384]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+16384]
 	add src_v,2
 	vpinsrd xmm0,xmm0,eax,0
 
 	vpaddd xmm0,xmm0,xmm1
 	vpsrad xmm0,xmm0,8
+	
+	mov edi,dst
+	
 	vpackusdw xmm3,xmm0,xmm0
 	
 	vmovq qword ptr[edi],xmm3
 	
-	add edi,8
+	add dst,8
 		
 Convert_10_YV24toRGB64_AVX_4:	
-	add edi,dst_modulo
+	mov edi,dst
 	mov eax,src_y
+	add edi,dst_modulo
 	add eax,src_modulo_y
+	mov dst,edi
 	mov src_y,eax
 	mov eax,src_u
 	add eax,src_modulo_u
@@ -3870,9 +3842,9 @@ JPSDR_RGBConvert_Convert_12_YV24toRGB64_AVX proc src_y:dword,src_u:dword,src_v:d
 	shr eax,1
 	mov w0,eax
 	
-	mov edi,dst
-	
 Convert_12_YV24toRGB64_AVX_1:
+	mov edi,lookup
+	
 	mov eax,w0
 	or eax,eax 
 	jz Convert_12_YV24toRGB64_AVX_3
@@ -3885,16 +3857,15 @@ Convert_12_YV24toRGB64_AVX_2:
 	movzx ecx,word ptr[esi]
 	mov esi,src_v
 	movzx edx,word ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+16384]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+16384]
 	vpinsrd xmm0,xmm0,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+32768]
-	add eax,dword ptr[esi+4*edx+49152]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+32768]
+	add eax,dword ptr[edi+4*edx+49152]
 	vpinsrd xmm0,xmm0,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+65536]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+65536]
 	mov esi,src_y
 	vpinsrd xmm0,xmm0,eax,0
 	
@@ -3903,18 +3874,17 @@ Convert_12_YV24toRGB64_AVX_2:
 	movzx ecx,word ptr[esi+2]
 	mov esi,src_v
 	movzx edx,word ptr[esi+2] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+16384]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+16384]
 	add src_y,4
 	vpinsrd xmm2,xmm2,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+32768]
-	add eax,dword ptr[esi+4*edx+49152]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+32768]
+	add eax,dword ptr[edi+4*edx+49152]
 	add src_u,4
 	vpinsrd xmm2,xmm2,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+65536]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+65536]
 	add src_v,4
 	vpinsrd xmm2,xmm2,eax,0
 	
@@ -3922,11 +3892,16 @@ Convert_12_YV24toRGB64_AVX_2:
 	vpaddd xmm2,xmm2,xmm1
 	vpsrad xmm0,xmm0,8
 	vpsrad xmm2,xmm2,8
+	
+	mov edi,dst
+	
 	vpackusdw xmm3,xmm0,xmm2
 	
 	vmovdqa XMMWORD ptr[edi],xmm3
 	
-	add edi,16
+	add dst,16
+	
+	mov edi,lookup
 	
 	dec i
 	jnz Convert_12_YV24toRGB64_AVX_2
@@ -3941,33 +3916,37 @@ Convert_12_YV24toRGB64_AVX_3:
 	movzx ecx,word ptr[esi]
 	mov esi,src_v
 	movzx edx,word ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+16384]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+16384]
 	add src_y,2
 	vpinsrd xmm0,xmm0,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+32768]
-	add eax,dword ptr[esi+4*edx+49152]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+32768]
+	add eax,dword ptr[edi+4*edx+49152]
 	add src_u,2
 	vpinsrd xmm0,xmm0,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+65536]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+65536]
 	add src_v,2
 	vpinsrd xmm0,xmm0,eax,0
 	
 	vpaddd xmm0,xmm0,xmm1
 	vpsrad xmm0,xmm0,8
+	
+	mov edi,dst
+	
 	vpackusdw xmm3,xmm0,xmm0
 	
 	vmovq qword ptr[edi],xmm3
 	
-	add edi,8
+	add dst,8
 	
-Convert_12_YV24toRGB64_AVX_4:	
-	add edi,dst_modulo
+Convert_12_YV24toRGB64_AVX_4:
+	mov edi,dst
 	mov eax,src_y
+	add edi,dst_modulo
 	add eax,src_modulo_y
+	mov dst,edi
 	mov src_y,eax
 	mov eax,src_u
 	add eax,src_modulo_u
@@ -4012,9 +3991,9 @@ JPSDR_RGBConvert_Convert_14_YV24toRGB64_AVX proc src_y:dword,src_u:dword,src_v:d
 	shr eax,1
 	mov w0,eax
 	
-	mov edi,dst
-	
 Convert_14_YV24toRGB64_AVX_1:
+	mov edi,lookup
+	
 	mov eax,w0
 	or eax,eax 
 	jz Convert_14_YV24toRGB64_AVX_3
@@ -4027,16 +4006,15 @@ Convert_14_YV24toRGB64_AVX_2:
 	movzx ecx,word ptr[esi]
 	mov esi,src_v
 	movzx edx,word ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+65536]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+65536]
 	vpinsrd xmm0,xmm0,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+131072]
-	add eax,dword ptr[esi+4*edx+196608]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+131072]
+	add eax,dword ptr[edi+4*edx+196608]
 	vpinsrd xmm0,xmm0,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
 	mov esi,src_y
 	vpinsrd xmm0,xmm0,eax,0
 
@@ -4045,18 +4023,17 @@ Convert_14_YV24toRGB64_AVX_2:
 	movzx ecx,word ptr[esi+2]
 	mov esi,src_v
 	movzx edx,word ptr[esi+2] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+65536]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+65536]
 	add src_y,4
 	vpinsrd xmm2,xmm2,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+131072]
-	add eax,dword ptr[esi+4*edx+196608]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+131072]
+	add eax,dword ptr[edi+4*edx+196608]
 	add src_u,4
 	vpinsrd xmm2,xmm2,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
 	add src_v,4
 	vpinsrd xmm2,xmm2,eax,0
 	
@@ -4064,11 +4041,16 @@ Convert_14_YV24toRGB64_AVX_2:
 	vpaddd xmm2,xmm2,xmm1
 	vpsrad xmm0,xmm0,8
 	vpsrad xmm2,xmm2,8
+	
+	mov edi,dst
+	
 	vpackusdw xmm3,xmm0,xmm2
 	
 	vmovdqa XMMWORD ptr[edi],xmm3
 	
-	add edi,16
+	add dst,16
+	
+	mov edi,lookup
 	
 	dec i
 	jnz Convert_14_YV24toRGB64_AVX_2
@@ -4083,33 +4065,37 @@ Convert_14_YV24toRGB64_AVX_3:
 	movzx ecx,word ptr[esi]
 	mov esi,src_v
 	movzx edx,word ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+65536]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+65536]
 	add src_y,2
 	vpinsrd xmm0,xmm0,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+131072]
-	add eax,dword ptr[esi+4*edx+196608]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+131072]
+	add eax,dword ptr[edi+4*edx+196608]
 	add src_u,2
 	vpinsrd xmm0,xmm0,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+262144]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+262144]
 	add src_v,2
 	vpinsrd xmm0,xmm0,eax,0
 	
 	vpaddd xmm0,xmm0,xmm1
 	vpsrad xmm0,xmm0,8
+	
+	mov edi,dst
+	
 	vpackusdw xmm3,xmm0,xmm0
 	
 	vmovq qword ptr[edi],xmm3
 	
-	add edi,8
+	add dst,8
 
 Convert_14_YV24toRGB64_AVX_4:
-	add edi,dst_modulo
+	mov edi,dst
 	mov eax,src_y
+	add edi,dst_modulo
 	add eax,src_modulo_y
+	mov dst,edi
 	mov src_y,eax
 	mov eax,src_u
 	add eax,src_modulo_u
@@ -4154,9 +4140,9 @@ JPSDR_RGBConvert_Convert_16_YV24toRGB64_AVX proc src_y:dword,src_u:dword,src_v:d
 	shr eax,1
 	mov w0,eax
 	
-	mov edi,dst
-	
 Convert_16_YV24toRGB64_AVX_1:
+	mov edi,lookup
+	
 	mov eax,w0
 	or eax,eax 
 	jz Convert_16_YV24toRGB64_AVX_3
@@ -4169,16 +4155,15 @@ Convert_16_YV24toRGB64_AVX_2:
 	movzx ecx,word ptr[esi]
 	mov esi,src_v
 	movzx edx,word ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+262144]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+262144]
 	vpinsrd xmm0,xmm0,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+524288]
-	add eax,dword ptr[esi+4*edx+786432]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+524288]
+	add eax,dword ptr[edi+4*edx+786432]
 	vpinsrd xmm0,xmm0,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+1048576]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+1048576]
 	mov esi,src_y
 	vpinsrd xmm0,xmm0,eax,0
 
@@ -4187,18 +4172,17 @@ Convert_16_YV24toRGB64_AVX_2:
 	movzx ecx,word ptr[esi+2]
 	mov esi,src_v
 	movzx edx,word ptr[esi+2] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+262144]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+262144]
 	add src_y,4
 	vpinsrd xmm2,xmm2,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+524288]
-	add eax,dword ptr[esi+4*edx+786432]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+524288]
+	add eax,dword ptr[edi+4*edx+786432]
 	add src_u,4
 	vpinsrd xmm2,xmm2,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+1048576]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+1048576]
 	add src_v,4
 	vpinsrd xmm2,xmm2,eax,0
 	
@@ -4206,11 +4190,16 @@ Convert_16_YV24toRGB64_AVX_2:
 	vpaddd xmm2,xmm2,xmm1
 	vpsrad xmm0,xmm0,8
 	vpsrad xmm2,xmm2,8
+	
+	mov edi,dst
+	
 	vpackusdw xmm3,xmm0,xmm2
 	
 	vmovdqa XMMWORD ptr[edi],xmm3
 	
-	add edi,16
+	add dst,16
+	
+	mov edi,lookup
 	
 	dec i
 	jnz Convert_16_YV24toRGB64_AVX_2
@@ -4225,33 +4214,37 @@ Convert_16_YV24toRGB64_AVX_3:
 	movzx ecx,word ptr[esi]
 	mov esi,src_v
 	movzx edx,word ptr[esi] ; ebx=Y ecx=U edx=V
-	mov esi,lookup
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*edx+262144]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*edx+262144]
 	add src_y,2
 	vpinsrd xmm0,xmm0,eax,2
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+524288]
-	add eax,dword ptr[esi+4*edx+786432]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+524288]
+	add eax,dword ptr[edi+4*edx+786432]
 	add src_u,2
 	vpinsrd xmm0,xmm0,eax,1
-	mov eax,dword ptr[esi+4*ebx]
-	add eax,dword ptr[esi+4*ecx+1048576]
+	mov eax,dword ptr[edi+4*ebx]
+	add eax,dword ptr[edi+4*ecx+1048576]
 	add src_v,2
 	vpinsrd xmm0,xmm0,eax,0
 	
 	vpaddd xmm0,xmm0,xmm1
 	vpsrad xmm0,xmm0,8
+	
+	mov edi,dst
+	
 	vpackusdw xmm3,xmm0,xmm0
 	
 	vmovq qword ptr[edi],xmm3
 	
-	add edi,8
+	add dst,8
 	
 Convert_16_YV24toRGB64_AVX_4:	
-	add edi,dst_modulo
+	mov edi,dst
 	mov eax,src_y
+	add edi,dst_modulo
 	add eax,src_modulo_y
+	mov dst,edi
 	mov src_y,eax
 	mov eax,src_u
 	add eax,src_modulo_u

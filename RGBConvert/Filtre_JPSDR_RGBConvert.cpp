@@ -4215,4 +4215,4 @@ void JPSDR_RGBConvert::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_RGBConvert=
-VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v3.1.0","RGB <-> YCbCr convertion with color matrix option.\n[SSE2][AVX][AVX2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v3.1.1","RGB <-> YCbCr convertion with color matrix option.\n[SSE2][AVX][AVX2] Optimised.");
