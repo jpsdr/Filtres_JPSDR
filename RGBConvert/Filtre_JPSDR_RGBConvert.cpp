@@ -241,10 +241,10 @@ public:
 
 protected:
 	Image_Data image_data;
-	int16_t *Tlookup;
-	uint16_t *lookup_Upscale8;
-	int32_t *Tlookup16;
-	uint32_t *lookup_Upscale16;
+	int16_t Tlookup[9*256];
+	uint16_t lookup_Upscale8[256];
+	int32_t Tlookup16[9*65536];
+	uint32_t lookup_Upscale16[65536];
 	uint8_t convertion_mode;
 	uint16_t Min_U,Max_U,Min_Y,Max_Y,Min_V,Max_V;
 	int32_t Offset_Y,Offset_U,Offset_V,Offset_R,Offset_G,Offset_B;
@@ -378,8 +378,8 @@ bool JPSDR_RGBConvertDialog::OnCommand(int cmd)
 		case IDC_AUTODETECT :
 			if (mifp && SaveToData())
 			{
-				if (filter->bits_per_pixel==8) filter->Compute_Lookup8();
-				else filter->Compute_Lookup16();
+				filter->Compute_Lookup8();
+				filter->Compute_Lookup16();
 				mifp->RedoFrame();
 			}
 			return true;
@@ -426,11 +426,6 @@ void JPSDR_RGBConvert::InternalInit(void)
 	BufferV_444=NULL;
 	BufferU_422=NULL;
 	BufferV_422=NULL;
-
-	lookup_Upscale8=NULL;
-	Tlookup=NULL;
-	lookup_Upscale16=NULL;
-	Tlookup16=NULL;
 
 	UserId=0;
 	if (poolInterface->GetThreadPoolInterfaceStatus())
@@ -3392,46 +3387,11 @@ void JPSDR_RGBConvert::Start()
 		return;
 	}
 
-	if (bits_per_pixel==8)
-	{
-		lookup_Upscale8=(uint16_t *)malloc(256*sizeof(uint16_t));
-		if (convertion_mode==0) Tlookup=(int16_t *)malloc(9*256*sizeof(int16_t));
-		else Tlookup=(int16_t *)malloc(5*256*sizeof(int16_t));
-	}
-	else
-	{
-		lookup_Upscale16=(uint32_t *)malloc(vmax*sizeof(uint32_t));
-		if (convertion_mode==0) Tlookup16=(int32_t *)malloc(9*vmax*sizeof(int32_t));
-		else Tlookup16=(int32_t *)malloc(5*vmax*sizeof(int32_t));
-	}
+	for(uint16_t i=0; i<256; i++)
+		lookup_Upscale8[i]=3*i+2;
 
-	if (bits_per_pixel==8)
-	{
-		if ((lookup_Upscale8==NULL) || (Tlookup==NULL))
-		{
-			ff->ExceptOutOfMemory();
-			return;
-		}
-	}
-	else
-	{
-		if ((lookup_Upscale16==NULL) || (Tlookup16==NULL))
-		{
-			ff->ExceptOutOfMemory();
-			return;
-		}
-	}
-
-	if (bits_per_pixel==8)
-	{
-		for(uint16_t i=0; i<256; i++)
-			lookup_Upscale8[i]=3*i+2;
-	}
-	else
-	{
-		for (uint32_t i=0; i<vmax; i++)
-			lookup_Upscale16[i]=3*i+2;
-	}
+	for (uint32_t i=0; i<vmax; i++)
+		lookup_Upscale16[i]=3*i+2;
 
 	if  (mData.mt_mode && (image_data.src_h0>=32) && (image_data.dst_h0>=32))
 	{
@@ -3541,8 +3501,8 @@ void JPSDR_RGBConvert::Start()
 		}
 	}
 
-	if (bits_per_pixel==8) Compute_Lookup8();
-	else Compute_Lookup16();
+	Compute_Lookup8();
+	Compute_Lookup16();
 }
 
 
@@ -3552,10 +3512,10 @@ void JPSDR_RGBConvert::End()
 	my_aligned_free(BufferU_422);
 	my_aligned_free(BufferV_444);
 	my_aligned_free(BufferU_444);
-	myfree(Tlookup16);
+/*	myfree(Tlookup16);
 	myfree(lookup_Upscale16);
 	myfree(Tlookup);
-	myfree(lookup_Upscale8);
+	myfree(lookup_Upscale8);*/
 }
 
 
@@ -4215,4 +4175,4 @@ void JPSDR_RGBConvert::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_RGBConvert=
-VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v3.1.1","RGB <-> YCbCr convertion with color matrix option.\n[SSE2][AVX][AVX2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v3.1.2","RGB <-> YCbCr convertion with color matrix option.\n[SSE2][AVX][AVX2] Optimised.");
