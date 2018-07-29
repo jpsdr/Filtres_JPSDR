@@ -378,8 +378,8 @@ bool JPSDR_RGBConvertDialog::OnCommand(int cmd)
 		case IDC_AUTODETECT :
 			if (mifp && SaveToData())
 			{
-				filter->Compute_Lookup8();
-				filter->Compute_Lookup16();
+				if (filter->bits_per_pixel==8) filter->Compute_Lookup8();
+				else filter->Compute_Lookup16();
 				mifp->RedoFrame();
 			}
 			return true;
@@ -3501,8 +3501,8 @@ void JPSDR_RGBConvert::Start()
 		}
 	}
 
-	Compute_Lookup8();
-	Compute_Lookup16();
+	if (bits_per_pixel==8) Compute_Lookup8();
+	else Compute_Lookup16();
 }
 
 
@@ -3512,10 +3512,6 @@ void JPSDR_RGBConvert::End()
 	my_aligned_free(BufferU_422);
 	my_aligned_free(BufferV_444);
 	my_aligned_free(BufferU_444);
-/*	myfree(Tlookup16);
-	myfree(lookup_Upscale16);
-	myfree(Tlookup);
-	myfree(lookup_Upscale8);*/
 }
 
 
