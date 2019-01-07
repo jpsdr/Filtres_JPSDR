@@ -545,7 +545,7 @@ void JPSDR_AddBorder::Run()
 			}
 			for (int32_t i=0; i<bottom_Y; i++)
 			{
-				JPSDR_AddBorder_Fill32(dst,image_data.dst_w0<<1,data32);
+				JPSDR_AddBorder_Fill32(dst,image_data.dst_w0>>1,data32);
 				dst=(void *)((uint8_t *)dst+image_data.dst_pitch0);
 			}
 			break;
@@ -685,5 +685,5 @@ void JPSDR_AddBorder::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_AddBorder=
-VDXVideoFilterDefinition<JPSDR_AddBorder>("JPSDR","AddBorder v1.4.1","Add boder to picture.");
+VDXVideoFilterDefinition<JPSDR_AddBorder>("JPSDR","AddBorder v1.4.2","Add boder to picture.");
 
