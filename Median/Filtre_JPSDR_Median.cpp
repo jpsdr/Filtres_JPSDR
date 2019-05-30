@@ -450,7 +450,7 @@ void JPSDR_Median::InternalInit(void)
 		total_cpu=poolInterface->GetThreadNumber(0,true);
 
 		if (total_cpu>1)
-			threadpoolAllocated=poolInterface->AllocateThreads(total_cpu,0,0,true,false,true,-1);
+			threadpoolAllocated=poolInterface->AllocateThreads(total_cpu,0,0,true,false,true,HighestThreadLevel,-1);
 		else threadpoolAllocated=false;
 		if (threadpoolAllocated) poolInterface->GetUserId(UserId);
 	}
@@ -1614,7 +1614,7 @@ void JPSDR_Median::Run()
 
 				if (threads_number>1)
 				{
-					if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,-1,false))
+					if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,NoneThreadLevel,-1,false))
 					{
 						uint8_t f_proc=0;
 
@@ -1773,7 +1773,7 @@ void JPSDR_Median::Run()
 
 				if (threads_number>1)
 				{
-					if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,-1,false))
+					if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,NoneThreadLevel,-1,false))
 					{
 						uint8_t f_proc=0;
 
@@ -2232,4 +2232,4 @@ void JPSDR_Median::GetScriptString(char *buf, int maxlen)
 }
 
 extern VDXFilterDefinition2 filterDef_JPSDR_Median=
-VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v3.4.2","Median filter with threshold.");
+VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v3.5.0","Median filter with threshold.");
