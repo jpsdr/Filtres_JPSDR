@@ -2534,7 +2534,7 @@ void JPSDR_ColorSpaceConvert::Run()
 
 	if (threads_number>1)
 	{
-		if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,NoneThreadLevel,-1,false))
+		if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,-1,false))
 		{
 			uint8_t f_proc=0,f_proc2=0;
 
@@ -2657,4 +2657,4 @@ void JPSDR_ColorSpaceConvert::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_ColorSpaceConvert=
-VDXVideoFilterDefinition<JPSDR_ColorSpaceConvert>("JPSDR","ColorSpaceConvert v2.6.0","YCbCr color space convertion.\n[SSE2][AVX] Optimised.");
+VDXVideoFilterDefinition<JPSDR_ColorSpaceConvert>("JPSDR","ColorSpaceConvert v2.6.1","YCbCr color space convertion.\n[SSE2][AVX] Optimised.");

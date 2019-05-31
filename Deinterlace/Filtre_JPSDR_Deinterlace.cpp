@@ -4275,7 +4275,7 @@ void JPSDR_Deinterlace::Run()
 
 		if (f_proc!=0)
 		{
-			if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,NoneThreadLevel,-1,false))
+			if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,-1,false))
 			{
 				if (f_proc<7)
 				{
@@ -5087,7 +5087,7 @@ void JPSDR_Deinterlace::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScript
 
 		
 extern VDXFilterDefinition2 filterDef_JPSDR_Deinterlace=
-VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v6.1.0","Deinterlace blending frames. [SSE2][AVX][AVX2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v6.1.1","Deinterlace blending frames. [SSE2][AVX][AVX2] Optimised.");
 
 
 
