@@ -500,13 +500,13 @@ uint8_t CreateMTData(MT_Data_Info MT_Data[],uint8_t max_threads,uint8_t threads_
 	}
 
 	int32_t dh_Y,src_dh_UV,dst_dh_UV,h_y;
-	uint8_t i,max=0;
+	uint8_t i,max=1;
 
 	dh_Y=(size_y+(int32_t)max_threads-1)/(int32_t)max_threads;
 	if (dh_Y<16) dh_Y=16;
 	if ((dh_Y & 3)!=0) dh_Y=((dh_Y+3) >> 2) << 2;
 
-	h_y=0;
+	h_y=dh_Y;
 	while (h_y<(size_y-16))
 	{
 		max++;
@@ -4193,4 +4193,4 @@ void JPSDR_RGBConvert::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_RGBConvert=
-VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v3.2.1","RGB <-> YCbCr convertion with color matrix option.\n[SSE2][AVX][AVX2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v3.2.2","RGB <-> YCbCr convertion with color matrix option.\n[SSE2][AVX][AVX2] Optimised.");

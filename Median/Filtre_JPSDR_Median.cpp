@@ -555,14 +555,14 @@ uint8_t JPSDR_Median::CreateMTData(uint8_t max_threads,int32_t size_x,int32_t si
 	}
 
 	int32_t dh_Y,dh_UV,h_y;
-	uint8_t i,max=0;
+	uint8_t i,max=1;
 
 	dh_Y=(size_y+(int32_t)max_threads-1)/(int32_t)max_threads;
 	if (dh_Y<16) dh_Y=16;
 	if (dh_Y<max_median_size) dh_Y=max_median_size;
 	if ((dh_Y & 3)!=0) dh_Y=((dh_Y+3) >> 2) << 2;
 
-	h_y=0;
+	h_y=dh_Y;
 	while (h_y<(size_y-16))
 	{
 		max++;
@@ -2232,4 +2232,4 @@ void JPSDR_Median::GetScriptString(char *buf, int maxlen)
 }
 
 extern VDXFilterDefinition2 filterDef_JPSDR_Median=
-VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v3.5.1","Median filter with threshold.");
+VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v3.5.2","Median filter with threshold.");

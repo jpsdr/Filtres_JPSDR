@@ -694,13 +694,13 @@ uint8_t JPSDR_Deinterlace::CreateMTData(uint8_t max_threads,int32_t size_x,int32
 	}
 
 	int32_t dh_Y,dh_UV,h_y;
-	uint8_t i,max=0;
+	uint8_t i,max=1;
 
 	dh_Y=(size_y+(int32_t)max_threads-1)/(int32_t)max_threads;
 	if (dh_Y<16) dh_Y=16;
 	if ((dh_Y & 3)!=0) dh_Y=((dh_Y+3) >> 2) << 2;
 
-	h_y=0;
+	h_y=dh_Y;
 	while (h_y<(size_y-16))
 	{
 		max++;
@@ -5087,7 +5087,7 @@ void JPSDR_Deinterlace::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScript
 
 		
 extern VDXFilterDefinition2 filterDef_JPSDR_Deinterlace=
-VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v6.1.1","Deinterlace blending frames. [SSE2][AVX][AVX2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v6.1.2","Deinterlace blending frames. [SSE2][AVX][AVX2] Optimised.");
 
 
 
