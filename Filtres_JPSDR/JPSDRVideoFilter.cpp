@@ -108,6 +108,18 @@ uint8_t JPSDRVDXVideoFilter::GetVideoMode(sint32 format)
 		// VDub2
 		case nsVDXPixmap::kPixFormat_Y16 :
 			return(VMODE_Y); break;
+		// Planar RGB VDub2
+		//  VDub2
+		case nsVDXPixmap::kPixFormat_RGB_Planar :
+		case nsVDXPixmap::kPixFormat_RGB_Planar16 :
+		case nsVDXPixmap::kPixFormat_RGB_Planar32F :
+			return(VMODE_PLANAR_RGB); break;
+		// Planar RGBA VDub2
+		//  VDub2
+		case nsVDXPixmap::kPixFormat_RGBA_Planar :
+		case nsVDXPixmap::kPixFormat_RGBA_Planar16 :
+		case nsVDXPixmap::kPixFormat_RGBA_Planar32F :
+			return(VMODE_PLANAR_RGBA); break;
 		default : return(VMODE_NONE); break;
 	}
 }
@@ -123,6 +135,12 @@ uint8_t JPSDRVDXVideoFilter::GetColorMode(sint32 format)
 		// VDub2
 		case nsVDXPixmap::kPixFormat_XRGB64 :
 		case nsVDXPixmap::kPixFormat_Y16 :
+		case nsVDXPixmap::kPixFormat_RGB_Planar :
+		case nsVDXPixmap::kPixFormat_RGB_Planar16 :
+		case nsVDXPixmap::kPixFormat_RGB_Planar32F :
+		case nsVDXPixmap::kPixFormat_RGBA_Planar :
+		case nsVDXPixmap::kPixFormat_RGBA_Planar16 :
+		case nsVDXPixmap::kPixFormat_RGBA_Planar32F :
 			return(MATRIX_NONE); break;
 		case nsVDXPixmap::kPixFormat_YUV422_YUYV :
 		case nsVDXPixmap::kPixFormat_YUV422_YUYV_FR :
@@ -222,6 +240,10 @@ uint8_t JPSDRVDXVideoFilter::GetBitDepth(sint32 format)
 		case nsVDXPixmap::kPixFormat_YUV420_Alpha_Planar16 :
 		case nsVDXPixmap::kPixFormat_YUV422_YU64 :
 			return(16); break;
+		// VDub2
+		case nsVDXPixmap::kPixFormat_RGB_Planar32F :
+		case nsVDXPixmap::kPixFormat_RGBA_Planar32F :
+			return(32); break;
 		default : return(8); break;
 	}
 }
@@ -251,10 +273,17 @@ bool JPSDRVDXVideoFilter::CheckFullRangeMode(sint32 format)
 		case nsVDXPixmap::kPixFormat_YUV420ib_Planar_709_FR :
 		// VDub2
 		case nsVDXPixmap::kPixFormat_XRGB64 :
+		case nsVDXPixmap::kPixFormat_RGB_Planar :
+		case nsVDXPixmap::kPixFormat_RGB_Planar16 :
+		case nsVDXPixmap::kPixFormat_RGB_Planar32F :
+		case nsVDXPixmap::kPixFormat_RGBA_Planar :
+		case nsVDXPixmap::kPixFormat_RGBA_Planar16 :
+		case nsVDXPixmap::kPixFormat_RGBA_Planar32F :
 			return(true); break;
 		default : return(false); break;
 	}
 }
+
 
 bool JPSDRVDXVideoFilter::CheckAlphaPlanarMode(sint32 format)
 {
@@ -267,6 +296,9 @@ bool JPSDRVDXVideoFilter::CheckAlphaPlanarMode(sint32 format)
 		case nsVDXPixmap::kPixFormat_YUV444_Alpha_Planar16 :
 		case nsVDXPixmap::kPixFormat_YUV422_Alpha_Planar16 :
 		case nsVDXPixmap::kPixFormat_YUV420_Alpha_Planar16 :
+		case nsVDXPixmap::kPixFormat_RGBA_Planar :
+		case nsVDXPixmap::kPixFormat_RGBA_Planar16 :
+		case nsVDXPixmap::kPixFormat_RGBA_Planar32F :
 			return(true); break;
 		default : return(false); break;
 	}
@@ -275,19 +307,22 @@ bool JPSDRVDXVideoFilter::CheckAlphaPlanarMode(sint32 format)
 
 uint8_t JPSDRVDXVideoFilter::GetColorMode(const VDXFBitmap* bitmap)
 {
+	uint8_t ColorMode;
+
 	if ((fma!=NULL) && (fma->fmpixmap!=NULL))
 	{
 		FilterModPixmapInfo* info = fma->fmpixmap->GetPixmapInfo(bitmap->mpPixmap);
 
 		switch(info->colorSpaceMode)
 		{
-			case nsVDXPixmap::kColorSpaceMode_601 : return(MATRIX_BT601); break;
-			case nsVDXPixmap::kColorSpaceMode_709 : return(MATRIX_BT709); break;
-			default : break;
+			case nsVDXPixmap::kColorSpaceMode_601 : ColorMode=MATRIX_BT601; break;
+			case nsVDXPixmap::kColorSpaceMode_709 : ColorMode=MATRIX_BT709; break;
+			default : ColorMode=GetColorMode(bitmap->mpPixmapLayout->format); break;
 		}
 	}
+	else ColorMode=GetColorMode(bitmap->mpPixmapLayout->format);
 
-	return(GetColorMode(bitmap->mpPixmapLayout->format));
+	return(ColorMode);
 }
 
 
@@ -311,27 +346,42 @@ uint8_t JPSDRVDXVideoFilter::GetInterlaceMode(const VDXFBitmap* bitmap)
 
 uint8_t JPSDRVDXVideoFilter::GetBitDepth(const VDXFBitmap* bitmap)
 {
-	if ((fma!=NULL) && (fma->fmpixmap!=NULL))
+	uint8_t BitDepth;
+
+	BitDepth=GetBitDepth(bitmap->mpPixmapLayout->format);
+	if (BitDepth!=32)
 	{
-		FilterModPixmapInfo* info = fma->fmpixmap->GetPixmapInfo(bitmap->mpPixmap);
-
-		if ((info->ref_r!=0) && (info->ref_g!=0) && (info->ref_b!=0) && (info->ref_a!=0))
+		if ((fma!=NULL) && (fma->fmpixmap!=NULL))
 		{
-			uint32 max=info->ref_r;
+			FilterModPixmapInfo* info = fma->fmpixmap->GetPixmapInfo(bitmap->mpPixmap);
 
-			if (max<info->ref_g) max=info->ref_g;
-			if (max<info->ref_b) max=info->ref_b;
-			if (max<info->ref_a) max=info->ref_a;
+			if ((info->ref_r!=0) && (info->ref_g!=0) && (info->ref_b!=0) && (info->ref_a!=0))
+			{
+				uint32 max=info->ref_r;
 
-			if (max>=0x4000) return(16);
-			if (max>=0x1000) return(14);
-			if (max>=0x0400) return(12);
-			if (max>=0x0100) return(10);
-			return(8);
+				if (max<info->ref_g) max=info->ref_g;
+				if (max<info->ref_b) max=info->ref_b;
+				if (max<info->ref_a) max=info->ref_a;
+
+				if (max>=0x4000) BitDepth=16;
+				else
+				{
+					if (max>=0x1000) BitDepth=14;
+					else
+					{
+						if (max>=0x0400) BitDepth=12;
+						else
+						{
+							if (max>=0x0100) BitDepth=10;
+							else BitDepth=8;
+						}
+					}
+				}
+			}
 		}
 	}
 
-	return(GetBitDepth(bitmap->mpPixmapLayout->format));
+	return(BitDepth);
 }
 
 
@@ -423,6 +473,48 @@ void JPSDRVDXVideoFilter::SetImageData(Image_Data& iData,bool modeBMP)
 		case VMODE_YUYV :
 		case VMODE_UYVY :
 			iData.src_line0=(iData.src_bits_pixel==8) ? 4*((iData.src_w0+1)>>1) : 8*((iData.src_w0+1)>>1);
+			break;
+		case VMODE_PLANAR_RGB :
+		case VMODE_PLANAR_RGBA :
+			iData.src_h1=iData.src_h0;
+			iData.src_h2=iData.src_h0;
+			iData.src_w1=iData.src_w0;
+			iData.src_w2=iData.src_w0;
+			switch (iData.src_bits_pixel)
+			{
+				case 8 :
+					iData.src_line0=iData.src_w0;
+					iData.src_line1=iData.src_w1;
+					iData.src_line2=iData.src_w2;
+					break;
+				case 16 :
+					iData.src_line0=2*iData.src_w0;
+					iData.src_line1=2*iData.src_w1;
+					iData.src_line2=2*iData.src_w2;
+					break;
+				case 32 :
+					iData.src_line0=4*iData.src_w0;
+					iData.src_line1=4*iData.src_w1;
+					iData.src_line2=4*iData.src_w2;
+					break;
+				default :
+					iData.src_line0=iData.src_w0;
+					iData.src_line1=iData.src_w1;
+					iData.src_line2=iData.src_w2;
+					break;
+			}
+			if (iData.src_alpha_planar)
+			{
+				iData.src_h3=iData.src_h0;
+				iData.src_w3=iData.src_w0;
+				switch (iData.src_bits_pixel)
+				{
+					case 8 : iData.src_line3=iData.src_w3; break;
+					case 16 : iData.src_line3=2*iData.src_w3; break;
+					case 32 : iData.src_line3=4*iData.src_w3; break;
+					default : iData.src_line3=iData.src_w3; break;
+				}
+			}
 			break;
 		case VMODE_PLANAR_YUV444 :
 			iData.src_h1=iData.src_h0;
@@ -532,6 +624,48 @@ void JPSDRVDXVideoFilter::SetImageData(Image_Data& iData,bool modeBMP)
 	{
 		case VMODE_BMP_RGBA :
 			iData.dst_line0=(iData.dst_bits_pixel==8) ? 4*iData.dst_w0 : 8*iData.dst_w0;
+			break;
+		case VMODE_PLANAR_RGB :
+		case VMODE_PLANAR_RGBA :
+			iData.dst_h1=iData.dst_h0;
+			iData.dst_h2=iData.dst_h0;
+			iData.dst_w1=iData.dst_w0;
+			iData.dst_w2=iData.dst_w0;
+			switch(iData.dst_bits_pixel)
+			{
+				case 8 :
+					iData.dst_line0=iData.dst_w0;
+					iData.dst_line1=iData.dst_w1;
+					iData.dst_line2=iData.dst_w2;
+					break;
+				case 16 :
+					iData.dst_line0=2*iData.dst_w0;
+					iData.dst_line1=2*iData.dst_w1;
+					iData.dst_line2=2*iData.dst_w2;
+					break;
+				case 32 :
+					iData.dst_line0=4*iData.dst_w0;
+					iData.dst_line1=4*iData.dst_w1;
+					iData.dst_line2=4*iData.dst_w2;
+					break;
+				default :
+					iData.dst_line0=iData.dst_w0;
+					iData.dst_line1=iData.dst_w1;
+					iData.dst_line2=iData.dst_w2;
+					break;
+			}
+			if (iData.dst_alpha_planar)
+			{
+				iData.dst_h3=iData.dst_h0;
+				iData.dst_w3=iData.dst_w0;
+				switch(iData.dst_bits_pixel)
+				{
+					case 8 : iData.dst_line3=iData.dst_w3; break;
+					case 16 : iData.dst_line3=2*iData.dst_w3; break;
+					case 32 : iData.dst_line3=4*iData.dst_w3; break;
+					default : iData.dst_line3=iData.dst_w3; break;
+				}
+			}
 			break;
 		case VMODE_YUYV :
 		case VMODE_UYVY :

@@ -164,7 +164,7 @@ struct VDXRect {
 	sint32	bottom;
 };
 
-namespace nsVDXPixmap {
+namespace vd2 {
 	enum ColorSpaceMode {
 		kColorSpaceMode_None,
 		kColorSpaceMode_601,
@@ -178,6 +178,12 @@ namespace nsVDXPixmap {
 		kColorRangeMode_Full,
 		kColorRangeModeCount
 	};
+
+	// converts 0xF0 -> 0xFF etc
+	inline int depth_mask(int ref) { return (ref + (ref & -ref))-1; }
+
+	// converts 0xFF -> 0x80, 0xFF0 -> 0x800 etc
+	inline int chroma_neutral(int ref) { return (ref + (ref & -ref))/2; }
 };
 
 struct FilterModPixmapInfo {
@@ -203,8 +209,8 @@ struct FilterModPixmapInfo {
 	int64 frame_num;
 
 	// FilterModVersion>=5
-	nsVDXPixmap::ColorSpaceMode colorSpaceMode;
-	nsVDXPixmap::ColorRangeMode colorRangeMode;
+	vd2::ColorSpaceMode colorSpaceMode;
+	vd2::ColorRangeMode colorRangeMode;
 
 	FilterModPixmapInfo() {
 		clear();
@@ -218,8 +224,8 @@ struct FilterModPixmapInfo {
 		transfer_type = kTransferUnknown;
 		alpha_type = kAlphaInvalid;
 		frame_num = -1;
-		colorSpaceMode = nsVDXPixmap::kColorSpaceMode_None;
-		colorRangeMode = nsVDXPixmap::kColorRangeMode_None;
+		colorSpaceMode = vd2::kColorSpaceMode_None;
+		colorRangeMode = vd2::kColorRangeMode_None;
 	}
 
 	void copy_ref(const FilterModPixmapInfo& a) {
@@ -286,11 +292,11 @@ struct VDXPixmapLayoutAlpha: public VDXPixmapLayout {
 
 class IFilterModPixmap {
 public:
-	virtual FilterModPixmapInfo* GetPixmapInfo(const VDXPixmap* pixmap)=NULL;
+	virtual FilterModPixmapInfo* GetPixmapInfo(const VDXPixmap* pixmap)=0;
 	virtual uint64 GetFormat_XRGB64()=0;
 };
 
-namespace nsVDXPixmap {
+namespace vd2 {
 	enum VDXPixmapFormat {
 		kPixFormat_Null						= 0,
 		kPixFormat_XRGB1555					= 5,
@@ -307,6 +313,7 @@ namespace nsVDXPixmap {
 		kPixFormat_YUV410_Planar			= 17,
 		kPixFormat_YUV422_V210				= 21,
 		kPixFormat_YUV422_UYVY_709			= 22,
+		kPixFormat_YUV420_NV12				= 23,
 		kPixFormat_Y8_FR					= 24,
 		kPixFormat_YUV422_YUYV_709			= 25,
 		kPixFormat_YUV444_Planar_709		= 26,
@@ -365,11 +372,21 @@ namespace nsVDXPixmap {
 		kPixFormat_YUV420_Alpha_Planar16 = 77,
 
 		kPixFormat_YUV422_YU64 = 78,
+		kPixFormat_B64A = 79,
+
+		kPixFormat_RGB_Planar = 80,
+		kPixFormat_RGB_Planar16 = 81,
+		kPixFormat_RGB_Planar32F = 82,
+		kPixFormat_RGBA_Planar = 83,
+		kPixFormat_RGBA_Planar16 = 84,
+		kPixFormat_RGBA_Planar32F = 85,
 
 		kPixFormat_VDXA_RGB			= 0x10001,
 		kPixFormat_VDXA_YUV			= 0x10002
 	};
 };
+
+namespace nsVDXPixmap = vd2;
 
 #define VDXMAKEFOURCC(a, b, c, d) ((uint32)(uint8)(d) + ((uint32)(uint8)(c) << 8) + ((uint32)(uint8)(b) << 16) + ((uint32)(uint8)(a) << 24))
 
