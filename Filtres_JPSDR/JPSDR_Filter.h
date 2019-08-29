@@ -160,7 +160,6 @@ typedef union _UYUYV16
 #define VMODE_PLANAR_YUV410 8
 #define VMODE_Y 9
 #define VMODE_PLANAR_RGB 10
-#define VMODE_PLANAR_RGBA 11
 
 typedef struct _Image_Data
 {

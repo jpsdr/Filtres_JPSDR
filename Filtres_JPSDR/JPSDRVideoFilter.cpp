@@ -108,18 +108,15 @@ uint8_t JPSDRVDXVideoFilter::GetVideoMode(sint32 format)
 		// VDub2
 		case nsVDXPixmap::kPixFormat_Y16 :
 			return(VMODE_Y); break;
-		// Planar RGB VDub2
+		// Planar RGB & RGBA VDub2
 		//  VDub2
 		case nsVDXPixmap::kPixFormat_RGB_Planar :
 		case nsVDXPixmap::kPixFormat_RGB_Planar16 :
 		case nsVDXPixmap::kPixFormat_RGB_Planar32F :
-			return(VMODE_PLANAR_RGB); break;
-		// Planar RGBA VDub2
-		//  VDub2
 		case nsVDXPixmap::kPixFormat_RGBA_Planar :
 		case nsVDXPixmap::kPixFormat_RGBA_Planar16 :
 		case nsVDXPixmap::kPixFormat_RGBA_Planar32F :
-			return(VMODE_PLANAR_RGBA); break;
+			return(VMODE_PLANAR_RGB); break;
 		default : return(VMODE_NONE); break;
 	}
 }
@@ -363,20 +360,14 @@ uint8_t JPSDRVDXVideoFilter::GetBitDepth(const VDXFBitmap* bitmap)
 				if (max<info->ref_b) max=info->ref_b;
 				if (max<info->ref_a) max=info->ref_a;
 
-				if (max>=0x4000) BitDepth=16;
-				else
+				if (max>=0x0100)
 				{
+					BitDepth=10;
+					if (max>=0x0400) BitDepth=12;
 					if (max>=0x1000) BitDepth=14;
-					else
-					{
-						if (max>=0x0400) BitDepth=12;
-						else
-						{
-							if (max>=0x0100) BitDepth=10;
-							else BitDepth=8;
-						}
-					}
+					if (max>=0x4000) BitDepth=16;
 				}
+				else BitDepth=8;
 			}
 		}
 	}
@@ -387,19 +378,22 @@ uint8_t JPSDRVDXVideoFilter::GetBitDepth(const VDXFBitmap* bitmap)
 
 bool JPSDRVDXVideoFilter::CheckFullRangeMode(const VDXFBitmap* bitmap)
 {
+	bool FullRange;
+
 	if ((fma!=NULL) && (fma->fmpixmap!=NULL))
 	{
 		FilterModPixmapInfo* info = fma->fmpixmap->GetPixmapInfo(bitmap->mpPixmap);
 
 		switch(info->colorRangeMode)
 		{
-			case nsVDXPixmap::kColorRangeMode_Limited : return(false); break;
-			case nsVDXPixmap::kColorRangeMode_Full : return(true); break;
-			default : break;
+			case nsVDXPixmap::kColorRangeMode_Limited : FullRange=false; break;
+			case nsVDXPixmap::kColorRangeMode_Full : FullRange=true; break;
+			default : FullRange=CheckFullRangeMode(bitmap->mpPixmapLayout->format); break;
 		}
 	}
+	else FullRange=CheckFullRangeMode(bitmap->mpPixmapLayout->format);
 
-	return(CheckFullRangeMode(bitmap->mpPixmapLayout->format));
+	return(FullRange);
 }
 
 
@@ -424,58 +418,124 @@ void JPSDRVDXVideoFilter::SetImageData(Image_Data& iData,bool modeBMP)
 	iData.dst_bits_pixel=GetBitDepth(&fa->dst);
 	iData.dst_alpha_planar=CheckAlphaPlanarMode(pxdst.format);
 
-	iData.src_h0=pxsrc.h;
-	iData.src_w0=pxsrc.w;
 	if (modeBMP)
 	{
 		iData.src_pitch0=-pxsrc.pitch;
-		iData.src_pitch1=-pxsrc.pitch2;
-		iData.src_pitch2=-pxsrc.pitch3;
+		switch(iData.src_video_mode)
+		{
+			case VMODE_BMP_RGBA :
+			case VMODE_YUYV :
+			case VMODE_UYVY :
+			case VMODE_Y :
+				iData.src_pitch1=0;
+				iData.src_pitch2=0;
+				break;
+			default :
+				iData.src_pitch1=-pxsrc.pitch2;
+				iData.src_pitch2=-pxsrc.pitch3;
+				break;
+		}
 	}
 	else
 	{
 		iData.src_pitch0=pxsrc.pitch;
-		iData.src_pitch1=pxsrc.pitch2;
-		iData.src_pitch2=pxsrc.pitch3;
+		switch(iData.src_video_mode)
+		{
+			case VMODE_BMP_RGBA :
+			case VMODE_YUYV :
+			case VMODE_UYVY :
+			case VMODE_Y :
+				iData.src_pitch1=0;
+				iData.src_pitch2=0;
+				break;
+			default :
+				iData.src_pitch1=pxsrc.pitch2;
+				iData.src_pitch2=pxsrc.pitch3;
+				break;
+		}
 	}
 
-	iData.dst_h0=pxdst.h;
-	iData.dst_w0=pxdst.w;
 	if (modeBMP)
 	{
 		iData.dst_pitch0=-pxdst.pitch;
-		iData.dst_pitch1=-pxdst.pitch2;
-		iData.dst_pitch2=-pxdst.pitch3;
+		switch(iData.dst_video_mode)
+		{
+			case VMODE_BMP_RGBA :
+			case VMODE_YUYV :
+			case VMODE_UYVY :
+			case VMODE_Y :
+				iData.dst_pitch1=0;
+				iData.dst_pitch2=0;
+				break;
+			default :
+				iData.dst_pitch1=-pxdst.pitch2;
+				iData.dst_pitch2=-pxdst.pitch3;
+				break;
+		}
 	}
 	else
 	{
 		iData.dst_pitch0=pxdst.pitch;
-		iData.dst_pitch1=pxdst.pitch2;
-		iData.dst_pitch2=pxdst.pitch3;
+		switch(iData.dst_video_mode)
+		{
+			case VMODE_BMP_RGBA :
+			case VMODE_YUYV :
+			case VMODE_UYVY :
+			case VMODE_Y :
+				iData.dst_pitch1=0;
+				iData.dst_pitch2=0;
+				break;
+			default :
+				iData.dst_pitch1=pxdst.pitch2;
+				iData.dst_pitch2=pxdst.pitch3;
+				break;
+		}
 	}
 
-	if (modeBMP)
+	if (iData.src_alpha_planar)
 	{
-		if (iData.src_alpha_planar) iData.src_pitch3=-pxsrc.pitch4;
-		if (iData.dst_alpha_planar) iData.dst_pitch3=-pxdst.pitch4;
+		if (modeBMP) iData.src_pitch3=-pxsrc.pitch4;
+		else iData.src_pitch3=pxsrc.pitch4;
 	}
-	else
-	{
-		if (iData.src_alpha_planar) iData.src_pitch3=pxsrc.pitch4;
-		if (iData.dst_alpha_planar) iData.dst_pitch3=pxdst.pitch4;
-	}
+	else iData.src_pitch3=0;
 
+	if (iData.dst_alpha_planar)
+	{
+		if (modeBMP) iData.dst_pitch3=-pxdst.pitch4;
+		else iData.dst_pitch3=pxdst.pitch4;
+	}
+	else iData.dst_pitch3=0;
+
+	iData.src_h0=pxsrc.h;
+	iData.src_w0=pxsrc.w;
 	switch(iData.src_video_mode)
 	{
 		case VMODE_BMP_RGBA :
 			iData.src_line0=(iData.src_bits_pixel==8) ? 4*iData.src_w0 : 8*iData.src_w0;
+			iData.src_h1=0;
+			iData.src_h2=0;
+			iData.src_h3=0;
+			iData.src_w1=0;
+			iData.src_w2=0;
+			iData.src_w3=0;
+			iData.src_line1=0;
+			iData.src_line2=0;
+			iData.src_line3=0;
 			break;
 		case VMODE_YUYV :
 		case VMODE_UYVY :
 			iData.src_line0=(iData.src_bits_pixel==8) ? 4*((iData.src_w0+1)>>1) : 8*((iData.src_w0+1)>>1);
+			iData.src_h1=0;
+			iData.src_h2=0;
+			iData.src_h3=0;
+			iData.src_w1=0;
+			iData.src_w2=0;
+			iData.src_w3=0;
+			iData.src_line1=0;
+			iData.src_line2=0;
+			iData.src_line3=0;
 			break;
 		case VMODE_PLANAR_RGB :
-		case VMODE_PLANAR_RGBA :
 			iData.src_h1=iData.src_h0;
 			iData.src_h2=iData.src_h0;
 			iData.src_w1=iData.src_w0;
@@ -515,6 +575,12 @@ void JPSDRVDXVideoFilter::SetImageData(Image_Data& iData,bool modeBMP)
 					default : iData.src_line3=iData.src_w3; break;
 				}
 			}
+			else
+			{
+				iData.src_h3=0;
+				iData.src_w3=0;
+				iData.src_line3=0;
+			}
 			break;
 		case VMODE_PLANAR_YUV444 :
 			iData.src_h1=iData.src_h0;
@@ -529,6 +595,12 @@ void JPSDRVDXVideoFilter::SetImageData(Image_Data& iData,bool modeBMP)
 				iData.src_h3=iData.src_h0;
 				iData.src_w3=iData.src_w0;
 				iData.src_line3=(iData.src_bits_pixel==8) ? iData.src_w3 : 2*iData.src_w3;
+			}
+			else
+			{
+				iData.src_h3=0;
+				iData.src_w3=0;
+				iData.src_line3=0;
 			}
 			break;
 		case VMODE_PLANAR_YUV422 :
@@ -545,6 +617,12 @@ void JPSDRVDXVideoFilter::SetImageData(Image_Data& iData,bool modeBMP)
 				iData.src_w3=iData.src_w0;
 				iData.src_line3=(iData.src_bits_pixel==8) ? iData.src_w3 : 2*iData.src_w3;
 			}
+			else
+			{
+				iData.src_h3=0;
+				iData.src_w3=0;
+				iData.src_line3=0;
+			}
 			break;
 		case VMODE_PLANAR_YUV420 :
 			iData.src_h1=(iData.src_h0+1)>>1;
@@ -559,6 +637,12 @@ void JPSDRVDXVideoFilter::SetImageData(Image_Data& iData,bool modeBMP)
 				iData.src_h3=iData.src_h0;
 				iData.src_w3=iData.src_w0;
 				iData.src_line3=(iData.src_bits_pixel==8) ? iData.src_w3 : 2*iData.src_w3;
+			}
+			else
+			{
+				iData.src_h3=0;
+				iData.src_w3=0;
+				iData.src_line3=0;
 			}
 			break;
 		case VMODE_PLANAR_YUV411 :
@@ -575,6 +659,12 @@ void JPSDRVDXVideoFilter::SetImageData(Image_Data& iData,bool modeBMP)
 				iData.src_w3=iData.src_w0;
 				iData.src_line3=(iData.src_bits_pixel==8) ? iData.src_w3 : 2*iData.src_w3;
 			}
+			else
+			{
+				iData.src_h3=0;
+				iData.src_w3=0;
+				iData.src_line3=0;
+			}
 			break;
 		case VMODE_PLANAR_YUV410 :
 			iData.src_h1=(iData.src_h0+3)>>2;
@@ -590,9 +680,24 @@ void JPSDRVDXVideoFilter::SetImageData(Image_Data& iData,bool modeBMP)
 				iData.src_w3=iData.src_w0;
 				iData.src_line3=(iData.src_bits_pixel==8) ? iData.src_w3 : 2*iData.src_w3;
 			}
+			else
+			{
+				iData.src_h3=0;
+				iData.src_w3=0;
+				iData.src_line3=0;
+			}
 			break;
 		case VMODE_Y :
 			iData.src_line0=(iData.src_bits_pixel==8) ? iData.src_w0 : 2*iData.src_w0;
+			iData.src_h1=0;
+			iData.src_h2=0;
+			iData.src_h3=0;
+			iData.src_w1=0;
+			iData.src_w2=0;
+			iData.src_w3=0;
+			iData.src_line1=0;
+			iData.src_line2=0;
+			iData.src_line3=0;
 			break;
 	}
 
@@ -619,14 +724,45 @@ void JPSDRVDXVideoFilter::SetImageData(Image_Data& iData,bool modeBMP)
 		iData.src_size3=(size_t)iData.src_h3*(size_t)iData.src_line3;
 		iData.src_size3_al=(size_t)iData.src_h3*(size_t)iData.src_pitch3_al;
 	}
+	else
+	{
+		iData.src_modulo3=0;
+		iData.src_pitch3_al=0;
+		iData.src_modulo3_al=0;
+		iData.src_size3=0;
+		iData.src_size3_al=0;
+	}
 
+	iData.dst_h0=pxdst.h;
+	iData.dst_w0=pxdst.w;
 	switch(iData.dst_video_mode)
 	{
 		case VMODE_BMP_RGBA :
 			iData.dst_line0=(iData.dst_bits_pixel==8) ? 4*iData.dst_w0 : 8*iData.dst_w0;
+			iData.dst_h1=0;
+			iData.dst_h2=0;
+			iData.dst_h3=0;
+			iData.dst_w1=0;
+			iData.dst_w2=0;
+			iData.dst_w3=0;
+			iData.dst_line1=0;
+			iData.dst_line2=0;
+			iData.dst_line3=0;
+			break;
+		case VMODE_YUYV :
+		case VMODE_UYVY :
+			iData.dst_line0=(iData.dst_bits_pixel==8) ? 4*((iData.dst_w0+1)>>1) : 8*((iData.dst_w0+1)>>1);
+			iData.dst_h1=0;
+			iData.dst_h2=0;
+			iData.dst_h3=0;
+			iData.dst_w1=0;
+			iData.dst_w2=0;
+			iData.dst_w3=0;
+			iData.dst_line1=0;
+			iData.dst_line2=0;
+			iData.dst_line3=0;
 			break;
 		case VMODE_PLANAR_RGB :
-		case VMODE_PLANAR_RGBA :
 			iData.dst_h1=iData.dst_h0;
 			iData.dst_h2=iData.dst_h0;
 			iData.dst_w1=iData.dst_w0;
@@ -666,10 +802,12 @@ void JPSDRVDXVideoFilter::SetImageData(Image_Data& iData,bool modeBMP)
 					default : iData.dst_line3=iData.dst_w3; break;
 				}
 			}
-			break;
-		case VMODE_YUYV :
-		case VMODE_UYVY :
-			iData.dst_line0=(iData.dst_bits_pixel==8) ? 4*((iData.dst_w0+1)>>1) : 8*((iData.dst_w0+1)>>1);
+			else
+			{
+				iData.dst_h3=0;
+				iData.dst_w3=0;
+				iData.dst_line3=0;
+			}
 			break;
 		case VMODE_PLANAR_YUV444 :
 			iData.dst_h1=iData.dst_h0;
@@ -684,6 +822,12 @@ void JPSDRVDXVideoFilter::SetImageData(Image_Data& iData,bool modeBMP)
 				iData.dst_h3=iData.dst_h0;
 				iData.dst_w3=iData.dst_w0;
 				iData.dst_line3=(iData.dst_bits_pixel==8) ? iData.dst_w3 : 2*iData.dst_w3;
+			}
+			else
+			{
+				iData.dst_h3=0;
+				iData.dst_w3=0;
+				iData.dst_line3=0;
 			}
 			break;
 		case VMODE_PLANAR_YUV422 :
@@ -700,6 +844,12 @@ void JPSDRVDXVideoFilter::SetImageData(Image_Data& iData,bool modeBMP)
 				iData.dst_w3=iData.dst_w0;
 				iData.dst_line3=(iData.dst_bits_pixel==8) ? iData.dst_w3 : 2*iData.dst_w3;
 			}
+			else
+			{
+				iData.dst_h3=0;
+				iData.dst_w3=0;
+				iData.dst_line3=0;
+			}
 			break;
 		case VMODE_PLANAR_YUV420 :
 			iData.dst_h1=(iData.dst_h0+1)>>1;
@@ -714,6 +864,12 @@ void JPSDRVDXVideoFilter::SetImageData(Image_Data& iData,bool modeBMP)
 				iData.dst_h3=iData.dst_h0;
 				iData.dst_w3=iData.dst_w0;
 				iData.dst_line3=(iData.dst_bits_pixel==8) ? iData.dst_w3 : 2*iData.dst_w3;
+			}
+			else
+			{
+				iData.dst_h3=0;
+				iData.dst_w3=0;
+				iData.dst_line3=0;
 			}
 			break;
 		case VMODE_PLANAR_YUV411 :
@@ -730,6 +886,12 @@ void JPSDRVDXVideoFilter::SetImageData(Image_Data& iData,bool modeBMP)
 				iData.dst_w3=iData.dst_w0;
 				iData.dst_line3=(iData.dst_bits_pixel==8) ? iData.dst_w3 : 2*iData.dst_w3;
 			}
+			else
+			{
+				iData.dst_h3=0;
+				iData.dst_w3=0;
+				iData.dst_line3=0;
+			}
 			break;
 		case VMODE_PLANAR_YUV410 :
 			iData.dst_h1=(iData.dst_h0+3)>>2;
@@ -745,9 +907,24 @@ void JPSDRVDXVideoFilter::SetImageData(Image_Data& iData,bool modeBMP)
 				iData.dst_w3=iData.dst_w0;
 				iData.dst_line3=(iData.dst_bits_pixel==8) ? iData.dst_w3 : 2*iData.dst_w3;
 			}
+			else
+			{
+				iData.dst_h3=0;
+				iData.dst_w3=0;
+				iData.dst_line3=0;
+			}
 			break;
 		case VMODE_Y :
 			iData.dst_line0=(iData.dst_bits_pixel==8) ? iData.dst_w0 : 2*iData.dst_w0;
+			iData.dst_h1=0;
+			iData.dst_h2=0;
+			iData.dst_h3=0;
+			iData.dst_w1=0;
+			iData.dst_w2=0;
+			iData.dst_w3=0;
+			iData.dst_line1=0;
+			iData.dst_line2=0;
+			iData.dst_line3=0;
 			break;
 	}
 
@@ -773,6 +950,14 @@ void JPSDRVDXVideoFilter::SetImageData(Image_Data& iData,bool modeBMP)
 		iData.dst_modulo3_al=iData.dst_pitch3_al-iData.dst_line3;
 		iData.dst_size3=(size_t)iData.dst_h3*(size_t)iData.dst_line3;
 		iData.dst_size3_al=(size_t)iData.dst_h3*(size_t)iData.dst_pitch3_al;
+	}
+	else
+	{
+		iData.dst_modulo3=0;
+		iData.dst_pitch3_al=0;
+		iData.dst_modulo3_al=0;
+		iData.dst_size3=0;
+		iData.dst_size3_al=0;
 	}
 
 	if (iData.src_bits_pixel<=16)
