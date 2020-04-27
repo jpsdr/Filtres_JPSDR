@@ -26,14 +26,14 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "RGBConvert_resource.h"
+#include "./RGBConvert_resource.h"
 
-#include "..\Filtres_JPSDR\JPSDRVideoFilter.h"
-#include "..\Filtres_JPSDR\VideoFilterDialog.h"
+#include "../Filtres_JPSDR/JPSDRVideoFilter.h"
+#include "../Filtres_JPSDR/VideoFilterDialog.h"
 
-#include "..\Filtres_JPSDR\Pascal.h"
+#include "../Filtres_JPSDR/Pascal.h"
 
-#include "..\Filtres_JPSDR\ThreadPoolInterface.h"
+#include "../Filtres_JPSDR/ThreadPoolInterface.h"
 
 extern int g_VFVAPIVersion;
 
@@ -4193,4 +4193,4 @@ void JPSDR_RGBConvert::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_RGBConvert=
-VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v3.2.2","RGB <-> YCbCr convertion with color matrix option.\n[SSE2][AVX][AVX2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v3.2.3","RGB <-> YCbCr convertion with color matrix option.\n[SSE2][AVX][AVX2] Optimised.");

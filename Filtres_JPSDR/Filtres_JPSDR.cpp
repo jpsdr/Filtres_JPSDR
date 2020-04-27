@@ -24,9 +24,9 @@
 //
 
 
-#include "VideoFilterEntry.h"
-#include "vdvideofilt.h"
-#include "ThreadPoolInterface.h"
+#include "./VideoFilterEntry.h"
+#include "./vdvideofilt.h"
+#include "./ThreadPoolInterface.h"
 
 ThreadPoolInterface *poolInterface;
 

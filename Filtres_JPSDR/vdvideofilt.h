@@ -25,7 +25,7 @@
 
 #include <stddef.h>
 
-#include "vdplugin.h"
+#include "./vdplugin.h"
 
 //////////////////
 

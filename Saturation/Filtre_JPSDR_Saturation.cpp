@@ -27,14 +27,14 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#include "Saturation_resource.h"
+#include "./Saturation_resource.h"
 
-#include "..\Filtres_JPSDR\JPSDRVideoFilter.h"
-#include "..\Filtres_JPSDR\VideoFilterDialog.h"
+#include "../Filtres_JPSDR/JPSDRVideoFilter.h"
+#include "../Filtres_JPSDR/VideoFilterDialog.h"
 
-#include "..\Filtres_JPSDR\Pascal.h"
+#include "../Filtres_JPSDR/Pascal.h"
 
-#include "..\Filtres_JPSDR\ThreadPoolInterface.h"
+#include "../Filtres_JPSDR/ThreadPoolInterface.h"
 
 extern int g_VFVAPIVersion;
 
@@ -1831,4 +1831,4 @@ void JPSDR_Saturation::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptV
 
 		
 extern VDXFilterDefinition2 filterDef_JPSDR_Saturation=
-VDXVideoFilterDefinition<JPSDR_Saturation>("JPSDR","Sat/Hue/Bright/Contr v4.5.2","[SSE2][AVX] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Saturation>("JPSDR","Sat/Hue/Bright/Contr v4.5.3","[SSE2][AVX] Optimised.");

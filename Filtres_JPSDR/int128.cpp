@@ -23,10 +23,10 @@
 //	3.	This notice may not be removed or altered from any source
 //		distribution.
 
-#include "stdafx.h"
+#include "./stdafx.h"
 #include <math.h>
 
-#include "int128.h"
+#include "./int128.h"
 
 #ifndef _M_AMD64
 	void __declspec(naked) __cdecl vdasm_uint128_add(uint64 dst[2], const uint64 x[2], const uint64 y[2]) {

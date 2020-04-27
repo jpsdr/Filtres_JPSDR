@@ -25,7 +25,7 @@
 #ifndef f_VD2_VDXFRAME_UNKNOWN_H
 #define f_VD2_VDXFRAME_UNKNOWN_H
 
-#include "vdplugin.h"
+#include "./vdplugin.h"
 
 extern "C" long _InterlockedExchangeAdd(volatile long *p, long v);
 #pragma intrinsic(_InterlockedExchangeAdd)

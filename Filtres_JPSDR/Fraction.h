@@ -26,7 +26,7 @@
 #ifndef f_VD2_SYSTEM_FRACTION_H
 #define f_VD2_SYSTEM_FRACTION_H
 
-#include "vdtypes.h"
+#include "./vdtypes.h"
 
 class VDFraction {
 friend VDFraction operator*(unsigned long b, const VDFraction f);

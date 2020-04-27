@@ -24,10 +24,10 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "Smart_Deinterlace_resource.h"
+#include "./Smart_Deinterlace_resource.h"
 
-#include "..\Filtres_JPSDR\JPSDRVideoFilter.h"
-#include "..\Filtres_JPSDR\VideoFilterDialog.h"
+#include "../Filtres_JPSDR/JPSDRVideoFilter.h"
+#include "../Filtres_JPSDR/VideoFilterDialog.h"
 
 
 extern int g_VFVAPIVersion;
@@ -647,6 +647,6 @@ void JPSDR_Smart_Deinterlace::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_Smart_Deinterlace=
-VDXVideoFilterDefinition<JPSDR_Smart_Deinterlace>("JPSDR","SmartDeinterlace v2.4.1","Smart Deinterlace (Based D. Grafh). [MMX][SSE] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Smart_Deinterlace>("JPSDR","SmartDeinterlace v2.4.2","Smart Deinterlace (Based D. Grafh). [MMX][SSE] Optimised.");
 
 

@@ -24,12 +24,12 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "CCC_resource.h"
+#include "./CCC_resource.h"
 
-#include "..\Filtres_JPSDR\JPSDRVideoFilter.h"
-#include "..\Filtres_JPSDR\VideoFilterDialog.h"
+#include "../Filtres_JPSDR/JPSDRVideoFilter.h"
+#include "../Filtres_JPSDR/VideoFilterDialog.h"
 
-#include "..\Filtres_JPSDR\Pascal.h"
+#include "../Filtres_JPSDR/Pascal.h"
 
 extern int g_VFVAPIVersion;
 
@@ -1182,5 +1182,5 @@ void JPSDR_CCC::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_CCC=
-VDXVideoFilterDefinition<JPSDR_CCC>("JPSDR","Cross-Conversion Correction v1.4.1","Restore interlaced 720->1080 upscale. SSE optimized.");
+VDXVideoFilterDefinition<JPSDR_CCC>("JPSDR","Cross-Conversion Correction v1.4.2","Restore interlaced 720->1080 upscale. SSE optimized.");
 

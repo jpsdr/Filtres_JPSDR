@@ -24,10 +24,10 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "Field_Shift_resource.h"
+#include "./Field_Shift_resource.h"
 
-#include "..\Filtres_JPSDR\JPSDRVideoFilter.h"
-#include "..\Filtres_JPSDR\VideoFilterDialog.h"
+#include "../Filtres_JPSDR/JPSDRVideoFilter.h"
+#include "../Filtres_JPSDR/VideoFilterDialog.h"
 
 extern int g_VFVAPIVersion;
 
@@ -1137,5 +1137,5 @@ void JPSDR_Field_Shift::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_Field_Shift=
-VDXVideoFilterDefinition<JPSDR_Field_Shift>("JPSDR","FieldShift v3.2.1","Shift Field from previous and current frame.");
+VDXVideoFilterDefinition<JPSDR_Field_Shift>("JPSDR","FieldShift v3.2.2","Shift Field from previous and current frame.");
 

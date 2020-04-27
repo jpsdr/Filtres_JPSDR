@@ -24,12 +24,12 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "RemoveFrames_resource.h"
+#include "./RemoveFrames_resource.h"
 
-#include "..\Filtres_JPSDR\JPSDRVideoFilter.h"
-#include "..\Filtres_JPSDR\VideoFilterDialog.h"
+#include "../Filtres_JPSDR/JPSDRVideoFilter.h"
+#include "../Filtres_JPSDR/VideoFilterDialog.h"
 
-#include "..\Filtres_JPSDR\Fraction.h"
+#include "../Filtres_JPSDR/Fraction.h"
 
 extern int g_VFVAPIVersion;
 
@@ -377,5 +377,5 @@ void JPSDR_RemoveFrames::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_RemoveFrames=
-VDXVideoFilterDefinition<JPSDR_RemoveFrames>("JPSDR","RemoveFrames v1.3.1","Filter to remove frames.");
+VDXVideoFilterDefinition<JPSDR_RemoveFrames>("JPSDR","RemoveFrames v1.3.2","Filter to remove frames.");
 

@@ -24,12 +24,12 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "AddBorder_resource.h"
+#include "./AddBorder_resource.h"
 
-#include "..\Filtres_JPSDR\JPSDRVideoFilter.h"
-#include "..\Filtres_JPSDR\VideoFilterDialog.h"
+#include "../Filtres_JPSDR/JPSDRVideoFilter.h"
+#include "../Filtres_JPSDR/VideoFilterDialog.h"
 
-#include "..\Filtres_JPSDR\Pascal.h"
+#include "../Filtres_JPSDR/Pascal.h"
 
 extern int g_VFVAPIVersion;
 
@@ -707,5 +707,5 @@ void JPSDR_AddBorder::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_AddBorder=
-VDXVideoFilterDefinition<JPSDR_AddBorder>("JPSDR","AddBorder v1.4.2","Add boder to picture.");
+VDXVideoFilterDefinition<JPSDR_AddBorder>("JPSDR","AddBorder v1.4.3","Add boder to picture.");
 

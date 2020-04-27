@@ -29,7 +29,7 @@
 #include <stddef.h>
 #include <new>
 
-#include "vdvideofilt.h"
+#include "./vdvideofilt.h"
 
 ///////////////////////////////////////////////////////////////////////////
 ///	\class VDXVideoFilter

@@ -22,13 +22,13 @@
 //	3.	This notice may not be removed or altered from any source
 //		distribution.
 
-#include "VideoFilter.h"
+#include "./VideoFilter.h"
 
 #ifndef _JPSDRVIDEOFILTER_H
 #define _JPSDRVIDEOFILTER_H
 
 #include <stdint.h>
-#include "JPSDR_Filter.h"
+#include "./JPSDR_Filter.h"
 
 class JPSDRVDXVideoFilter : public VDXVideoFilter
 {

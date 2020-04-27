@@ -22,9 +22,9 @@
 //	3.	This notice may not be removed or altered from any source
 //		distribution.
 
-#include "stdafx.h"
+#include "./stdafx.h"
 #include <windows.h>
-#include "VideoFilterDialog.h"
+#include "./VideoFilterDialog.h"
 
 namespace {
 #if defined(_MSC_VER) && _MSC_VER >= 1300

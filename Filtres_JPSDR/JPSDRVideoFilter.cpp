@@ -22,7 +22,7 @@
 //	3.	This notice may not be removed or altered from any source
 //		distribution.
 
-#include "JPSDRVideoFilter.h"
+#include "./JPSDRVideoFilter.h"
 
 
 uint8_t JPSDRVDXVideoFilter::GetVideoMode(sint32 format)

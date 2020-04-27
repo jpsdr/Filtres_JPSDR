@@ -24,12 +24,12 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "Deinterlace_resource.h"
+#include "./Deinterlace_resource.h"
 
-#include "..\Filtres_JPSDR\JPSDRVideoFilter.h"
-#include "..\Filtres_JPSDR\VideoFilterDialog.h"
+#include "../Filtres_JPSDR/JPSDRVideoFilter.h"
+#include "../Filtres_JPSDR/VideoFilterDialog.h"
 
-#include "..\Filtres_JPSDR\ThreadPoolInterface.h"
+#include "../Filtres_JPSDR/ThreadPoolInterface.h"
 
 #define Number_Max_Lines 2048
 
@@ -921,22 +921,6 @@ static inline void Move_Full(const void *src_, void *dst_, const int32_t w,const
 			src+=src_pitch;
 			dst+=dst_pitch;
 		}
-	}
-}
-
-
-static inline void Move_Half(const void *src_, void *dst_, const int32_t w,const int32_t h,
-		const ptrdiff_t src_pitch,const ptrdiff_t dst_pitch)
-{
-	const uint8_t *src=(uint8_t *)src_;
-	uint8_t *dst=(uint8_t *)dst_;
-	const ptrdiff_t src_pitch2=src_pitch << 1,dst_pitch2=dst_pitch << 1;
-
-	for(int32_t i=0; i<h; i++)
-	{
-		memcpy(dst,src,w);
-		src+=src_pitch2;
-		dst+=dst_pitch2;
 	}
 }
 
@@ -5087,7 +5071,7 @@ void JPSDR_Deinterlace::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScript
 
 		
 extern VDXFilterDefinition2 filterDef_JPSDR_Deinterlace=
-VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v6.1.2","Deinterlace blending frames. [SSE2][AVX][AVX2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v6.1.3","Deinterlace blending frames. [SSE2][AVX][AVX2] Optimised.");
 
 
 

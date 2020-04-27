@@ -24,14 +24,14 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "ColorSpaceConvert_resource.h"
+#include "./ColorSpaceConvert_resource.h"
 
-#include "..\Filtres_JPSDR\JPSDRVideoFilter.h"
-#include "..\Filtres_JPSDR\VideoFilterDialog.h"
+#include "../Filtres_JPSDR/JPSDRVideoFilter.h"
+#include "../Filtres_JPSDR/VideoFilterDialog.h"
 
-#include "..\Filtres_JPSDR\Pascal.h"
+#include "../Filtres_JPSDR/Pascal.h"
 
-#include "..\Filtres_JPSDR\ThreadPoolInterface.h"
+#include "../Filtres_JPSDR/ThreadPoolInterface.h"
 
 extern int g_VFVAPIVersion;
 
@@ -2168,15 +2168,9 @@ void JPSDR_ColorSpaceConvert::ConvertYV12_Progressif_SSE2_MT_2(uint8_t thread_nu
 	const int32_t h_UV_min=mt_data_inf.src_UV_h_min;
 	const int32_t h_UV_max=mt_data_inf.src_UV_h_max;
 	const ptrdiff_t src_pitch_y=mt_data_inf.src_pitch1;
-	const ptrdiff_t src_pitch_u=mt_data_inf.src_pitch2;
-	const ptrdiff_t src_pitch_v=mt_data_inf.src_pitch3;
-	const ptrdiff_t dst_pitch_y=mt_data_inf.dst_pitch1;
-	const ptrdiff_t dst_pitch_u=mt_data_inf.dst_pitch2;
-	const ptrdiff_t dst_pitch_v=mt_data_inf.dst_pitch3;
 	const ptrdiff_t src_modulo_y=mt_data_inf.src_modulo1;
 	const ptrdiff_t src_modulo_u=mt_data_inf.src_modulo2;
 	const ptrdiff_t src_modulo_v=mt_data_inf.src_modulo3;
-	const ptrdiff_t dst_modulo_y=mt_data_inf.dst_modulo1;
 	const ptrdiff_t dst_modulo_u=mt_data_inf.dst_modulo2;
 	const ptrdiff_t dst_modulo_v=mt_data_inf.dst_modulo3;
 
@@ -2209,15 +2203,9 @@ void JPSDR_ColorSpaceConvert::ConvertYV12_Progressif_AVX_MT_2(uint8_t thread_num
 	const int32_t h_UV_min=mt_data_inf.src_UV_h_min;
 	const int32_t h_UV_max=mt_data_inf.src_UV_h_max;
 	const ptrdiff_t src_pitch_y=mt_data_inf.src_pitch1;
-	const ptrdiff_t src_pitch_u=mt_data_inf.src_pitch2;
-	const ptrdiff_t src_pitch_v=mt_data_inf.src_pitch3;
-	const ptrdiff_t dst_pitch_y=mt_data_inf.dst_pitch1;
-	const ptrdiff_t dst_pitch_u=mt_data_inf.dst_pitch2;
-	const ptrdiff_t dst_pitch_v=mt_data_inf.dst_pitch3;
 	const ptrdiff_t src_modulo_y=mt_data_inf.src_modulo1;
 	const ptrdiff_t src_modulo_u=mt_data_inf.src_modulo2;
 	const ptrdiff_t src_modulo_v=mt_data_inf.src_modulo3;
-	const ptrdiff_t dst_modulo_y=mt_data_inf.dst_modulo1;
 	const ptrdiff_t dst_modulo_u=mt_data_inf.dst_modulo2;
 	const ptrdiff_t dst_modulo_v=mt_data_inf.dst_modulo3;
 
@@ -2657,4 +2645,4 @@ void JPSDR_ColorSpaceConvert::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_ColorSpaceConvert=
-VDXVideoFilterDefinition<JPSDR_ColorSpaceConvert>("JPSDR","ColorSpaceConvert v2.6.2","YCbCr color space convertion.\n[SSE2][AVX] Optimised.");
+VDXVideoFilterDefinition<JPSDR_ColorSpaceConvert>("JPSDR","ColorSpaceConvert v2.6.3","YCbCr color space convertion.\n[SSE2][AVX] Optimised.");

@@ -23,12 +23,12 @@
 //	3.	This notice may not be removed or altered from any source
 //		distribution.
 
-#include "stdafx.h"
+#include "./stdafx.h"
 #include <math.h>
 
-#include "fraction.h"
-#include "vdtypes.h"
-#include "math.h"
+#include "./Fraction.h"
+#include "./vdtypes.h"
+#include "./math.h"
 
 VDFraction::VDFraction(double d) {
 	int xp;

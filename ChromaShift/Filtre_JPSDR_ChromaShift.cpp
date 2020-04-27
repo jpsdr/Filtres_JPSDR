@@ -24,12 +24,12 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "ChromaShift_resource.h"
+#include "./ChromaShift_resource.h"
 
-#include "..\Filtres_JPSDR\JPSDRVideoFilter.h"
-#include "..\Filtres_JPSDR\VideoFilterDialog.h"
+#include "../Filtres_JPSDR/JPSDRVideoFilter.h"
+#include "../Filtres_JPSDR/VideoFilterDialog.h"
 
-#include "..\Filtres_JPSDR\Pascal.h"
+#include "../Filtres_JPSDR/Pascal.h"
 
 extern int g_VFVAPIVersion;
 
@@ -1329,5 +1329,5 @@ void JPSDR_ChromaShift::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_ChromaShift=
-VDXVideoFilterDefinition<JPSDR_ChromaShift>("JPSDR","ChromaShift v2.2.0","Shift chrominace channels");
+VDXVideoFilterDefinition<JPSDR_ChromaShift>("JPSDR","ChromaShift v2.2.1","Shift chrominace channels");
 

@@ -27,7 +27,7 @@
 #define f_VD2_SYSTEM_MATH_H
 
 #include <math.h>
-#include "vdtypes.h"
+#include "./vdtypes.h"
 
 // Constants
 namespace nsVDMath {

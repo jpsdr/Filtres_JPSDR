@@ -25,10 +25,10 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "WideScreen_resource.h"
+#include "./WideScreen_resource.h"
 
-#include "..\Filtres_JPSDR\JPSDRVideoFilter.h"
-#include "..\Filtres_JPSDR\VideoFilterDialog.h"
+#include "../Filtres_JPSDR/JPSDRVideoFilter.h"
+#include "../Filtres_JPSDR/VideoFilterDialog.h"
 
 extern int g_VFVAPIVersion;
 
@@ -351,6 +351,6 @@ void JPSDR_WideScreen::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_WideScreen=
-VDXVideoFilterDefinition<JPSDR_WideScreen>("JPSDR","WideSreen v2.4.1","Black WideScreen and left subtitles.[ASM] Optimised.");
+VDXVideoFilterDefinition<JPSDR_WideScreen>("JPSDR","WideSreen v2.4.2","Black WideScreen and left subtitles.[ASM] Optimised.");
 
 

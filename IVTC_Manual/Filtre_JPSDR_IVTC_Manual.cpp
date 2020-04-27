@@ -24,10 +24,10 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "IVTC_Manual_resource.h"
+#include "./IVTC_Manual_resource.h"
 
-#include "..\Filtres_JPSDR\JPSDRVideoFilter.h"
-#include "..\Filtres_JPSDR\VideoFilterDialog.h"
+#include "../Filtres_JPSDR/JPSDRVideoFilter.h"
+#include "../Filtres_JPSDR/VideoFilterDialog.h"
 
 
 #define Max_Sequence 2048
@@ -878,5 +878,5 @@ void JPSDR_IVTC_Manual::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_IVTC_Manual=
-VDXVideoFilterDefinition<JPSDR_IVTC_Manual>("JPSDR","IVTC Manual v3.2.1","IVTC Filter (Manual). [ASM] Optimised.");
+VDXVideoFilterDefinition<JPSDR_IVTC_Manual>("JPSDR","IVTC Manual v3.2.2","IVTC Filter (Manual). [ASM] Optimised.");
 

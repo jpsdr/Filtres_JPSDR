@@ -24,12 +24,12 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "DeinterlaceII_resource.h"
+#include "./DeinterlaceII_resource.h"
 
-#include "..\Filtres_JPSDR\JPSDRVideoFilter.h"
-#include "..\Filtres_JPSDR\VideoFilterDialog.h"
+#include "../Filtres_JPSDR/JPSDRVideoFilter.h"
+#include "../Filtres_JPSDR/VideoFilterDialog.h"
 
-#include "..\Filtres_JPSDR\Pascal.h"
+#include "../Filtres_JPSDR/Pascal.h"
 
 
 extern int g_VFVAPIVersion;
@@ -919,4 +919,4 @@ void JPSDR_DeinterlaceII::GetScriptString(char *buf, int maxlen)
 }
 
 extern VDXFilterDefinition2 filterDef_JPSDR_DeinterlaceII=
-VDXVideoFilterDefinition<JPSDR_DeinterlaceII>("JPSDR","Deinterlace II v2.4.1","Deinterlace Advanced. Lag 1");
+VDXVideoFilterDefinition<JPSDR_DeinterlaceII>("JPSDR","Deinterlace II v2.4.2","Deinterlace Advanced. Lag 1");

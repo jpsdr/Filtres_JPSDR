@@ -1,6 +1,6 @@
 // Microsoft Visual C++ generated resource script.
 //
-#include "ColorSpaceConvert_RESOURCE.h"
+#include "./ColorSpaceConvert_RESOURCE.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////

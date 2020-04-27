@@ -23,10 +23,10 @@
 //	3.	This notice may not be removed or altered from any source
 //		distribution.
 
-#include "stdafx.h"
+#include "./stdafx.h"
 #include <math.h>
-#include "math.h"
-#include "int128.h"
+#include "./math.h"
+#include "./int128.h"
 
 int VDRoundToInt(double x) {
 	return (int)floor(x + 0.5);

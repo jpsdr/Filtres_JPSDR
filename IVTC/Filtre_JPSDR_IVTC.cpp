@@ -24,14 +24,14 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "IVTC_resource.h"
+#include "./IVTC_resource.h"
 
-#include "..\Filtres_JPSDR\JPSDRVideoFilter.h"
-#include "..\Filtres_JPSDR\VideoFilterDialog.h"
+#include "../Filtres_JPSDR/JPSDRVideoFilter.h"
+#include "../Filtres_JPSDR/VideoFilterDialog.h"
 
-#include "..\Filtres_JPSDR\Pascal.h"
+#include "../Filtres_JPSDR/Pascal.h"
 
-#include "..\Filtres_JPSDR\ThreadPoolInterface.h"
+#include "../Filtres_JPSDR/ThreadPoolInterface.h"
 
 extern int g_VFVAPIVersion;
 
@@ -2374,31 +2374,31 @@ void JPSDR_IVTC::Convert_Automatic_Planar420_to_YUY2(uint8_t thread_num)
 					dst[j].y2=src_Y[i+1];
 					i+=2;
 
-					if (((abs((int16_t)src_U[j]-(int16_t)src_Un[j])>=threshold) &&
+					if ((abs((int16_t)src_U[j]-(int16_t)src_Un[j])>=threshold) &&
 						(abs((int16_t)src_Unn[j]-(int16_t)src_Un[j])>=threshold) &&
-						((src_U[j]>src_Un[j]) && (src_Unn[j]>src_Un[j]) ||
-						(src_U[j]<src_Un[j]) && (src_Unn[j]<src_Un[j]))))
+						(((src_U[j]>src_Un[j]) && (src_Unn[j]>src_Un[j])) ||
+						((src_U[j]<src_Un[j]) && (src_Unn[j]<src_Un[j]))))
 						itabu0[j]=true;
 					else itabu0[j]=false;
-					if (((abs((int16_t)src_Un[j]-(int16_t)src_Unn[j])>=threshold) &&
+					if ((abs((int16_t)src_Un[j]-(int16_t)src_Unn[j])>=threshold) &&
 						(abs((int16_t)src_Unnn[j]-(int16_t)src_Unn[j])>=threshold) &&
-						((src_Un[j]>src_Unn[j]) && (src_Unnn[j]>src_Unn[j]) ||
-						(src_Un[j]<src_Unn[j]) && (src_Unnn[j]<src_Unn[j]))))
+						(((src_Un[j]>src_Unn[j]) && (src_Unnn[j]>src_Unn[j])) ||
+						((src_Un[j]<src_Unn[j]) && (src_Unnn[j]<src_Unn[j]))))
 						itabu1[j]=true;
 					else itabu1[j]=false;
 
 					dst[j].u=(uint8_t)((lookup[(uint16_t)src_Un[j]+512]+(uint16_t)src_Unnn[j]+4)>>3);
 						
-					if	(((abs((int16_t)src_V[j]-(int16_t)src_Vn[j])>=threshold) &&
+					if	((abs((int16_t)src_V[j]-(int16_t)src_Vn[j])>=threshold) &&
 						(abs((int16_t)src_Vnn[j]-(int16_t)src_Vn[j])>=threshold) &&
-						((src_V[j]>src_Vn[j]) && (src_Vnn[j]>src_Vn[j]) ||
-						(src_V[j]<src_Vn[j]) && (src_Vnn[j]<src_Vn[j]))))
+						(((src_V[j]>src_Vn[j]) && (src_Vnn[j]>src_Vn[j])) ||
+						((src_V[j]<src_Vn[j]) && (src_Vnn[j]<src_Vn[j]))))
 						itabv0[j]=true;
 					else itabv0[j]=false;
-					if	(((abs((int16_t)src_Vn[j]-(int16_t)src_Vnn[j])>=threshold) &&
+					if	((abs((int16_t)src_Vn[j]-(int16_t)src_Vnn[j])>=threshold) &&
 						(abs((int16_t)src_Vnnn[j]-(int16_t)src_Vnn[j])>=threshold) &&
-						((src_Vn[j]>src_Vnn[j]) && (src_Vnnn[j]>src_Vnn[j]) ||
-						(src_Vn[j]<src_Vnn[j]) && (src_Vnnn[j]<src_Vnn[j]))))
+						(((src_Vn[j]>src_Vnn[j]) && (src_Vnnn[j]>src_Vnn[j])) ||
+						((src_Vn[j]<src_Vnn[j]) && (src_Vnnn[j]<src_Vnn[j]))))
 						itabv1[j]=true;
 					else itabv1[j]=false;
 						
@@ -2430,29 +2430,29 @@ void JPSDR_IVTC::Convert_Automatic_Planar420_to_YUY2(uint8_t thread_num)
 					
 		for (int32_t j=0; j<w_UV; j++)
 		{
-			if (((abs((int16_t)src_Upp[j]-(int16_t)src_Up[j])>=threshold) &&
+			if ((abs((int16_t)src_Upp[j]-(int16_t)src_Up[j])>=threshold) &&
 				(abs((int16_t)src_U[j]-(int16_t)src_Up[j])>=threshold) &&
-				((src_Upp[j]>src_Up[j]) && (src_U[j]>src_Up[j]) ||
-				(src_Upp[j]<src_Up[j]) && (src_U[j]<src_Up[j]))))
+				(((src_Upp[j]>src_Up[j]) && (src_U[j]>src_Up[j])) ||
+				((src_Upp[j]<src_Up[j]) && (src_U[j]<src_Up[j]))))
 				itabu0[j]=true;
 			else itabu0[j]=false;
-			if (((abs((int16_t)src_Up[j]-(int16_t)src_U[j])>=threshold) &&
+			if ((abs((int16_t)src_Up[j]-(int16_t)src_U[j])>=threshold) &&
 				(abs((int16_t)src_Un[j]-(int16_t)src_U[j])>=threshold) &&
-				((src_Up[j]>src_U[j]) && (src_Un[j]>src_U[j]) ||
-				(src_Up[j]<src_U[j]) && (src_Un[j]<src_U[j]))))
+				(((src_Up[j]>src_U[j]) && (src_Un[j]>src_U[j])) ||
+				((src_Up[j]<src_U[j]) && (src_Un[j]<src_U[j]))))
 				itabu1[j]=true;
 			else itabu1[j]=false;
 			
-			if	(((abs((int16_t)src_Vpp[j]-(int16_t)src_Vp[j])>=threshold) &&
+			if	((abs((int16_t)src_Vpp[j]-(int16_t)src_Vp[j])>=threshold) &&
 				(abs((int16_t)src_V[j]-(int16_t)src_Vp[j])>=threshold) &&
-				((src_Vpp[j]>src_Vp[j]) && (src_V[j]>src_Vp[j]) ||
-				(src_Vpp[j]<src_Vp[j]) && (src_V[j]<src_Vp[j]))))
+				(((src_Vpp[j]>src_Vp[j]) && (src_V[j]>src_Vp[j])) ||
+				((src_Vpp[j]<src_Vp[j]) && (src_V[j]<src_Vp[j]))))
 				itabv0[j]=true;
 			else itabv0[j]=false;
-			if	(((abs((int16_t)src_Vp[j]-(int16_t)src_V[j])>=threshold) &&
+			if	((abs((int16_t)src_Vp[j]-(int16_t)src_V[j])>=threshold) &&
 				(abs((int16_t)src_Vn[j]-(int16_t)src_V[j])>=threshold) &&
-				((src_Vp[j]>src_V[j]) && (src_Vn[j]>src_V[j]) ||
-				(src_Vp[j]<src_V[j]) && (src_Vn[j]<src_V[j]))))
+				(((src_Vp[j]>src_V[j]) && (src_Vn[j]>src_V[j])) ||
+				((src_Vp[j]<src_V[j]) && (src_Vn[j]<src_V[j]))))
 				itabv1[j]=true;
 			else itabv1[j]=false;						
 		}
@@ -2510,10 +2510,10 @@ void JPSDR_IVTC::Convert_Automatic_Planar420_to_YUY2(uint8_t thread_num)
 				dst[j].y2=src_Y[i+1];
 				i+=2;
 
-				if (((abs((int16_t)src_U[j]-(int16_t)src_Un[j])>=threshold) &&
+				if ((abs((int16_t)src_U[j]-(int16_t)src_Un[j])>=threshold) &&
 					(abs((int16_t)src_Unn[j]-(int16_t)src_Un[j])>=threshold) &&
-					((src_U[j]>src_Un[j]) && (src_Unn[j]>src_Un[j]) ||
-					(src_U[j]<src_Un[j]) && (src_Unn[j]<src_Un[j]))))
+					(((src_U[j]>src_Un[j]) && (src_Unn[j]>src_Un[j])) ||
+					((src_U[j]<src_Un[j]) && (src_Unn[j]<src_Un[j]))))
 					itabu2[j]=true;
 				else itabu2[j]=false;			
 
@@ -2527,10 +2527,10 @@ void JPSDR_IVTC::Convert_Automatic_Planar420_to_YUY2(uint8_t thread_num)
 					dst[j].u=(uint8_t)((lookup[src_U[j]]+(uint16_t)src_Un[j]+2)>>2);
 				}
 
-				if	(((abs((int16_t)src_V[j]-(int16_t)src_Vn[j])>=threshold) &&
+				if	((abs((int16_t)src_V[j]-(int16_t)src_Vn[j])>=threshold) &&
 					(abs((int16_t)src_Vnn[j]-(int16_t)src_Vn[j])>=threshold) &&
-					((src_V[j]>src_Vn[j]) && (src_Vnn[j]>src_Vn[j]) ||
-					(src_V[j]<src_Vn[j]) && (src_Vnn[j]<src_Vn[j]))))
+					(((src_V[j]>src_Vn[j]) && (src_Vnn[j]>src_Vn[j])) ||
+					((src_V[j]<src_Vn[j]) && (src_Vnn[j]<src_Vn[j]))))
 					itabv2[j]=true;
 				else itabv2[j]=false;			
 
@@ -2594,10 +2594,10 @@ void JPSDR_IVTC::Convert_Automatic_Planar420_to_YUY2(uint8_t thread_num)
 				dst[j].y2=src_Y[i+1];
 				i+=2;
 
-				if (((abs((int16_t)src_Un[j]-(int16_t)src_Unn[j])>=threshold) &&
+				if ((abs((int16_t)src_Un[j]-(int16_t)src_Unn[j])>=threshold) &&
 					(abs((int16_t)src_Unnn[j]-(int16_t)src_Unn[j])>=threshold) &&
-					((src_Un[j]>src_Unn[j]) && (src_Unnn[j]>src_Unn[j]) ||
-					(src_Un[j]<src_Unn[j]) && (src_Unnn[j]<src_Unn[j]))))
+					(((src_Un[j]>src_Unn[j]) && (src_Unnn[j]>src_Unn[j])) ||
+					((src_Un[j]<src_Unn[j]) && (src_Unnn[j]<src_Unn[j]))))
 					itabu0[j]=true;
 				else itabu0[j]=false;
 
@@ -2611,10 +2611,10 @@ void JPSDR_IVTC::Convert_Automatic_Planar420_to_YUY2(uint8_t thread_num)
 					dst[j].u=(uint8_t)((lookup[src_Un[j]]+(uint16_t)src_Unn[j]+2)>>2);
 				}
 
-				if	(((abs((int16_t)src_Vn[j]-(int16_t)src_Vnn[j])>=threshold) &&
+				if	((abs((int16_t)src_Vn[j]-(int16_t)src_Vnn[j])>=threshold) &&
 					(abs((int16_t)src_Vnnn[j]-(int16_t)src_Vnn[j])>=threshold) &&
-					((src_Vn[j]>src_Vnn[j]) && (src_Vnnn[j]>src_Vnn[j]) ||
-					(src_Vn[j]<src_Vnn[j]) && (src_Vnnn[j]<src_Vnn[j]))))
+					(((src_Vn[j]>src_Vnn[j]) && (src_Vnnn[j]>src_Vnn[j])) ||
+					((src_Vn[j]<src_Vnn[j]) && (src_Vnnn[j]<src_Vnn[j]))))
 					itabv0[j]=true;
 				else itabv0[j]=false;
 
@@ -6446,7 +6446,7 @@ void JPSDR_IVTC::Smart_Deinterlace_Tri_Motion_Map_RGB32(const void *src1_0,const
 	const RGB32BMP *src1,*src2,*src3,*src4;
 	RGB32BMP *buffer,*buffer2;
 	uint8_t *dst1,*dst2;
-	const int32_t delta_map=w_map-w,h_1=h-1;
+	const int32_t h_1=h-1;
 	const int16_t thr=thrs;
 
 	const ptrdiff_t pitch2=pitch << 1,pitch_buffer2=pitch_buffer << 1;
@@ -11166,16 +11166,16 @@ void JPSDR_IVTC::Run()
 			{
 				if (first!=5)
 				{
-					if ((first==i_rd) || (first==(i_rd+4)%5) &&
-						(buffer[read_index[first]].flags.p1_f))
+					if (((first==i_rd) || (first==(i_rd+4)%5)) &&
+						buffer[read_index[first]].flags.p1_f)
 						buffer[read_index[first]].flags.ivtc_valid=true;
 				}
 				else
 				{
 					if (last!=5)
 					{
-						if ((last==i_rd) || (last==(i_rd+1)%5)
-							&& (buffer[read_index[(last+4)%5]].flags.p1_f))
+						if (((last==i_rd) || (last==(i_rd+1)%5))
+							&& buffer[read_index[(last+4)%5]].flags.p1_f)
 							buffer[read_index[(last+4)%5]].flags.ivtc_valid=true;
 					}
 				}
@@ -14202,4 +14202,4 @@ void JPSDR_IVTC::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_IVTC=
-VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.6.2","IVTC Filter. [SSE2][AVX] Optimised.");
+VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.6.3","IVTC Filter. [SSE2][AVX] Optimised.");

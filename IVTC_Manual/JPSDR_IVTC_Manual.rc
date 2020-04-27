@@ -1,6 +1,6 @@
 // Microsoft Visual C++ generated resource script.
 //
-#include "IVTC_Manual_resource.h"
+#include "./IVTC_Manual_resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////

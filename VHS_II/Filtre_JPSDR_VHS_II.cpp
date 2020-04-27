@@ -24,12 +24,12 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "VHS_II_resource.h"
+#include "./VHS_II_resource.h"
 
-#include "..\Filtres_JPSDR\JPSDRVideoFilter.h"
-#include "..\Filtres_JPSDR\VideoFilterDialog.h"
+#include "../Filtres_JPSDR/JPSDRVideoFilter.h"
+#include "../Filtres_JPSDR/VideoFilterDialog.h"
 
-#include "..\Filtres_JPSDR\Pascal.h"
+#include "../Filtres_JPSDR/Pascal.h"
 
 extern int g_VFVAPIVersion;
 
@@ -1301,5 +1301,5 @@ void JPSDR_VHS_II::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_VHS_II=
-VDXVideoFilterDefinition<JPSDR_VHS_II>("JPSDR","VHS II v2.4.1","Filter to remove VHS noise [lag 2].");
+VDXVideoFilterDefinition<JPSDR_VHS_II>("JPSDR","VHS II v2.4.2","Filter to remove VHS noise [lag 2].");
 

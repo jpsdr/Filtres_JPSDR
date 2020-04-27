@@ -26,7 +26,7 @@
 #ifndef f_VD2_SYSTEM_INT128_H
 #define f_VD2_SYSTEM_INT128_H
 
-#include "vdtypes.h"
+#include "./vdtypes.h"
 
 struct vdint128;
 struct vduint128;
