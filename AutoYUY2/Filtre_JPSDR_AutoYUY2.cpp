@@ -332,7 +332,7 @@ protected:
 	MT_Data_Info MT_Data[MAX_MT_THREADS];
 	uint8_t threads_number,total_cpu;
 	bool threadpoolAllocated;
-	uint16_t UserId;
+	uint32_t UserId;
 
 	uint8_t CreateMTData(uint8_t max_threads,int32_t size_x,int32_t size_y);
 

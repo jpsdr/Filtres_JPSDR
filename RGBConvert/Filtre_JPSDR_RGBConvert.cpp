@@ -281,7 +281,7 @@ protected:
 	MT_Data_Info MT_Data[3][MAX_MT_THREADS];
 	uint8_t total_cpu,threads_number[3],max_threads;
 	bool threadpoolAllocated;
-	uint16_t UserId;
+	uint32_t UserId;
 
 	ThreadPoolFunction StaticThreadpoolF;
 
