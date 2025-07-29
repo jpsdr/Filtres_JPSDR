@@ -231,11 +231,11 @@ error_motion_map equ qword ptr[rbp+112]
 	.pushreg r14
 	push r15
 	.pushreg r15
-	sub rsp,32
-	.allocstack 32
-	movdqu XMMWORD ptr[rsp],xmm6
+	sub rsp,40
+	.allocstack 40
+	movdqa XMMWORD ptr[rsp],xmm6
 	.savexmm128 xmm6,0
-	movdqu XMMWORD ptr[rsp+16],xmm7
+	movdqa XMMWORD ptr[rsp+16],xmm7
 	.savexmm128 xmm7,16	
 	.endprolog
 
@@ -398,9 +398,10 @@ Loop_A_3b:
 	movd dword ptr[rdi],xmm2
 	movd eax,xmm1
 
-	movdqu xmm7,XMMWORD ptr[rsp+16]
-	movdqu xmm6,XMMWORD ptr[rsp]	
-	add rsp,32	
+	movdqa xmm7,XMMWORD ptr[rsp+16]
+	movdqa xmm6,XMMWORD ptr[rsp]	
+	add rsp,40
+
 	pop r15
 	pop r14
 	pop r13
@@ -451,11 +452,11 @@ error_motion_map equ qword ptr[rbp+112]
 	.pushreg r14
 	push r15
 	.pushreg r15
-	sub rsp,32
-	.allocstack 32
-	vmovdqu XMMWORD ptr[rsp],xmm6
+	sub rsp,40
+	.allocstack 40
+	vmovdqa XMMWORD ptr[rsp],xmm6
 	.savexmm128 xmm6,0
-	vmovdqu XMMWORD ptr[rsp+16],xmm7
+	vmovdqa XMMWORD ptr[rsp+16],xmm7
 	.savexmm128 xmm7,16	
 	.endprolog
 
@@ -615,9 +616,10 @@ Loop_A_3b_AVX:
 	vmovd dword ptr[rdi],xmm2
 	vmovd eax,xmm1
 
-	vmovdqu xmm7,XMMWORD ptr[rsp+16]
-	vmovdqu xmm6,XMMWORD ptr[rsp]	
-	add rsp,32	
+	vmovdqa xmm7,XMMWORD ptr[rsp+16]
+	vmovdqa xmm6,XMMWORD ptr[rsp]	
+	add rsp,40
+
 	pop r15
 	pop r14
 	pop r13
@@ -1187,17 +1189,17 @@ w_map equ dword ptr[rbp+104]
 	.pushreg r14
 	push r15
 	.pushreg r15
-	sub rsp,80
-	.allocstack 80
-	movdqu XMMWORD ptr[rsp],xmm6
+	sub rsp,88
+	.allocstack 88
+	movdqa XMMWORD ptr[rsp],xmm6
 	.savexmm128 xmm6,0
-	movdqu XMMWORD ptr[rsp+16],xmm7
+	movdqa XMMWORD ptr[rsp+16],xmm7
 	.savexmm128 xmm7,16	
-	movdqu XMMWORD ptr[rsp+32],xmm8
+	movdqa XMMWORD ptr[rsp+32],xmm8
 	.savexmm128 xmm8,32
-	movdqu XMMWORD ptr[rsp+48],xmm9
+	movdqa XMMWORD ptr[rsp+48],xmm9
 	.savexmm128 xmm9,48
-	movdqu XMMWORD ptr[rsp+64],xmm10
+	movdqa XMMWORD ptr[rsp+64],xmm10
 	.savexmm128 xmm10,64
 	.endprolog	
 	
@@ -1378,12 +1380,13 @@ Loop_A0_3:
 	mov rdi,rbx
 	rep stosd
 
-	movdqu xmm10,XMMWORD ptr[rsp+64]
-	movdqu xmm9,XMMWORD ptr[rsp+48]
-	movdqu xmm8,XMMWORD ptr[rsp+32]
-	movdqu xmm7,XMMWORD ptr[rsp+16]
-	movdqu xmm6,XMMWORD ptr[rsp]
-	add rsp,80	
+	movdqa xmm10,XMMWORD ptr[rsp+64]
+	movdqa xmm9,XMMWORD ptr[rsp+48]
+	movdqa xmm8,XMMWORD ptr[rsp+32]
+	movdqa xmm7,XMMWORD ptr[rsp+16]
+	movdqa xmm6,XMMWORD ptr[rsp]
+	add rsp,88
+
 	pop r15
 	pop r14
 	pop r13
@@ -1434,17 +1437,17 @@ w_map equ dword ptr[rbp+104]
 	.pushreg r14
 	push r15
 	.pushreg r15
-	sub rsp,80
-	.allocstack 80
-	vmovdqu XMMWORD ptr[rsp],xmm6
+	sub rsp,88
+	.allocstack 88
+	vmovdqa XMMWORD ptr[rsp],xmm6
 	.savexmm128 xmm6,0
-	vmovdqu XMMWORD ptr[rsp+16],xmm7
+	vmovdqa XMMWORD ptr[rsp+16],xmm7
 	.savexmm128 xmm7,16	
-	vmovdqu XMMWORD ptr[rsp+32],xmm8
+	vmovdqa XMMWORD ptr[rsp+32],xmm8
 	.savexmm128 xmm8,32
-	vmovdqu XMMWORD ptr[rsp+48],xmm9
+	vmovdqa XMMWORD ptr[rsp+48],xmm9
 	.savexmm128 xmm9,48
-	vmovdqu XMMWORD ptr[rsp+64],xmm10
+	vmovdqa XMMWORD ptr[rsp+64],xmm10
 	.savexmm128 xmm10,64
 	.endprolog	
 	
@@ -1613,12 +1616,13 @@ Loop_A0_3_AVX:
 	mov rdi,rbx
 	rep stosd
 
-	vmovdqu xmm10,XMMWORD ptr[rsp+64]
-	vmovdqu xmm9,XMMWORD ptr[rsp+48]
-	vmovdqu xmm8,XMMWORD ptr[rsp+32]
-	vmovdqu xmm7,XMMWORD ptr[rsp+16]
-	vmovdqu xmm6,XMMWORD ptr[rsp]
-	add rsp,80	
+	vmovdqa xmm10,XMMWORD ptr[rsp+64]
+	vmovdqa xmm9,XMMWORD ptr[rsp+48]
+	vmovdqa xmm8,XMMWORD ptr[rsp+32]
+	vmovdqa xmm7,XMMWORD ptr[rsp+16]
+	vmovdqa xmm6,XMMWORD ptr[rsp]
+	add rsp,88
+
 	pop r15
 	pop r14
 	pop r13
@@ -1921,17 +1925,17 @@ w_map equ dword ptr[rbp+104]
 	.pushreg r14
 	push r15
 	.pushreg r15
-	sub rsp,80
-	.allocstack 80
-	movdqu XMMWORD ptr[rsp],xmm6
+	sub rsp,88
+	.allocstack 88
+	movdqa XMMWORD ptr[rsp],xmm6
 	.savexmm128 xmm6,0
-	movdqu XMMWORD ptr[rsp+16],xmm7
+	movdqa XMMWORD ptr[rsp+16],xmm7
 	.savexmm128 xmm7,16	
-	movdqu XMMWORD ptr[rsp+32],xmm8
+	movdqa XMMWORD ptr[rsp+32],xmm8
 	.savexmm128 xmm8,32
-	movdqu XMMWORD ptr[rsp+48],xmm9
+	movdqa XMMWORD ptr[rsp+48],xmm9
 	.savexmm128 xmm9,48
-	movdqu XMMWORD ptr[rsp+64],xmm10
+	movdqa XMMWORD ptr[rsp+64],xmm10
 	.savexmm128 xmm10,64
 	.endprolog	
 
@@ -2140,12 +2144,13 @@ Loop_A0_2_1_a:
 	dec r14d
 	jnz Loop_A0_2_1_a	
 
-	movdqu xmm10,XMMWORD ptr[rsp+64]
-	movdqu xmm9,XMMWORD ptr[rsp+48]
-	movdqu xmm8,XMMWORD ptr[rsp+32]
-	movdqu xmm7,XMMWORD ptr[rsp+16]
-	movdqu xmm6,XMMWORD ptr[rsp]
-	add rsp,80		
+	movdqa xmm10,XMMWORD ptr[rsp+64]
+	movdqa xmm9,XMMWORD ptr[rsp+48]
+	movdqa xmm8,XMMWORD ptr[rsp+32]
+	movdqa xmm7,XMMWORD ptr[rsp+16]
+	movdqa xmm6,XMMWORD ptr[rsp]
+	add rsp,88
+
 	pop r15
 	pop r14
 	pop r13
@@ -2196,17 +2201,17 @@ w_map equ dword ptr[rbp+104]
 	.pushreg r14
 	push r15
 	.pushreg r15
-	sub rsp,80
-	.allocstack 80
-	vmovdqu XMMWORD ptr[rsp],xmm6
+	sub rsp,88
+	.allocstack 88
+	vmovdqa XMMWORD ptr[rsp],xmm6
 	.savexmm128 xmm6,0
-	vmovdqu XMMWORD ptr[rsp+16],xmm7
+	vmovdqa XMMWORD ptr[rsp+16],xmm7
 	.savexmm128 xmm7,16	
-	vmovdqu XMMWORD ptr[rsp+32],xmm8
+	vmovdqa XMMWORD ptr[rsp+32],xmm8
 	.savexmm128 xmm8,32
-	vmovdqu XMMWORD ptr[rsp+48],xmm9
+	vmovdqa XMMWORD ptr[rsp+48],xmm9
 	.savexmm128 xmm9,48
-	vmovdqu XMMWORD ptr[rsp+64],xmm10
+	vmovdqa XMMWORD ptr[rsp+64],xmm10
 	.savexmm128 xmm10,64
 	.endprolog	
 
@@ -2398,12 +2403,13 @@ Loop_A0_2_1_a_AVX:
 	dec r14d
 	jnz Loop_A0_2_1_a_AVX
 
-	vmovdqu xmm10,XMMWORD ptr[rsp+64]
-	vmovdqu xmm9,XMMWORD ptr[rsp+48]
-	vmovdqu xmm8,XMMWORD ptr[rsp+32]
-	vmovdqu xmm7,XMMWORD ptr[rsp+16]
-	vmovdqu xmm6,XMMWORD ptr[rsp]
-	add rsp,80		
+	vmovdqa xmm10,XMMWORD ptr[rsp+64]
+	vmovdqa xmm9,XMMWORD ptr[rsp+48]
+	vmovdqa xmm8,XMMWORD ptr[rsp+32]
+	vmovdqa xmm7,XMMWORD ptr[rsp+16]
+	vmovdqa xmm6,XMMWORD ptr[rsp]
+	add rsp,88
+
 	pop r15
 	pop r14
 	pop r13
@@ -2640,17 +2646,17 @@ w_map equ dword ptr[rbp+104]
 	.pushreg r14
 	push r15
 	.pushreg r15
-	sub rsp,80
-	.allocstack 80
-	movdqu XMMWORD ptr[rsp],xmm6
+	sub rsp,88
+	.allocstack 88
+	movdqa XMMWORD ptr[rsp],xmm6
 	.savexmm128 xmm6,0
-	movdqu XMMWORD ptr[rsp+16],xmm7
+	movdqa XMMWORD ptr[rsp+16],xmm7
 	.savexmm128 xmm7,16	
-	movdqu XMMWORD ptr[rsp+32],xmm8
+	movdqa XMMWORD ptr[rsp+32],xmm8
 	.savexmm128 xmm8,32
-	movdqu XMMWORD ptr[rsp+48],xmm9
+	movdqa XMMWORD ptr[rsp+48],xmm9
 	.savexmm128 xmm9,48
-	movdqu XMMWORD ptr[rsp+64],xmm10
+	movdqa XMMWORD ptr[rsp+64],xmm10
 	.savexmm128 xmm10,64
 	.endprolog	
 
@@ -2794,12 +2800,13 @@ Loop_A0_2_2:
 	dec r9d
 	jnz Loop_A0_1_2
 
-	movdqu xmm10,XMMWORD ptr[rsp+64]
-	movdqu xmm9,XMMWORD ptr[rsp+48]
-	movdqu xmm8,XMMWORD ptr[rsp+32]
-	movdqu xmm7,XMMWORD ptr[rsp+16]
-	movdqu xmm6,XMMWORD ptr[rsp]
-	add rsp,80			
+	movdqa xmm10,XMMWORD ptr[rsp+64]
+	movdqa xmm9,XMMWORD ptr[rsp+48]
+	movdqa xmm8,XMMWORD ptr[rsp+32]
+	movdqa xmm7,XMMWORD ptr[rsp+16]
+	movdqa xmm6,XMMWORD ptr[rsp]
+	add rsp,88
+
 	pop r15
 	pop r14
 	pop r13
@@ -2850,17 +2857,17 @@ w_map equ dword ptr[rbp+104]
 	.pushreg r14
 	push r15
 	.pushreg r15
-	sub rsp,80
-	.allocstack 80
-	vmovdqu XMMWORD ptr[rsp],xmm6
+	sub rsp,88
+	.allocstack 88
+	vmovdqa XMMWORD ptr[rsp],xmm6
 	.savexmm128 xmm6,0
-	vmovdqu XMMWORD ptr[rsp+16],xmm7
+	vmovdqa XMMWORD ptr[rsp+16],xmm7
 	.savexmm128 xmm7,16	
-	vmovdqu XMMWORD ptr[rsp+32],xmm8
+	vmovdqa XMMWORD ptr[rsp+32],xmm8
 	.savexmm128 xmm8,32
-	vmovdqu XMMWORD ptr[rsp+48],xmm9
+	vmovdqa XMMWORD ptr[rsp+48],xmm9
 	.savexmm128 xmm9,48
-	vmovdqu XMMWORD ptr[rsp+64],xmm10
+	vmovdqa XMMWORD ptr[rsp+64],xmm10
 	.savexmm128 xmm10,64
 	.endprolog	
 
@@ -2993,12 +3000,13 @@ Loop_A0_2_2_AVX:
 	dec r9d
 	jnz Loop_A0_1_2_AVX
 
-	vmovdqu xmm10,XMMWORD ptr[rsp+64]
-	vmovdqu xmm9,XMMWORD ptr[rsp+48]
-	vmovdqu xmm8,XMMWORD ptr[rsp+32]
-	vmovdqu xmm7,XMMWORD ptr[rsp+16]
-	vmovdqu xmm6,XMMWORD ptr[rsp]
-	add rsp,80			
+	vmovdqa xmm10,XMMWORD ptr[rsp+64]
+	vmovdqa xmm9,XMMWORD ptr[rsp+48]
+	vmovdqa xmm8,XMMWORD ptr[rsp+32]
+	vmovdqa xmm7,XMMWORD ptr[rsp+16]
+	vmovdqa xmm6,XMMWORD ptr[rsp]
+	add rsp,88
+
 	pop r15
 	pop r14
 	pop r13
@@ -3317,17 +3325,17 @@ w_map equ dword ptr[rbp+104]
 	.pushreg r14
 	push r15
 	.pushreg r15
-	sub rsp,80
-	.allocstack 80
-	movdqu XMMWORD ptr[rsp],xmm6
+	sub rsp,88
+	.allocstack 88
+	movdqa XMMWORD ptr[rsp],xmm6
 	.savexmm128 xmm6,0
-	movdqu XMMWORD ptr[rsp+16],xmm7
+	movdqa XMMWORD ptr[rsp+16],xmm7
 	.savexmm128 xmm7,16	
-	movdqu XMMWORD ptr[rsp+32],xmm8
+	movdqa XMMWORD ptr[rsp+32],xmm8
 	.savexmm128 xmm8,32
-	movdqu XMMWORD ptr[rsp+48],xmm9
+	movdqa XMMWORD ptr[rsp+48],xmm9
 	.savexmm128 xmm9,48
-	movdqu XMMWORD ptr[rsp+64],xmm10
+	movdqa XMMWORD ptr[rsp+64],xmm10
 	.savexmm128 xmm10,64
 	.endprolog	
 
@@ -3553,12 +3561,13 @@ Loop_A0_2_3_c:
 	mov ecx,r8d
 	rep movsq
 	
-	movdqu xmm10,XMMWORD ptr[rsp+64]
-	movdqu xmm9,XMMWORD ptr[rsp+48]
-	movdqu xmm8,XMMWORD ptr[rsp+32]
-	movdqu xmm7,XMMWORD ptr[rsp+16]
-	movdqu xmm6,XMMWORD ptr[rsp]
-	add rsp,80				
+	movdqa xmm10,XMMWORD ptr[rsp+64]
+	movdqa xmm9,XMMWORD ptr[rsp+48]
+	movdqa xmm8,XMMWORD ptr[rsp+32]
+	movdqa xmm7,XMMWORD ptr[rsp+16]
+	movdqa xmm6,XMMWORD ptr[rsp]
+	add rsp,88
+
 	pop r15
 	pop r14
 	pop r13
@@ -3609,17 +3618,17 @@ w_map equ dword ptr[rbp+104]
 	.pushreg r14
 	push r15
 	.pushreg r15
-	sub rsp,80
-	.allocstack 80
-	vmovdqu XMMWORD ptr[rsp],xmm6
+	sub rsp,88
+	.allocstack 88
+	vmovdqa XMMWORD ptr[rsp],xmm6
 	.savexmm128 xmm6,0
-	vmovdqu XMMWORD ptr[rsp+16],xmm7
+	vmovdqa XMMWORD ptr[rsp+16],xmm7
 	.savexmm128 xmm7,16	
-	vmovdqu XMMWORD ptr[rsp+32],xmm8
+	vmovdqa XMMWORD ptr[rsp+32],xmm8
 	.savexmm128 xmm8,32
-	vmovdqu XMMWORD ptr[rsp+48],xmm9
+	vmovdqa XMMWORD ptr[rsp+48],xmm9
 	.savexmm128 xmm9,48
-	vmovdqu XMMWORD ptr[rsp+64],xmm10
+	vmovdqa XMMWORD ptr[rsp+64],xmm10
 	.savexmm128 xmm10,64
 	.endprolog	
 
@@ -3827,12 +3836,13 @@ Loop_A0_2_3_c_AVX:
 	mov ecx,r8d
 	rep movsq
 	
-	vmovdqu xmm10,XMMWORD ptr[rsp+64]
-	vmovdqu xmm9,XMMWORD ptr[rsp+48]
-	vmovdqu xmm8,XMMWORD ptr[rsp+32]
-	vmovdqu xmm7,XMMWORD ptr[rsp+16]
-	vmovdqu xmm6,XMMWORD ptr[rsp]
-	add rsp,80				
+	vmovdqa xmm10,XMMWORD ptr[rsp+64]
+	vmovdqa xmm9,XMMWORD ptr[rsp+48]
+	vmovdqa xmm8,XMMWORD ptr[rsp+32]
+	vmovdqa xmm7,XMMWORD ptr[rsp+16]
+	vmovdqa xmm6,XMMWORD ptr[rsp]
+	add rsp,88
+
 	pop r15
 	pop r14
 	pop r13
