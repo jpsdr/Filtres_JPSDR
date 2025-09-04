@@ -48,7 +48,7 @@ protected:
 
 bool JPSDR_InterlaceMotion::Init()
 {
-	mem=NULL;
+	mem=nullptr;
 	return(true);
 }
 
@@ -60,7 +60,7 @@ uint32 JPSDR_InterlaceMotion::GetParams()
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+	VDub2_Enable=((fma!=nullptr) && (fma->fmpixmap!=nullptr));
 
 	switch(pxsrc.format)
 	{
@@ -312,7 +312,7 @@ void JPSDR_InterlaceMotion::Start()
 	SetImageData(image_data);
 
 	mem=(void *)malloc(image_data.src_size0_al);
-	if (mem==NULL)
+	if (mem==nullptr)
 	{
 		ff->ExceptOutOfMemory();
 		return;
@@ -330,5 +330,5 @@ void JPSDR_InterlaceMotion::End()
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_InterlaceMotion=
-VDXVideoFilterDefinition<JPSDR_InterlaceMotion>("JPSDR","InterlaceMotion v2.4.1",
+VDXVideoFilterDefinition<JPSDR_InterlaceMotion>("JPSDR","InterlaceMotion v2.4.2",
 	"Interlace inter frame after x2 frame rate.");

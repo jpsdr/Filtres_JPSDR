@@ -212,7 +212,7 @@ bool JPSDR_DeinterlaceII::Init()
 	SSE2_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_SSE2)!=0);
 
 	for (int16_t j=0; j<2; j++)
-		buffer_frame[j]=NULL;
+		buffer_frame[j]=nullptr;
 
 	for (int16_t j=0; j<=255; j++)
 	{
@@ -236,7 +236,7 @@ uint32 JPSDR_DeinterlaceII::GetParams()
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+	VDub2_Enable=((fma!=nullptr) && (fma->fmpixmap!=nullptr));
 
 	switch(fa->src.mpPixmapLayout->format)
 	{
@@ -870,7 +870,7 @@ void JPSDR_DeinterlaceII::Start()
 		buffer_frame[i]=(void *)malloc(image_data.src_size0);
 	ok=true;
 	for (i=0; i<2; i++)
-		ok=ok && (buffer_frame[i]!=NULL);
+		ok=ok && (buffer_frame[i]!=nullptr);
 	if (!ok)
 	{
 		for (i=1; i>=0; i--)
@@ -919,4 +919,4 @@ void JPSDR_DeinterlaceII::GetScriptString(char *buf, int maxlen)
 }
 
 extern VDXFilterDefinition2 filterDef_JPSDR_DeinterlaceII=
-VDXVideoFilterDefinition<JPSDR_DeinterlaceII>("JPSDR","Deinterlace II v2.4.2","Deinterlace Advanced. Lag 1");
+VDXVideoFilterDefinition<JPSDR_DeinterlaceII>("JPSDR","Deinterlace II v2.4.3","Deinterlace Advanced. Lag 1");

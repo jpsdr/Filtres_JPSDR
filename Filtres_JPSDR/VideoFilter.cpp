@@ -32,7 +32,7 @@ uint32 VDXVideoFilter::sAPIVersion;
 uint32 VDXVideoFilter::FilterModVersion;
 
 VDXVideoFilter::VDXVideoFilter() {
-	fma = NULL;
+	fma = nullptr;
 }
 
 VDXVideoFilter::~VDXVideoFilter() {
@@ -234,7 +234,7 @@ void VDXVideoFilter::End() {
 }
 
 bool VDXVideoFilter::Configure(VDXHWND hwnd) {
-	return hwnd != NULL;
+	return hwnd != nullptr;
 }
 
 void VDXVideoFilter::GetSettingString(char *buf, int maxlen) {

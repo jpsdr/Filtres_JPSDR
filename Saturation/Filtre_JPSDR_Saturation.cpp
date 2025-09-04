@@ -790,7 +790,7 @@ uint32 JPSDR_Saturation::GetParams()
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+	VDub2_Enable=((fma!=nullptr) && (fma->fmpixmap!=nullptr));
 
 	if (mData.hue==0)
 	{
@@ -1831,4 +1831,4 @@ void JPSDR_Saturation::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScriptV
 
 		
 extern VDXFilterDefinition2 filterDef_JPSDR_Saturation=
-VDXVideoFilterDefinition<JPSDR_Saturation>("JPSDR","Sat/Hue/Bright/Contr v4.5.3","[SSE2][AVX] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Saturation>("JPSDR","Sat/Hue/Bright/Contr v4.5.4","[SSE2][AVX] Optimised.");

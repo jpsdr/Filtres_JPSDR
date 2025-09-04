@@ -556,18 +556,18 @@ bool JPSDR_VHS_III::Init()
 
 	for (i=0; i<5; i++)
 	{
-		Y_filtre[i]=NULL;
-		U_filtre[i]=NULL;
-		V_filtre[i]=NULL;
+		Y_filtre[i]=nullptr;
+		U_filtre[i]=nullptr;
+		V_filtre[i]=nullptr;
 	}
-	Y_filtre_prec=NULL;
-	U_filtre_prec=NULL;
-	V_filtre_prec=NULL;
+	Y_filtre_prec=nullptr;
+	U_filtre_prec=nullptr;
+	V_filtre_prec=nullptr;
 	for (i=0; i<2; i++)
 	{
-		buffer_Y[i]=NULL;
-		buffer_U[i]=NULL;
-		buffer_V[i]=NULL;
+		buffer_Y[i]=nullptr;
+		buffer_U[i]=nullptr;
+		buffer_V[i]=nullptr;
 	}
 
 	a=0.3008;
@@ -600,7 +600,7 @@ uint32 JPSDR_VHS_III::GetParams()
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 	
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+	VDub2_Enable=((fma!=nullptr) && (fma->fmpixmap!=nullptr));
 
 	switch(pxsrc.format)
 	{
@@ -2902,20 +2902,20 @@ void JPSDR_VHS_III::Start()
 
 	for (i=0; i<5; i++)
 	{
-		ok = ok && (Y_filtre[i]!=NULL);
-		ok = ok && (U_filtre[i]!=NULL);
-		ok = ok && (V_filtre[i]!=NULL);
+		ok = ok && (Y_filtre[i]!=nullptr);
+		ok = ok && (U_filtre[i]!=nullptr);
+		ok = ok && (V_filtre[i]!=nullptr);
 	}
 
-	ok=ok && (Y_filtre_prec!=NULL);
-	ok=ok && (U_filtre_prec!=NULL);
-	ok=ok && (V_filtre_prec!=NULL);
+	ok=ok && (Y_filtre_prec!=nullptr);
+	ok=ok && (U_filtre_prec!=nullptr);
+	ok=ok && (V_filtre_prec!=nullptr);
 
 	for (i=0; i<2; i++)
 	{
-		ok=ok && (buffer_Y[i]!=NULL);
-		ok=ok && (buffer_U[i]!=NULL);
-		ok=ok && (buffer_V[i]!=NULL);
+		ok=ok && (buffer_Y[i]!=nullptr);
+		ok=ok && (buffer_U[i]!=nullptr);
+		ok=ok && (buffer_V[i]!=nullptr);
 	}
 
 	if (!ok)
@@ -3063,5 +3063,5 @@ void JPSDR_VHS_III::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_VHS_III=
-VDXVideoFilterDefinition<JPSDR_VHS_III>("JPSDR","VHS III v2.5.2","Filter to remove VHS noise.[ASM][SSE][SSE2] Optimised. Lag 2");
+VDXVideoFilterDefinition<JPSDR_VHS_III>("JPSDR","VHS III v2.5.3","Filter to remove VHS noise.[ASM][SSE][SSE2] Optimised. Lag 2");
 

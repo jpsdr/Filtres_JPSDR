@@ -306,7 +306,7 @@ uint8_t JPSDRVDXVideoFilter::GetColorMode(const VDXFBitmap* bitmap)
 {
 	uint8_t ColorMode;
 
-	if ((fma!=NULL) && (fma->fmpixmap!=NULL))
+	if ((fma!=nullptr) && (fma->fmpixmap!=nullptr))
 	{
 		FilterModPixmapInfo* info = fma->fmpixmap->GetPixmapInfo(bitmap->mpPixmap);
 
@@ -325,7 +325,7 @@ uint8_t JPSDRVDXVideoFilter::GetColorMode(const VDXFBitmap* bitmap)
 
 uint8_t JPSDRVDXVideoFilter::GetInterlaceMode(const VDXFBitmap* bitmap)
 {/*
-	if ((fma!=NULL) && (fma->fmpixmap!=NULL))
+	if ((fma!=nullptr) && (fma->fmpixmap!=nullptr))
 	{
 		FilterModPixmapInfo* info = fma->fmpixmap->GetPixmapInfo(bitmap->mpPixmap);
 
@@ -348,7 +348,7 @@ uint8_t JPSDRVDXVideoFilter::GetBitDepth(const VDXFBitmap* bitmap)
 	BitDepth=GetBitDepth(bitmap->mpPixmapLayout->format);
 	if (BitDepth!=32)
 	{
-		if ((fma!=NULL) && (fma->fmpixmap!=NULL))
+		if ((fma!=nullptr) && (fma->fmpixmap!=nullptr))
 		{
 			FilterModPixmapInfo* info = fma->fmpixmap->GetPixmapInfo(bitmap->mpPixmap);
 
@@ -380,7 +380,7 @@ bool JPSDRVDXVideoFilter::CheckFullRangeMode(const VDXFBitmap* bitmap)
 {
 	bool FullRange;
 
-	if ((fma!=NULL) && (fma->fmpixmap!=NULL))
+	if ((fma!=nullptr) && (fma->fmpixmap!=nullptr))
 	{
 		FilterModPixmapInfo* info = fma->fmpixmap->GetPixmapInfo(bitmap->mpPixmap);
 

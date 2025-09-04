@@ -834,30 +834,30 @@ void JPSDR_IVTC::InternalInit(void)
 	int16_t i,j;
 
 	resize_720x480=false;
-	buffer_resize_Y=NULL;
-	buffer_resize_U=NULL;
-	buffer_resize_V=NULL;
-	buffer_delta=NULL;
-	buffer_map=NULL;
-	buffer_2=NULL;
+	buffer_resize_Y=nullptr;
+	buffer_resize_U=nullptr;
+	buffer_resize_V=nullptr;
+	buffer_delta=nullptr;
+	buffer_map=nullptr;
+	buffer_2=nullptr;
 	for (i=0; i<2; i++)
 	{
-		buffer_frame[i]=NULL;
-		buffer_frameRGB32[i]=NULL;
+		buffer_frame[i]=nullptr;
+		buffer_frameRGB32[i]=nullptr;
 	}
 	for (i=0; i<Error_Fields_Size; i++)
-		error_Fields[i]=NULL;
+		error_Fields[i]=nullptr;
 	for (i=0; i<Data_Buffer_Size; i++)
 	{
-		buffer[i].frameRGB32=NULL;
-		buffer[i].frameRGB32Resize=NULL;
+		buffer[i].frameRGB32=nullptr;
+		buffer[i].frameRGB32Resize=nullptr;
 	}
 	for (j=0; j<MAX_MT_THREADS; j++)
 	{
 		for (i=0; i<Interlaced_Tab_Size; i++)
 		{
-			interlaced_tab_U[j][i]=NULL;
-			interlaced_tab_V[j][i]=NULL;
+			interlaced_tab_U[j][i]=nullptr;
+			interlaced_tab_V[j][i]=nullptr;
 		}
 	}
 	for (i=0; i<256; i++)
@@ -918,7 +918,7 @@ uint32 JPSDR_IVTC::GetParams()
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 	
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+	VDub2_Enable=((fma!=nullptr) && (fma->fmpixmap!=nullptr));
 
 	switch(pxsrc.format)
 	{
@@ -1656,21 +1656,21 @@ void JPSDR_IVTC::Start()
 	}
 
 
-	test=((buffer_delta!=NULL) && (buffer_map!=NULL) && (buffer_2!=NULL));
+	test=((buffer_delta!=nullptr) && (buffer_map!=nullptr) && (buffer_2!=nullptr));
 	for (i=0; i<2; i++)
 	{
-		test=test && (buffer_frame[i]!=NULL);
+		test=test && (buffer_frame[i]!=nullptr);
 		switch (image_data.video_mode)
 		{
 			case VMODE_YUYV :
 			case VMODE_UYVY :
 			case VMODE_PLANAR_YUV420 :
-				test=test && (buffer_frameRGB32[i]!=NULL);
+				test=test && (buffer_frameRGB32[i]!=nullptr);
 				break;
 		}
 	}
 	for (i=0; i<Error_Fields_Size; i++)
-		test=test && (error_Fields[i]!=NULL);
+		test=test && (error_Fields[i]!=nullptr);
 	for (i=0; i<Data_Buffer_Size; i++)
 	{
 		switch (image_data.video_mode)
@@ -1678,7 +1678,7 @@ void JPSDR_IVTC::Start()
 			case VMODE_YUYV :
 			case VMODE_UYVY :
 			case VMODE_PLANAR_YUV420 :
-				test=test && (buffer[i].frameRGB32!=NULL);
+				test=test && (buffer[i].frameRGB32!=nullptr);
 				break;
 		}
 	}
@@ -1686,18 +1686,18 @@ void JPSDR_IVTC::Start()
 	{
 		for (i=0; i<Interlaced_Tab_Size; i++)
 		{
-			test=test && (interlaced_tab_U[j][i]!=NULL);
-			test=test && (interlaced_tab_V[j][i]!=NULL);
+			test=test && (interlaced_tab_U[j][i]!=nullptr);
+			test=test && (interlaced_tab_V[j][i]!=nullptr);
 		}
 	}
 	if (resize_720x480)
 	{
-		test=test && (buffer_resize_Y!=NULL);
-		test=test && (buffer_resize_U!=NULL);
-		test=test && (buffer_resize_V!=NULL);
+		test=test && (buffer_resize_Y!=nullptr);
+		test=test && (buffer_resize_U!=nullptr);
+		test=test && (buffer_resize_V!=nullptr);
 		for (i=0; i<Data_Buffer_Size; i++)
 		{
-			test=test && (buffer[i].frameRGB32Resize!=NULL);
+			test=test && (buffer[i].frameRGB32Resize!=nullptr);
 		}
 	}
 
@@ -1794,9 +1794,9 @@ void JPSDR_IVTC::Start()
 		}
 	}
 
-/*	fic1=NULL;
-	fic2=NULL;
-	fic3=NULL;*/
+/*	fic1=nullptr;
+	fic2=nullptr;
+	fic3=nullptr;*/
 }
 
 
@@ -14202,4 +14202,4 @@ void JPSDR_IVTC::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_IVTC=
-VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.6.4","IVTC Filter. [SSE2][AVX] Optimised.");
+VDXVideoFilterDefinition<JPSDR_IVTC>("JPSDR","IVTC v6.6.5","IVTC Filter. [SSE2][AVX] Optimised.");

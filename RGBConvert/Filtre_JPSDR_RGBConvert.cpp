@@ -444,10 +444,10 @@ void JPSDR_RGBConvert::InternalInit(void)
 		MT_Thread[i].thread_Id=(uint8_t)i;
 		MT_Thread[i].pFunc=StaticThreadpoolF;
 	}
-	BufferU_444=NULL;
-	BufferV_444=NULL;
-	BufferU_422=NULL;
-	BufferV_422=NULL;
+	BufferU_444=nullptr;
+	BufferV_444=nullptr;
+	BufferU_422=nullptr;
+	BufferV_422=nullptr;
 
 	UserId=0;
 	if (poolInterface->GetThreadPoolInterfaceStatus())
@@ -3105,7 +3105,7 @@ uint32 JPSDR_RGBConvert::GetParams()
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+	VDub2_Enable=((fma!=nullptr) && (fma->fmpixmap!=nullptr));
 
 	switch(pxsrc.format)
 	{
@@ -3438,7 +3438,7 @@ void JPSDR_RGBConvert::Start()
 					modulo444=pitch444-line0;
 					BufferU_444=(uint8_t *)_aligned_malloc(pitch444*image_data.dst_h0,64);
 					BufferV_444=(uint8_t *)_aligned_malloc(pitch444*image_data.dst_h0,64);
-					if ((BufferU_444==NULL) || (BufferV_444==NULL))
+					if ((BufferU_444==nullptr) || (BufferV_444==nullptr))
 					{
 						ff->ExceptOutOfMemory();
 						return;
@@ -3453,7 +3453,7 @@ void JPSDR_RGBConvert::Start()
 					BufferV_444=(uint8_t *)_aligned_malloc(pitch444*image_data.dst_h0,64);
 					BufferU_422=(uint8_t *)_aligned_malloc(pitch422*image_data.dst_h0,64);
 					BufferV_422=(uint8_t *)_aligned_malloc(pitch422*image_data.dst_h0,64);
-					if ((BufferU_444==NULL) || (BufferV_444==NULL) || (BufferV_422==NULL) || (BufferV_422==NULL))
+					if ((BufferU_444==nullptr) || (BufferV_444==nullptr) || (BufferV_422==nullptr) || (BufferV_422==nullptr))
 					{
 						ff->ExceptOutOfMemory();
 						return;
@@ -3467,7 +3467,7 @@ void JPSDR_RGBConvert::Start()
 			modulo444=pitch444-line0;
 			BufferU_444=(uint8_t *)_aligned_malloc(pitch444*image_data.dst_h0,64);
 			BufferV_444=(uint8_t *)_aligned_malloc(pitch444*image_data.dst_h0,64);
-			if ((BufferU_444==NULL) || (BufferV_444==NULL))
+			if ((BufferU_444==nullptr) || (BufferV_444==nullptr))
 			{
 				ff->ExceptOutOfMemory();
 				return;
@@ -3482,7 +3482,7 @@ void JPSDR_RGBConvert::Start()
 			BufferV_444=(uint8_t *)_aligned_malloc(pitch444*image_data.dst_h0,64);
 			BufferU_422=(uint8_t *)_aligned_malloc(pitch422*image_data.dst_h0,64);
 			BufferV_422=(uint8_t *)_aligned_malloc(pitch422*image_data.dst_h0,64);
-			if ((BufferU_444==NULL) || (BufferV_444==NULL) || (BufferV_422==NULL) || (BufferV_422==NULL))
+			if ((BufferU_444==nullptr) || (BufferV_444==nullptr) || (BufferV_422==nullptr) || (BufferV_422==nullptr))
 			{
 				ff->ExceptOutOfMemory();
 				return;
@@ -4193,4 +4193,4 @@ void JPSDR_RGBConvert::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_RGBConvert=
-VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v3.2.3","RGB <-> YCbCr convertion with color matrix option.\n[SSE2][AVX][AVX2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_RGBConvert>("JPSDR","RGBConvert v3.2.4","RGB <-> YCbCr convertion with color matrix option.\n[SSE2][AVX][AVX2] Optimised.");

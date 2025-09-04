@@ -64,7 +64,7 @@ uint32 JPSDR_BlurMotion::GetParams()
 {
 	if (g_VFVAPIVersion<12) return FILTERPARAM_NOT_SUPPORTED;
 
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+	VDub2_Enable=((fma!=nullptr) && (fma->fmpixmap!=nullptr));
 
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
@@ -356,6 +356,6 @@ void JPSDR_BlurMotion::Start()
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_BlurMotion=
-VDXVideoFilterDefinition<JPSDR_BlurMotion>("JPSDR","Correct Frame Rate Blur v3.2.1",
+VDXVideoFilterDefinition<JPSDR_BlurMotion>("JPSDR","Correct Frame Rate Blur v3.2.2",
 	"Blur added frames after changing frame rate. [SSE2] Optimized.");
 

@@ -492,9 +492,9 @@ void JPSDR_ChromaShift::GetSettingString(char *buf, int maxlen)
 
 bool JPSDR_ChromaShift::Init()
 {
-	buffer_Y=NULL;
-	buffer_U=NULL;
-	buffer_V=NULL;
+	buffer_Y=nullptr;
+	buffer_U=nullptr;
+	buffer_V=nullptr;
 
 	return(true);
 }
@@ -1260,9 +1260,9 @@ void JPSDR_ChromaShift::Start()
 		case VMODE_BMP_RGBA :
 		case VMODE_YUYV :
 		case VMODE_UYVY :
-			ok=ok && (buffer_Y!=NULL);
-			ok=ok && (buffer_U!=NULL);
-			ok=ok && (buffer_V!=NULL);
+			ok=ok && (buffer_Y!=nullptr);
+			ok=ok && (buffer_U!=nullptr);
+			ok=ok && (buffer_V!=nullptr);
 			break;
 	}
 
@@ -1329,5 +1329,5 @@ void JPSDR_ChromaShift::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_ChromaShift=
-VDXVideoFilterDefinition<JPSDR_ChromaShift>("JPSDR","ChromaShift v2.2.1","Shift chrominace channels");
+VDXVideoFilterDefinition<JPSDR_ChromaShift>("JPSDR","ChromaShift v2.2.2","Shift chrominace channels");
 

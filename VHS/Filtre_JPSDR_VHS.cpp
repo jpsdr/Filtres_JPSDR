@@ -198,12 +198,12 @@ bool JPSDR_VHS::Init()
 	for (int16_t i=0; i<3; i++)
 	{
 		for (int16_t j=0; j<3; j++)
-			_x[i][j]=NULL;
+			_x[i][j]=nullptr;
 	}
 	for (int16_t i=0; i<3; i++)
-		_y[i]=NULL;
+		_y[i]=nullptr;
 	for (int16_t i=0; i<3; i++)
-		line_out[i]=NULL;
+		line_out[i]=nullptr;
 
 	return(true);
 }
@@ -216,7 +216,7 @@ uint32 JPSDR_VHS::GetParams()
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 	
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+	VDub2_Enable=((fma!=nullptr) && (fma->fmpixmap!=nullptr));
 
 	switch(pxsrc.format)
 	{
@@ -650,11 +650,11 @@ void JPSDR_VHS::Start()
 	ok=true;
 	for (i=0; i<3; i++)
 		for (j=0; j<3; j++)
-			ok=ok && (_x[i][j]!=NULL);
+			ok=ok && (_x[i][j]!=nullptr);
 	for (i=0; i<3; i++)
-		ok=ok && (_y[i]!=NULL);
+		ok=ok && (_y[i]!=nullptr);
 	for (i=0; i<3; i++)
-		ok=ok && (line_out[i]!=NULL);
+		ok=ok && (line_out[i]!=nullptr);
 	if (!ok)
 	{
 		for (i=2; i>=0; i--)
@@ -724,5 +724,5 @@ void JPSDR_VHS::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_VHS=
-VDXVideoFilterDefinition<JPSDR_VHS>("JPSDR","VHS I v2.4.2","Filter to remove VHS noise.");
+VDXVideoFilterDefinition<JPSDR_VHS>("JPSDR","VHS I v2.4.3","Filter to remove VHS noise.");
 

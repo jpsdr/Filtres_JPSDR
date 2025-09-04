@@ -229,7 +229,7 @@ uint32 JPSDR_IVTC_Manual::GetParams()
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+	VDub2_Enable=((fma!=nullptr) && (fma->fmpixmap!=nullptr));
 
 	switch(pxsrc.format)
 	{
@@ -468,7 +468,7 @@ void JPSDR_IVTC_Manual::Run()
 
 /*	if (pxsrc.mFrameNumber==0)
 	{
-		if (fic!=NULL) fclose(fic);
+		if (fic!=nullptr) fclose(fic);
 
 		fic=fopen("D:\\Test.txt","wt");
 	}*/
@@ -827,8 +827,8 @@ void JPSDR_IVTC_Manual::Start()
 	last_offset=2;
 	first_offset=2;
 	ivtc_index=0;
-/*	if (fic!=NULL) fclose(fic);
-	fic=NULL;*/
+/*	if (fic!=nullptr) fclose(fic);
+	fic=nullptr;*/
 
 }
 
@@ -878,5 +878,5 @@ void JPSDR_IVTC_Manual::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_IVTC_Manual=
-VDXVideoFilterDefinition<JPSDR_IVTC_Manual>("JPSDR","IVTC Manual v3.2.2","IVTC Filter (Manual). [ASM] Optimised.");
+VDXVideoFilterDefinition<JPSDR_IVTC_Manual>("JPSDR","IVTC Manual v3.2.3","IVTC Filter (Manual). [ASM] Optimised.");
 

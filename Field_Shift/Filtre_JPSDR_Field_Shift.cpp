@@ -282,7 +282,7 @@ uint32 JPSDR_Field_Shift::GetParams()
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+	VDub2_Enable=((fma!=nullptr) && (fma->fmpixmap!=nullptr));
 
 	switch(pxsrc.format)
 	{
@@ -1137,5 +1137,5 @@ void JPSDR_Field_Shift::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_Field_Shift=
-VDXVideoFilterDefinition<JPSDR_Field_Shift>("JPSDR","FieldShift v3.2.2","Shift Field from previous and current frame.");
+VDXVideoFilterDefinition<JPSDR_Field_Shift>("JPSDR","FieldShift v3.2.3","Shift Field from previous and current frame.");
 

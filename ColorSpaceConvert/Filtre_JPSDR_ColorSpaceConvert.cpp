@@ -949,7 +949,7 @@ uint32 JPSDR_ColorSpaceConvert::GetParams()
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+	VDub2_Enable=((fma!=nullptr) && (fma->fmpixmap!=nullptr));
 
 	switch(pxsrc.format)
 	{
@@ -2645,4 +2645,4 @@ void JPSDR_ColorSpaceConvert::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_ColorSpaceConvert=
-VDXVideoFilterDefinition<JPSDR_ColorSpaceConvert>("JPSDR","ColorSpaceConvert v2.6.4","YCbCr color space convertion.\n[SSE2][AVX] Optimised.");
+VDXVideoFilterDefinition<JPSDR_ColorSpaceConvert>("JPSDR","ColorSpaceConvert v2.6.5","YCbCr color space convertion.\n[SSE2][AVX] Optimised.");

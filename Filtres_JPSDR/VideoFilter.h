@@ -198,7 +198,7 @@ struct VDXFilterDefinition2: public VDXFilterDefinition{
 	FilterModDefinition filterMod;
 
 	VDXFilterDefinition2() {
-		fm = NULL;
+		fm = nullptr;
 	}
 
 	VDXFilterDefinition2(const VDXFilterDefinition2& a)
@@ -213,21 +213,21 @@ template<class T>
 class VDXVideoFilterDefinition : public VDXFilterDefinition2 {
 public:
 	VDXVideoFilterDefinition(const char *pszAuthor, const char *pszName, const char *pszDescription) {
-		_next			= NULL;
-		_prev			= NULL;
-		_module			= NULL;
+		_next			= nullptr;
+		_prev			= nullptr;
+		_module			= nullptr;
 
 		name			= pszName;
 		desc			= pszDescription;
 		maker			= pszAuthor;
-		private_data	= NULL;
+		private_data	= nullptr;
 		inst_data_size	= sizeof(T) + sizeof(VDXVideoFilter *);
 
 		initProc		= FilterInit;
 		deinitProc		= T::FilterDeinit;
 		runProc			= T::FilterRun;
 		paramProc		= T::FilterParam;
-		configProc		= sizeof(VDXVideoFilterConfigureOverloadTest(&T::Configure)) > 1 ? T::FilterConfig : NULL;
+		configProc		= sizeof(VDXVideoFilterConfigureOverloadTest(&T::Configure)) > 1 ? T::FilterConfig : nullptr;
 		stringProc		= T::FilterString;
 		startProc		= T::FilterStart;
 		endProc			= T::FilterEnd;
@@ -241,18 +241,18 @@ public:
 		copyProc		= FilterCopy;
 		copyProc2		= FilterCopy2;
 
-		prefetchProc	= sizeof(VDXVideoFilterPrefetchOverloadTest(&T::Prefetch)) > 1 ? T::FilterPrefetch : NULL;
-		prefetchProc2	= sizeof(VDXVideoFilterPrefetch2OverloadTest(&T::Prefetch2)) > 1 || sizeof(VDXVideoFilterPrefetchOverloadTest(&T::Prefetch)) > 1 ? T::FilterPrefetch2 : NULL;
+		prefetchProc	= sizeof(VDXVideoFilterPrefetchOverloadTest(&T::Prefetch)) > 1 ? T::FilterPrefetch : nullptr;
+		prefetchProc2	= sizeof(VDXVideoFilterPrefetch2OverloadTest(&T::Prefetch2)) > 1 || sizeof(VDXVideoFilterPrefetchOverloadTest(&T::Prefetch)) > 1 ? T::FilterPrefetch2 : nullptr;
 
 		eventProc		= T::FilterEvent;
 
-		accelRunProc	= sizeof(VDXVideoFilterAccelRunOverloadTest(&T::Prefetch)) > 1 ? T::FilterAccelRun : NULL;
+		accelRunProc	= sizeof(VDXVideoFilterAccelRunOverloadTest(&T::Prefetch)) > 1 ? T::FilterAccelRun : nullptr;
 
 		mSourceCountLowMinus1 = T::kMinInputCount - 1;
 		mSourceCountHighMinus1 = T::kMaxInputCount - 1;
 
-		mpStaticAboutProc = T::StaticAbout == VDXVideoFilter::StaticAbout ? NULL : VDXStaticAboutConfigureAdapter<T::StaticAbout>;
-		mpStaticConfigureProc = T::StaticConfigure == VDXVideoFilter::StaticConfigure ? NULL :VDXStaticAboutConfigureAdapter<T::StaticConfigure>;
+		mpStaticAboutProc = T::StaticAbout == VDXVideoFilter::StaticAbout ? nullptr : VDXStaticAboutConfigureAdapter<T::StaticAbout>;
+		mpStaticConfigureProc = T::StaticConfigure == VDXVideoFilter::StaticConfigure ? nullptr :VDXStaticAboutConfigureAdapter<T::StaticConfigure>;
 
 		filterMod.activateProc = T::FilterModActivate;
 		filterMod.paramProc = T::FilterModParam;

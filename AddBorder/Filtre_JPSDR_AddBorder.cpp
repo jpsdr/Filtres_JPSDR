@@ -202,7 +202,7 @@ uint32 JPSDR_AddBorder::GetParams()
 {
 	if (g_VFVAPIVersion<12) return FILTERPARAM_NOT_SUPPORTED;
 	
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+	VDub2_Enable=((fma!=nullptr) && (fma->fmpixmap!=nullptr));
 	top_Y=mData.top;
 	bottom_Y=mData.bottom;
 	left_Y=mData.left;
@@ -707,5 +707,5 @@ void JPSDR_AddBorder::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_AddBorder=
-VDXVideoFilterDefinition<JPSDR_AddBorder>("JPSDR","AddBorder v1.4.3","Add boder to picture.");
+VDXVideoFilterDefinition<JPSDR_AddBorder>("JPSDR","AddBorder v1.4.4","Add boder to picture.");
 

@@ -213,7 +213,7 @@ uint32 JPSDR_CCC::GetParams()
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 	
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+	VDub2_Enable=((fma!=nullptr) && (fma->fmpixmap!=nullptr));
 
 	switch(pxsrc.format)
 	{
@@ -1182,5 +1182,5 @@ void JPSDR_CCC::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_CCC=
-VDXVideoFilterDefinition<JPSDR_CCC>("JPSDR","Cross-Conversion Correction v1.4.2","Restore interlaced 720->1080 upscale. SSE optimized.");
+VDXVideoFilterDefinition<JPSDR_CCC>("JPSDR","Cross-Conversion Correction v1.4.3","Restore interlaced 720->1080 upscale. SSE optimized.");
 

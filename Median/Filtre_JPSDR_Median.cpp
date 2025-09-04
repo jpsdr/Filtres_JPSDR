@@ -429,8 +429,8 @@ void JPSDR_Median::InternalInit(void)
 
 	for (i=0; i<3; i++)
 	{
-		buffer_in[i]=NULL;
-		buffer_out[i]=NULL;
+		buffer_in[i]=nullptr;
+		buffer_out[i]=nullptr;
 	}
 
 	StaticThreadpoolF=StaticThreadpool;
@@ -441,7 +441,7 @@ void JPSDR_Median::InternalInit(void)
 		MT_Thread[i].f_process=0;
 		MT_Thread[i].thread_Id=(uint8_t)i;
 		MT_Thread[i].pFunc=StaticThreadpoolF;
-		Tdata[i]=NULL;
+		Tdata[i]=nullptr;
 	}
 
 	UserId=0;
@@ -768,7 +768,7 @@ uint32 JPSDR_Median::GetParams()
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 	bool swap_buffer;
 	
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+	VDub2_Enable=((fma!=nullptr) && (fma->fmpixmap!=nullptr));
 
 	switch(pxsrc.format)
 	{
@@ -2064,13 +2064,13 @@ void JPSDR_Median::Start()
 	{
 		if (buffer_size[i]>0)
 			buffer_in[i]=(uint8_t *)_aligned_malloc(buffer_size[i]*sizeof(uint8_t),ALIGN_SIZE);
-		else buffer_in[i]=NULL;
+		else buffer_in[i]=nullptr;
 	}
 	for (i=0; i<3; i++)
 	{
 		if (buffer_size[i]>0)
 			buffer_out[i]=(uint8_t *)_aligned_malloc(buffer_size[i]*sizeof(uint8_t),ALIGN_SIZE);
-		else buffer_out[i]=NULL;
+		else buffer_out[i]=nullptr;
 	}
 
 	if (total_cpu==0)
@@ -2152,11 +2152,11 @@ void JPSDR_Median::Start()
 
 	ok=true;
 	for (i=0; i<3; i++)
-		if (buffer_size[i]>0) ok=ok && (buffer_in[i]!=NULL);
+		if (buffer_size[i]>0) ok=ok && (buffer_in[i]!=nullptr);
 	for (i=0; i<3; i++)
-		if (buffer_size[i]>0) ok=ok && (buffer_out[i]!=NULL);
+		if (buffer_size[i]>0) ok=ok && (buffer_out[i]!=nullptr);
 	for (i=0; i<threads_number; i++)
-		ok=ok && (Tdata[i]!=NULL);
+		ok=ok && (Tdata[i]!=nullptr);
 
 	if (!ok)
 	{
@@ -2232,4 +2232,4 @@ void JPSDR_Median::GetScriptString(char *buf, int maxlen)
 }
 
 extern VDXFilterDefinition2 filterDef_JPSDR_Median=
-VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v3.5.3","Median filter with threshold.");
+VDXVideoFilterDefinition<JPSDR_Median>("JPSDR","Median v3.5.4","Median filter with threshold.");

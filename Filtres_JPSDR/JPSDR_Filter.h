@@ -207,7 +207,7 @@ typedef struct _Image_Data
 		video_mode=VMODE_NONE; src_video_mode=VMODE_NONE; dst_video_mode=VMODE_NONE;
 		alpha_planar=false; src_alpha_planar=false; dst_alpha_planar=false;
 
-		src_plane0=NULL; src_plane1=NULL; src_plane2=NULL; src_plane3=NULL;
+		src_plane0=nullptr; src_plane1=nullptr; src_plane2=nullptr; src_plane3=nullptr;
 		src_w0=0; src_w1=0; src_w2=0; src_w3=0;
 		src_h0=0; src_h1=0; src_h2=0; src_h3=0;
 		src_line0=0; src_line1=0; src_line2=0; src_line3=0;
@@ -220,7 +220,7 @@ typedef struct _Image_Data
 		src_full_mode=false;
 		src_color_matrix=MATRIX_NONE; src_interlaced=IMODE_NONE; src_bits_pixel=8;
 
-		dst_plane0=NULL; dst_plane1=NULL; dst_plane2=NULL; dst_plane3=NULL;
+		dst_plane0=nullptr; dst_plane1=nullptr; dst_plane2=nullptr; dst_plane3=nullptr;
 		dst_w0=0; dst_w1=0; dst_w2=0; dst_w3=0;
 		dst_h0=0; dst_h1=0; dst_h2=0; dst_h3=0;
 		dst_line0=0; dst_line1=0; dst_line2=0; dst_line3=0;
@@ -236,12 +236,12 @@ typedef struct _Image_Data
 
 } Image_Data;
 
-#define myfree(ptr) if (ptr!=NULL) { free(ptr); ptr=NULL;}
-#define myCloseHandle(ptr) if (ptr!=NULL) { CloseHandle(ptr); ptr=NULL;}
+#define myfree(ptr) if (ptr!=nullptr) { free(ptr); ptr=nullptr;}
+#define myCloseHandle(ptr) if (ptr!=nullptr) { CloseHandle(ptr); ptr=nullptr;}
 
 #define ALIGN_SIZE 64
 #define ALIGN_SHIFT 6
-#define my_aligned_free(ptr) if (ptr!=NULL) { _aligned_free(ptr); ptr=NULL;}
+#define my_aligned_free(ptr) if (ptr!=nullptr) { _aligned_free(ptr); ptr=nullptr;}
 
 /*
 #define abs64(x) (x<0)?-x:x

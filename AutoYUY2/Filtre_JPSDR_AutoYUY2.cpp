@@ -372,13 +372,13 @@ void JPSDR_AutoYUY2::InternalInit()
 	{
 		for (i=0; i<Interlaced_Tab_Size; i++)
 		{
-			interlaced_tab_U[j][i]=NULL;
-			interlaced_tab_V[j][i]=NULL;
+			interlaced_tab_U[j][i]=nullptr;
+			interlaced_tab_V[j][i]=nullptr;
 		}
 	}
 
-	lookup_Upscale16=NULL;
-	lookup_Upscale8=NULL;
+	lookup_Upscale16=nullptr;
+	lookup_Upscale8=nullptr;
 
 	StaticThreadpoolF=StaticThreadpool;
 
@@ -425,7 +425,7 @@ uint32 JPSDR_AutoYUY2::GetParams()
 	bool full_mode,bt709;
 	uint8_t bit_pixel;
 
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+	VDub2_Enable=((fma!=nullptr) && (fma->fmpixmap!=nullptr));
 
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
@@ -748,7 +748,7 @@ void JPSDR_AutoYUY2::Start()
 	lookup_Upscale8=(uint16_t *)malloc(3*256*sizeof(uint16_t));
 	lookup_Upscale16=(uint32_t *)malloc(3*vmax*sizeof(uint32_t));
 
-	if ((lookup_Upscale8==NULL) || (lookup_Upscale16==NULL))
+	if ((lookup_Upscale8==nullptr) || (lookup_Upscale16==nullptr))
 	{
 		ff->ExceptOutOfMemory();
 		return;
@@ -770,8 +770,8 @@ void JPSDR_AutoYUY2::Start()
 		{
 			for (i=0; i<Interlaced_Tab_Size; i++)
 			{
-				ok=ok && (interlaced_tab_U[j][i]!=NULL);
-				ok=ok && (interlaced_tab_V[j][i]!=NULL);
+				ok=ok && (interlaced_tab_U[j][i]!=nullptr);
+				ok=ok && (interlaced_tab_V[j][i]!=nullptr);
 			}
 		}
 
@@ -9259,5 +9259,5 @@ void JPSDR_AutoYUY2::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_AutoYUY2=
-VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","AutoYUY2 v4.1.3","Convert Planar4:2:0 to 4:2:2 modes. [SSE2][AVX][AVX2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_AutoYUY2>("JPSDR","AutoYUY2 v4.1.4","Convert Planar4:2:0 to 4:2:2 modes. [SSE2][AVX][AVX2] Optimised.");
 

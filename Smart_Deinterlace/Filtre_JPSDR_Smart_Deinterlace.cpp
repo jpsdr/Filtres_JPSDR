@@ -202,9 +202,9 @@ VDXVF_END_SCRIPT_METHODS()
 bool JPSDR_Smart_Deinterlace::Init()
 {
 	Integer_SSE_Enable=((ff->getCPUFlags() & CPUF_SUPPORTS_INTEGER_SSE)!=0);
-	buffer_delta=NULL;
-	buffer_map=NULL;
-	buffer_2=NULL;
+	buffer_delta=nullptr;
+	buffer_map=nullptr;
+	buffer_2=nullptr;
 
 	return(true);
 }
@@ -218,7 +218,7 @@ uint32 JPSDR_Smart_Deinterlace::GetParams()
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 	
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+	VDub2_Enable=((fma!=nullptr) && (fma->fmpixmap!=nullptr));
 
 	switch(pxsrc.format)
 	{
@@ -603,7 +603,7 @@ void JPSDR_Smart_Deinterlace::Start()
 	buffer_map=(uint8_t *)malloc(image_data.src_h0*w_map*sizeof(uint8_t));
 	buffer_2=(uint8_t *)malloc(image_data.src_h0*w_map*sizeof(uint8_t));
 
-	test=((buffer_delta!=NULL) && (buffer_map!=NULL) && (buffer_2!=NULL));
+	test=((buffer_delta!=nullptr) && (buffer_map!=nullptr) && (buffer_2!=nullptr));
 
 	if (!test)
 	{
@@ -647,6 +647,6 @@ void JPSDR_Smart_Deinterlace::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_Smart_Deinterlace=
-VDXVideoFilterDefinition<JPSDR_Smart_Deinterlace>("JPSDR","SmartDeinterlace v2.4.2","Smart Deinterlace (Based D. Grafh). [MMX][SSE] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Smart_Deinterlace>("JPSDR","SmartDeinterlace v2.4.3","Smart Deinterlace (Based D. Grafh). [MMX][SSE] Optimised.");
 
 

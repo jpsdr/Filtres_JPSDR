@@ -179,7 +179,7 @@ uint32 JPSDR_WideScreen::GetParams()
 	const VDXPixmapLayout& pxsrc = *fa->src.mpPixmapLayout;
 	VDXPixmapLayout& pxdst = *fa->dst.mpPixmapLayout;
 	
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+	VDub2_Enable=((fma!=nullptr) && (fma->fmpixmap!=nullptr));
 
 	switch(pxsrc.format)
 	{
@@ -351,6 +351,6 @@ void JPSDR_WideScreen::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_WideScreen=
-VDXVideoFilterDefinition<JPSDR_WideScreen>("JPSDR","WideSreen v2.4.2","Black WideScreen and left subtitles.[ASM] Optimised.");
+VDXVideoFilterDefinition<JPSDR_WideScreen>("JPSDR","WideSreen v2.4.3","Black WideScreen and left subtitles.[ASM] Optimised.");
 
 

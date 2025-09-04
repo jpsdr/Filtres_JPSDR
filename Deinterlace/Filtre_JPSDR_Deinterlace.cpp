@@ -546,9 +546,9 @@ void JPSDR_Deinterlace::InternalInit(void)
 {
 	int16_t i,j;	
 
-	buffer0=NULL;
-	buffer1=NULL;
-	buffer2=NULL;
+	buffer0=nullptr;
+	buffer1=nullptr;
+	buffer2=nullptr;
 	buffer0_pitch=0;
 	buffer0_modulo=0;
 	buffer1_pitch=0;
@@ -559,7 +559,7 @@ void JPSDR_Deinterlace::InternalInit(void)
 	{
 		for (j=0; j<2; j++)
 		{
-			buffer[i][j]=NULL;
+			buffer[i][j]=nullptr;
 		}
 	}
 
@@ -932,7 +932,7 @@ uint32 JPSDR_Deinterlace::GetParams()
 	const VDXPixmapLayoutAlpha& pxsrc = (const VDXPixmapLayoutAlpha&)*fa->src.mpPixmapLayout;
 	VDXPixmapLayoutAlpha& pxdst = (VDXPixmapLayoutAlpha&)*fa->dst.mpPixmapLayout;
 
-	VDub2_Enable=((fma!=NULL) && (fma->fmpixmap!=NULL));
+	VDub2_Enable=((fma!=nullptr) && (fma->fmpixmap!=nullptr));
 
 	switch(pxsrc.format)
 	{
@@ -1321,7 +1321,7 @@ void JPSDR_Deinterlace::Start()
 			case VMODE_UYVY :
 			case VMODE_Y :
 				buffer[0][i]=(void *)_aligned_malloc(image_data.src_pitch0_al,ALIGN_SIZE);
-				buff_ok=buff_ok && (buffer[0][i]!=NULL);
+				buff_ok=buff_ok && (buffer[0][i]!=nullptr);
 				break;
 			case VMODE_PLANAR_YUV444 :
 			case VMODE_PLANAR_YUV422 :
@@ -1329,11 +1329,11 @@ void JPSDR_Deinterlace::Start()
 			case VMODE_PLANAR_YUV411 :
 			case VMODE_PLANAR_YUV410 :
 				buffer[0][i]=(void *)_aligned_malloc(image_data.src_pitch0_al,ALIGN_SIZE);
-				buff_ok=buff_ok && (buffer[0][i]!=NULL);
+				buff_ok=buff_ok && (buffer[0][i]!=nullptr);
 				buffer[1][i]=(void *)_aligned_malloc(image_data.src_pitch1_al,ALIGN_SIZE);
-				buff_ok=buff_ok && (buffer[1][i]!=NULL);
+				buff_ok=buff_ok && (buffer[1][i]!=nullptr);
 				buffer[2][i]=(void *)_aligned_malloc(image_data.src_pitch2_al,ALIGN_SIZE);
-				buff_ok=buff_ok && (buffer[2][i]!=NULL);
+				buff_ok=buff_ok && (buffer[2][i]!=nullptr);
 				break;
 		}
 	}
@@ -1354,17 +1354,17 @@ void JPSDR_Deinterlace::Start()
 			buffer1_pitch=image_data.src_pitch1_al;
 			buffer1_modulo=image_data.src_modulo1_al;
 		}
-		else buffer1=NULL;
+		else buffer1=nullptr;
 		if (image_data.src_size2!=0)
 		{
 			buffer2=(void *)_aligned_malloc(image_data.src_size2_al,ALIGN_SIZE);
 			buffer2_pitch=image_data.src_pitch2_al;
 			buffer2_modulo=image_data.src_modulo2_al;
 		}
-		else buffer2=NULL;
-		buff_ok=(buffer0!=NULL);
-		if (image_data.src_size1!=0) buff_ok=buff_ok && (buffer1!=NULL);
-		if (image_data.src_size2!=0) buff_ok=buff_ok && (buffer2!=NULL);
+		else buffer2=nullptr;
+		buff_ok=(buffer0!=nullptr);
+		if (image_data.src_size1!=0) buff_ok=buff_ok && (buffer1!=nullptr);
+		if (image_data.src_size2!=0) buff_ok=buff_ok && (buffer2!=nullptr);
 		if (!buff_ok)
 		{
 			ff->ExceptOutOfMemory();
@@ -5071,7 +5071,7 @@ void JPSDR_Deinterlace::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScript
 
 		
 extern VDXFilterDefinition2 filterDef_JPSDR_Deinterlace=
-VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v6.1.3","Deinterlace blending frames. [SSE2][AVX][AVX2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v6.1.4","Deinterlace blending frames. [SSE2][AVX][AVX2] Optimised.");
 
 
 
