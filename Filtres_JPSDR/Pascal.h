@@ -1,3 +1,5 @@
+#ifndef __PASCAL_H
+
 #define __PASCAL_H
 
 #ifndef _INC_MATH
@@ -6,3 +8,5 @@
 
 #define trunc(x) (signed long) floor(x)
 #define round(x) (signed long) floor(x+0.5)
+
+#endif
