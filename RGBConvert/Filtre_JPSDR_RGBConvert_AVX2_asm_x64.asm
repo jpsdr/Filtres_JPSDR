@@ -36,10 +36,8 @@ JPSDR_RGBConvert_Convert_Planar420_to_Planar422_8_AVX2 proc public frame
 	vpcmpeqb ymm3,ymm3,ymm3
 	
 	mov r10,rcx				; r10=src1
-	xor rcx,rcx
 	xor rax,rax	
 	mov ecx,r9d	
-	mov r11,32
 	
 Convert_Planar420_to_Planar422_8_AVX2_1:
 	vmovdqa ymm0,YMMWORD ptr[r10+rax]
@@ -51,8 +49,9 @@ Convert_Planar420_to_Planar422_8_AVX2_1:
 	vpavgb ymm2,ymm2,ymm0
 	
 	vmovdqa YMMWORD ptr[r8+rax],ymm2
-	add rax,r11
-	loop Convert_Planar420_to_Planar422_8_AVX2_1
+	add rax,32
+	dec ecx
+	jnz short Convert_Planar420_to_Planar422_8_AVX2_1
 	
 	vzeroupper
 	
@@ -74,10 +73,8 @@ JPSDR_RGBConvert_Convert_Planar420_to_Planar422_16_AVX2 proc public frame
 	vpcmpeqb ymm3,ymm3,ymm3
 	
 	mov r10,rcx				; r10=src1
-	xor rcx,rcx
 	xor rax,rax	
 	mov ecx,r9d	
-	mov r11,32
 	
 Convert_Planar420_to_Planar422_16_AVX2_1:
 	vmovdqa ymm0,YMMWORD ptr[r10+rax]
@@ -89,8 +86,9 @@ Convert_Planar420_to_Planar422_16_AVX2_1:
 	vpavgw ymm2,ymm2,ymm0
 	
 	vmovdqa YMMWORD ptr[r8+rax],ymm2
-	add rax,r11
-	loop Convert_Planar420_to_Planar422_16_AVX2_1
+	add rax,32
+	dec ecx
+	jnz short Convert_Planar420_to_Planar422_16_AVX2_1
 	
 	vzeroupper
 	
@@ -116,18 +114,14 @@ dst_pitch equ qword ptr[rbp+64]
 	mov rbp,rsp
 	push rsi
 	.pushreg rsi
-	push rbx
-	.pushreg rbx
 	push r12
 	.pushreg r12
 	.endprolog		
 	
 	mov rsi,rcx
 	mov r10d,h
-	mov rbx,32
 	mov r11,src_pitch2
 	mov r12,dst_pitch
-	xor rcx,rcx
 
 Convert_Planar422_to_Planar420_8_AVX2_1:
 	xor rax,rax
@@ -138,8 +132,9 @@ Convert_Planar422_to_Planar420_8_AVX2_2:
 	vpavgb ymm0,ymm0,YMMWORD ptr[rdx+rax]
 	
 	vmovdqa YMMWORD ptr[r8+rax],ymm0
-	add rax,rbx
-	loop Convert_Planar422_to_Planar420_8_AVX2_2
+	add rax,32
+	dec ecx
+	jnz short Convert_Planar422_to_Planar420_8_AVX2_2
 	
 	add rsi,r11
 	add rdx,r11
@@ -150,7 +145,6 @@ Convert_Planar422_to_Planar420_8_AVX2_2:
 	vzeroupper
 
 	pop r12
-	pop rbx
 	pop rsi
 	pop rbp
 
@@ -176,18 +170,14 @@ dst_pitch equ qword ptr[rbp+64]
 	mov rbp,rsp
 	push rsi
 	.pushreg rsi
-	push rbx
-	.pushreg rbx
 	push r12
 	.pushreg r12
 	.endprolog		
 	
 	mov rsi,rcx
 	mov r10d,h
-	mov rbx,32
 	mov r11,src_pitch2
 	mov r12,dst_pitch
-	xor rcx,rcx
 
 Convert_Planar422_to_Planar420_16_AVX2_1:
 	xor rax,rax
@@ -198,8 +188,9 @@ Convert_Planar422_to_Planar420_16_AVX2_2:
 	vpavgw ymm0,ymm0,YMMWORD ptr[rdx+rax]
 	
 	vmovdqa YMMWORD ptr[r8+rax],ymm0
-	add rax,rbx
-	loop Convert_Planar422_to_Planar420_16_AVX2_2
+	add rax,32
+	dec ecx
+	jnz short Convert_Planar422_to_Planar420_16_AVX2_2
 	
 	add rsi,r11
 	add rdx,r11
@@ -210,13 +201,11 @@ Convert_Planar422_to_Planar420_16_AVX2_2:
 	vzeroupper
 	
 	pop r12
-	pop rbx
 	pop rsi
 	pop rbp
 
 	ret
 
 JPSDR_RGBConvert_Convert_Planar422_to_Planar420_16_AVX2 endp
-
 
 end
