@@ -579,7 +579,7 @@ void JPSDR_Deinterlace::InternalInit(void)
 		total_cpu=poolInterface->GetThreadNumber(0,true);
 
 		if (total_cpu>1)
-			threadpoolAllocated=poolInterface->AllocateThreads(total_cpu,0,0,true,false,true,HighestThreadLevel,-1);
+			threadpoolAllocated=poolInterface->AllocateThreads(total_cpu,0,0,true,false,false,HighestThreadLevel,-1);
 		else threadpoolAllocated=false;
 		if (threadpoolAllocated) poolInterface->GetUserId(UserId);
 	}
@@ -5071,7 +5071,7 @@ void JPSDR_Deinterlace::ScriptConfig(IVDXScriptInterpreter *isi, const VDXScript
 
 		
 extern VDXFilterDefinition2 filterDef_JPSDR_Deinterlace=
-VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v6.1.4","Deinterlace blending frames. [SSE2][AVX][AVX2] Optimised.");
+VDXVideoFilterDefinition<JPSDR_Deinterlace>("JPSDR","Deinterlace v6.1.5","Deinterlace blending frames. [SSE2][AVX][AVX2] Optimised.");
 
 
 

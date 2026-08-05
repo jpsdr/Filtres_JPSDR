@@ -102,7 +102,6 @@ public:
 };
 
 
-
 typedef struct _MT_Data_Info
 {
 	void *src1,*src2,*src3;
@@ -117,7 +116,6 @@ typedef struct _MT_Data_Info
 	int32_t dst_UV_h_min,dst_UV_h_max,dst_UV_w,dst_UV_w_32;
 	bool top,bottom;
 } MT_Data_Info;
-
 
 
 JPSDR_ColorSpaceConvertData::JPSDR_ColorSpaceConvertData(void)
@@ -419,7 +417,7 @@ void JPSDR_ColorSpaceConvert::InternalInit(void)
 		total_cpu=poolInterface->GetThreadNumber(0,true);
 
 		if (total_cpu>1)
-			threadpoolAllocated=poolInterface->AllocateThreads(total_cpu,0,0,true,false,true,HighestThreadLevel,-1);
+			threadpoolAllocated=poolInterface->AllocateThreads(total_cpu,0,0,true,false,false,HighestThreadLevel,-1);
 		else threadpoolAllocated=false;
 		if (threadpoolAllocated) poolInterface->GetUserId(UserId);
 	}
@@ -2645,4 +2643,4 @@ void JPSDR_ColorSpaceConvert::GetScriptString(char *buf, int maxlen)
 
 
 extern VDXFilterDefinition2 filterDef_JPSDR_ColorSpaceConvert=
-VDXVideoFilterDefinition<JPSDR_ColorSpaceConvert>("JPSDR","ColorSpaceConvert v2.6.5","YCbCr color space convertion.\n[SSE2][AVX] Optimised.");
+VDXVideoFilterDefinition<JPSDR_ColorSpaceConvert>("JPSDR","ColorSpaceConvert v2.6.6","YCbCr color space convertion.\n[SSE2][AVX] Optimised.");
