@@ -56,7 +56,6 @@ dst_pitch equ qword ptr[rbp+64]
 	mov r10d,h
 	mov r11,src_pitch
 	mov r12,dst_pitch
-	xor rcx,rcx
 
 loop_1:
 	mov ecx,r9d
@@ -82,7 +81,8 @@ loop_2:
 	mov dword ptr[r8+4*rax],ebx
 	
 	inc rax
-	loop loop_2
+	dec ecx
+	jnz short loop_2
 	
 	add rsi,r11
 	add rdi,r11
@@ -137,7 +137,6 @@ dst_pitch equ qword ptr[rbp+64]
 	mov r10d,h
 	mov r11,src_pitch
 	mov r12,dst_pitch
-	xor rcx,rcx
 
 loop_1_i:
 	mov ecx,r9d
@@ -169,7 +168,8 @@ loop_2_i:
 	mov dword ptr[r8+4*rax],ebx
 	
 	inc rax
-	loop loop_2_i
+	dec ecx
+	jnz short loop_2_i
 	
 	add rsi,r11
 	add rdi,r11
@@ -224,7 +224,6 @@ dst_pitch equ qword ptr[rbp+64]
 	mov r10d,h
 	mov r11,src_pitch
 	mov r12,dst_pitch
-	xor rcx,rcx
 
 loop_1_48:
 	mov ecx,r9d
@@ -250,7 +249,8 @@ loop_2_48:
 	mov qword ptr[r8+8*rax],rbx
 	
 	inc rax
-	loop loop_2_48
+	dec ecx
+	jnz short loop_2_48
 	
 	add rsi,r11
 	add rdi,r11
@@ -305,7 +305,6 @@ dst_pitch equ qword ptr[rbp+64]
 	mov r10d,h
 	mov r11,src_pitch
 	mov r12,dst_pitch
-	xor rcx,rcx
 
 loop_1_i_64:
 	mov ecx,r9d
@@ -337,7 +336,8 @@ loop_2_i_64:
 	mov qword ptr[r8+8*rax],rbx
 	
 	inc rax
-	loop loop_2_i_64
+	dec ecx
+	jnz short loop_2_i_64
 	
 	add rsi,r11
 	add rdi,r11
@@ -390,7 +390,6 @@ dst_pitch equ qword ptr[rbp+64]
 	mov r10d,h
 	mov r11,src_pitch
 	mov r12,dst_pitch
-	xor rcx,rcx
 
 loop_1_j:
 	mov ecx,r9d
@@ -403,7 +402,8 @@ loop_2_j:
 	mov byte ptr[r8+rax],bl
 	
 	inc rax
-	loop loop_2_j
+	dec ecx
+	jnz short loop_2_j
 	
 	add rsi,r11
 	add rdi,r11
@@ -454,7 +454,6 @@ dst_pitch equ qword ptr[rbp+64]
 	mov r10d,h
 	mov r11,src_pitch
 	mov r12,dst_pitch
-	xor rcx,rcx
 
 loop_1_j_16:
 	mov ecx,r9d
@@ -467,7 +466,8 @@ loop_2_j_16:
 	mov word ptr[r8+2*rax],bx
 	
 	inc rax
-	loop loop_2_j_16
+	dec ecx
+	jnz short loop_2_j_16
 	
 	add rsi,r11
 	add rdi,r11
@@ -507,8 +507,6 @@ dst_pitch equ qword ptr[rbp+64]
 	.pushreg rdi
 	push rsi
 	.pushreg rsi	
-	push rbx
-	.pushreg rbx
 	.endprolog
 	
 	mov rsi,rcx
@@ -516,8 +514,6 @@ dst_pitch equ qword ptr[rbp+64]
 	mov r10d,h
 	mov r11,src_pitch
 	mov rdx,dst_pitch
-	mov rbx,16
-	xor rcx,rcx
 
 loop_1_e:
 	xor rax,rax
@@ -526,8 +522,9 @@ loop_2_e:
 	movdqa xmm0,XMMWORD ptr[rsi+rax]
 	pavgb xmm0,XMMWORD ptr[rdi+rax]
 	movdqa XMMWORD ptr[r8+rax],xmm0
-	add rax,rbx
-	loop loop_2_e
+	add rax,16
+	dec ecx
+	jnz short loop_2_e
 
 	add rsi,r11
 	add rdi,r11
@@ -536,7 +533,6 @@ loop_2_e:
 	jnz short loop_1_e
 	
 fin_e:
-	pop rbx
 	pop rsi
 	pop rdi
 	pop rbp
@@ -566,8 +562,6 @@ dst_pitch equ qword ptr[rbp+64]
 	.pushreg rdi
 	push rsi
 	.pushreg rsi	
-	push rbx
-	.pushreg rbx
 	.endprolog
 	
 	mov rsi,rcx
@@ -575,8 +569,6 @@ dst_pitch equ qword ptr[rbp+64]
 	mov r10d,h
 	mov r11,src_pitch
 	mov rdx,dst_pitch
-	mov rbx,16
-	xor rcx,rcx
 
 loop_1_e_16:
 	xor rax,rax
@@ -585,8 +577,9 @@ loop_2_e_16:
 	movdqa xmm0,XMMWORD ptr[rsi+rax]
 	pavgw xmm0,XMMWORD ptr[rdi+rax]
 	movdqa XMMWORD ptr[r8+rax],xmm0
-	add rax,rbx
-	loop loop_2_e_16
+	add rax,16
+	dec ecx
+	jnz short loop_2_e_16
 
 	add rsi,r11
 	add rdi,r11
@@ -595,7 +588,6 @@ loop_2_e_16:
 	jnz short loop_1_e_16
 	
 fin_e_16:
-	pop rbx
 	pop rsi
 	pop rdi
 	pop rbp
@@ -625,8 +617,6 @@ dst_pitch equ qword ptr[rbp+64]
 	.pushreg rdi
 	push rsi
 	.pushreg rsi	
-	push rbx
-	.pushreg rbx
 	.endprolog
 	
 	mov rsi,rcx
@@ -634,8 +624,6 @@ dst_pitch equ qword ptr[rbp+64]
 	mov r10d,h
 	mov r11,src_pitch
 	mov rdx,dst_pitch
-	mov rbx,16
-	xor rcx,rcx
 
 loop_1_e_AVX:
 	xor rax,rax
@@ -644,8 +632,9 @@ loop_2_e_AVX:
 	vmovdqa xmm0,XMMWORD ptr[rsi+rax]
 	vpavgb xmm0,xmm0,XMMWORD ptr[rdi+rax]
 	vmovdqa XMMWORD ptr[r8+rax],xmm0
-	add rax,rbx
-	loop loop_2_e_AVX
+	add rax,16
+	dec ecx
+	jnz short loop_2_e_AVX
 
 	add rsi,r11
 	add rdi,r11
@@ -654,7 +643,6 @@ loop_2_e_AVX:
 	jnz short loop_1_e_AVX
 	
 fin_e_AVX:
-	pop rbx
 	pop rsi
 	pop rdi
 	pop rbp
@@ -684,8 +672,6 @@ dst_pitch equ qword ptr[rbp+64]
 	.pushreg rdi
 	push rsi
 	.pushreg rsi	
-	push rbx
-	.pushreg rbx
 	.endprolog
 	
 	mov rsi,rcx
@@ -693,8 +679,6 @@ dst_pitch equ qword ptr[rbp+64]
 	mov r10d,h
 	mov r11,src_pitch
 	mov rdx,dst_pitch
-	mov rbx,16
-	xor rcx,rcx
 
 loop_1_e_AVX_16:
 	xor rax,rax
@@ -703,8 +687,9 @@ loop_2_e_AVX_16:
 	vmovdqa xmm0,XMMWORD ptr[rsi+rax]
 	vpavgw xmm0,xmm0,XMMWORD ptr[rdi+rax]
 	vmovdqa XMMWORD ptr[r8+rax],xmm0
-	add rax,rbx
-	loop loop_2_e_AVX_16
+	add rax,16
+	dec ecx
+	jnz short loop_2_e_AVX_16
 
 	add rsi,r11
 	add rdi,r11
@@ -713,7 +698,6 @@ loop_2_e_AVX_16:
 	jnz short loop_1_e_AVX_16
 	
 fin_e_AVX_16:
-	pop rbx
 	pop rsi
 	pop rdi
 	pop rbp
@@ -744,13 +728,10 @@ dst_pitch equ qword ptr[rbp+56]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	.endprolog
 
 	mov r10,src_pitch
 	mov r11,dst_pitch
-	mov r12,16
 	mov rbx,rcx	
 	mov rsi,rcx
 	mov rdi,rdx
@@ -758,16 +739,15 @@ dst_pitch equ qword ptr[rbp+56]
 	mov rdx,rsi
 	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
 	
-	xor rcx,rcx
-		
 	xor rax,rax
 	mov ecx,r8d	
 loop_0_g_2:
 	movdqa xmm0,XMMWORD ptr[rbx+rax]
 	pavgb xmm0,XMMWORD ptr[rsi+rax]
 	movdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_0_g_2
+	add rax,16
+	dec ecx
+	jnz short loop_0_g_2
 
 	add rdi,r11
 
@@ -779,8 +759,9 @@ loop_2_g_2:
 	pavgb xmm0,XMMWORD ptr[rdx+rax]
 	pavgb xmm0,XMMWORD ptr[rsi+rax]
 	movdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_2_g_2
+	add rax,16
+	dec ecx
+	jnz short loop_2_g_2
 	
 	add rsi,r10
 	add rbx,r10
@@ -795,11 +776,11 @@ loop_3_g_2:
 	movdqa xmm0,XMMWORD ptr[rbx+rax]
 	pavgb xmm0,XMMWORD ptr[rsi+rax]
 	movdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_3_g_2
+	add rax,16
+	dec ecx
+	jnz short loop_3_g_2
 	
 fin_g_2:
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -831,13 +812,10 @@ dst_pitch equ qword ptr[rbp+56]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	.endprolog
 
 	mov r10,src_pitch
 	mov r11,dst_pitch
-	mov r12,16
 	mov rbx,rcx	
 	mov rsi,rcx
 	mov rdi,rdx
@@ -845,16 +823,15 @@ dst_pitch equ qword ptr[rbp+56]
 	mov rdx,rsi
 	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
 	
-	xor rcx,rcx
-		
 	xor rax,rax
 	mov ecx,r8d	
 loop_0_g_2_16:
 	movdqa xmm0,XMMWORD ptr[rbx+rax]
 	pavgw xmm0,XMMWORD ptr[rsi+rax]
 	movdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_0_g_2_16
+	add rax,16
+	dec ecx
+	jnz short loop_0_g_2_16
 
 	add rdi,r11
 
@@ -866,8 +843,9 @@ loop_2_g_2_16:
 	pavgw xmm0,XMMWORD ptr[rdx+rax]
 	pavgw xmm0,XMMWORD ptr[rsi+rax]
 	movdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_2_g_2_16
+	add rax,16
+	dec ecx
+	jnz short loop_2_g_2_16
 	
 	add rsi,r10
 	add rbx,r10
@@ -882,11 +860,11 @@ loop_3_g_2_16:
 	movdqa xmm0,XMMWORD ptr[rbx+rax]
 	pavgw xmm0,XMMWORD ptr[rsi+rax]
 	movdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_3_g_2_16
+	add rax,16
+	dec ecx
+	jnz short loop_3_g_2_16
 	
 fin_g_2_16:
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -918,13 +896,10 @@ dst_pitch equ qword ptr[rbp+56]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	.endprolog
 
 	mov r10,src_pitch
 	mov r11,dst_pitch
-	mov r12,16
 	mov rbx,rcx	
 	mov rsi,rcx
 	mov rdi,rdx
@@ -932,16 +907,15 @@ dst_pitch equ qword ptr[rbp+56]
 	mov rdx,rsi
 	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
 	
-	xor rcx,rcx
-		
 	xor rax,rax
 	mov ecx,r8d	
 loop_0_g_2_AVX:
 	vmovdqa xmm0,XMMWORD ptr[rbx+rax]
 	vpavgb xmm0,xmm0,XMMWORD ptr[rsi+rax]
 	vmovdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_0_g_2_AVX
+	add rax,16
+	dec ecx
+	jnz short loop_0_g_2_AVX
 
 	add rdi,r11
 
@@ -953,8 +927,9 @@ loop_2_g_2_AVX:
 	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
 	vpavgb xmm0,xmm0,XMMWORD ptr[rsi+rax]
 	vmovdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_2_g_2_AVX
+	add rax,16
+	dec ecx
+	jnz short loop_2_g_2_AVX
 	
 	add rsi,r10
 	add rbx,r10
@@ -969,11 +944,11 @@ loop_3_g_2_AVX:
 	vmovdqa xmm0,XMMWORD ptr[rbx+rax]
 	vpavgb xmm0,xmm0,XMMWORD ptr[rsi+rax]
 	vmovdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_3_g_2_AVX
+	add rax,16
+	dec ecx
+	jnz short loop_3_g_2_AVX
 	
 fin_g_2_AVX:
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -1005,13 +980,10 @@ dst_pitch equ qword ptr[rbp+56]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	.endprolog
 
 	mov r10,src_pitch
 	mov r11,dst_pitch
-	mov r12,16
 	mov rbx,rcx	
 	mov rsi,rcx
 	mov rdi,rdx
@@ -1019,16 +991,15 @@ dst_pitch equ qword ptr[rbp+56]
 	mov rdx,rsi
 	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
 	
-	xor rcx,rcx
-		
 	xor rax,rax
 	mov ecx,r8d	
 loop_0_g_2_AVX_16:
 	vmovdqa xmm0,XMMWORD ptr[rbx+rax]
 	vpavgw xmm0,xmm0,XMMWORD ptr[rsi+rax]
 	vmovdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_0_g_2_AVX_16
+	add rax,16
+	dec ecx
+	jnz short loop_0_g_2_AVX_16
 
 	add rdi,r11
 
@@ -1040,8 +1011,9 @@ loop_2_g_2_AVX_16:
 	vpavgw xmm0,xmm0,XMMWORD ptr[rdx+rax]
 	vpavgw xmm0,xmm0,XMMWORD ptr[rsi+rax]
 	vmovdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_2_g_2_AVX_16
+	add rax,16
+	dec ecx
+	jnz short loop_2_g_2_AVX_16
 	
 	add rsi,r10
 	add rbx,r10
@@ -1056,11 +1028,11 @@ loop_3_g_2_AVX_16:
 	vmovdqa xmm0,XMMWORD ptr[rbx+rax]
 	vpavgw xmm0,xmm0,XMMWORD ptr[rsi+rax]
 	vmovdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_3_g_2_AVX_16
+	add rax,16
+	dec ecx
+	jnz short loop_3_g_2_AVX_16
 	
 fin_g_2_AVX_16:
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -1092,30 +1064,26 @@ dst_pitch equ qword ptr[rbp+56]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	.endprolog
 
 	mov r10,src_pitch
 	mov r11,dst_pitch
-	mov r12,16
 	mov rbx,rcx	
 	mov rsi,rcx
 	mov rdi,rdx
 	add rsi,r10
 	mov rdx,rsi
 	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
-	
-	xor rcx,rcx
-		
+
 	xor rax,rax
 	mov ecx,r8d	
 loop_0_g_2_1:
 	movdqa xmm0,XMMWORD ptr[rbx+rax]
 	pavgb xmm0,XMMWORD ptr[rsi+rax]
 	movdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_0_g_2_1
+	add rax,16
+	dec ecx
+	jnz short loop_0_g_2_1
 
 	add rdi,r11
 
@@ -1127,8 +1095,9 @@ loop_2_g_2_1:
 	pavgb xmm0,XMMWORD ptr[rdx+rax]
 	pavgb xmm0,XMMWORD ptr[rsi+rax]
 	movdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_2_g_2_1
+	add rax,16
+	dec ecx
+	jnz short loop_2_g_2_1
 
 	add rsi,r10
 	add rbx,r10
@@ -1138,7 +1107,6 @@ loop_2_g_2_1:
 	jnz short loop_1_g_2_1
 
 fin_g_2_1:
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -1170,13 +1138,10 @@ dst_pitch equ qword ptr[rbp+56]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	.endprolog
 
 	mov r10,src_pitch
 	mov r11,dst_pitch
-	mov r12,16
 	mov rbx,rcx	
 	mov rsi,rcx
 	mov rdi,rdx
@@ -1184,16 +1149,15 @@ dst_pitch equ qword ptr[rbp+56]
 	mov rdx,rsi
 	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
 	
-	xor rcx,rcx
-		
 	xor rax,rax
 	mov ecx,r8d	
 loop_0_g_2_1_16:
 	movdqa xmm0,XMMWORD ptr[rbx+rax]
 	pavgw xmm0,XMMWORD ptr[rsi+rax]
 	movdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_0_g_2_1_16
+	add rax,16
+	dec ecx
+	jnz short loop_0_g_2_1_16
 
 	add rdi,r11
 
@@ -1205,8 +1169,9 @@ loop_2_g_2_1_16:
 	pavgw xmm0,XMMWORD ptr[rdx+rax]
 	pavgw xmm0,XMMWORD ptr[rsi+rax]
 	movdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_2_g_2_1_16
+	add rax,16
+	dec ecx
+	jnz short loop_2_g_2_1_16
 
 	add rsi,r10
 	add rbx,r10
@@ -1216,7 +1181,6 @@ loop_2_g_2_1_16:
 	jnz short loop_1_g_2_1_16
 
 fin_g_2_1_16:
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -1248,30 +1212,26 @@ dst_pitch equ qword ptr[rbp+56]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	.endprolog
 
 	mov r10,src_pitch
 	mov r11,dst_pitch
-	mov r12,16
 	mov rbx,rcx	
 	mov rsi,rcx
 	mov rdi,rdx
 	add rsi,r10
 	mov rdx,rsi
 	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
-	
-	xor rcx,rcx
-		
+
 	xor rax,rax
 	mov ecx,r8d	
 loop_0_g_2_1_AVX:
 	vmovdqa xmm0,XMMWORD ptr[rbx+rax]
 	vpavgb xmm0,xmm0,XMMWORD ptr[rsi+rax]
 	vmovdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_0_g_2_1_AVX
+	add rax,16
+	dec ecx
+	jnz short loop_0_g_2_1_AVX
 
 	add rdi,r11
 
@@ -1283,8 +1243,9 @@ loop_2_g_2_1_AVX:
 	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
 	vpavgb xmm0,xmm0,XMMWORD ptr[rsi+rax]
 	vmovdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_2_g_2_1_AVX
+	add rax,16
+	dec ecx
+	jnz short loop_2_g_2_1_AVX
 
 	add rsi,r10
 	add rbx,r10
@@ -1294,7 +1255,6 @@ loop_2_g_2_1_AVX:
 	jnz short loop_1_g_2_1_AVX
 
 fin_g_2_1_AVX:
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -1326,30 +1286,26 @@ dst_pitch equ qword ptr[rbp+56]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	.endprolog
 
 	mov r10,src_pitch
 	mov r11,dst_pitch
-	mov r12,16
 	mov rbx,rcx	
 	mov rsi,rcx
 	mov rdi,rdx
 	add rsi,r10
 	mov rdx,rsi
 	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
-	
-	xor rcx,rcx
-		
+
 	xor rax,rax
 	mov ecx,r8d	
 loop_0_g_2_1_AVX_16:
 	vmovdqa xmm0,XMMWORD ptr[rbx+rax]
 	vpavgw xmm0,xmm0,XMMWORD ptr[rsi+rax]
 	vmovdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_0_g_2_1_AVX_16
+	add rax,16
+	dec ecx
+	jnz short loop_0_g_2_1_AVX_16
 
 	add rdi,r11
 
@@ -1361,8 +1317,9 @@ loop_2_g_2_1_AVX_16:
 	vpavgw xmm0,xmm0,XMMWORD ptr[rdx+rax]
 	vpavgw xmm0,xmm0,XMMWORD ptr[rsi+rax]
 	vmovdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_2_g_2_1_AVX_16
+	add rax,16
+	dec ecx
+	jnz short loop_2_g_2_1_AVX_16
 
 	add rsi,r10
 	add rbx,r10
@@ -1372,7 +1329,6 @@ loop_2_g_2_1_AVX_16:
 	jnz short loop_1_g_2_1_AVX_16
 
 fin_g_2_1_AVX_16:
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -1404,13 +1360,10 @@ dst_pitch equ qword ptr[rbp+56]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	.endprolog
 
 	mov r10,src_pitch
 	mov r11,dst_pitch
-	mov r12,16
 	mov rbx,rcx	
 	mov rsi,rcx
 	mov rdi,rdx
@@ -1418,8 +1371,6 @@ dst_pitch equ qword ptr[rbp+56]
 	mov rdx,rsi
 	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
 	
-	xor rcx,rcx
-		
 loop_1_g_2_2:
 	xor rax,rax
 	mov ecx,r8d
@@ -1428,8 +1379,9 @@ loop_2_g_2_2:
 	pavgb xmm0,XMMWORD ptr[rdx+rax]
 	pavgb xmm0,XMMWORD ptr[rsi+rax]
 	movdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_2_g_2_2
+	add rax,16
+	dec ecx
+	jnz short loop_2_g_2_2
 	
 	add rsi,r10
 	add rbx,r10
@@ -1439,7 +1391,6 @@ loop_2_g_2_2:
 	jnz short loop_1_g_2_2
 	
 fin_g_2_2:
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -1471,22 +1422,17 @@ dst_pitch equ qword ptr[rbp+56]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	.endprolog
 
 	mov r10,src_pitch
 	mov r11,dst_pitch
-	mov r12,16
 	mov rbx,rcx	
 	mov rsi,rcx
 	mov rdi,rdx
 	add rsi,r10
 	mov rdx,rsi
 	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
-	
-	xor rcx,rcx
-		
+
 loop_1_g_2_2_16:
 	xor rax,rax
 	mov ecx,r8d
@@ -1495,8 +1441,9 @@ loop_2_g_2_2_16:
 	pavgw xmm0,XMMWORD ptr[rdx+rax]
 	pavgw xmm0,XMMWORD ptr[rsi+rax]
 	movdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_2_g_2_2_16
+	add rax,16
+	dec ecx
+	jnz short loop_2_g_2_2_16
 	
 	add rsi,r10
 	add rbx,r10
@@ -1506,7 +1453,6 @@ loop_2_g_2_2_16:
 	jnz short loop_1_g_2_2_16
 	
 fin_g_2_2_16:
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -1538,13 +1484,10 @@ dst_pitch equ qword ptr[rbp+56]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	.endprolog
 
 	mov r10,src_pitch
 	mov r11,dst_pitch
-	mov r12,16
 	mov rbx,rcx	
 	mov rsi,rcx
 	mov rdi,rdx
@@ -1552,8 +1495,6 @@ dst_pitch equ qword ptr[rbp+56]
 	mov rdx,rsi
 	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
 	
-	xor rcx,rcx
-		
 loop_1_g_2_2_AVX:
 	xor rax,rax
 	mov ecx,r8d
@@ -1562,8 +1503,9 @@ loop_2_g_2_2_AVX:
 	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
 	vpavgb xmm0,xmm0,XMMWORD ptr[rsi+rax]
 	vmovdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_2_g_2_2_AVX
+	add rax,16
+	dec ecx
+	jnz short loop_2_g_2_2_AVX
 	
 	add rsi,r10
 	add rbx,r10
@@ -1573,7 +1515,6 @@ loop_2_g_2_2_AVX:
 	jnz short loop_1_g_2_2_AVX
 	
 fin_g_2_2_AVX:
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -1605,22 +1546,17 @@ dst_pitch equ qword ptr[rbp+56]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	.endprolog
 
 	mov r10,src_pitch
 	mov r11,dst_pitch
-	mov r12,16
 	mov rbx,rcx	
 	mov rsi,rcx
 	mov rdi,rdx
 	add rsi,r10
 	mov rdx,rsi
 	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
-	
-	xor rcx,rcx
-		
+
 loop_1_g_2_2_AVX_16:
 	xor rax,rax
 	mov ecx,r8d
@@ -1629,8 +1565,9 @@ loop_2_g_2_2_AVX_16:
 	vpavgw xmm0,xmm0,XMMWORD ptr[rdx+rax]
 	vpavgw xmm0,xmm0,XMMWORD ptr[rsi+rax]
 	vmovdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_2_g_2_2_AVX_16
+	add rax,16
+	dec ecx
+	jnz short loop_2_g_2_2_AVX_16
 	
 	add rsi,r10
 	add rbx,r10
@@ -1640,7 +1577,6 @@ loop_2_g_2_2_AVX_16:
 	jnz short loop_1_g_2_2_AVX_16
 	
 fin_g_2_2_AVX_16:
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -1672,22 +1608,17 @@ dst_pitch equ qword ptr[rbp+56]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	.endprolog
 
 	mov r10,src_pitch
 	mov r11,dst_pitch
-	mov r12,16
 	mov rbx,rcx	
 	mov rsi,rcx
 	mov rdi,rdx
 	add rsi,r10
 	mov rdx,rsi
 	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
-	
-	xor rcx,rcx
-		
+
 loop_1_g_2_3:
 	xor rax,rax
 	mov ecx,r8d
@@ -1696,8 +1627,9 @@ loop_2_g_2_3:
 	pavgb xmm0,XMMWORD ptr[rdx+rax]
 	pavgb xmm0,XMMWORD ptr[rsi+rax]
 	movdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_2_g_2_3
+	add rax,16
+	dec ecx
+	jnz short loop_2_g_2_3
 
 	add rsi,r10
 	add rbx,r10
@@ -1712,11 +1644,11 @@ loop_3_g_2_3:
 	movdqa xmm0,XMMWORD ptr[rbx+rax]
 	pavgb xmm0,XMMWORD ptr[rsi+rax]
 	movdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_3_g_2_3
+	add rax,16
+	dec ecx
+	jnz short loop_3_g_2_3
 	
 fin_g_2_3:
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -1748,22 +1680,17 @@ dst_pitch equ qword ptr[rbp+56]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	.endprolog
 
 	mov r10,src_pitch
 	mov r11,dst_pitch
-	mov r12,16
 	mov rbx,rcx	
 	mov rsi,rcx
 	mov rdi,rdx
 	add rsi,r10
 	mov rdx,rsi
 	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
-	
-	xor rcx,rcx
-		
+
 loop_1_g_2_3_16:
 	xor rax,rax
 	mov ecx,r8d
@@ -1772,8 +1699,9 @@ loop_2_g_2_3_16:
 	pavgw xmm0,XMMWORD ptr[rdx+rax]
 	pavgw xmm0,XMMWORD ptr[rsi+rax]
 	movdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_2_g_2_3_16
+	add rax,16
+	dec ecx
+	jnz short loop_2_g_2_3_16
 
 	add rsi,r10
 	add rbx,r10
@@ -1788,11 +1716,11 @@ loop_3_g_2_3_16:
 	movdqa xmm0,XMMWORD ptr[rbx+rax]
 	pavgw xmm0,XMMWORD ptr[rsi+rax]
 	movdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_3_g_2_3_16
+	add rax,16
+	dec ecx
+	jnz short loop_3_g_2_3_16
 	
 fin_g_2_3_16:
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -1824,22 +1752,17 @@ dst_pitch equ qword ptr[rbp+56]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	.endprolog
 
 	mov r10,src_pitch
 	mov r11,dst_pitch
-	mov r12,16
 	mov rbx,rcx	
 	mov rsi,rcx
 	mov rdi,rdx
 	add rsi,r10
 	mov rdx,rsi
 	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
-	
-	xor rcx,rcx
-		
+
 loop_1_g_2_3_AVX:
 	xor rax,rax
 	mov ecx,r8d
@@ -1848,8 +1771,9 @@ loop_2_g_2_3_AVX:
 	vpavgb xmm0,xmm0,XMMWORD ptr[rdx+rax]
 	vpavgb xmm0,xmm0,XMMWORD ptr[rsi+rax]
 	vmovdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_2_g_2_3_AVX
+	add rax,16
+	dec ecx
+	jnz short loop_2_g_2_3_AVX
 
 	add rsi,r10
 	add rbx,r10
@@ -1864,11 +1788,11 @@ loop_3_g_2_3_AVX:
 	vmovdqa xmm0,XMMWORD ptr[rbx+rax]
 	vpavgb xmm0,xmm0,XMMWORD ptr[rsi+rax]
 	vmovdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_3_g_2_3_AVX
+	add rax,16
+	dec ecx
+	jnz short loop_3_g_2_3_AVX
 	
 fin_g_2_3_AVX:
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -1900,22 +1824,17 @@ dst_pitch equ qword ptr[rbp+56]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	.endprolog
 
 	mov r10,src_pitch
 	mov r11,dst_pitch
-	mov r12,16
 	mov rbx,rcx	
 	mov rsi,rcx
 	mov rdi,rdx
 	add rsi,r10
 	mov rdx,rsi
 	add rdx,r10			;rbx=ln-1 	rsi=ln	rdx=ln+1
-	
-	xor rcx,rcx
-		
+
 loop_1_g_2_3_AVX_16:
 	xor rax,rax
 	mov ecx,r8d
@@ -1924,8 +1843,9 @@ loop_2_g_2_3_AVX_16:
 	vpavgw xmm0,xmm0,XMMWORD ptr[rdx+rax]
 	vpavgw xmm0,xmm0,XMMWORD ptr[rsi+rax]
 	vmovdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_2_g_2_3_AVX_16
+	add rax,16
+	dec ecx
+	jnz short loop_2_g_2_3_AVX_16
 
 	add rsi,r10
 	add rbx,r10
@@ -1940,11 +1860,11 @@ loop_3_g_2_3_AVX_16:
 	vmovdqa xmm0,XMMWORD ptr[rbx+rax]
 	vpavgw xmm0,xmm0,XMMWORD ptr[rsi+rax]
 	vmovdqa XMMWORD ptr[rdi+rax],xmm0
-	add rax,r12
-	loop loop_3_g_2_3_AVX_16
+	add rax,16
+	dec ecx
+	jnz short loop_3_g_2_3_AVX_16
 	
 fin_g_2_3_AVX_16:
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -1953,7 +1873,6 @@ fin_g_2_3_AVX_16:
 	ret
 
 JPSDR_Deinterlace_Blend_16_Tri_AVX_c endp
-
 
 end
 

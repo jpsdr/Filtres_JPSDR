@@ -46,8 +46,6 @@ dst_pitch equ qword ptr[rbp+72]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	.endprolog
 	
 	mov rsi,rcx
@@ -56,8 +54,6 @@ dst_pitch equ qword ptr[rbp+72]
 	mov r11,src_pitch
 	mov rbx,buffer_pitch
 	mov rdx,dst_pitch
-	mov r12,16
-	xor rcx,rcx
 
 loop_1_f:
 	xor rax,rax
@@ -67,8 +63,9 @@ loop_2_f:
 	movdqa xmm0,oword ptr[rsi+rax]
 	pavgb xmm0,oword ptr[rdi+rax]
 	movdqa [r8+rax],xmm0
-	add rax,r12
-	loop loop_2_f
+	add rax,16
+	dec ecx
+	jnz short loop_2_f
 	
 	add rsi,r11
 	add rdi,rbx
@@ -76,7 +73,6 @@ loop_2_f:
 	dec r10d
 	jnz short loop_1_f
 
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi

@@ -79,7 +79,6 @@ w equ dword ptr[rbp+48]
 	mov r10,rcx		; r10 = src_orig
 	mov r11,rdx		; r11 = dst_orig
 	add r11,r9
-	xor rcx,rcx
 	
 	movdqa xmm9,XMMWORD ptr uw_2
 	movdqa xmm8,XMMWORD ptr uw_32
@@ -314,7 +313,6 @@ w equ dword ptr[rbp+48]
 	mov r10,rcx		; r10 = src_orig
 	mov r11,rdx		; r11 = dst_orig
 	add r11,r9
-	xor rcx,rcx
 	
 	movdqa xmm9,oword ptr uw_2
 	movdqa xmm8,oword ptr uw_32

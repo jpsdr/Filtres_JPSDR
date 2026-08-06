@@ -74,8 +74,6 @@ Max_V equ word ptr[rbp+200]
 	.pushreg rbx
 	push r12
 	.pushreg r12
-	push r13
-	.pushreg r13
 	push r14
 	.pushreg r14
 	push r15
@@ -86,12 +84,10 @@ Max_V equ word ptr[rbp+200]
 	mov r11,rdx
 	mov r12,r8
 	mov rdi,dst_u
-	mov r13,r9
-	mov r14,dst_v				;rsi=src_y r11=src_u r12=src_v rdi=dst_u r13=dst_y r14=dst_v
+	mov r14,dst_v				;rsi=src_y r11=src_u r12=src_v rdi=dst_u r9=dst_y r14=dst_v
 	mov r8d,w
 	shr r8d,1
 	mov r10,lookup	
-	mov r9,2
 	
 	pxor xmm4,xmm4						
 	pxor xmm0,xmm0
@@ -147,11 +143,11 @@ Boucle1_2:
 	pinsrw xmm0,eax,4
 
 	movzx ebx,byte ptr[rsi+1]
-	add rsi,r9
+	add rsi,2
 	movzx ecx,byte ptr[r11+1]
-	add r11,r9
+	add r11,2
 	movzx edx,byte ptr[r12+1] ; edx=V ecx=U ebx=Y
-	add r12,r9
+	add r12,2
 	movzx eax,word ptr[r10+2*rbx]
 	add ax,word ptr[r10+2*rcx+512]
 	add ax,word ptr[r10+2*rdx+1024]
@@ -172,14 +168,14 @@ Boucle1_2:
 	packuswb xmm0,xmm4		
 	
 	pextrw eax,xmm0,0
-	mov word ptr[r13],ax
-	add r13,r9
+	mov word ptr[r9],ax
+	add r9,2
 	pextrw eax,xmm0,1
 	mov word ptr[rdi],ax
-	add rdi,r9
+	add rdi,2
 	pextrw eax,xmm0,2
 	mov word ptr[r14],ax
-	add r14,r9
+	add r14,2
 	
 	dec r15d
 	jnz Boucle1_2
@@ -213,8 +209,8 @@ Boucle1_2:
 	packuswb xmm0,xmm4
 	
 	pextrw eax,xmm0,0
-	mov byte ptr[r13],al
-	inc r13
+	mov byte ptr[r9],al
+	inc r9
 	mov byte ptr[rdi],ah
 	inc rdi
 	pextrw eax,xmm0,1
@@ -225,7 +221,7 @@ Suite1_2:
 	add rsi,src_modulo_y
 	add r11,src_modulo_u
 	add r12,src_modulo_v
-	add r13,dst_modulo_y
+	add r9,dst_modulo_y
 	add rdi,dst_modulo_u
 	add r14,dst_modulo_v
 	dec h
@@ -233,7 +229,6 @@ Suite1_2:
 	
 	pop r15
 	pop r14
-	pop r13
 	pop r12
 	pop rbx
 	pop rsi
@@ -287,8 +282,6 @@ Max_V equ word ptr[rbp+200]
 	.pushreg rbx
 	push r12
 	.pushreg r12
-	push r13
-	.pushreg r13
 	push r14
 	.pushreg r14
 	push r15
@@ -299,12 +292,10 @@ Max_V equ word ptr[rbp+200]
 	mov r11,rdx
 	mov r12,r8
 	mov rdi,dst_u
-	mov r13,r9
-	mov r14,dst_v				;rsi=src_y r11=src_u r12=src_v rdi=dst_u r13=dst_y r14=dst_v
+	mov r14,dst_v				;rsi=src_y r11=src_u r12=src_v rdi=dst_u r9=dst_y r14=dst_v
 	mov r8d,w
 	shr r8d,1
 	mov r10,lookup	
-	mov r9,2
 	
 	vpxor xmm4,xmm4,xmm4						
 	vpxor xmm0,xmm0,xmm0
@@ -360,11 +351,11 @@ Boucle1_2_AVX:
 	vpinsrw xmm0,xmm0,eax,4
 
 	movzx ebx,byte ptr[rsi+1]
-	add rsi,r9
+	add rsi,2
 	movzx ecx,byte ptr[r11+1]
-	add r11,r9
+	add r11,2
 	movzx edx,byte ptr[r12+1] ; edx=V ecx=U ebx=Y
-	add r12,r9
+	add r12,2
 	movzx eax,word ptr[r10+2*rbx]
 	add ax,word ptr[r10+2*rcx+512]
 	add ax,word ptr[r10+2*rdx+1024]
@@ -385,14 +376,14 @@ Boucle1_2_AVX:
 	vpackuswb xmm0,xmm0,xmm4		
 	
 	vpextrw eax,xmm0,0
-	mov word ptr[r13],ax
-	add r13,r9
+	mov word ptr[r9],ax
+	add r9,2
 	vpextrw eax,xmm0,1
 	mov word ptr[rdi],ax
-	add rdi,r9
+	add rdi,2
 	vpextrw eax,xmm0,2
 	mov word ptr[r14],ax
-	add r14,r9
+	add r14,2
 	
 	dec r15d
 	jnz Boucle1_2_AVX
@@ -426,8 +417,8 @@ Boucle1_2_AVX:
 	vpackuswb xmm0,xmm0,xmm4
 	
 	vpextrw eax,xmm0,0
-	mov byte ptr[r13],al
-	inc r13
+	mov byte ptr[r9],al
+	inc r9
 	mov byte ptr[rdi],ah
 	inc rdi
 	vpextrw eax,xmm0,1
@@ -438,7 +429,7 @@ Suite1_2_AVX:
 	add rsi,src_modulo_y
 	add r11,src_modulo_u
 	add r12,src_modulo_v
-	add r13,dst_modulo_y
+	add r9,dst_modulo_y
 	add rdi,dst_modulo_u
 	add r14,dst_modulo_v
 	dec h
@@ -446,7 +437,6 @@ Suite1_2_AVX:
 	
 	pop r15
 	pop r14
-	pop r13
 	pop r12
 	pop rbx
 	pop rsi
@@ -2386,10 +2376,6 @@ Max_Y equ word ptr[rbp+80]
 	.pushreg rsi
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
-	push r13
-	.pushreg r13
 	push r14
 	.pushreg r14
 	push r15
@@ -2397,12 +2383,9 @@ Max_Y equ word ptr[rbp+80]
 	.endprolog
 	
 	mov rsi,rcx				; rsi=src_Y
-	mov r11,rdx				; r11=src_U
-	mov r12,r8				; r12=src_V
+	mov r11,rdx				; r11=src_U ; r8=src_V
 	mov rdi,r9				; rdi=dst_Y
 	mov r10,lookup
-	mov r8,8
-	mov r13,4
 	
 	pxor xmm4,xmm4
 	pxor xmm0,xmm0
@@ -2443,7 +2426,7 @@ Max_Y equ word ptr[rbp+80]
 	pinsrw xmm3,eax,7
 	
 	movzx ecx,byte ptr[r11]
-	movzx edx,byte ptr[r12]
+	movzx edx,byte ptr[r8]
 	
 	mov eax,w
 	dec eax
@@ -2454,7 +2437,7 @@ Max_Y equ word ptr[rbp+80]
 Boucle0_9:	
 	movzx ebx,byte ptr[rsi]
 	movzx r14d,byte ptr[r11+1]
-	movzx r15d,byte ptr[r12+1]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
+	movzx r15d,byte ptr[r8+1]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
 	
 	movzx eax,word ptr[r10+2*rbx]
 	add ax,word ptr[r10+2*rcx+512]
@@ -2476,7 +2459,7 @@ Boucle0_9:
 	mov edx,r15d
 	movzx ebx,byte ptr[rsi+2]
 	movzx r14d,byte ptr[r11+2]
-	movzx r15d,byte ptr[r12+2]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
+	movzx r15d,byte ptr[r8+2]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
 	
 	movzx eax,word ptr[r10+2*rbx]
 	add ax,word ptr[r10+2*rcx+512]
@@ -2498,7 +2481,7 @@ Boucle0_9:
 	mov edx,r15d
 	movzx ebx,byte ptr[rsi+4]
 	movzx r14d,byte ptr[r11+3]
-	movzx r15d,byte ptr[r12+3]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
+	movzx r15d,byte ptr[r8+3]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
 	
 	movzx eax,word ptr[r10+2*rbx]
 	add ax,word ptr[r10+2*rcx+512]
@@ -2520,7 +2503,7 @@ Boucle0_9:
 	mov edx,r15d
 	movzx ebx,byte ptr[rsi+6]
 	movzx r14d,byte ptr[r11+4]
-	movzx r15d,byte ptr[r12+4]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
+	movzx r15d,byte ptr[r8+4]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
 	
 	movzx eax,word ptr[r10+2*rbx]
 	add ax,word ptr[r10+2*rcx+512]
@@ -2549,10 +2532,10 @@ Boucle0_9:
 	mov ecx,r14d
 	mov edx,r15d
 	
-	add rsi,r8
-	add rdi,r8
-	add r11,r13
-	add r12,r13
+	add rsi,8
+	add rdi,8
+	add r11,4
+	add r8,4
 		
 	dec r9d
 	jnz Boucle0_9
@@ -2567,7 +2550,7 @@ Suite0_9:
 	
 	movzx ebx,byte ptr[rsi]
 	movzx r14d,byte ptr[r11+1]
-	movzx r15d,byte ptr[r12+1]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
+	movzx r15d,byte ptr[r8+1]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
 	
 	movzx eax,word ptr[r10+2*rbx]
 	add ax,word ptr[r10+2*rcx+512]
@@ -2589,7 +2572,7 @@ Suite0_9:
 	mov edx,r15d
 	movzx ebx,byte ptr[rsi+2]
 	movzx r14d,byte ptr[r11+2]
-	movzx r15d,byte ptr[r12+2]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
+	movzx r15d,byte ptr[r8+2]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
 	
 	movzx eax,word ptr[r10+2*rbx]
 	add ax,word ptr[r10+2*rcx+512]
@@ -2618,10 +2601,10 @@ Suite0_9:
 	mov ecx,r14d
 	mov edx,r15d
 	
-	add rsi,r13
-	add rdi,r13
+	add rsi,4
+	add rdi,4
 	add r11,2
-	add r12,2
+	add r8,2
 	
 	mov eax,w
 	dec eax	
@@ -2631,7 +2614,7 @@ Suite0_9:
 suite1_9:
 	movzx ebx,byte ptr[rsi]
 	movzx r14d,byte ptr[r11+1]
-	movzx r15d,byte ptr[r12+1]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
+	movzx r15d,byte ptr[r8+1]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
 	
 	movzx eax,word ptr[r10+2*rbx]
 	add ax,word ptr[r10+2*rcx+512]
@@ -2700,8 +2683,6 @@ suite2_9:
 suite3_9:	
 	pop r15
 	pop r14
-	pop r13
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -2735,10 +2716,6 @@ Max_Y equ word ptr[rbp+80]
 	.pushreg rsi
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
-	push r13
-	.pushreg r13
 	push r14
 	.pushreg r14
 	push r15
@@ -2746,12 +2723,9 @@ Max_Y equ word ptr[rbp+80]
 	.endprolog
 	
 	mov rsi,rcx				; rsi=src_Y
-	mov r11,rdx				; r11=src_U
-	mov r12,r8				; r12=src_V
+	mov r11,rdx				; r11=src_U r8=src_V
 	mov rdi,r9				; rdi=dst_Y
 	mov r10,lookup
-	mov r8,8
-	mov r13,4
 	
 	vpxor xmm4,xmm4,xmm4
 	vpxor xmm0,xmm0,xmm0
@@ -2792,7 +2766,7 @@ Max_Y equ word ptr[rbp+80]
 	vpinsrw xmm3,xmm3,eax,7	
 	
 	movzx ecx,byte ptr[r11]
-	movzx edx,byte ptr[r12]
+	movzx edx,byte ptr[r8]
 	
 	mov eax,w
 	dec eax
@@ -2803,7 +2777,7 @@ Max_Y equ word ptr[rbp+80]
 Boucle0_9_AVX:	
 	movzx ebx,byte ptr[rsi]
 	movzx r14d,byte ptr[r11+1]
-	movzx r15d,byte ptr[r12+1]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
+	movzx r15d,byte ptr[r8+1]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
 	
 	movzx eax,word ptr[r10+2*rbx]
 	add ax,word ptr[r10+2*rcx+512]
@@ -2825,7 +2799,7 @@ Boucle0_9_AVX:
 	mov edx,r15d
 	movzx ebx,byte ptr[rsi+2]
 	movzx r14d,byte ptr[r11+2]
-	movzx r15d,byte ptr[r12+2]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
+	movzx r15d,byte ptr[r8+2]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
 	
 	movzx eax,word ptr[r10+2*rbx]
 	add ax,word ptr[r10+2*rcx+512]
@@ -2847,7 +2821,7 @@ Boucle0_9_AVX:
 	mov edx,r15d
 	movzx ebx,byte ptr[rsi+4]
 	movzx r14d,byte ptr[r11+3]
-	movzx r15d,byte ptr[r12+3]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
+	movzx r15d,byte ptr[r8+3]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
 	
 	movzx eax,word ptr[r10+2*rbx]
 	add ax,word ptr[r10+2*rcx+512]
@@ -2869,7 +2843,7 @@ Boucle0_9_AVX:
 	mov edx,r15d
 	movzx ebx,byte ptr[rsi+6]
 	movzx r14d,byte ptr[r11+4]
-	movzx r15d,byte ptr[r12+4]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
+	movzx r15d,byte ptr[r8+4]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
 	
 	movzx eax,word ptr[r10+2*rbx]
 	add ax,word ptr[r10+2*rcx+512]
@@ -2898,10 +2872,10 @@ Boucle0_9_AVX:
 	mov ecx,r14d
 	mov edx,r15d
 	
-	add rsi,r8
-	add rdi,r8
-	add r11,r13
-	add r12,r13
+	add rsi,8
+	add rdi,8
+	add r11,4
+	add r8,4
 		
 	dec r9d
 	jnz Boucle0_9_AVX
@@ -2916,7 +2890,7 @@ Suite0_9_AVX:
 	
 	movzx ebx,byte ptr[rsi]
 	movzx r14d,byte ptr[r11+1]
-	movzx r15d,byte ptr[r12+1]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
+	movzx r15d,byte ptr[r8+1]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
 	
 	movzx eax,word ptr[r10+2*rbx]
 	add ax,word ptr[r10+2*rcx+512]
@@ -2938,7 +2912,7 @@ Suite0_9_AVX:
 	mov edx,r15d
 	movzx ebx,byte ptr[rsi+2]
 	movzx r14d,byte ptr[r11+2]
-	movzx r15d,byte ptr[r12+2]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
+	movzx r15d,byte ptr[r8+2]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
 	
 	movzx eax,word ptr[r10+2*rbx]
 	add ax,word ptr[r10+2*rcx+512]
@@ -2967,10 +2941,10 @@ Suite0_9_AVX:
 	mov ecx,r14d
 	mov edx,r15d
 	
-	add rsi,r13
-	add rdi,r13
+	add rsi,4
+	add rdi,4
 	add r11,2
-	add r12,2
+	add r8,2
 	
 	mov eax,w
 	dec eax	
@@ -2980,7 +2954,7 @@ Suite0_9_AVX:
 suite1_9_AVX:
 	movzx ebx,byte ptr[rsi]
 	movzx r14d,byte ptr[r11+1]
-	movzx r15d,byte ptr[r12+1]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
+	movzx r15d,byte ptr[r8+1]	; edx=V ecx=U ebx=Y1 r15d=V2 r14d=U2
 	
 	movzx eax,word ptr[r10+2*rbx]
 	add ax,word ptr[r10+2*rcx+512]
@@ -3049,8 +3023,6 @@ suite2_9_AVX:
 suite3_9_AVX:	
 	pop r15
 	pop r14
-	pop r13
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -4006,14 +3978,10 @@ Max_V equ word ptr[rbp+168]
 	.pushreg rsi
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	push r13
 	.pushreg r13
 	push r14
 	.pushreg r14
-	push r15
-	.pushreg r15
 	sub rsp,88
 	.allocstack 88
 	movdqa XMMWORD ptr[rsp],xmm6
@@ -4029,8 +3997,7 @@ Max_V equ word ptr[rbp+168]
 	.endprolog
 
 	mov rsi,rcx				; rsi=src_y
-	mov r11,rdx				; r11=src_u
-	mov r12,r8				; r12=src_v
+	mov r11,rdx				; r11=src_u r8=src_v
 	mov rdi,r9				; rdi=dst_u
 	mov r13,dst_V
 	
@@ -4096,8 +4063,6 @@ Max_V equ word ptr[rbp+168]
 	pinsrw xmm6,eax,6
 	pinsrw xmm6,eax,7
 	
-	mov r8,8
-	mov r15,4
 	mov r14,src_pitch_y
 	mov r10,lookup
 	
@@ -4110,13 +4075,13 @@ Boucle0_11:
 Boucle1_11:	
 	movq xmm8,qword ptr[rsi]
 	movq xmm10,qword ptr[rsi+r14]
-	add rsi,r8
+	add rsi,8
 	pavgb xmm8,xmm10
 	punpcklbw xmm8,xmm7
 	
 	movzx ecx,byte ptr[r11]
 	pextrw ebx,xmm8,0
-	movzx edx,byte ptr[r12] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8] ; edx=V ecx=U ebx=Y
 
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4129,7 +4094,7 @@ Boucle1_11:
 	
 	movzx ecx,byte ptr[r11+1]
 	pextrw ebx,xmm8,2
-	movzx edx,byte ptr[r12+1] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+1] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4142,7 +4107,7 @@ Boucle1_11:
 	
 	movzx ecx,byte ptr[r11+2]
 	pextrw ebx,xmm8,4
-	movzx edx,byte ptr[r12+2] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+2] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4155,7 +4120,7 @@ Boucle1_11:
 	
 	movzx ecx,byte ptr[r11+3]
 	pextrw ebx,xmm8,6
-	movzx edx,byte ptr[r12+3] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+3] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4168,13 +4133,13 @@ Boucle1_11:
 	
 	movq xmm8,qword ptr[rsi]
 	movq xmm10,qword ptr[rsi+r14]
-	add rsi,r8
+	add rsi,8
 	pavgb xmm8,xmm10
 	punpcklbw xmm8,xmm7
 	
 	movzx ecx,byte ptr[r11+4]
 	pextrw ebx,xmm8,0
-	movzx edx,byte ptr[r12+4] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+4] ; edx=V ecx=U ebx=Y
 
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4187,7 +4152,7 @@ Boucle1_11:
 	
 	movzx ecx,byte ptr[r11+5]
 	pextrw ebx,xmm8,2
-	movzx edx,byte ptr[r12+5] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+5] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4200,7 +4165,7 @@ Boucle1_11:
 	
 	movzx ecx,byte ptr[r11+6]
 	pextrw ebx,xmm8,4
-	movzx edx,byte ptr[r12+6] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+6] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4213,7 +4178,7 @@ Boucle1_11:
 	
 	movzx ecx,byte ptr[r11+7]
 	pextrw ebx,xmm8,6
-	movzx edx,byte ptr[r12+7] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+7] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4238,10 +4203,10 @@ Boucle1_11:
 	movq qword ptr[rdi],xmm0
 	movq qword ptr[r13],xmm9
 	
-	add r11,r8
-	add r12,r8
-	add rdi,r8
-	add r13,r8
+	add r11,8
+	add r8,8
+	add rdi,8
+	add r13,8
 	
 	dec r9d
 	jnz Boucle1_11
@@ -4250,18 +4215,18 @@ Suite0_11:
 	mov eax,w
 	and eax,7
 	jz suite3_11
-	and eax,r15d
+	and eax,4
 	jz suite1_11
 	
 	movq xmm8,qword ptr[rsi]
 	movq xmm0,qword ptr[rsi+r14]
-	add rsi,r8
+	add rsi,8
 	pavgb xmm8,xmm0
 	punpcklbw xmm8,xmm7
 	
 	movzx ecx,byte ptr[r11]
 	pextrw ebx,xmm8,0
-	movzx edx,byte ptr[r12] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8] ; edx=V ecx=U ebx=Y
 
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4274,7 +4239,7 @@ Suite0_11:
 	
 	movzx ecx,byte ptr[r11+1]
 	pextrw ebx,xmm8,2
-	movzx edx,byte ptr[r12+1] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+1] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4287,7 +4252,7 @@ Suite0_11:
 	
 	movzx ecx,byte ptr[r11+2]
 	pextrw ebx,xmm8,4
-	movzx edx,byte ptr[r12+2] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+2] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4300,7 +4265,7 @@ Suite0_11:
 	
 	movzx ecx,byte ptr[r11+3]
 	pextrw ebx,xmm8,6
-	movzx edx,byte ptr[r12+3] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+3] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4325,10 +4290,10 @@ Suite0_11:
 	movd dword ptr[rdi],xmm0
 	movd dword ptr[r13],xmm9
 	
-	add r11,r15
-	add r12,r15
-	add rdi,r15
-	add r13,r15
+	add r11,4
+	add r8,4
+	add rdi,4
+	add r13,4
 	
 suite1_11:	
 	mov eax,w
@@ -4337,13 +4302,13 @@ suite1_11:
 	
 	movd xmm8,dword ptr[rsi]
 	movd xmm0,dword ptr[rsi+r14]
-	add rsi,r15
+	add rsi,4
 	pavgb xmm8,xmm0
 	punpcklbw xmm8,xmm7
 	
 	movzx ecx,byte ptr[r11]
 	pextrw ebx,xmm8,0
-	movzx edx,byte ptr[r12] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8] ; edx=V ecx=U ebx=Y
 
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4356,7 +4321,7 @@ suite1_11:
 	
 	movzx ecx,byte ptr[r11+1]
 	pextrw ebx,xmm8,2
-	movzx edx,byte ptr[r12+1] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+1] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4381,7 +4346,7 @@ suite1_11:
 	pextrw eax,xmm0,0
 	add r11,2
 	mov word ptr[rdi],ax
-	add r12,2
+	add r8,2
 	pextrw eax,xmm9,0
 	add rdi,2
 	mov word ptr[r13],ax
@@ -4399,7 +4364,7 @@ suite2_11:
 	shr ebx,1
 	
 	movzx ecx,byte ptr[r11]
-	movzx ebx,byte ptr[r12] ; edx=V ecx=U ebx=Y
+	movzx ebx,byte ptr[r8] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4424,7 +4389,7 @@ suite2_11:
 	pextrw eax,xmm0,0
 	inc r11
 	mov byte ptr[rdi],al
-	inc r12
+	inc r8
 	pextrw eax,xmm9,0
 	inc rdi
 	mov byte ptr[r13],al
@@ -4434,7 +4399,7 @@ suite3_11:
 	add rsi,src_modulo_y
 	add rsi,r14
 	add r11,src_modulo_u
-	add r12,src_modulo_v
+	add r8,src_modulo_v
 	add rdi,dst_modulo_u
 	add r13,dst_modulo_v
 	
@@ -4448,10 +4413,8 @@ suite3_11:
 	movdqa xmm6,XMMWORD ptr[rsp]
 	add rsp,88
 
-	pop r15
 	pop r14
 	pop r13
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -4499,14 +4462,10 @@ Max_V equ word ptr[rbp+168]
 	.pushreg rsi
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	push r13
 	.pushreg r13
 	push r14
 	.pushreg r14
-	push r15
-	.pushreg r15
 	sub rsp,88
 	.allocstack 88
 	vmovdqa XMMWORD ptr[rsp],xmm6
@@ -4522,8 +4481,7 @@ Max_V equ word ptr[rbp+168]
 	.endprolog
 
 	mov rsi,rcx				; rsi=src_y
-	mov r11,rdx				; r11=src_u
-	mov r12,r8				; r12=src_v
+	mov r11,rdx				; r11=src_u r8=src_v
 	mov rdi,r9				; rdi=dst_u
 	mov r13,dst_V
 	
@@ -4589,8 +4547,6 @@ Max_V equ word ptr[rbp+168]
 	vpinsrw xmm6,xmm6,eax,6
 	vpinsrw xmm6,xmm6,eax,7
 	
-	mov r8,8
-	mov r15,4
 	mov r14,src_pitch_y
 	mov r10,lookup
 	
@@ -4603,13 +4559,13 @@ Boucle0_11_AVX:
 Boucle1_11_AVX:	
 	vmovq xmm8,qword ptr[rsi]
 	vmovq xmm10,qword ptr[rsi+r14]
-	add rsi,r8
+	add rsi,8
 	vpavgb xmm8,xmm8,xmm10
 	vpunpcklbw xmm8,xmm8,xmm7
 	
 	movzx ecx,byte ptr[r11]
 	vpextrw ebx,xmm8,0
-	movzx edx,byte ptr[r12] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8] ; edx=V ecx=U ebx=Y
 
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4622,7 +4578,7 @@ Boucle1_11_AVX:
 	
 	movzx ecx,byte ptr[r11+1]
 	vpextrw ebx,xmm8,2
-	movzx edx,byte ptr[r12+1] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+1] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4635,7 +4591,7 @@ Boucle1_11_AVX:
 	
 	movzx ecx,byte ptr[r11+2]
 	vpextrw ebx,xmm8,4
-	movzx edx,byte ptr[r12+2] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+2] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4648,7 +4604,7 @@ Boucle1_11_AVX:
 	
 	movzx ecx,byte ptr[r11+3]
 	vpextrw ebx,xmm8,6
-	movzx edx,byte ptr[r12+3] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+3] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4661,13 +4617,13 @@ Boucle1_11_AVX:
 	
 	vmovq xmm8,qword ptr[rsi]
 	vmovq xmm10,qword ptr[rsi+r14]
-	add rsi,r8
+	add rsi,8
 	vpavgb xmm8,xmm8,xmm10
 	vpunpcklbw xmm8,xmm8,xmm7
 	
 	movzx ecx,byte ptr[r11+4]
 	vpextrw ebx,xmm8,0
-	movzx edx,byte ptr[r12+4] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+4] ; edx=V ecx=U ebx=Y
 
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4680,7 +4636,7 @@ Boucle1_11_AVX:
 	
 	movzx ecx,byte ptr[r11+5]
 	vpextrw ebx,xmm8,2
-	movzx edx,byte ptr[r12+5] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+5] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4693,7 +4649,7 @@ Boucle1_11_AVX:
 	
 	movzx ecx,byte ptr[r11+6]
 	vpextrw ebx,xmm8,4
-	movzx edx,byte ptr[r12+6] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+6] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4706,7 +4662,7 @@ Boucle1_11_AVX:
 	
 	movzx ecx,byte ptr[r11+7]
 	vpextrw ebx,xmm8,6
-	movzx edx,byte ptr[r12+7] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+7] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4731,10 +4687,10 @@ Boucle1_11_AVX:
 	vmovq qword ptr[rdi],xmm0
 	vmovq qword ptr[r13],xmm9
 	
-	add r11,r8
-	add r12,r8
-	add rdi,r8
-	add r13,r8
+	add r11,8
+	add r8,8
+	add rdi,8
+	add r13,8
 	
 	dec r9d
 	jnz Boucle1_11_AVX
@@ -4743,18 +4699,18 @@ Suite0_11_AVX:
 	mov eax,w
 	and eax,7
 	jz suite3_11_AVX
-	and eax,r15d
+	and eax,4
 	jz suite1_11_AVX
 	
 	vmovq xmm8,qword ptr[rsi]
 	vmovq xmm0,qword ptr[rsi+r14]
-	add rsi,r8
+	add rsi,8
 	vpavgb xmm8,xmm8,xmm0
 	vpunpcklbw xmm8,xmm8,xmm7
 	
 	movzx ecx,byte ptr[r11]
 	vpextrw ebx,xmm8,0
-	movzx edx,byte ptr[r12] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8] ; edx=V ecx=U ebx=Y
 
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4767,7 +4723,7 @@ Suite0_11_AVX:
 	
 	movzx ecx,byte ptr[r11+1]
 	vpextrw ebx,xmm8,2
-	movzx edx,byte ptr[r12+1] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+1] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4780,7 +4736,7 @@ Suite0_11_AVX:
 	
 	movzx ecx,byte ptr[r11+2]
 	vpextrw ebx,xmm8,4
-	movzx edx,byte ptr[r12+2] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+2] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4793,7 +4749,7 @@ Suite0_11_AVX:
 	
 	movzx ecx,byte ptr[r11+3]
 	vpextrw ebx,xmm8,6
-	movzx edx,byte ptr[r12+3] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+3] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4818,10 +4774,10 @@ Suite0_11_AVX:
 	vmovd dword ptr[rdi],xmm0
 	vmovd dword ptr[r13],xmm9
 	
-	add r11,r15
-	add r12,r15
-	add rdi,r15
-	add r13,r15
+	add r11,4
+	add r8,4
+	add rdi,4
+	add r13,4
 	
 suite1_11_AVX:	
 	mov eax,w
@@ -4830,13 +4786,13 @@ suite1_11_AVX:
 	
 	vmovd xmm8,dword ptr[rsi]
 	vmovd xmm0,dword ptr[rsi+r14]
-	add rsi,r15
+	add rsi,4
 	vpavgb xmm8,xmm8,xmm0
 	vpunpcklbw xmm8,xmm8,xmm7
 	
 	movzx ecx,byte ptr[r11]
 	vpextrw ebx,xmm8,0
-	movzx edx,byte ptr[r12] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8] ; edx=V ecx=U ebx=Y
 
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4849,7 +4805,7 @@ suite1_11_AVX:
 	
 	movzx ecx,byte ptr[r11+1]
 	vpextrw ebx,xmm8,2
-	movzx edx,byte ptr[r12+1] ; edx=V ecx=U ebx=Y
+	movzx edx,byte ptr[r8+1] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4874,7 +4830,7 @@ suite1_11_AVX:
 	vpextrw eax,xmm0,0
 	add r11,2
 	mov word ptr[rdi],ax
-	add r12,2
+	add r8,2
 	vpextrw eax,xmm9,0
 	add rdi,2
 	mov word ptr[r13],ax
@@ -4892,7 +4848,7 @@ suite2_11_AVX:
 	shr ebx,1
 	
 	movzx ecx,byte ptr[r11]
-	movzx ebx,byte ptr[r12] ; edx=V ecx=U ebx=Y
+	movzx ebx,byte ptr[r8] ; edx=V ecx=U ebx=Y
 	
 	movzx eax,word ptr[r10+2*rbx+1536]
 	add ax,word ptr[r10+2*rcx+2048]
@@ -4917,7 +4873,7 @@ suite2_11_AVX:
 	vpextrw eax,xmm0,0
 	inc r11
 	mov byte ptr[rdi],al
-	inc r12
+	inc r8
 	vpextrw eax,xmm9,0
 	inc rdi
 	mov byte ptr[r13],al
@@ -4927,7 +4883,7 @@ suite3_11_AVX:
 	add rsi,src_modulo_y
 	add rsi,r14
 	add r11,src_modulo_u
-	add r12,src_modulo_v
+	add r8,src_modulo_v
 	add rdi,dst_modulo_u
 	add r13,dst_modulo_v
 	
@@ -4941,10 +4897,8 @@ suite3_11_AVX:
 	vmovdqa xmm6,XMMWORD ptr[rsp]
 	add rsp,88
 
-	pop r15
 	pop r14
 	pop r13
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -4953,6 +4907,5 @@ suite3_11_AVX:
 	ret
 	
 JPSDR_ColorSpaceConvert_YV12_AVX_3 endp
-
 
 end
