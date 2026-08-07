@@ -693,7 +693,7 @@ uint8_t JPSDR_Deinterlace::CreateMTData(uint8_t max_threads,int32_t size_x,int32
 		return(1);
 	}
 
-	int32_t dh_Y,dh_UV,h_y;
+	int32_t dh_Y,h_y;
 	uint8_t i,max=1;
 
 	dh_Y=(size_y+(int32_t)max_threads-1)/(int32_t)max_threads;
@@ -787,62 +787,77 @@ uint8_t JPSDR_Deinterlace::CreateMTData(uint8_t max_threads,int32_t size_x,int32
 		return(1);
 	}
 
+	// Rebalance thread partitions to reduce the size difference
+	// between the last partition and the others.
+	int32_t tab_dh_Y[MAX_MT_THREADS];
+	int32_t tab_dh_UV[MAX_MT_THREADS];
+	int32_t current_dh;
+	uint8_t current_i;
+
+	for (uint8_t i=0; i<(max-1); i++)
+		tab_dh_Y[i]=dh_Y;
+	tab_dh_Y[max-1]=size_y-(max-1)*dh_Y;
+	
+	current_i=max-2;
+	current_dh=dh_Y;
+	while (tab_dh_Y[max-1]>(current_dh+4))
+	{
+		tab_dh_Y[max-1]-=4;
+		tab_dh_Y[current_i]+=4;
+		if (current_i==0)
+		{
+			current_i=max-2;
+			current_dh+=4;
+		}
+		else current_i--;
+	}
+
 	switch (div_y)
 	{
-		case 0 : dh_UV=dh_Y; break;
-		case 1 : dh_UV=dh_Y >> 1; break;
-		case 2 : dh_UV=dh_Y >> 2; break;
-		default : dh_UV=dh_Y;
+		case 0 :
+			for (uint8_t i=0; i<max; i++)
+				tab_dh_UV[i]=tab_dh_Y[i];
+			break;
+		case 1 :
+			for (uint8_t i=0; i<max; i++)
+				tab_dh_UV[i]=tab_dh_Y[i] >> 1;
+			break;
+		case 2 :
+			for (uint8_t i=0; i<max; i++)
+				tab_dh_UV[i]=tab_dh_Y[i] >> 2;
+			break;
+		default :
+			for (uint8_t i=0; i<max; i++)
+				tab_dh_UV[i]=tab_dh_Y[i];
+			break;
 	}
 
 	MT_Data[0].top=true;
 	MT_Data[0].bottom=false;
 	MT_Data[0].src_Y_h_min=0;
-	MT_Data[0].src_Y_h_max=dh_Y;
+	MT_Data[0].src_Y_h_max=tab_dh_Y[0];
 	MT_Data[0].dst_Y_h_min=0;
-	MT_Data[0].dst_Y_h_max=dh_Y;
+	MT_Data[0].dst_Y_h_max=tab_dh_Y[0];
 	MT_Data[0].src_UV_h_min=0;
-	MT_Data[0].src_UV_h_max=dh_UV;
+	MT_Data[0].src_UV_h_max=tab_dh_UV[0];
 	MT_Data[0].dst_UV_h_min=0;
-	MT_Data[0].dst_UV_h_max=dh_UV;
-
-	i=1;
-	while (i<max)
+	MT_Data[0].dst_UV_h_max=tab_dh_UV[0];
+	
+	for (uint8_t i=1; i<max; i++)
 	{
 		MT_Data[i].top=false;
 		MT_Data[i].bottom=false;
 		MT_Data[i].src_Y_h_min=MT_Data[i-1].src_Y_h_max;
-		MT_Data[i].src_Y_h_max=MT_Data[i].src_Y_h_min+dh_Y;
+		MT_Data[i].src_Y_h_max=MT_Data[i].src_Y_h_min+tab_dh_Y[i];
 		MT_Data[i].dst_Y_h_min=MT_Data[i-1].dst_Y_h_max;
-		MT_Data[i].dst_Y_h_max=MT_Data[i].dst_Y_h_min+dh_Y;
+		MT_Data[i].dst_Y_h_max=MT_Data[i].dst_Y_h_min+tab_dh_Y[i];
 		MT_Data[i].src_UV_h_min=MT_Data[i-1].src_UV_h_max;
-		MT_Data[i].src_UV_h_max=MT_Data[i].src_UV_h_min+dh_UV;
+		MT_Data[i].src_UV_h_max=MT_Data[i].src_UV_h_min+tab_dh_UV[i];
 		MT_Data[i].dst_UV_h_min=MT_Data[i-1].dst_UV_h_max;
-		MT_Data[i].dst_UV_h_max=MT_Data[i].dst_UV_h_min+dh_UV;
-		i++;
+		MT_Data[i].dst_UV_h_max=MT_Data[i].dst_UV_h_min+tab_dh_UV[i];	
 	}
 	MT_Data[max-1].bottom=true;
-	MT_Data[max-1].src_Y_h_max=size_y;
-	MT_Data[max-1].dst_Y_h_max=size_y;
-	switch (div_y)
-	{
-		case 0 :
-			MT_Data[max-1].src_UV_h_max=size_y;
-			MT_Data[max-1].dst_UV_h_max=size_y;
-			break;
-		case 1 :
-			MT_Data[max-1].src_UV_h_max=size_y >> 1;
-			MT_Data[max-1].dst_UV_h_max=size_y >> 1;
-			break;
-		case 2 :
-			MT_Data[max-1].src_UV_h_max=size_y >> 2;
-			MT_Data[max-1].dst_UV_h_max=size_y >> 2;
-			break;
-		default :
-			MT_Data[max-1].src_UV_h_max=size_y;
-			MT_Data[max-1].dst_UV_h_max=size_y;
-			break;
-	}
+
 	for (i=0; i<max; i++)
 	{
 		MT_Data[i].src_Y_w=size_x;
@@ -894,6 +909,7 @@ uint8_t JPSDR_Deinterlace::CreateMTData(uint8_t max_threads,int32_t size_x,int32
 				break;
 		}
 	}
+
 	return(max);
 }
 
@@ -3916,23 +3932,35 @@ void JPSDR_Deinterlace::StaticThreadpool(void *ptr)
 		case 1 : ptrClass->Deinterlace_Blend_8_MT_1(data->thread_Id); break;
 		case 2 : ptrClass->Deinterlace_Blend_8_MT_2(data->thread_Id); break;
 		case 3 : ptrClass->Deinterlace_Blend_8_MT_3(data->thread_Id); break;
-		case 7 : ptrClass->Deinterlace_Blend_8_MT_4(data->thread_Id); break;
-		case 8 : ptrClass->Deinterlace_Blend_8_MT_5(data->thread_Id); break;
+		case 7 :
+			ptrClass->Deinterlace_Blend_8_MT_3(data->thread_Id);
+			ptrClass->Deinterlace_Blend_8_MT_4(data->thread_Id);
+			ptrClass->Deinterlace_Blend_8_MT_5(data->thread_Id);
+			break;
 		case 4 : ptrClass->Deinterlace_8_Tri_MT_1(data->thread_Id); break;
 		case 5 : ptrClass->Deinterlace_8_Tri_MT_2(data->thread_Id); break;
 		case 6 : ptrClass->Deinterlace_8_Tri_MT_3(data->thread_Id); break;
-		case 9 : ptrClass->Deinterlace_8_Tri_MT_4(data->thread_Id); break;
-		case 10 : ptrClass->Deinterlace_8_Tri_MT_5(data->thread_Id); break;
+		case 8 :
+			ptrClass->Deinterlace_8_Tri_MT_3(data->thread_Id);
+			ptrClass->Deinterlace_8_Tri_MT_4(data->thread_Id);
+			ptrClass->Deinterlace_8_Tri_MT_5(data->thread_Id);
+			break;
 		case 11 : ptrClass->Deinterlace_Blend_16_MT_1(data->thread_Id); break;
 		case 12 : ptrClass->Deinterlace_Blend_16_MT_2(data->thread_Id); break;
 		case 13 : ptrClass->Deinterlace_Blend_16_MT_3(data->thread_Id); break;
-		case 17 : ptrClass->Deinterlace_Blend_16_MT_4(data->thread_Id); break;
-		case 18 : ptrClass->Deinterlace_Blend_16_MT_5(data->thread_Id); break;
+		case 17 :
+			ptrClass->Deinterlace_Blend_16_MT_3(data->thread_Id);
+			ptrClass->Deinterlace_Blend_16_MT_4(data->thread_Id);
+			ptrClass->Deinterlace_Blend_16_MT_5(data->thread_Id);
+			break;
 		case 14 : ptrClass->Deinterlace_16_Tri_MT_1(data->thread_Id); break;
 		case 15 : ptrClass->Deinterlace_16_Tri_MT_2(data->thread_Id); break;
 		case 16 : ptrClass->Deinterlace_16_Tri_MT_3(data->thread_Id); break;
-		case 19 : ptrClass->Deinterlace_16_Tri_MT_4(data->thread_Id); break;
-		case 20 : ptrClass->Deinterlace_16_Tri_MT_5(data->thread_Id); break;
+		case 18 :
+			ptrClass->Deinterlace_16_Tri_MT_3(data->thread_Id);
+			ptrClass->Deinterlace_16_Tri_MT_4(data->thread_Id);
+			ptrClass->Deinterlace_16_Tri_MT_5(data->thread_Id);
+			break;
 		default : break;
 	}
 }
@@ -4261,61 +4289,14 @@ void JPSDR_Deinterlace::Run()
 		{
 			if (poolInterface->RequestThreadPool(UserId,threads_number,MT_Thread,-1,false))
 			{
-				if (f_proc<7)
-				{
-					for(uint8_t i=0; i<threads_number; i++)
-						MT_Thread[i].f_process=f_proc+Offset_MT;
+				for(uint8_t i=0; i<threads_number; i++)
+					MT_Thread[i].f_process=f_proc+Offset_MT;
 
-					if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
+				if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
 
-					for(uint8_t i=0; i<threads_number; i++)
-						MT_Thread[i].f_process=0;
-				}
-				else
-				{
-					switch (f_proc)
-					{
-						case 7 :
-							for(uint8_t i=0; i<threads_number; i++)
-								MT_Thread[i].f_process=3+Offset_MT;
-
-							if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
-
-							for(uint8_t i=0; i<threads_number; i++)
-								MT_Thread[i].f_process=7+Offset_MT;
-
-							if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
-
-							for(uint8_t i=0; i<threads_number; i++)
-								MT_Thread[i].f_process=8+Offset_MT;
-
-							if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
-
-							for(uint8_t i=0; i<threads_number; i++)
-								MT_Thread[i].f_process=0;
-							break;
-						case 8 :
-							for(uint8_t i=0; i<threads_number; i++)
-								MT_Thread[i].f_process=6+Offset_MT;
-
-							if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
-
-							for(uint8_t i=0; i<threads_number; i++)
-								MT_Thread[i].f_process=9+Offset_MT;
-
-							if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
-
-							for(uint8_t i=0; i<threads_number; i++)
-								MT_Thread[i].f_process=10+Offset_MT;
-
-							if (poolInterface->StartThreads(UserId)) poolInterface->WaitThreadsEnd(UserId);
-
-							for(uint8_t i=0; i<threads_number; i++)
-								MT_Thread[i].f_process=0;
-							break;
-						default : break;
-					}
-				}
+				for(uint8_t i=0; i<threads_number; i++)
+					MT_Thread[i].f_process=0;
+				
 				poolInterface->ReleaseThreadPool(UserId,false);
 			}
 		}
