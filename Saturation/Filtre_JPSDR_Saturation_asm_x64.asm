@@ -48,21 +48,15 @@ dst_modulo equ qword ptr[rbp+88]
 	.pushreg rsi
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	push r13
 	.pushreg r13
 	push r14
 	.pushreg r14
-	push r15
-	.pushreg r15
 	.endprolog
 
 	mov rsi,rcx
 	mov rdi,rdx
 	mov r11,lookup
-	mov r12,8
-	mov r15,4
 	mov r13,src_modulo
 	mov r14,dst_modulo
 	xor rax,rax
@@ -121,15 +115,15 @@ Boucle1_2:
 	psraw xmm0,4
 	packuswb xmm0,xmm2
 	movq qword ptr[rdi],xmm0
-	add rsi,r12
-	add rdi,r12
+	add rsi,8
+	add rdi,8
 	dec r10d
 	jnz Boucle1_2
 	
 Suite1_2:
 	mov r10d,r8d
 	and r10d,1
-	jz short Suite2_2
+	jz Suite2_2
 
 	movzx edx,byte ptr[rsi]
 	movzx ecx,byte ptr[rsi+1]
@@ -150,8 +144,8 @@ Suite1_2:
 	psraw xmm0,4
 	packuswb xmm0,xmm2
 	movd dword ptr[rdi],xmm0
-	add rsi,r15
-	add rdi,r15
+	add rsi,4
+	add rdi,4
 	
 Suite2_2:	
 	add rsi,r13
@@ -159,10 +153,8 @@ Suite2_2:
 	dec r9d
 	jnz Boucle0_2
 
-	pop r15
 	pop r14
 	pop r13
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -199,21 +191,15 @@ dst_modulo equ qword ptr[rbp+88]
 	.pushreg rsi
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	push r13
 	.pushreg r13
 	push r14
 	.pushreg r14
-	push r15
-	.pushreg r15
 	.endprolog
 
 	mov rsi,rcx
 	mov rdi,rdx
 	mov r11,lookup
-	mov r12,8
-	mov r15,4
 	mov r13,src_modulo
 	mov r14,dst_modulo
 	xor rax,rax
@@ -272,15 +258,15 @@ Boucle1_2_AVX:
 	vpsraw xmm0,xmm0,4
 	vpackuswb xmm0,xmm0,xmm2
 	vmovq qword ptr[rdi],xmm0
-	add rsi,r12
-	add rdi,r12
+	add rsi,8
+	add rdi,8
 	dec r10d
 	jnz Boucle1_2_AVX
 	
 Suite1_2_AVX:
 	mov r10d,r8d
 	and r10d,1
-	jz short Suite2_2_AVX
+	jz Suite2_2_AVX
 
 	movzx edx,byte ptr[rsi]
 	movzx ecx,byte ptr[rsi+1]
@@ -301,8 +287,8 @@ Suite1_2_AVX:
 	vpsraw xmm0,xmm0,4
 	vpackuswb xmm0,xmm0,xmm2
 	vmovd dword ptr[rdi],xmm0
-	add rsi,r15
-	add rdi,r15
+	add rsi,4
+	add rdi,4
 	
 Suite2_2_AVX:	
 	add rsi,r13
@@ -310,10 +296,8 @@ Suite2_2_AVX:
 	dec r9d
 	jnz Boucle0_2_AVX
 
-	pop r15
 	pop r14
 	pop r13
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -346,8 +330,6 @@ dst_modulo equ qword ptr[rbp+64]
 	.pushreg rsi
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	push r13
 	.pushreg r13
 	push r14
@@ -361,7 +343,6 @@ dst_modulo equ qword ptr[rbp+64]
 	mov r11,rcx
 	mov rdi,rdx
 	mov rsi,lookup
-	mov r12,4
 	mov r13,src_modulo
 	mov r14,dst_modulo
 
@@ -380,7 +361,7 @@ Boucle1_3:
 	mov ah,byte ptr[rsi+2*rbx+512]
 	mov al,byte ptr[rsi+2*rcx]
 	stosd
-	add r11,r12
+	add r11,4
 	dec r10d
 	jnz short Boucle1_3
 	add r11,r13
@@ -391,7 +372,6 @@ Boucle1_3:
 	pop r15
 	pop r14
 	pop r13
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -424,8 +404,6 @@ dst_modulo equ qword ptr[rbp+64]
 	.pushreg rsi
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	push r13
 	.pushreg r13
 	push r14
@@ -438,7 +416,6 @@ dst_modulo equ qword ptr[rbp+64]
 	mov r11,rcx
 	mov rdi,rdx
 	mov rsi,lookup
-	mov r12,4
 	mov r13,src_modulo
 	mov r14,dst_modulo
 
@@ -457,7 +434,7 @@ Boucle1_4:
 	mov ah,byte ptr[rsi+2*rbx]
 	mov al,byte ptr[rsi+2*rcx+512]
 	stosd
-	add r11,r12
+	add r11,4
 	dec r10d
 	jnz short Boucle1_4
 	add r11,r13
@@ -468,7 +445,6 @@ Boucle1_4:
 	pop r15
 	pop r14
 	pop r13
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -508,7 +484,6 @@ dst_modulo equ qword ptr[rbp+64]
 	mov rdx,lookup
 	mov r10,src_modulo
 	mov r11,dst_modulo
-	xor rcx,rcx
 	xor rax,rax
 
 Boucle0_5:
@@ -517,7 +492,9 @@ Boucle1_5:
 	lodsb
 	movzx rax,byte ptr[rdx+2*rax]
 	stosb
-	loop Boucle1_5
+	dec ecx
+	jnz short Boucle1_5
+
 	add rsi,r10
 	add rdi,r11
 	dec r9d
@@ -583,7 +560,6 @@ dst_cr_modulo equ qword ptr[rbp+96]
 	mov r13,src_cr_modulo
 	mov r14,dst_cb_modulo
 	mov r15,dst_cr_modulo
-	xor rcx,rcx
 	xor rax,rax
 
 Boucle_hue0:
@@ -598,7 +574,9 @@ Boucle_hue1:
 	inc rbx
 	mov byte ptr[rdi],dl
 	inc rdi
-	loop Boucle_hue1
+	dec ecx
+	jnz short Boucle_hue1
+
 	add rbx,r14
 	add rdi,r15
 	add rsi,r12
@@ -649,8 +627,6 @@ dst_modulo equ qword ptr[rbp+80]
 	.pushreg r12
 	push r13
 	.pushreg r13
-	push r14
-	.pushreg r14
 	push r15
 	.pushreg r15
 	.endprolog
@@ -658,7 +634,6 @@ dst_modulo equ qword ptr[rbp+80]
 	cld
 	mov rdi,rdx
 	mov rsi,rcx
-	xor rcx,rcx
 	xor rax,rax
 	xor rbx,rbx
 	movzx r10d,offset_U
@@ -668,7 +643,6 @@ dst_modulo equ qword ptr[rbp+80]
 	mov rdx,lookup
 	mov r12,src_modulo
 	mov r13,dst_modulo
-	mov r14,4
 	
 BoucleY_0_3:
 	mov ecx,r8d
@@ -683,15 +657,16 @@ BoucleY_1_3:
 	mov al,byte ptr[rdx+2*rbx]
 	or eax,r10d
 	stosd
-	add rsi,r14
-	loop BoucleY_1_3
+	add rsi,4
+	dec ecx
+	jnz short BoucleY_1_3
+
 	add rsi,r12
 	add rdi,r13
 	dec r9d
 	jnz short BoucleY_0_3
 
 	pop r15
-	pop r14
 	pop r13
 	pop r12
 	pop rbx
@@ -732,8 +707,6 @@ dst_modulo equ qword ptr[rbp+80]
 	.pushreg r12
 	push r13
 	.pushreg r13
-	push r14
-	.pushreg r14
 	push r15
 	.pushreg r15
 	.endprolog
@@ -750,7 +723,6 @@ dst_modulo equ qword ptr[rbp+80]
 	mov rdx,lookup
 	mov r12,src_modulo
 	mov r13,dst_modulo
-	mov r14,4
 	
 
 BoucleY_0_4:
@@ -766,15 +738,16 @@ BoucleY_1_4:
 	or eax,r10d
 	mov ah,byte ptr[rdx+2*rbx]
 	stosd
-	add rsi,r14
-	loop BoucleY_1_4
+	add rsi,4
+	dec ecx
+	jnz short BoucleY_1_4
+
 	add rsi,r12
 	add rdi,r13
 	dec r9d
 	jnz short BoucleY_0_4
 
 	pop r15
-	pop r14
 	pop r13
 	pop r12
 	pop rbx
@@ -815,10 +788,6 @@ dst_modulo equ qword ptr[rbp+72]
 	.pushreg r12
 	push r13
 	.pushreg r13
-	push r14
-	.pushreg r14
-	push r15
-	.pushreg r15
 	.endprolog
 
 
@@ -838,16 +807,14 @@ dst_modulo equ qword ptr[rbp+72]
 	pinsrw xmm1,eax,2
 	pinsrw xmm1,eax,1
 	pinsrw xmm1,eax,0	
-	mov r10,8
-	mov r15,4
 	mov r12,lookup
 	mov r13,src_modulo
-	mov r14,dst_modulo
+	mov r10,dst_modulo
 
 BoucleY_0_2:
 	mov r11d,r8d
 	shr r11d,1
-	jz short SuiteY1_1
+	jz SuiteY1_1
 BoucleY_1_2:
 	movzx edx,byte ptr[rsi]
 	movzx ecx,byte ptr[rsi+1]
@@ -871,10 +838,10 @@ BoucleY_1_2:
 	psraw xmm0,4
 	packuswb xmm0,xmm2
 	movq qword ptr[rdi],xmm0
-	add rsi,r10
-	add rdi,r10
+	add rsi,8
+	add rdi,8
 	dec r11d
-	jnz short BoucleY_1_2
+	jnz BoucleY_1_2
 	
 SuiteY1_1:
 	mov r11d,r8d
@@ -894,17 +861,15 @@ SuiteY1_1:
 	psraw xmm0,4
 	packuswb xmm0,xmm2
 	movd dword ptr[rdi],xmm0
-	add rsi,r15
-	add rdi,r15
+	add rsi,4
+	add rdi,4
 
 SuiteY1_2:	
 	add rsi,r13
-	add rdi,r14
+	add rdi,r10
 	dec r9d
 	jnz BoucleY_0_2
 	
-	pop r15
-	pop r14
 	pop r13
 	pop r12
 	pop rbx
@@ -944,10 +909,6 @@ dst_modulo equ qword ptr[rbp+72]
 	.pushreg r12
 	push r13
 	.pushreg r13
-	push r14
-	.pushreg r14
-	push r15
-	.pushreg r15
 	.endprolog
 
 
@@ -967,11 +928,9 @@ dst_modulo equ qword ptr[rbp+72]
 	vpinsrw xmm1,xmm1,eax,2
 	vpinsrw xmm1,xmm1,eax,1
 	vpinsrw xmm1,xmm1,eax,0	
-	mov r10,8
-	mov r15,4
 	mov r12,lookup
 	mov r13,src_modulo
-	mov r14,dst_modulo
+	mov r10,dst_modulo
 
 BoucleY_0_2_AVX:
 	mov r11d,r8d
@@ -1000,10 +959,10 @@ BoucleY_1_2_AVX:
 	vpsraw xmm0,xmm0,4
 	vpackuswb xmm0,xmm0,xmm2
 	vmovq qword ptr[rdi],xmm0
-	add rsi,r10
-	add rdi,r10
+	add rsi,8
+	add rdi,8
 	dec r11d
-	jnz short BoucleY_1_2_AVX
+	jnz BoucleY_1_2_AVX
 	
 SuiteY1_1_AVX:
 	mov r11d,r8d
@@ -1023,17 +982,15 @@ SuiteY1_1_AVX:
 	vpsraw xmm0,xmm0,4
 	vpackuswb xmm0,xmm0,xmm2
 	vmovd dword ptr[rdi],xmm0
-	add rsi,r15
-	add rdi,r15
+	add rsi,4
+	add rdi,4
 
 SuiteY1_2_AVX:	
 	add rsi,r13
-	add rdi,r14
+	add rdi,r10
 	dec r9d
 	jnz BoucleY_0_2_AVX
 	
-	pop r15
-	pop r14
 	pop r13
 	pop r12
 	pop rbx
@@ -1071,8 +1028,6 @@ dst_modulo equ qword ptr[rbp+88]
 	.pushreg rsi
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	push r13
 	.pushreg r13
 	push r14
@@ -1087,8 +1042,7 @@ dst_modulo equ qword ptr[rbp+88]
 	xor rcx,rcx
 	xor rdx,rdx
 	xor rbx,rbx
-	mov r10,4
-	mov r12,lookup
+	mov r10,lookup
 	movzx r13d,offset_R
 	movzx r14d,offset_G
 	movzx r15d,offset_B
@@ -1106,9 +1060,9 @@ Boucle_b:
 	and ebx,eax
 	and ecx,eax
 	and edx,eax			; ebx=R ecx=G edx=B
-	movzx eax,word ptr[r12+2*rbx]
-	add ax,word ptr[r12+2*rcx+512]
-	add ax,word ptr[r12+2*rdx+1024]
+	movzx eax,word ptr[r10+2*rbx]
+	add ax,word ptr[r10+2*rcx+512]
+	add ax,word ptr[r10+2*rdx+1024]
 	add eax,r13d
 	sar ax,4
 	cmp ax,07FFFh
@@ -1122,9 +1076,9 @@ suite_r_1_b:
 stk_r_b:
 	shl eax,16
 	mov dword ptr[rdi],eax
-	movzx eax,word ptr[r12+2*rbx+1536]
-	add ax,word ptr[r12+2*rcx+2048]
-	add ax,word ptr[r12+2*rdx+2560]
+	movzx eax,word ptr[r10+2*rbx+1536]
+	add ax,word ptr[r10+2*rcx+2048]
+	add ax,word ptr[r10+2*rdx+2560]
 	add eax,r14d
 	sar ax,4
 	cmp ax,07FFFh
@@ -1138,9 +1092,9 @@ suite_g_1_b:
 stk_g_b:
 	shl ax,8
 	or dword ptr[rdi],eax
-	movzx eax,word ptr[r12+2*rbx+3072]
-	add ax,word ptr[r12+2*rcx+3584]
-	add ax,word ptr[r12+2*rdx+4096]
+	movzx eax,word ptr[r10+2*rbx+3072]
+	add ax,word ptr[r10+2*rcx+3584]
+	add ax,word ptr[r10+2*rdx+4096]
 	add eax,r15d
 	sar ax,4
 	cmp ax,07FFFh
@@ -1153,8 +1107,8 @@ suite_b_1_b:
 	mov ax,255
 stk_b_b:
 	or dword ptr[rdi],eax
-	add rsi,r10
-	add rdi,r10
+	add rsi,4
+	add rdi,4
 	dec r11d
 	jnz Boucle_b
 	add rsi,src_modulo
@@ -1165,7 +1119,6 @@ stk_b_b:
 	pop r15
 	pop r14
 	pop r13
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -1199,8 +1152,6 @@ dst_modulo equ qword ptr[rbp+72]
 	.pushreg rsi
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	push r13
 	.pushreg r13
 	push r14
@@ -1215,8 +1166,7 @@ dst_modulo equ qword ptr[rbp+72]
 	xor rcx,rcx
 	xor rdx,rdx
 	xor rbx,rbx
-	mov r10,4
-	mov r12,lookup
+	mov r10,lookup
 	mov r13,src_modulo
 	mov r14,dst_modulo
 	movzx r15d,offset_Y
@@ -1234,9 +1184,9 @@ BoucleY_b:
 	and ebx,eax
 	and ecx,eax
 	and edx,eax			; ebx=R ecx=G edx=B
-	movzx eax,word ptr[r12+2*rbx]
-	add ax,word ptr[r12+2*rcx+512]
-	add ax,word ptr[r12+2*rdx+1024]
+	movzx eax,word ptr[r10+2*rbx]
+	add ax,word ptr[r10+2*rcx+512]
+	add ax,word ptr[r10+2*rdx+1024]
 	add eax,r15d
 	sar ax,4
 	cmp ax,07FFFh
@@ -1255,8 +1205,8 @@ stk_Y_b:
 	or eax,ebx
 	or eax,ecx
 	mov dword ptr[rdi],eax
-	add rsi,r10
-	add rdi,r10
+	add rsi,4
+	add rdi,4
 	dec r11d
 	jnz short BoucleY_b
 	add rsi,r13
@@ -1267,7 +1217,6 @@ stk_Y_b:
 	pop r15
 	pop r14
 	pop r13
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi

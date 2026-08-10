@@ -57,7 +57,6 @@ dst_offset equ qword ptr[rbp+72]
 	mov r8d,h
 	mov r9,src_offset
 	mov r11,dst_offset
-	xor rcx,rcx
 		
 loop_1_g:
 	mov ecx,edx
@@ -69,7 +68,8 @@ loop_2_g:
 	inc rbx
 	mov byte ptr[r10],al
 	inc r10
-	loop loop_2_g
+	dec ecx
+	jnz short loop_2_g
 	
 	add rsi,r9
 	add rdi,r11
@@ -111,8 +111,6 @@ dst_pitch equ qword ptr[rbp+72]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	push r13
 	.pushreg r13
 	push r14
@@ -127,11 +125,9 @@ dst_pitch equ qword ptr[rbp+72]
 	mov r8d,h
 	mov r9,src_pitch
 	mov r11,dst_pitch
-	mov r12,8
 	mov r13d,1
 	mov r14d,edx
 	shr r14d,1
-	xor rcx,rcx
 	
 loop_1_g_2:
     xor rax,rax
@@ -155,8 +151,9 @@ loop_2_g_2:
 	movq qword ptr[rdi+rax],xmm0
 	movhps qword ptr[rbx+rax],xmm0
 	movq qword ptr[r10+rax],xmm2
-	add rax,r12
-	loop loop_2_g_2
+	add rax,8
+	dec ecx
+	jnz short loop_2_g_2
 	
 suite1_g_2:
 	mov ecx,edx
@@ -185,7 +182,6 @@ suite2_g_2:
 fin_g_2:
     pop r14
 	pop r13
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -218,8 +214,6 @@ dst_pitch equ qword ptr[rbp+72]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	push r13
 	.pushreg r13
 	push r14
@@ -234,7 +228,6 @@ dst_pitch equ qword ptr[rbp+72]
 	mov r8d,h
 	mov r9,src_pitch
 	mov r11,dst_pitch
-	mov r12,8
 	mov r13d,1
 	mov r14d,edx
 	shr r14d,1
@@ -259,8 +252,9 @@ loop_2_g_2_AVX:
 	vmovq qword ptr[rdi+rax],xmm0
 	vmovhps qword ptr[rbx+rax],xmm0
 	vmovq qword ptr[r10+rax],xmm2
-	add rax,r12
-	loop loop_2_g_2_AVX
+	add rax,8
+	dec ecx
+	jnz short loop_2_g_2_AVX
 	
 suite1_g_2_AVX:
 	mov ecx,edx
@@ -289,7 +283,6 @@ suite2_g_2_AVX:
 fin_g_2_AVX:
     pop r14
 	pop r13
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -336,7 +329,6 @@ dst_offset_UV equ qword ptr[rbp+80]
 	mov r10,src_offset
 	mov r11,dst_offset_Y
 	mov r12,dst_offset_UV
-	xor rcx,rcx
 	
 loop_1_h:
 	mov ecx,r8d
@@ -349,7 +341,8 @@ loop_2_h:
 	stosb
 	mov byte ptr[rdx],ah
 	inc rdx
-	loop loop_2_h
+	dec ecx
+	jnz short loop_2_h
 	
 	add rsi,r10
 	add rdi,r11
@@ -395,8 +388,6 @@ dst_pitch_UV equ qword ptr[rbp+80]
 	.pushreg rbx
 	push r12
 	.pushreg r12
-	push r13
-	.pushreg r13
 	push r14
 	.pushreg r14
 	push r15
@@ -412,11 +403,9 @@ dst_pitch_UV equ qword ptr[rbp+80]
 	mov r10,src_pitch
 	mov r11,dst_pitch_Y
 	mov r12,dst_pitch_UV
-	mov r13,8
 	mov r14d,r8d
 	shr r14d,1
 	mov r15d,1
-	xor rcx,rcx
 	
 loop_1_h_2:
     xor rax,rax
@@ -440,8 +429,9 @@ loop_2_h_2:
 	punpcklbw xmm0,xmm2                  ;Y16Y15Y14Y13Y12Y11Y10Y9Y8Y7Y6Y5Y4Y3Y2Y1
 	movhps qword ptr [rdx+rax],xmm2
 	movdqa XMMWORD ptr[rdi+2*rax],xmm0
-	add rax,r13
-	loop loop_2_h_2
+	add rax,8
+	dec ecx
+	jnz short loop_2_h_2
 	
 suite1_h_2:
 	mov ecx,r8d
@@ -473,7 +463,6 @@ suite2_h_2:
 fin_h_2:
 	pop r15
 	pop r14
-	pop r13
 	pop r12
 	pop rbx
 	pop rsi
@@ -510,8 +499,6 @@ dst_pitch_UV equ qword ptr[rbp+80]
 	.pushreg rbx
 	push r12
 	.pushreg r12
-	push r13
-	.pushreg r13
 	push r14
 	.pushreg r14
 	push r15
@@ -527,11 +514,9 @@ dst_pitch_UV equ qword ptr[rbp+80]
 	mov r10,src_pitch
 	mov r11,dst_pitch_Y
 	mov r12,dst_pitch_UV
-	mov r13,8
 	mov r14d,r8d
 	shr r14d,1
 	mov r15d,1
-	xor rcx,rcx
 	
 loop_1_h_2_AVX:
     xor rax,rax
@@ -552,8 +537,9 @@ loop_2_h_2_AVX:
 	vpunpcklbw xmm0,xmm0,xmm2                  ;Y16Y15Y14Y13Y12Y11Y10Y9Y8Y7Y6Y5Y4Y3Y2Y1
 	vmovhps qword ptr [rdx+rax],xmm2
 	vmovdqa XMMWORD ptr[rdi+2*rax],xmm0
-	add rax,r13
-	loop loop_2_h_2_AVX
+	add rax,8
+	dec ecx
+	jnz short loop_2_h_2_AVX
 	
 suite1_h_2_AVX:
 	mov ecx,r8d
@@ -584,7 +570,6 @@ suite2_h_2_AVX:
 fin_h_2_AVX:
 	pop r15
 	pop r14
-	pop r13
 	pop r12
 	pop rbx
 	pop rsi
@@ -620,8 +605,6 @@ dst_offset_UV equ qword ptr[rbp+80]
 	.pushreg rbx
 	push r12
 	.pushreg r12	
-	push r13
-	.pushreg r13
 	.endprolog	
 	
 	mov rsi,rcx
@@ -631,10 +614,8 @@ dst_offset_UV equ qword ptr[rbp+80]
 	mov r8d,w
 	mov r9d,h
 	mov r10,src_offset
-	mov r11,2
 	mov r12,dst_offset_Y
-	mov r13,dst_offset_UV	
-	xor rcx,rcx
+	mov r11,dst_offset_UV	
 		
 loop_1_i:
 	mov ecx,r8d
@@ -646,19 +627,19 @@ loop_2_i:
 	inc rbx
 	mov byte ptr[rdi+1],ah
 	mov byte ptr[rdx],al
-	add rdi,r11
+	add rdi,2
 	inc rdx
-	loop loop_2_i
+	dec ecx
+	jnz short loop_2_i
 	
 	add rsi,r10
 	add rdi,r12
-	add rbx,r13
-	add rdx,r13	
+	add rbx,r11
+	add rdx,r11	
 	dec r9d
 	jnz short loop_1_i
 	
 fin_i:
-	pop r13
 	pop r12
 	pop rbx
 	pop rsi
@@ -694,8 +675,6 @@ dst_pitch_UV equ qword ptr[rbp+80]
 	.pushreg rbx
 	push r12
 	.pushreg r12	
-	push r13
-	.pushreg r13
 	push r14
 	.pushreg r14
 	push r15
@@ -709,10 +688,8 @@ dst_pitch_UV equ qword ptr[rbp+80]
 	mov r8d,w
 	mov r9d,h
 	mov r10,src_pitch
-	mov r11,8
 	mov r12,dst_pitch_Y
-	mov r13,dst_pitch_UV	
-	xor rcx,rcx
+	mov r11,dst_pitch_UV	
 	mov r14d,r8d
 	shr r14d,1
 	mov r15d,1
@@ -739,8 +716,9 @@ loop_2_i_2:
 	punpckhbw xmm0,xmm2                  ;Y16Y15Y14Y13Y12Y11Y10Y9Y8Y7Y6Y5Y4Y3Y2Y1
 	movq qword ptr [rdx+rax],xmm2
 	movdqa XMMWORD ptr[rdi+2*rax],xmm0
-	add rax,r11
-	loop loop_2_i_2
+	add rax,8
+	dec ecx
+	jnz short loop_2_i_2
 	
 suite1_i_2:
 	mov ecx,r8d
@@ -761,15 +739,14 @@ suite1_i_2:
 suite2_i_2:
 	add rsi,r10
 	add rdi,r12
-	add rbx,r13
-	add rdx,r13	
+	add rbx,r11
+	add rdx,r11	
 	dec r9d
 	jnz loop_1_i_2
 	
 fin_i_2:
 	pop r15
 	pop r14
-	pop r13
 	pop r12
 	pop rbx
 	pop rsi
@@ -805,8 +782,6 @@ dst_pitch_UV equ qword ptr[rbp+80]
 	.pushreg rbx
 	push r12
 	.pushreg r12	
-	push r13
-	.pushreg r13
 	push r14
 	.pushreg r14
 	push r15
@@ -820,10 +795,8 @@ dst_pitch_UV equ qword ptr[rbp+80]
 	mov r8d,w
 	mov r9d,h
 	mov r10,src_pitch
-	mov r11,8
 	mov r12,dst_pitch_Y
-	mov r13,dst_pitch_UV	
-	xor rcx,rcx
+	mov r11,dst_pitch_UV	
 	mov r14d,r8d
 	shr r14d,1
 	mov r15d,1
@@ -847,8 +820,9 @@ loop_2_i_2_AVX:
 	vpunpckhbw xmm0,xmm0,xmm2                  ;Y16Y15Y14Y13Y12Y11Y10Y9Y8Y7Y6Y5Y4Y3Y2Y1
 	vmovq qword ptr [rdx+rax],xmm2
 	vmovdqa XMMWORD ptr[rdi+2*rax],xmm0
-	add rax,r11
-	loop loop_2_i_2_AVX
+	add rax,8
+	dec ecx
+	jnz short loop_2_i_2_AVX
 	
 suite1_i_2_AVX:
 	mov ecx,r8d
@@ -869,15 +843,14 @@ suite1_i_2_AVX:
 suite2_i_2_AVX:
 	add rsi,r10
 	add rdi,r12
-	add rbx,r13
-	add rdx,r13	
+	add rbx,r11
+	add rdx,r11	
 	dec r9d
 	jnz loop_1_i_2_AVX
 	
 fin_i_2_AVX:
 	pop r15
 	pop r14
-	pop r13
 	pop r12
 	pop rbx
 	pop rsi
@@ -921,7 +894,6 @@ dst_offset equ qword ptr[rbp+72]
 	mov r9d,h
 	mov r10,src_offset
 	mov r11,dst_offset
-	xor rcx,rcx
 	
 loop_1_j:
 	mov ecx,r8d
@@ -933,7 +905,8 @@ loop_2_j:
 	mov ah,byte ptr[rbx]
 	inc rbx
 	stosd
-	loop loop_2_j
+	dec ecx
+	jnz short loop_2_j
 	
 	add rsi,r10
 	add rdx,r10
@@ -975,8 +948,6 @@ dst_pitch equ qword ptr[rbp+72]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	push r13
 	.pushreg r13
 	push r14
@@ -991,9 +962,7 @@ dst_pitch equ qword ptr[rbp+72]
 	mov r9d,h
 	mov r10,src_pitch
 	mov r11,dst_pitch
-	xor rcx,rcx
 	pxor xmm3,xmm3
-	mov r12,8
 	mov r13d,1
 	mov r14d,r8d
 	shr r14d,1	
@@ -1015,8 +984,9 @@ loop_2_j_2:
 	punpckhbw xmm2,xmm1             ;0R8G8B80R7G7B70R6G6B60R5G5B5
 	movdqa XMMWORD ptr[rdi+4*rax],xmm0
 	movdqa XMMWORD ptr[rdi+4*rax+16],xmm2
-	add rax,r12
-	loop loop_2_j_2
+	add rax,8
+	dec ecx
+	jnz short loop_2_j_2
 
 suite1_j_2:
 	mov ecx,r8d
@@ -1042,7 +1012,6 @@ suite2_j_2:
 fin_j_2:
 	pop r14
 	pop r13
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -1075,8 +1044,6 @@ dst_pitch equ qword ptr[rbp+72]
 	.pushreg rsi	
 	push rbx
 	.pushreg rbx
-	push r12
-	.pushreg r12
 	push r13
 	.pushreg r13
 	push r14
@@ -1091,9 +1058,7 @@ dst_pitch equ qword ptr[rbp+72]
 	mov r9d,h
 	mov r10,src_pitch
 	mov r11,dst_pitch
-	xor rcx,rcx
 	vpxor xmm3,xmm3,xmm3
-	mov r12,8
 	mov r13d,1
 	mov r14d,r8d
 	shr r14d,1	
@@ -1114,8 +1079,9 @@ loop_2_j_2_AVX:
 	vpunpcklbw xmm0,xmm0,xmm1             ;0R4G4B40R3G3B30R2G2B20R1G1B1
 	vmovdqa XMMWORD ptr[rdi+4*rax],xmm0
 	vmovdqa XMMWORD ptr[rdi+4*rax+16],xmm2
-	add rax,r12
-	loop loop_2_j_2_AVX
+	add rax,8
+	dec ecx
+	jnz short loop_2_j_2_AVX
 
 suite1_j_2_AVX:
 	mov ecx,r8d
@@ -1141,7 +1107,6 @@ suite2_j_2_AVX:
 fin_j_2_AVX:
 	pop r14
 	pop r13
-	pop r12
 	pop rbx
 	pop rsi
 	pop rdi
@@ -1188,7 +1153,6 @@ dst_offset equ qword ptr[rbp+80]
 	mov r10,dst_offset
 	mov r11,src_offset_Y
 	mov r12,src_offset_UV
-	xor rcx,rcx
 			
 loop_1_k:
 	mov ecx,r8d
@@ -1202,7 +1166,8 @@ loop_2_k:
 	inc rsi
 	stosd
 	inc rbx
-	loop loop_2_k
+	dec ecx
+	jnz short loop_2_k
 	
 	add rsi,r11
 	add rdx,r12
@@ -1248,8 +1213,6 @@ dst_pitch equ qword ptr[rbp+80]
 	.pushreg rbx
 	push r12
 	.pushreg r12
-	push r13
-	.pushreg r13
 	push r14
 	.pushreg r14
 	push r15
@@ -1265,8 +1228,6 @@ dst_pitch equ qword ptr[rbp+80]
 	mov r10,dst_pitch
 	mov r11,src_pitch_Y
 	mov r12,src_pitch_UV
-	xor rcx,rcx
-	mov r13,8
 	mov r14d,r8d
 	shr r14d,1
 	mov r15d,1
@@ -1287,8 +1248,9 @@ loop_2_k_2:
 	punpckhbw xmm2,xmm1             ;VYUYVYUYVYUYVYUY	
 	movdqa XMMWORD ptr[rdi+4*rax],xmm0
 	movdqa XMMWORD ptr[rdi+4*rax+16],xmm2
-	add rax,r13
-	loop loop_2_k_2
+	add rax,8
+	dec ecx
+	jnz short loop_2_k_2
 	
 suite1_k_2:	
 	mov ecx,r8d
@@ -1313,7 +1275,6 @@ suite2_k_2:
 fin_k_2:
 	pop r15
 	pop r14
-	pop r13
 	pop r12
 	pop rbx
 	pop rsi
@@ -1350,8 +1311,6 @@ dst_pitch equ qword ptr[rbp+80]
 	.pushreg rbx
 	push r12
 	.pushreg r12
-	push r13
-	.pushreg r13
 	push r14
 	.pushreg r14
 	push r15
@@ -1367,8 +1326,6 @@ dst_pitch equ qword ptr[rbp+80]
 	mov r10,dst_pitch
 	mov r11,src_pitch_Y
 	mov r12,src_pitch_UV
-	xor rcx,rcx
-	mov r13,8
 	mov r14d,r8d
 	shr r14d,1
 	mov r15d,1
@@ -1388,8 +1345,9 @@ loop_2_k_2_AVX:
 	vpunpcklbw xmm0,xmm0,xmm1             ;VYUYVYUYVYUYVYUY
 	vmovdqa XMMWORD ptr[rdi+4*rax],xmm0
 	vmovdqa XMMWORD ptr[rdi+4*rax+16],xmm2
-	add rax,r13
-	loop loop_2_k_2_AVX
+	add rax,8
+	dec ecx
+	jnz short loop_2_k_2_AVX
 	
 suite1_k_2_AVX:	
 	mov ecx,r8d
@@ -1414,7 +1372,6 @@ suite2_k_2_AVX:
 fin_k_2_AVX:
 	pop r15
 	pop r14
-	pop r13
 	pop r12
 	pop rbx
 	pop rsi
@@ -1451,8 +1408,6 @@ dst_offset equ qword ptr[rbp+80]
 	.pushreg rbx
 	push r12
 	.pushreg r12
-	push r13
-	.pushreg r13
 	.endprolog	
 
 	mov rsi,rcx
@@ -1462,10 +1417,8 @@ dst_offset equ qword ptr[rbp+80]
 	mov r8d,w
 	mov r9d,h
 	mov r10,dst_offset
-	mov r11,2
 	mov r12,src_offset_Y
-	mov r13,src_offset_UV
-	xor rcx,rcx
+	mov r11,src_offset_UV
 	
 loop_1_l:
 	mov ecx,r8d
@@ -1476,20 +1429,20 @@ loop_2_l:
 	shl eax,16
 	mov ah,byte ptr[rsi]
 	mov al,byte ptr[rbx]
-	add rsi,r11
+	add rsi,2
 	stosd
 	inc rbx
-	loop loop_2_l
+	dec ecx
+	jnz short loop_2_l
 	
 	add rsi,r12
-	add rdx,r13
-	add rbx,r13
+	add rdx,r11
+	add rbx,r11
 	add rdi,r10
 	dec r9d
 	jnz short loop_1_l
 		
 fin_l:
-	pop r13
 	pop r12
 	pop rbx
 	pop rsi
@@ -1526,8 +1479,6 @@ dst_pitch equ qword ptr[rbp+80]
 	.pushreg rbx
 	push r12
 	.pushreg r12
-	push r13
-	.pushreg r13
 	push r14
 	.pushreg r14
 	push r15
@@ -1543,8 +1494,6 @@ dst_pitch equ qword ptr[rbp+80]
 	mov r10,dst_pitch
 	mov r11,src_pitch_Y
 	mov r12,src_pitch_UV
-	xor rcx,rcx
-	mov r13,8
 	mov r14d,r8d
 	shr r14d,1
 	mov r15d,1
@@ -1565,8 +1514,9 @@ loop_2_l_2:
 	punpckhbw xmm2,xmm0             ;YVYUYVYUYVYUYVYU
 	movdqa XMMWORD ptr[rdi+4*rax],xmm1
 	movdqa XMMWORD ptr[rdi+4*rax+16],xmm2
-	add rax,r13
-	loop loop_2_l_2
+	add rax,8
+	dec ecx
+	jnz short loop_2_l_2
 	
 suite1_l_2:
 	mov ecx,r8d
@@ -1591,7 +1541,6 @@ suite2_l_2:
 fin_l_2:
 	pop r15
 	pop r14
-	pop r13
 	pop r12
 	pop rbx
 	pop rsi
@@ -1628,8 +1577,6 @@ dst_pitch equ qword ptr[rbp+80]
 	.pushreg rbx
 	push r12
 	.pushreg r12
-	push r13
-	.pushreg r13
 	push r14
 	.pushreg r14
 	push r15
@@ -1645,8 +1592,6 @@ dst_pitch equ qword ptr[rbp+80]
 	mov r10,dst_pitch
 	mov r11,src_pitch_Y
 	mov r12,src_pitch_UV
-	xor rcx,rcx
-	mov r13,8
 	mov r14d,r8d
 	shr r14d,1
 	mov r15d,1
@@ -1666,8 +1611,9 @@ loop_2_l_2_AVX:
 	vpunpcklbw xmm1,xmm1,xmm0             ;YVYUYVYUYVYUYVYU
 	vmovdqa XMMWORD ptr[rdi+4*rax],xmm1
 	vmovdqa XMMWORD ptr[rdi+4*rax+16],xmm2
-	add rax,r13
-	loop loop_2_l_2_AVX
+	add rax,8
+	dec ecx
+	jnz short loop_2_l_2_AVX
 	
 suite1_l_2_AVX:
 	mov ecx,r8d
@@ -1692,7 +1638,6 @@ suite2_l_2_AVX:
 fin_l_2_AVX:
 	pop r15
 	pop r14
-	pop r13
 	pop r12
 	pop rbx
 	pop rsi
@@ -1702,7 +1647,6 @@ fin_l_2_AVX:
 	ret
 
 JPSDR_Median_UYVY_Move_dst_AVX_2 endp
-
 
 end
 
